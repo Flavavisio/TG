@@ -25603,12 +25603,29 @@ window._relPrefill = function(msg){
                     dataCriacao: new Date().toISOString(),
                     criadoPor: usuarioLogado.id
                 };
+                // Verificação prévia: se a sessão local estiver desatualizada (ex.: o teu registo
+                // foi apagado e recriado entretanto, com um ID novo, enquanto tinhas a app aberta),
+                // o pedido nunca vai conseguir gravar-se no servidor — é melhor avisar já e pedir
+                // para voltar a entrar do que deixar a pessoa pensar que ficou tudo bem.
+                const tabelaPropria = (usuarioLogado.role === 'encarregado') ? dados.encarregados : dados.funcionarios;
+                if (!(tabelaPropria || []).some(x => x.id === usuarioLogado.id)) {
+                    alert('⚠️ A tua sessão parece estar desatualizada (o teu registo pode ter sido alterado entretanto). Sai da aplicação e entra novamente antes de voltares a tentar — assim evitas que este pedido se perca.');
+                    return;
+                }
                 if (!dados.pedidos) dados.pedidos = [];
                 dados.pedidos.push(pedido);
-                guardarDados(dados);
-                fecharModalPedido();
-                renderizarTudo();
-                alert('Pedido enviado com sucesso! Aguarde aprovação.');
+                guardarDados(dados).then(() => {
+                    fecharModalPedido();
+                    renderizarTudo();
+                    alert('Pedido enviado com sucesso! Aguarde aprovação.');
+                }).catch(err => {
+                    console.error('Falha ao gravar pedido de férias/falta:', err);
+                    const idx = dados.pedidos.indexOf(pedido);
+                    if (idx !== -1) dados.pedidos.splice(idx, 1); // remove do ecrã — nunca chegou a ficar guardado
+                    fecharModalPedido();
+                    renderizarTudo();
+                    alert('⚠️ Não foi possível guardar o pedido no servidor. Verifica a ligação à internet e tenta novamente. Se o problema persistir, contacta o administrador — o teu registo pode precisar de ser atualizado.');
+                });
             }
         }
 
