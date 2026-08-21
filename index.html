@@ -23940,14 +23940,18 @@ async function salvarAdmin(e) {
             let algumaIntervencao = false;
             grupos.forEach(grupo => {
                 const ossGrupo = oss.filter(s => (s.localId || '') === grupo.id);
-                // A "Sede" (morada principal) aparece sempre, mesmo sem intervenções ainda registadas
-                if (!ossGrupo.length && grupo.id !== '') return;
+                // Mostra sempre todos os locais (mesmo sem nenhuma intervenção ainda registada) —
+                // um local recém-criado tem de aparecer aqui logo, senão fica invisível e ninguém
+                // consegue editá-lo ou sequer confirmar que ficou bem gravado.
                 algumaIntervencao = true;
-                const podeEliminarLocal = !comoCliente && grupo.id && (usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin');
+                const podeGerirLocal = !comoCliente && grupo.id && (usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin');
                 h += `<div style="margin-top:14px;">
                     <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #e2e8f0;padding-bottom:4px;margin-bottom:8px;">
                         <div style="font-weight:700;font-size:.92rem;color:#0b3b5c;"><i class="fas fa-map-marker-alt"></i> ${grupo.nome}</div>
-                        ${podeEliminarLocal ? `<button class="btn btn-sm btn-danger" onclick="eliminarLocalCliente('${grupo.id}','${clienteId}')" title="Eliminar esta instalação"><i class="fas fa-trash"></i></button>` : ''}
+                        ${podeGerirLocal ? `<div style="display:flex;gap:6px;">
+                            <button class="btn btn-sm" style="background:#0f766e;color:#fff;" onclick="abrirModalEditarLocalCliente('${grupo.id}','${clienteId}')" title="Editar morada desta instalação"><i class="fas fa-pen"></i></button>
+                            <button class="btn btn-sm btn-danger" onclick="eliminarLocalCliente('${grupo.id}','${clienteId}')" title="Eliminar esta instalação"><i class="fas fa-trash"></i></button>
+                        </div>` : ''}
                     </div>`;
                 if (!ossGrupo.length) {
                     h += `<p style="color:#94a3b8;font-size:.82rem;margin:4px 0 0;">Ainda não há intervenções registadas nesta instalação.</p>`;
@@ -24021,45 +24025,53 @@ async function salvarAdmin(e) {
             }
         }
 
-        // Novo local/instalação diretamente a partir da lista de Clientes — sem ter de passar por
-        // criar uma OS/Obra/Contrato primeiro. Reutiliza a mesma tabela "locais" e os mesmos
-        // campos que já se usam nesses formulários.
-        function abrirModalNovoLocalCliente(clienteId) {
+        // Novo local/instalação OU editar um já existente — mesmo formulário para os dois casos.
+        // Chamada com só clienteId = criar; com localId também = editar esse local.
+        function abrirModalNovoLocalCliente(clienteId) { abrirModalLocalCliente(clienteId, null); }
+        function abrirModalEditarLocalCliente(localId, clienteId) { abrirModalLocalCliente(clienteId, localId); }
+        function abrirModalLocalCliente(clienteId, localId) {
             const cli = dados.clientes?.find(c => c.id === clienteId);
             if (!cli) return;
-            document.getElementById('modalGenericoTitulo').innerHTML = `<i class="fas fa-map-pin"></i> Nova morada/instalação — ${escapeHtmlSimples(_clienteLabel(cli))}`;
+            const local = localId ? dados.locais?.find(l => l.id === localId) : null;
+            document.getElementById('modalGenericoTitulo').innerHTML = local
+                ? `<i class="fas fa-map-pin"></i> Editar morada — ${escapeHtmlSimples(local.nome)}`
+                : `<i class="fas fa-map-pin"></i> Nova morada/instalação — ${escapeHtmlSimples(_clienteLabel(cli))}`;
             document.getElementById('modalGenericoCampos').innerHTML = `
-                <div class="form-group"><label>Nome do local *</label><input type="text" id="nl_nome" placeholder="Ex: Loja Centro, Armazém 2..." required /></div>
-                <div class="form-group"><label>Morada</label><input type="text" id="nl_morada" value="${escapeHtmlSimples(cli.morada || '')}" placeholder="Rua/Avenida" /></div>
-                <div class="form-group"><label>Número de porta</label><input type="text" id="nl_numero" placeholder="Ex.: 12, 3º Dto" /></div>
-                <div class="form-group"><label>Código Postal</label><input type="text" id="nl_cp" placeholder="0000-000" oninput="aplicarMascaraCP(this); _cttPreencherPorCP(this.value,{cidade:'nl_cidade',freguesia:'nl_freguesia',morada:'nl_morada'})" maxlength="8" /></div>
-                <div class="form-group"><label>Cidade</label><input type="text" id="nl_cidade" value="${escapeHtmlSimples(cli.cidade || '')}" /></div>
-                <div class="form-group"><label>Freguesia</label><input type="text" id="nl_freguesia" value="${escapeHtmlSimples(cli.freguesia || '')}" /></div>
-                <div class="form-group"><label><i class="fas fa-map-pin" style="color:#dc2626;"></i> Pin do Google Maps (opcional) <a href="https://www.google.com/maps" target="_blank" rel="noopener" style="font-weight:400;font-size:.78rem;color:#2563eb;text-decoration:none;margin-left:8px;"><i class="fas fa-up-right-from-square"></i> Abrir Google Maps</a></label><input type="text" id="nl_pin_mapa" placeholder="Cola aqui o link ou as coordenadas copiadas do Google Maps" oninput="_clienteAtualizarLinkPin('nl_pin_mapa','nl_pin_mapa_link')" /><div id="nl_pin_mapa_link" style="margin-top:6px;font-size:.82rem;"></div></div>
+                <div class="form-group"><label>Nome do local *</label><input type="text" id="nl_nome" value="${escapeHtmlSimples(local?.nome || '')}" placeholder="Ex: Loja Centro, Armazém 2..." required /></div>
+                <div class="form-group"><label>Morada</label><input type="text" id="nl_morada" value="${escapeHtmlSimples(local ? (local.morada || '') : (cli.morada || ''))}" placeholder="Rua/Avenida" /></div>
+                <div class="form-group"><label>Número de porta</label><input type="text" id="nl_numero" value="${escapeHtmlSimples(local?.numeroPorta || '')}" placeholder="Ex.: 12, 3º Dto" /></div>
+                <div class="form-group"><label>Código Postal</label><input type="text" id="nl_cp" value="${escapeHtmlSimples(local?.codigoPostal || '')}" placeholder="0000-000" oninput="aplicarMascaraCP(this); _cttPreencherPorCP(this.value,{cidade:'nl_cidade',freguesia:'nl_freguesia',morada:'nl_morada'})" maxlength="8" /></div>
+                <div class="form-group"><label>Cidade</label><input type="text" id="nl_cidade" value="${escapeHtmlSimples(local ? (local.cidade || '') : (cli.cidade || ''))}" /></div>
+                <div class="form-group"><label>Freguesia</label><input type="text" id="nl_freguesia" value="${escapeHtmlSimples(local ? (local.freguesia || '') : (cli.freguesia || ''))}" /></div>
+                <div class="form-group"><label><i class="fas fa-map-pin" style="color:#dc2626;"></i> Pin do Google Maps (opcional) <a href="https://www.google.com/maps" target="_blank" rel="noopener" style="font-weight:400;font-size:.78rem;color:#2563eb;text-decoration:none;margin-left:8px;"><i class="fas fa-up-right-from-square"></i> Abrir Google Maps</a></label><input type="text" id="nl_pin_mapa" value="${escapeHtmlSimples(local?.pinMapa || '')}" placeholder="Cola aqui o link ou as coordenadas copiadas do Google Maps" oninput="_clienteAtualizarLinkPin('nl_pin_mapa','nl_pin_mapa_link')" /><div id="nl_pin_mapa_link" style="margin-top:6px;font-size:.82rem;"></div></div>
             `;
-            document.getElementById('modalGenericoForm').onsubmit = function (ev) { ev.preventDefault(); _guardarNovoLocalCliente(clienteId); };
+            if (local?.pinMapa) _clienteAtualizarLinkPin('nl_pin_mapa', 'nl_pin_mapa_link');
+            document.getElementById('modalGenericoForm').onsubmit = function (ev) { ev.preventDefault(); _guardarNovoLocalCliente(clienteId, localId); };
             document.getElementById('modalGenericoOverlay').classList.add('open');
         }
-        function _guardarNovoLocalCliente(clienteId) {
+        function _guardarNovoLocalCliente(clienteId, localId) {
             const cli = dados.clientes?.find(c => c.id === clienteId);
             if (!cli) return;
             const nome = document.getElementById('nl_nome').value.trim();
             if (!nome) { alert('Indique o nome do local.'); return; }
             dados.locais = dados.locais || [];
-            dados.locais.push({
-                id: gerarId(), adminId: cli.adminId, clienteId, nome,
-                morada: document.getElementById('nl_morada').value.trim(),
-                numeroPorta: document.getElementById('nl_numero')?.value.trim() || null,
-                codigoPostal: document.getElementById('nl_cp')?.value.trim() || null,
-                cidade: document.getElementById('nl_cidade')?.value.trim() || null,
-                freguesia: document.getElementById('nl_freguesia')?.value.trim() || null,
-                pinMapa: document.getElementById('nl_pin_mapa')?.value.trim() || null,
-                dataCriacao: Date.now()
-            });
+            let local = localId ? dados.locais.find(l => l.id === localId) : null;
+            const isNovo = !local;
+            if (isNovo) {
+                local = { id: gerarId(), adminId: cli.adminId, clienteId, dataCriacao: Date.now() };
+                dados.locais.push(local);
+            }
+            local.nome = nome;
+            local.morada = document.getElementById('nl_morada').value.trim();
+            local.numeroPorta = document.getElementById('nl_numero')?.value.trim() || null;
+            local.codigoPostal = document.getElementById('nl_cp')?.value.trim() || null;
+            local.cidade = document.getElementById('nl_cidade')?.value.trim() || null;
+            local.freguesia = document.getElementById('nl_freguesia')?.value.trim() || null;
+            local.pinMapa = document.getElementById('nl_pin_mapa')?.value.trim() || null;
             guardarDados(dados);
             _fecharModalGenerico();
             renderizarClientes();
-            alert('✅ Instalação criada.');
+            alert(isNovo ? '✅ Instalação criada.' : '✅ Morada atualizada.');
         }
         function eliminarLocalCliente(localId, clienteId) {
             if (usuarioLogado?.role !== 'admin' && usuarioLogado?.role !== 'subadmin') { alert('Sem permissão.'); return; }
