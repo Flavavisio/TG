@@ -23604,18 +23604,44 @@ async function salvarAdmin(e) {
             if (!tipo) return;
             tipo.campos = tipo.campos || [];
             area.innerHTML = `
-                <div style="border-top:1px solid #e2e8f0;padding-top:12px;margin-top:8px;">
-                    <div id="rp_lista_campos" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;"></div>
-                    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-                        <input type="text" id="rp_novo_campo_label" placeholder="Ex: Central testada?" style="flex:1;min-width:160px;" />
-                        <select id="rp_novo_campo_tipo" style="width:150px;">
-                            ${CAMPO_TIPOS.map(c => `<option value="${c.valor}">${c.label}</option>`).join('')}
-                        </select>
-                        <button type="button" class="btn btn-sm btn-outline" onclick="_rpAdicionarCampo('${codigo}')"><i class="fas fa-plus"></i> Adicionar campo</button>
+                <div style="border-top:1px solid #e2e8f0;padding-top:12px;margin-top:8px;display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start;">
+                    <div style="flex:1 1 320px;min-width:280px;">
+                        <div id="rp_lista_campos" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;"></div>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                            <input type="text" id="rp_novo_campo_label" placeholder="Ex: Central testada?" style="flex:1;min-width:160px;" />
+                            <select id="rp_novo_campo_tipo" style="width:150px;">
+                                ${CAMPO_TIPOS.map(c => `<option value="${c.valor}">${c.label}</option>`).join('')}
+                            </select>
+                            <button type="button" class="btn btn-sm btn-outline" onclick="_rpAdicionarCampo('${codigo}')"><i class="fas fa-plus"></i> Adicionar campo</button>
+                        </div>
+                    </div>
+                    <div style="flex:1 1 300px;min-width:260px;max-width:380px;">
+                        <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.4px;color:var(--muted,#64748b);font-weight:700;margin-bottom:6px;">
+                            <i class="fas fa-eye"></i> Pré-visualização (o que o técnico vai ver)
+                        </div>
+                        <div style="border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;background:#f8fafc;">
+                            <iframe id="rp_preview_iframe" style="width:100%;height:480px;border:none;background:#fff;"></iframe>
+                        </div>
                     </div>
                 </div>
             `;
             _rpAtualizarLista(tipo);
+            _rpAtualizarPreview(tipo);
+        }
+
+        // Gera a pré-visualização ao vivo do relatório, reaproveitando exatamente a mesma
+        // função que produz o relatório real (_gerarTemplateRelatorioCustom), para que o
+        // admin veja fielmente o que o técnico vai preencher no telemóvel — sem duplicar
+        // a lógica de renderização dos campos.
+        function _rpAtualizarPreview(tipo) {
+            const iframe = document.getElementById('rp_preview_iframe');
+            if (!iframe) return;
+            try {
+                const html = _gerarTemplateRelatorioCustom(tipo);
+                iframe.srcdoc = html;
+            } catch (e) {
+                iframe.srcdoc = '<p style="font-family:sans-serif;color:#94a3b8;padding:16px;font-size:.85rem;">Adiciona um campo para veres aqui a pré-visualização.</p>';
+            }
         }
         function _rpAtualizarLista(tipo) {
             const lista = document.getElementById('rp_lista_campos');
@@ -23644,6 +23670,7 @@ async function salvarAdmin(e) {
             [tipo.campos[indice], tipo.campos[novoIndice]] = [tipo.campos[novoIndice], tipo.campos[indice]];
             try { await guardarDados(dados, ['tiposTrabalhoCustom']); } catch (e) { alert('⚠️ Ficou no ecrã, mas ainda não foi possível confirmar no servidor.'); }
             _rpAtualizarLista(tipo);
+            _rpAtualizarPreview(tipo);
         }
         async function _rpAdicionarCampo(codigo) {
             const label = document.getElementById('rp_novo_campo_label').value.trim();
@@ -23657,6 +23684,7 @@ async function salvarAdmin(e) {
             try { await guardarDados(dados, ['tiposTrabalhoCustom']); } catch (e) { alert('⚠️ Ficou no ecrã, mas ainda não foi possível confirmar no servidor.'); }
             document.getElementById('rp_novo_campo_label').value = '';
             _rpAtualizarLista(tipo);
+            _rpAtualizarPreview(tipo);
             const sel = document.getElementById('rp_tipo_select');
             if (sel) { const opt = sel.querySelector(`option[value="${codigo}"]`); if (opt) opt.textContent = `${tipo.nome} (${tipo.campos.length} campo${tipo.campos.length === 1 ? '' : 's'})`; }
         }
@@ -23667,6 +23695,7 @@ async function salvarAdmin(e) {
             tipo.campos.splice(indice, 1);
             try { await guardarDados(dados, ['tiposTrabalhoCustom']); } catch (e) { alert('⚠️ Ficou no ecrã, mas ainda não foi possível confirmar no servidor.'); }
             _rpAtualizarLista(tipo);
+            _rpAtualizarPreview(tipo);
         }
 
         const REPORT_TEMPLATES_B64 = {
