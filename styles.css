@@ -8,6 +8,13 @@
         .header-title h2 { font-size:24px; font-weight:700; letter-spacing:1px; }
         .header-title .sub { display:none; }
         .header .user-info { display:flex; align-items:center; gap:15px; flex-wrap:wrap; }
+        /* No PC (fora do layout mobile), o Sair/Login fica encostado ao Perfil, no fim da barra —
+           só a ORDEM visual muda (via flexbox order), o HTML mantém-se no mesmo sítio para o
+           telemóvel continuar a colocar o Sair na 1ª linha, como já fazia. */
+        body:not(.tem-menu-inferior) .header #btnEditarPerfil { order:20; }
+        body:not(.tem-menu-inferior) .header #btnEditarEmpresa { order:21; }
+        body:not(.tem-menu-inferior) .header #btnLogin,
+        body:not(.tem-menu-inferior) .header #btnLogout { order:22; }
         .btn-login { background:#facc15; color:#0b3b5c; border:none; padding:8px 18px; border-radius:30px; font-weight:600; cursor:pointer; transition:0.2s; }
         .btn-login:hover { background:#fde047; transform:scale(1.02); }
         .btn-logout { background:#dc2626; color:#fff; border:none; padding:8px 18px; border-radius:30px; font-weight:600; cursor:pointer; }
@@ -342,7 +349,8 @@
         .modal { background:#fff; border-radius:20px; max-width:720px; width:100%; padding:30px 32px; box-shadow:0 25px 60px rgba(0,0,0,0.25); animation:modalIn 0.25s ease; max-height:90vh; overflow-y:auto; }
         /* Modal "Ver OS" / "Ver Obra": altura fixa (não max-height) para não saltar de tamanho ao trocar de aba (Folhas/Relatórios/Materiais) */
         @media (max-width:700px) {
-            #modalGenericoOverlay.modal-veros .modal { height:88vh; max-height:88vh; display:flex; flex-direction:column; overflow-y:hidden; }
+            #modalGenericoOverlay.modal-veros .modal { height:94vh; max-height:94vh; display:flex; flex-direction:column; overflow-y:hidden; }
+            #modalGenericoOverlay.modal-veros #modalGenericoCampos > .rp-editor-scroll { flex:1; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; }
             #modalGenericoOverlay.modal-veros #modalGenericoForm { display:flex; flex-direction:column; flex:1; min-height:0; }
             #modalGenericoOverlay.modal-veros #modalGenericoCampos { display:flex; flex-direction:column; flex:1; min-height:0; }
             #modalGenericoOverlay.modal-veros #verOsConteudo,
@@ -1237,13 +1245,13 @@ body.tem-menu-inferior .header .header-title { order:6; flex-basis:100%; display
 body.tem-menu-inferior .header .tg-breadcrumb { margin-top:2px; }
 body.tem-menu-inferior .header #headerExtrasAcordeao { order:7; flex-basis:100%; }
 #headerExtrasAcordeao.tg-header-extras-acordeao { display:contents; } /* no PC é transparente — os botões seguem soltos no .user-info, como sempre */
-.tg-header-extras-h { display:none; } /* label "Mais opções" só existe no layout mobile */
+.tg-header-extras-h { display:none !important; } /* label "Mais opções" só existe no layout mobile — nunca no PC */
 #headerExtras { display:contents; }
 body.tem-menu-inferior .tg-header-extras-acordeao#headerExtrasAcordeao {
     display:block; margin-top:6px; padding-top:10px; border-top:1px dashed var(--tgm-border);
 }
 body.tem-menu-inferior .tg-header-extras-h {
-    display:flex; align-items:center; justify-content:space-between; cursor:pointer; user-select:none;
+    display:flex !important; align-items:center; justify-content:space-between; cursor:pointer; user-select:none;
     font-weight:700; font-size:.88rem; color: var(--tgm-text);
 }
 .tg-header-extras-seta { transition:transform .2s ease; color: var(--tgm-text-mute); }

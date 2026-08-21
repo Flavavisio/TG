@@ -23579,21 +23579,26 @@ async function salvarAdmin(e) {
             const tid = _tenantId();
             const tipos = (dados.tiposTrabalhoCustom || []).filter(t => t.adminId === tid);
             document.getElementById('modalGenericoTitulo').innerHTML = '<i class="fas fa-clipboard-list"></i> Relatórios personalizados por tipo de trabalho';
+            const _modalEl = document.querySelector('#modalGenericoOverlay .modal');
+            if (_modalEl) { _modalEl.dataset.maxWidthOriginal = _modalEl.style.maxWidth || ''; _modalEl.style.maxWidth = '920px'; }
             document.getElementById('modalGenericoCampos').innerHTML = `
-                <p class="help-text" style="margin-bottom:12px;">Escolhe um tipo de trabalho criado por ti para desenhares o formulário que aparece quando um técnico fecha uma OS desse tipo. Os tipos base (REX, RBI, etc.) já têm o relatório de especialidade próprio e não aparecem aqui.</p>
-                ${tipos.length ? `
-                    <div class="form-group">
-                        <label>Tipo de trabalho</label>
-                        <select id="rp_tipo_select" onchange="_rpRenderCampos(this.value)">
-                            <option value="">— Escolhe —</option>
-                            ${tipos.map(t => `<option value="${t.codigo}">${escapeHtmlSimples(t.nome)}${(t.campos || []).length ? ` (${t.campos.length} campo${t.campos.length === 1 ? '' : 's'})` : ''}</option>`).join('')}
-                        </select>
-                    </div>
-                    <div id="rp_campos_area"></div>
-                ` : `<p class="help-text">Ainda não criaste nenhum tipo de trabalho próprio. Cria um primeiro no campo "Novo tipo de trabalho" ao editar uma OS.</p>`}
+                <div class="rp-editor-scroll">
+                    <p class="help-text" style="margin-bottom:12px;">Escolhe um tipo de trabalho criado por ti para desenhares o formulário que aparece quando um técnico fecha uma OS desse tipo. Os tipos base (REX, RBI, etc.) já têm o relatório de especialidade próprio e não aparecem aqui.</p>
+                    ${tipos.length ? `
+                        <div class="form-group">
+                            <label>Tipo de trabalho</label>
+                            <select id="rp_tipo_select" onchange="_rpRenderCampos(this.value)">
+                                <option value="">— Escolhe —</option>
+                                ${tipos.map(t => `<option value="${t.codigo}">${escapeHtmlSimples(t.nome)}${(t.campos || []).length ? ` (${t.campos.length} campo${t.campos.length === 1 ? '' : 's'})` : ''}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div id="rp_campos_area"></div>
+                    ` : `<p class="help-text">Ainda não criaste nenhum tipo de trabalho próprio. Cria um primeiro no campo "Novo tipo de trabalho" ao editar uma OS.</p>`}
+                </div>
             `;
             document.getElementById('modalGenericoForm').onsubmit = ev => ev.preventDefault();
-            document.getElementById('modalGenericoOverlay').classList.add('open');
+            const _bgRp = document.querySelector('#modalGenericoOverlay .modal-actions .btn-success'); if (_bgRp) { _bgRp.style.display = ''; _bgRp.innerHTML = '<i class="fas fa-check"></i> Fechar'; }
+            document.getElementById('modalGenericoOverlay').classList.add('open', 'modal-veros');
         }
         function _rpRenderCampos(codigo) {
             const area = document.getElementById('rp_campos_area');
@@ -23620,7 +23625,7 @@ async function salvarAdmin(e) {
                             <i class="fas fa-eye"></i> Pré-visualização (o que o técnico vai ver)
                         </div>
                         <div style="border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;background:#f8fafc;">
-                            <iframe id="rp_preview_iframe" style="width:100%;height:480px;border:none;background:#fff;"></iframe>
+                            <iframe id="rp_preview_iframe" style="width:100%;height:62vh;min-height:420px;border:none;background:#fff;"></iframe>
                         </div>
                     </div>
                 </div>
