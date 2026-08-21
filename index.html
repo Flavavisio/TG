@@ -2795,17 +2795,32 @@
 
     <!-- SDK do Supabase (expõe window.supabase) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- As bibliotecas abaixo (PDF, QR, mapas, Excel) só são usadas DEPOIS do login, nunca na
-         página pública — "defer" evita que bloqueiem a primeira renderização da página, sem
-         quebrar nada (continuam prontas antes de qualquer clique real do utilizador). -->
-    <!-- jsPDF para gerar folhas de obra em PDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
-    <!-- jsQR para ler QR Codes com a câmara (levantamento/devolução de equipamento) -->
-    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" defer></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" media="print" onload="this.media='all'" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
+    <!-- As bibliotecas abaixo (PDF, QR, mapas, Excel — ~650 KiB no total) só são usadas DEPOIS
+         do login, nunca na página pública. Mesmo com "defer" o browser continua a DESCARREGÁ-LAS
+         em paralelo com a imagem principal, disputando a pouca largura de banda em ligações
+         lentas — por isso agora só começam a ser pedidas depois de a página acabar de carregar
+         (window.load), sem disputar rede com o que a pessoa vê primeiro. Continuam prontas muito
+         antes de alguém conseguir fazer login e chegar a usar alguma destas funcionalidades. -->
+    <script>
+        window.addEventListener('load', function () {
+            var scripts = [
+                'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+                'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js',
+                'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js',
+                'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js',
+                'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'
+            ];
+            var folhaLeaflet = document.createElement('link');
+            folhaLeaflet.rel = 'stylesheet';
+            folhaLeaflet.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css';
+            document.head.appendChild(folhaLeaflet);
+            scripts.forEach(function (src) {
+                var s = document.createElement('script');
+                s.src = src;
+                document.body.appendChild(s);
+            });
+        });
+    </script>
     <!-- EmailJS para envio de emails de pagamento -->
     <script>
         // Configuração EmailJS
