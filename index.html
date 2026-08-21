@@ -23622,13 +23622,28 @@ async function salvarAdmin(e) {
             if (!lista) return;
             lista.innerHTML = (tipo.campos || []).length ? tipo.campos.map((c, i) => {
                 const info = CAMPO_TIPOS.find(t => t.valor === c.tipo) || CAMPO_TIPOS[0];
+                const ehPrimeiro = i === 0, ehUltimo = i === tipo.campos.length - 1;
                 return `<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#f8fafc;border-radius:8px;">
+                    <div style="display:flex;flex-direction:column;gap:2px;">
+                        <button type="button" class="btn btn-sm" style="padding:2px 7px;background:${ehPrimeiro ? '#e2e8f0' : '#eef2ff'};color:${ehPrimeiro ? '#94a3b8' : '#3730a3'};" ${ehPrimeiro ? 'disabled' : ''} onclick="_rpMoverCampo('${tipo.codigo}', ${i}, -1)" title="Mover para cima"><i class="fas fa-chevron-up"></i></button>
+                        <button type="button" class="btn btn-sm" style="padding:2px 7px;background:${ehUltimo ? '#e2e8f0' : '#eef2ff'};color:${ehUltimo ? '#94a3b8' : '#3730a3'};" ${ehUltimo ? 'disabled' : ''} onclick="_rpMoverCampo('${tipo.codigo}', ${i}, 1)" title="Mover para baixo"><i class="fas fa-chevron-down"></i></button>
+                    </div>
                     <i class="fas ${info.icon}" style="color:#64748b;width:18px;"></i>
                     <span style="flex:1;">${escapeHtmlSimples(c.label)}</span>
                     <span class="help-text">${info.label}</span>
                     <button type="button" class="btn btn-sm" style="background:#fee2e2;color:#991b1b;" onclick="_rpRemoverCampo('${tipo.codigo}', ${i})"><i class="fas fa-trash"></i></button>
                 </div>`;
             }).join('') : '<p class="help-text">Ainda sem campos — adiciona o primeiro abaixo.</p>';
+        }
+        async function _rpMoverCampo(codigo, indice, direcao) {
+            const tid = _tenantId();
+            const tipo = (dados.tiposTrabalhoCustom || []).find(t => t.codigo === codigo && t.adminId === tid);
+            if (!tipo || !tipo.campos) return;
+            const novoIndice = indice + direcao;
+            if (novoIndice < 0 || novoIndice >= tipo.campos.length) return;
+            [tipo.campos[indice], tipo.campos[novoIndice]] = [tipo.campos[novoIndice], tipo.campos[indice]];
+            try { await guardarDados(dados, ['tiposTrabalhoCustom']); } catch (e) { alert('⚠️ Ficou no ecrã, mas ainda não foi possível confirmar no servidor.'); }
+            _rpAtualizarLista(tipo);
         }
         async function _rpAdicionarCampo(codigo) {
             const label = document.getElementById('rp_novo_campo_label').value.trim();
