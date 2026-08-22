@@ -3104,8 +3104,8 @@
         const M = {
             administradores: {
                 tabela: 'administradores',
-                from: r => ({ id: r.id, nome: r.nome, email: r.email, empresa: r.empresa || '', nif: r.nif || null, logo: r.logo || null, licencaFeedback: r.licenca_feedback || null, contratosPlano: r.contratos_plano || null, contratosExpiracao: isoToMs(r.contratos_expiracao), frotaPlano: r.frota_plano || null, frotaExpiracao: isoToMs(r.frota_expiracao), armazemPlano: r.armazem_plano || null, armazemExpiracao: isoToMs(r.armazem_expiracao), portalPlano: r.portal_plano || null, portalExpiracao: isoToMs(r.portal_expiracao), crmPlano: r.crm_plano || null, crmExpiracao: isoToMs(r.crm_expiracao), assistPlano: r.assist_plano || null, assistExpiracao: isoToMs(r.assist_expiracao), erpPlano: r.erp_plano || null, erpExpiracao: isoToMs(r.erp_expiracao), notificacoesPlano: r.notificacoes_plano || null, notificacoesExpiracao: isoToMs(r.notificacoes_expiracao), dadosBancarios: r.dados_bancarios || null, integracaoFaturacao: r.integracao_faturacao || null, ativo: r.ativo, mudarSenha: r.mudar_senha === true, ultimoLogin: isoToMs(r.ultimo_login), ultimaAtividade: isoToMs(r.ultima_atividade), mostrarEstadoOnline: r.mostrar_estado_online === true, layout: r.layout || null, tiposEquipamento: r.tipos_equipamento || [], logo: r.logo, notificarAprovacao: r.notificar_aprovacao === true, numeroRegistoPrevio: r.numero_registo_previo || null, dataRegistoPrevio: r.data_registo_previo || null, numeroAnepc: r.numero_anepc || null, dataAnepc: r.data_anepc || null, anepcValidade: r.anepc_validade || null, registoPrevioValidade: r.registo_previo_validade || null, corCorporativa: r.cor_corporativa || null, favoritos: Array.isArray(r.favoritos) ? r.favoritos : [], ivaPeriodicidade: r.iva_periodicidade || 'mensal', irsPeriodicidade: r.irs_periodicidade || 'semestral', painelTvAtivo: r.painel_tv_ativo === true, descricoesRapidasOS: Array.isArray(r.descricoes_rapidas_os) ? r.descricoes_rapidas_os : ['Instalação', 'Manutenção', 'Visita', 'Formação'], horaEntradaHabitual: r.hora_entrada_habitual || '09:00', toleranciaAtrasoMin: r.tolerancia_atraso_min != null ? r.tolerancia_atraso_min : 15, certificadoraLogo: r.certificadora_logo || null, ehDistribuidor: r.eh_distribuidor === true, distribuidorDesconto: r.distribuidor_desconto != null ? Number(r.distribuidor_desconto) : null, distribuidorId: r.distribuidor_id || null, precoDistribuidorCobrado: r.preco_distribuidor_cobrado != null ? Number(r.preco_distribuidor_cobrado) : null, distribuidorPagamentoPrazo: isoToMs(r.distribuidor_pagamento_prazo), precoFundador: r.preco_fundador === true, contratosDemoDias: r.contratos_demo_dias || null, frotaDemoDias: r.frota_demo_dias || null, armazemDemoDias: r.armazem_demo_dias || null, crmDemoDias: r.crm_demo_dias || null, erpDemoDias: r.erp_demo_dias || null, rondasPlano: r.rondas_plano || null, rondasExpiracao: isoToMs(r.rondas_expiracao), rondasDemoDias: r.rondas_demo_dias || null, usoSecoes: r.uso_secoes ? (typeof r.uso_secoes === 'string' ? JSON.parse(r.uso_secoes) : r.uso_secoes) : {}, usoSecoesUltima: isoToMs(r.uso_secoes_ultima), dataCriacao: isoToMs(r.data_criacao) }),
-                to:   o => ({ id: o.id, nome: o.nome, email: o.email, senha: o.senha, empresa: o.empresa || null, nif: o.nif || null, logo: o.logo || null, licenca_feedback: o.licencaFeedback || null, contratos_plano: o.contratosPlano || null, contratos_expiracao: msToISO(o.contratosExpiracao), frota_plano: o.frotaPlano || null, frota_expiracao: msToISO(o.frotaExpiracao), armazem_plano: o.armazemPlano || null, armazem_expiracao: msToISO(o.armazemExpiracao), portal_plano: o.portalPlano || null, portal_expiracao: msToISO(o.portalExpiracao), crm_plano: o.crmPlano || null, crm_expiracao: msToISO(o.crmExpiracao), assist_plano: o.assistPlano || null, assist_expiracao: msToISO(o.assistExpiracao), erp_plano: o.erpPlano || null, erp_expiracao: msToISO(o.erpExpiracao), notificacoes_plano: o.notificacoesPlano || null, notificacoes_expiracao: msToISO(o.notificacoesExpiracao), dados_bancarios: o.dadosBancarios || null, integracao_faturacao: o.integracaoFaturacao || null, ativo: o.ativo !== false, mudar_senha: o.mudarSenha === true, ultimo_login: o.ultimoLogin ? msToISO(o.ultimoLogin) : null, ultima_atividade: o.ultimaAtividade ? msToISO(o.ultimaAtividade) : null, mostrar_estado_online: o.mostrarEstadoOnline === true, layout: o.layout || null, tipos_equipamento: o.tiposEquipamento || [], logo: o.logo || null, notificar_aprovacao: o.notificarAprovacao === true, numero_registo_previo: o.numeroRegistoPrevio || null, data_registo_previo: o.dataRegistoPrevio || null, numero_anepc: o.numeroAnepc || null, data_anepc: o.dataAnepc || null, anepc_validade: o.anepcValidade || null, registo_previo_validade: o.registoPrevioValidade || null, cor_corporativa: o.corCorporativa || null, favoritos: o.favoritos || [], iva_periodicidade: o.ivaPeriodicidade || 'mensal', irs_periodicidade: o.irsPeriodicidade || 'semestral', painel_tv_ativo: o.painelTvAtivo === true, descricoes_rapidas_os: o.descricoesRapidasOS || null, hora_entrada_habitual: o.horaEntradaHabitual || '09:00', tolerancia_atraso_min: o.toleranciaAtrasoMin != null ? o.toleranciaAtrasoMin : 15, certificadora_logo: o.certificadoraLogo || null, eh_distribuidor: o.ehDistribuidor === true, distribuidor_desconto: o.distribuidorDesconto ?? null, distribuidor_id: o.distribuidorId || null, preco_distribuidor_cobrado: o.precoDistribuidorCobrado ?? null, distribuidor_pagamento_prazo: o.distribuidorPagamentoPrazo ? msToISO(o.distribuidorPagamentoPrazo) : null, preco_fundador: o.precoFundador === true, contratos_demo_dias: o.contratosDemoDias || null, frota_demo_dias: o.frotaDemoDias || null, armazem_demo_dias: o.armazemDemoDias || null, crm_demo_dias: o.crmDemoDias || null, erp_demo_dias: o.erpDemoDias || null, rondas_plano: o.rondasPlano || null, rondas_expiracao: msToISO(o.rondasExpiracao), rondas_demo_dias: o.rondasDemoDias || null, uso_secoes: JSON.stringify(o.usoSecoes || {}), uso_secoes_ultima: o.usoSecoesUltima ? msToISO(o.usoSecoesUltima) : null, data_criacao: msToISO(o.dataCriacao) })
+                from: r => ({ id: r.id, nome: r.nome, email: r.email, empresa: r.empresa || '', nif: r.nif || null, logo: r.logo || null, licencaFeedback: r.licenca_feedback || null, contratosPlano: r.contratos_plano || null, contratosExpiracao: isoToMs(r.contratos_expiracao), frotaPlano: r.frota_plano || null, frotaExpiracao: isoToMs(r.frota_expiracao), armazemPlano: r.armazem_plano || null, armazemExpiracao: isoToMs(r.armazem_expiracao), portalPlano: r.portal_plano || null, portalExpiracao: isoToMs(r.portal_expiracao), crmPlano: r.crm_plano || null, crmExpiracao: isoToMs(r.crm_expiracao), assistPlano: r.assist_plano || null, assistExpiracao: isoToMs(r.assist_expiracao), erpPlano: r.erp_plano || null, erpExpiracao: isoToMs(r.erp_expiracao), notificacoesPlano: r.notificacoes_plano || null, notificacoesExpiracao: isoToMs(r.notificacoes_expiracao), dadosBancarios: r.dados_bancarios || null, integracaoFaturacao: r.integracao_faturacao || null, ativo: r.ativo, mudarSenha: r.mudar_senha === true, ultimoLogin: isoToMs(r.ultimo_login), ultimaAtividade: isoToMs(r.ultima_atividade), mostrarEstadoOnline: r.mostrar_estado_online === true, layout: r.layout || null, tiposEquipamento: r.tipos_equipamento || [], logo: r.logo, notificarAprovacao: r.notificar_aprovacao === true, numeroRegistoPrevio: r.numero_registo_previo || null, dataRegistoPrevio: r.data_registo_previo || null, numeroAnepc: r.numero_anepc || null, dataAnepc: r.data_anepc || null, anepcValidade: r.anepc_validade || null, registoPrevioValidade: r.registo_previo_validade || null, corCorporativa: r.cor_corporativa || null, favoritos: Array.isArray(r.favoritos) ? r.favoritos : [], ivaPeriodicidade: r.iva_periodicidade || 'mensal', irsPeriodicidade: r.irs_periodicidade || 'semestral', painelTvAtivo: r.painel_tv_ativo === true, descricoesRapidasOS: Array.isArray(r.descricoes_rapidas_os) ? r.descricoes_rapidas_os : ['Instalação', 'Manutenção', 'Visita', 'Formação'], horaEntradaHabitual: r.hora_entrada_habitual || '09:00', toleranciaAtrasoMin: r.tolerancia_atraso_min != null ? r.tolerancia_atraso_min : 15, certificadoraLogo: r.certificadora_logo || null, ehDistribuidor: r.eh_distribuidor === true, distribuidorDesconto: r.distribuidor_desconto != null ? Number(r.distribuidor_desconto) : null, distribuidorId: r.distribuidor_id || null, precoDistribuidorCobrado: r.preco_distribuidor_cobrado != null ? Number(r.preco_distribuidor_cobrado) : null, distribuidorPagamentoPrazo: isoToMs(r.distribuidor_pagamento_prazo), precoFundador: r.preco_fundador === true, obrasAvancadoAtivo: r.obras_avancado_ativo === true, obrasChecklistItens: Array.isArray(r.obras_checklist_itens) ? r.obras_checklist_itens : [], contratosDemoDias: r.contratos_demo_dias || null, frotaDemoDias: r.frota_demo_dias || null, armazemDemoDias: r.armazem_demo_dias || null, crmDemoDias: r.crm_demo_dias || null, erpDemoDias: r.erp_demo_dias || null, rondasPlano: r.rondas_plano || null, rondasExpiracao: isoToMs(r.rondas_expiracao), rondasDemoDias: r.rondas_demo_dias || null, usoSecoes: r.uso_secoes ? (typeof r.uso_secoes === 'string' ? JSON.parse(r.uso_secoes) : r.uso_secoes) : {}, usoSecoesUltima: isoToMs(r.uso_secoes_ultima), dataCriacao: isoToMs(r.data_criacao) }),
+                to:   o => ({ id: o.id, nome: o.nome, email: o.email, senha: o.senha, empresa: o.empresa || null, nif: o.nif || null, logo: o.logo || null, licenca_feedback: o.licencaFeedback || null, contratos_plano: o.contratosPlano || null, contratos_expiracao: msToISO(o.contratosExpiracao), frota_plano: o.frotaPlano || null, frota_expiracao: msToISO(o.frotaExpiracao), armazem_plano: o.armazemPlano || null, armazem_expiracao: msToISO(o.armazemExpiracao), portal_plano: o.portalPlano || null, portal_expiracao: msToISO(o.portalExpiracao), crm_plano: o.crmPlano || null, crm_expiracao: msToISO(o.crmExpiracao), assist_plano: o.assistPlano || null, assist_expiracao: msToISO(o.assistExpiracao), erp_plano: o.erpPlano || null, erp_expiracao: msToISO(o.erpExpiracao), notificacoes_plano: o.notificacoesPlano || null, notificacoes_expiracao: msToISO(o.notificacoesExpiracao), dados_bancarios: o.dadosBancarios || null, integracao_faturacao: o.integracaoFaturacao || null, ativo: o.ativo !== false, mudar_senha: o.mudarSenha === true, ultimo_login: o.ultimoLogin ? msToISO(o.ultimoLogin) : null, ultima_atividade: o.ultimaAtividade ? msToISO(o.ultimaAtividade) : null, mostrar_estado_online: o.mostrarEstadoOnline === true, layout: o.layout || null, tipos_equipamento: o.tiposEquipamento || [], logo: o.logo || null, notificar_aprovacao: o.notificarAprovacao === true, numero_registo_previo: o.numeroRegistoPrevio || null, data_registo_previo: o.dataRegistoPrevio || null, numero_anepc: o.numeroAnepc || null, data_anepc: o.dataAnepc || null, anepc_validade: o.anepcValidade || null, registo_previo_validade: o.registoPrevioValidade || null, cor_corporativa: o.corCorporativa || null, favoritos: o.favoritos || [], iva_periodicidade: o.ivaPeriodicidade || 'mensal', irs_periodicidade: o.irsPeriodicidade || 'semestral', painel_tv_ativo: o.painelTvAtivo === true, descricoes_rapidas_os: o.descricoesRapidasOS || null, hora_entrada_habitual: o.horaEntradaHabitual || '09:00', tolerancia_atraso_min: o.toleranciaAtrasoMin != null ? o.toleranciaAtrasoMin : 15, certificadora_logo: o.certificadoraLogo || null, eh_distribuidor: o.ehDistribuidor === true, distribuidor_desconto: o.distribuidorDesconto ?? null, distribuidor_id: o.distribuidorId || null, preco_distribuidor_cobrado: o.precoDistribuidorCobrado ?? null, distribuidor_pagamento_prazo: o.distribuidorPagamentoPrazo ? msToISO(o.distribuidorPagamentoPrazo) : null, preco_fundador: o.precoFundador === true, obras_avancado_ativo: o.obrasAvancadoAtivo === true, obras_checklist_itens: o.obrasChecklistItens || [], contratos_demo_dias: o.contratosDemoDias || null, frota_demo_dias: o.frotaDemoDias || null, armazem_demo_dias: o.armazemDemoDias || null, crm_demo_dias: o.crmDemoDias || null, erp_demo_dias: o.erpDemoDias || null, rondas_plano: o.rondasPlano || null, rondas_expiracao: msToISO(o.rondasExpiracao), rondas_demo_dias: o.rondasDemoDias || null, uso_secoes: JSON.stringify(o.usoSecoes || {}), uso_secoes_ultima: o.usoSecoesUltima ? msToISO(o.usoSecoesUltima) : null, data_criacao: msToISO(o.dataCriacao) })
             },
             funcionarios: {
                 tabela: 'funcionarios',
@@ -3254,8 +3254,8 @@
             },
             obras: {
                 tabela: 'obras',
-                from: r => ({ id: r.id, adminId: r.admin_id, nome: r.nome, clienteId: r.cliente_id, localId: r.local_id || null, morada: r.morada, codigoPostal: r.codigo_postal, cidade: r.cidade, estado: r.estado, observacoes: r.observacoes, longaDuracao: r.longa_duracao === true, responsavelId: r.responsavel_id || null, responsaveisIds: Array.isArray(r.responsaveis_ids) ? r.responsaveis_ids : [], relatorioResponsavelId: r.relatorio_responsavel_id || null, valor: r.valor != null ? Number(r.valor) : null, custoHora: r.custo_hora != null ? Number(r.custo_hora) : null, dataConclusao: r.data_conclusao || null, dataCriacao: isoToMs(r.data_criacao), avisoDocs12MesesVisto: r.aviso_docs_12_meses_visto === true, docsExpirarEm: isoToMs(r.docs_expirar_em), temAutosMedicao: r.tem_autos_medicao === true }),
-                to:   o => ({ id: o.id, admin_id: o.adminId, nome: o.nome, cliente_id: o.clienteId || null, local_id: o.localId || null, morada: o.morada || null, codigo_postal: o.codigoPostal || null, cidade: o.cidade || null, estado: o.estado || 'ativa', observacoes: o.observacoes || null, longa_duracao: o.longaDuracao === true, responsavel_id: o.responsavelId || null, responsaveis_ids: o.responsaveisIds || [], relatorio_responsavel_id: o.relatorioResponsavelId || null, valor: o.valor != null ? Number(o.valor) : null, custo_hora: o.custoHora != null ? Number(o.custoHora) : null, data_conclusao: nn(o.dataConclusao), data_criacao: msToISO(o.dataCriacao), aviso_docs_12_meses_visto: o.avisoDocs12MesesVisto === true, docs_expirar_em: o.docsExpirarEm ? msToISO(o.docsExpirarEm) : null, tem_autos_medicao: o.temAutosMedicao === true })
+                from: r => ({ id: r.id, adminId: r.admin_id, nome: r.nome, clienteId: r.cliente_id, localId: r.local_id || null, morada: r.morada, codigoPostal: r.codigo_postal, cidade: r.cidade, estado: r.estado, observacoes: r.observacoes, longaDuracao: r.longa_duracao === true, responsavelId: r.responsavel_id || null, responsaveisIds: Array.isArray(r.responsaveis_ids) ? r.responsaveis_ids : [], relatorioResponsavelId: r.relatorio_responsavel_id || null, dataInicioPrevista: r.data_inicio_prevista || null, dataFimPrevista: r.data_fim_prevista || null, marcos: Array.isArray(r.marcos) ? r.marcos : [], checklist: r.checklist || {}, valor: r.valor != null ? Number(r.valor) : null, custoHora: r.custo_hora != null ? Number(r.custo_hora) : null, dataConclusao: r.data_conclusao || null, dataCriacao: isoToMs(r.data_criacao), avisoDocs12MesesVisto: r.aviso_docs_12_meses_visto === true, docsExpirarEm: isoToMs(r.docs_expirar_em), temAutosMedicao: r.tem_autos_medicao === true }),
+                to:   o => ({ id: o.id, admin_id: o.adminId, nome: o.nome, cliente_id: o.clienteId || null, local_id: o.localId || null, morada: o.morada || null, codigo_postal: o.codigoPostal || null, cidade: o.cidade || null, estado: o.estado || 'ativa', observacoes: o.observacoes || null, longa_duracao: o.longaDuracao === true, responsavel_id: o.responsavelId || null, responsaveis_ids: o.responsaveisIds || [], relatorio_responsavel_id: o.relatorioResponsavelId || null, data_inicio_prevista: o.dataInicioPrevista || null, data_fim_prevista: o.dataFimPrevista || null, marcos: o.marcos || [], checklist: o.checklist || {}, valor: o.valor != null ? Number(o.valor) : null, custo_hora: o.custoHora != null ? Number(o.custoHora) : null, data_conclusao: nn(o.dataConclusao), data_criacao: msToISO(o.dataCriacao), aviso_docs_12_meses_visto: o.avisoDocs12MesesVisto === true, docs_expirar_em: o.docsExpirarEm ? msToISO(o.docsExpirarEm) : null, tem_autos_medicao: o.temAutosMedicao === true })
             },
             artigos: {
                 tabela: 'artigos',
@@ -8510,6 +8510,13 @@
             if (!admin) return false;
             return !!admin.rondasPlano && admin.rondasExpiracao && admin.rondasExpiracao > Date.now();
         }
+        // "Obras Avançado" não é um add-on pago com plano/validade próprio — é um interruptor
+        // simples que o superadmin ativa manualmente por cliente (checkbox na edição do admin),
+        // depois de o cliente comprar o pacote de Obras. Desbloqueia: painel Financeiro,
+        // datas previstas com aviso de atraso, e Marcos/fases com barra de progresso.
+        function obrasAvancadoAtivo(admin) {
+            return !!admin?.obrasAvancadoAtivo;
+        }
         function solicitarRondas(plano) {
             const admin = adminAtual();
             if (!admin) return;
@@ -12975,6 +12982,16 @@
             }
             const emAberto = (dados.obraPontoLonga || []).filter(p => p.obraId === obraId && !p.saida).length;
             const aviso = emAberto ? ('\n\nAtenção: ' + emAberto + ' funcionário(s) ainda ' + (emAberto === 1 ? 'tem' : 'têm') + ' entrada em aberto nesta obra.') : '';
+            const _adminObra = dados.administradores?.find(a => a.id === obra.adminId);
+            if (obrasAvancadoAtivo(_adminObra)) {
+                const _itensChecklist = _adminObra?.obrasChecklistItens || [];
+                const _concl = obra.checklist || {};
+                const _porMarcar = _itensChecklist.filter(it => !_concl[it.id]);
+                if (_porMarcar.length) {
+                    alert('Não é possível concluir esta obra: falta marcar ' + _porMarcar.length + ' ponto(s) do checklist de qualidade/segurança:\n\n' + _porMarcar.map(it => '• ' + it.texto).join('\n') + '\n\nAbre "Checklist" na ficha da obra para os marcar.');
+                    return;
+                }
+            }
             if (!confirm('Finalizar a obra "' + obra.nome + '"? Fica marcada como Concluída e será gerado um relatório final.' + aviso)) return;
             obra.estado = 'concluida';
             obra.dataConclusao = getDataHoje();
@@ -13383,7 +13400,7 @@
                     if (_souRespFunc && o.estado !== 'concluida') acoes += ` <button class="btn btn-sm" style="background:#0f766e;color:#fff;" onclick="finalizarObraLonga('${o.id}')" title="Finalizar obra"><i class="fas fa-flag-checkered"></i> Finalizar</button>`;
                 }
                 return `<tr>
-                    <td><strong>${o.nome}</strong></td><td>${o.clienteId ? obterNomeCliente(o.clienteId) : '—'}</td>
+                    <td><strong>${o.nome}</strong>${(obrasAvancadoAtivo(dados.administradores?.find(a => a.id === o.adminId)) && o.dataFimPrevista && o.estado !== 'concluida' && o.dataFimPrevista < getDataHoje()) ? ' <span title="Obra em atraso — fim previsto era ' + o.dataFimPrevista.split('-').reverse().join('/') + '" style="color:#dc2626;"><i class="fas fa-triangle-exclamation"></i></span>' : ''}</td><td>${o.clienteId ? obterNomeCliente(o.clienteId) : '—'}</td>
                     <td>${_nomesAtribuidosObraColorido(o)}</td>
                     <td>${_estadoSelectObra(o)}</td>
                     <td>${horas.toFixed(1)}h</td><td>${nFolhas}</td>
@@ -13569,7 +13586,8 @@
             // faz sentido admin/sub-admin verem entrada disponível numa OS que não é deles; a
             // visão geral da empresa já existe à parte, no resumo da equipa mais abaixo).
             const minhasOS = (dados.servicos || []).filter(s => s.adminId === adminId && s.data === hoje && s.status !== 'concluído' && s.status !== 'cancelado'
-                && (((s.funcionariosIds && s.funcionariosIds.length) ? s.funcionariosIds : [s.funcionarioId].filter(Boolean)).includes(meuId)));
+                && (((s.funcionariosIds && s.funcionariosIds.length) ? s.funcionariosIds : [s.funcionarioId].filter(Boolean)).includes(meuId)))
+                .sort((a, b) => (a.hora || '99:99').localeCompare(b.hora || '99:99')); // sem hora fica sempre no fim
 
             // Obras ativas — mesma regra: admin/sub-admin têm acesso a todas, mesmo sem estarem alocados
             const minhasObras = (dados.obras || []).filter(o => o.adminId === adminId && o.estado !== 'concluida'
@@ -13586,18 +13604,36 @@
                 const cliente = dados.clientes?.find(c => c.id === s.clienteId);
                 const morada = cliente ? [cliente.morada, cliente.codigoPostal, cliente.localidade].filter(Boolean).join(', ') : '';
                 const urlInfo = _osMapaInfo(s.clienteId, s.morada || morada, s.localId);
+                const _atrasada = s.hora && !aberto && s.hora < new Date().toTimeString().slice(0, 5);
+                const btnLigar = cliente?.telefone ? `<button type="button" class="tgm-btn-mapa" title="Ligar a ${escapeHtmlSimples(obterNomeCliente(s.clienteId) || 'cliente')}" onclick="event.stopPropagation();_ligarClienteOS('${s.id}')"><i class="fas fa-phone"></i></button>` : '';
+                const btnObs = (s.observacoes && s.observacoes.trim()) ? `<button type="button" class="tgm-btn-mapa" title="Ver observações" onclick="event.stopPropagation();_verObservacoesOS('${s.id}')"><i class="fas fa-comment-dots"></i></button>` : '';
                 return `<div class="tgm-row tgm-row--os">
                     ${aberto ? '<span class="tgm-live-dot" title="Em curso"></span>' : ''}
                     <div class="tgm-row-icon tgm-row-icon--os"><i class="fas fa-wrench"></i></div>
                     <div class="tgm-row-txt">
                         <div class="tgm-row-title">${escapeHtmlSimples(obterNomeCliente(s.clienteId) || 'OS')}</div>
-                        <div class="tgm-row-sub">${s.hora ? `<span class="tgm-mono tgm-hora">${s.hora}</span> · ` : ''}${escapeHtmlSimples((s.descricao || '').slice(0, 50))}</div>
+                        <div class="tgm-row-sub">${s.hora ? `<span class="tgm-mono tgm-hora">${s.hora}</span> · ` : ''}${escapeHtmlSimples((s.descricao || '').slice(0, 50))}${_atrasada ? ' <span style="color:#dc2626;font-weight:700;">· Atrasada</span>' : ''}</div>
                     </div>
                     <div class="tgm-row-acoes">
-                        <div class="tgm-row-acoes-top">${_botaoMapa(urlInfo)}${btn}</div>
+                        <div class="tgm-row-acoes-top">${btn}</div>
                         ${btnVer}
                     </div>
-                </div>`;
+                </div>
+                ${(btnObs || btnLigar || _botaoMapa(urlInfo)) ? `<div class="tgm-row-extra" style="display:flex;gap:8px;justify-content:flex-end;margin:-6px 0 8px;padding-right:2px;">${btnObs}${btnLigar}${_botaoMapa(urlInfo)}</div>` : ''}`;
+            };
+            // Ligar ao cliente: pergunta explicitamente pelo nome antes de abrir o marcador
+            // (tel:), para evitar toques acidentais no botão a ligarem sem querer.
+            window._ligarClienteOS = function(servicoId) {
+                const s = (dados.servicos || []).find(x => x.id === servicoId); if (!s) return;
+                const cliente = dados.clientes?.find(c => c.id === s.clienteId);
+                if (!cliente?.telefone) { alert('Este cliente não tem telefone registado.'); return; }
+                if (!confirm('Ligar ao cliente ' + (cliente.nome || obterNomeCliente(s.clienteId) || '') + '?\n' + cliente.telefone)) return;
+                window.location.href = 'tel:' + cliente.telefone.replace(/\s+/g, '');
+            };
+            // Ver observações da OS num popup simples, sem ter de abrir o "Ver OS" completo.
+            window._verObservacoesOS = function(servicoId) {
+                const s = (dados.servicos || []).find(x => x.id === servicoId); if (!s) return;
+                alert('Observações da OS — ' + (obterNomeCliente(s.clienteId) || '') + ':\n\n' + (s.observacoes || '(sem observações)'));
             };
             const linhaObra = o => {
                 const aberto = _obraLongaPontoAberto ? _obraLongaPontoAberto(o.id) : null;
@@ -13689,23 +13725,38 @@
             document.getElementById('modalGenericoOverlay').classList.add('open');
             const estLabel = e => e === 'concluida' ? 'Concluída' : e === 'suspensa' ? 'Suspensa' : e === 'preparacao' ? 'Preparação' : 'Ativa';
             const horas = totalHorasObra(obraId);
+            const _obrasAv = obrasAvancadoAtivo(dados.administradores?.find(a => a.id === obra.adminId));
+            const _emAtraso = _obrasAv && obra.dataFimPrevista && obra.estado !== 'concluida' && obra.dataFimPrevista < getDataHoje();
             const _modalEl = document.querySelector('#modalGenericoOverlay .modal');
             if (_modalEl) _modalEl.style.maxWidth = '680px'; // este ecrã tem mais botões numa linha do que os outros modais genéricos
             document.getElementById('modalGenericoTitulo').innerHTML = '<i class="fas fa-building-shield"></i> ' + obra.nome;
             document.getElementById('modalGenericoCampos').innerHTML = `
+                ${_emAtraso ? `<div style="background:#fef2f2;border:1px solid #fecaca;color:#991b1b;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:.85rem;"><i class="fas fa-triangle-exclamation"></i> Obra em atraso — fim previsto era ${obra.dataFimPrevista.split('-').reverse().join('/')}.</div>` : ''}
                 <div style="display:flex;flex-wrap:wrap;gap:16px;margin-bottom:14px;">
                     <div><strong>Cliente:</strong> ${obra.clienteId ? obterNomeCliente(obra.clienteId) : '—'}</div>
                     <div><strong>Atribuídos:</strong> ${_nomesAtribuidosObraColorido(obra)}</div>
                     <div><strong>Morada:</strong> ${_moradaCompletaObra(obra)}</div>
                     <div><strong>Estado:</strong> ${estLabel(obra.estado)}</div>
                     <div><strong>Total de horas:</strong> ${horas.toFixed(1)}h</div>
+                    ${(_obrasAv && (obra.dataInicioPrevista || obra.dataFimPrevista)) ? `<div><strong>Previsto:</strong> ${obra.dataInicioPrevista ? obra.dataInicioPrevista.split('-').reverse().join('/') : '—'} a ${obra.dataFimPrevista ? obra.dataFimPrevista.split('-').reverse().join('/') : '—'}</div>` : ''}
                 </div>
+                ${(_obrasAv && obra.marcos && obra.marcos.length) ? (() => {
+                    const _concl = obra.marcos.filter(m => m.concluido).length;
+                    const _pct = Math.round((_concl / obra.marcos.length) * 100);
+                    return `<div style="margin-bottom:14px;">
+                        <div style="display:flex;justify-content:space-between;font-size:.78rem;color:#64748b;margin-bottom:4px;"><span>Progresso da obra</span><span>${_concl}/${obra.marcos.length} marcos (${_pct}%)</span></div>
+                        <div style="background:#e2e8f0;border-radius:99px;height:8px;overflow:hidden;"><div style="background:${_pct === 100 ? '#16a34a' : '#0ea5e9'};height:100%;width:${_pct}%;"></div></div>
+                    </div>`;
+                })() : ''}
                 <div style="margin-bottom:14px;">${_botaoPontoObraHTML(obra)}</div>
                 <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
                     <button type="button" class="btn btn-sm" id="verObraBtnFolhas" onclick="_verObraMostrar('${obraId}','folhas')" style="flex:1;min-width:100px;background:#0ea5e9;color:#fff;"><i class="fas fa-clipboard-list"></i> Folhas de obra</button>
                     <button type="button" class="btn btn-sm" id="verObraBtnMateriais" onclick="_verObraMostrar('${obraId}','materiais')" style="flex:1;min-width:100px;background:#f1f5f9;color:#334155;"><i class="fas fa-boxes-stacked"></i> Materiais</button>
                     <button type="button" class="btn btn-sm" id="verObraBtnDocumentos" onclick="_verObraMostrar('${obraId}','documentos')" style="flex:1;min-width:100px;background:#f1f5f9;color:#334155;"><i class="fas fa-folder-open"></i> Documentos</button>
                     ${(obra.temAutosMedicao && moduloCrmAtivo(dados.administradores?.find(a => a.id === obra.adminId))) ? `<button type="button" class="btn btn-sm" id="verObraBtnAutos" onclick="_verObraMostrar('${obraId}','autos')" style="flex:1;min-width:100px;background:#f1f5f9;color:#334155;"><i class="fas fa-file-invoice-dollar"></i> Auto de Medição</button>` : ''}
+                    ${(obrasAvancadoAtivo(dados.administradores?.find(a => a.id === obra.adminId)) && (usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin')) ? `<button type="button" class="btn btn-sm" id="verObraBtnFinanceiro" onclick="_verObraMostrar('${obraId}','financeiro')" style="flex:1;min-width:100px;background:#f1f5f9;color:#334155;"><i class="fas fa-sack-dollar"></i> Financeiro</button>` : ''}
+                    ${obrasAvancadoAtivo(dados.administradores?.find(a => a.id === obra.adminId)) ? `<button type="button" class="btn btn-sm" id="verObraBtnMarcos" onclick="_verObraMostrar('${obraId}','marcos')" style="flex:1;min-width:100px;background:#f1f5f9;color:#334155;"><i class="fas fa-list-check"></i> Marcos</button>` : ''}
+                    ${obrasAvancadoAtivo(dados.administradores?.find(a => a.id === obra.adminId)) ? `<button type="button" class="btn btn-sm" id="verObraBtnChecklist" onclick="_verObraMostrar('${obraId}','checklist')" style="flex:1;min-width:100px;background:#f1f5f9;color:#334155;"><i class="fas fa-shield-halved"></i> Checklist</button>` : ''}
                 </div>
                 <div id="verObraConteudo"></div>
             `;
@@ -13809,11 +13860,20 @@
             const btnMateriais = document.getElementById('verObraBtnMateriais');
             const btnDocumentos = document.getElementById('verObraBtnDocumentos');
             const btnAutos = document.getElementById('verObraBtnAutos');
-            [['folhas', btnFolhas], ['materiais', btnMateriais], ['documentos', btnDocumentos], ['autos', btnAutos]].forEach(([chave, btn]) => {
+            const btnFinanceiro = document.getElementById('verObraBtnFinanceiro');
+            const btnMarcos = document.getElementById('verObraBtnMarcos');
+            const btnChecklist = document.getElementById('verObraBtnChecklist');
+            [['folhas', btnFolhas], ['materiais', btnMateriais], ['documentos', btnDocumentos], ['autos', btnAutos], ['financeiro', btnFinanceiro], ['marcos', btnMarcos], ['checklist', btnChecklist]].forEach(([chave, btn]) => {
                 if (!btn) return;
                 btn.style.background = aba === chave ? '#0ea5e9' : '#f1f5f9';
                 btn.style.color = aba === chave ? '#fff' : '#334155';
             });
+            if (aba === 'checklist') { if (!obrasAvancadoAtivo(dados.administradores?.find(a => a.id === obra.adminId))) { aba = 'folhas'; } else { _renderizarChecklistObra(obraId); return; } }
+            if (aba === 'marcos') { if (!obrasAvancadoAtivo(dados.administradores?.find(a => a.id === obra.adminId))) { aba = 'folhas'; } else { _renderizarMarcosObra(obraId); return; } }
+            if (aba === 'financeiro') {
+                if (!(usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin') || !obrasAvancadoAtivo(dados.administradores?.find(a => a.id === obra.adminId))) { aba = 'folhas'; }
+                else { _renderizarFinanceiroObra(obraId); return; }
+            }
             if (aba === 'materiais') {
                 cont.innerHTML = `<button type="button" class="btn btn-outline" onclick="_fecharModalGenerico();abrirPlanoMateriais('${obraId}')"><i class="fas fa-tasks"></i> Gerir plano de materiais</button>`;
                 return;
@@ -13850,6 +13910,189 @@
             dados.folhasObra = (dados.folhasObra || []).filter(f => f.id !== folhaId);
             guardarDados(dados, ['folhasObra']);
             _verObraMostrar(obraId, 'folhas');
+        }
+        // Marcos/fases da obra: lista simples de etapas com concluído sim/não, guardada dentro
+        // da própria obra (array "marcos"). Dá uma visão de progresso sem precisar de um módulo
+        // de planeamento à parte — cada empresa define as fases que fazem sentido para si.
+        function _renderizarMarcosObra(obraId) {
+            const obra = (dados.obras || []).find(o => o.id === obraId); if (!obra) return;
+            const cont = document.getElementById('verObraConteudo');
+            if (!cont) return;
+            const marcos = obra.marcos || [];
+            const podeEditar = usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin' || usuarioLogado?.role === 'encarregado';
+            const linhas = marcos.map((m, i) => `
+                <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9;">
+                    <input type="checkbox" ${m.concluido ? 'checked' : ''} ${podeEditar ? '' : 'disabled'} onchange="_marcoToggle('${obraId}', ${i})" style="width:18px;height:18px;flex-shrink:0;" />
+                    <span style="flex:1;${m.concluido ? 'text-decoration:line-through;color:#94a3b8;' : ''}">${escapeHtmlSimples(m.nome)}</span>
+                    ${m.dataPrevista ? `<span style="font-size:.78rem;color:#94a3b8;">${m.dataPrevista.split('-').reverse().join('/')}</span>` : ''}
+                    ${podeEditar ? `<button type="button" class="btn btn-sm" style="background:#fee2e2;color:#991b1b;" onclick="_marcoRemover('${obraId}', ${i})"><i class="fas fa-trash"></i></button>` : ''}
+                </div>
+            `).join('') || `<p class="help-text">Ainda sem marcos definidos para esta obra.</p>`;
+            cont.innerHTML = `
+                <div>${linhas}</div>
+                ${podeEditar ? `
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px;">
+                        <input type="text" id="marco_novo_nome" placeholder="Ex: Fundações" style="flex:1;min-width:160px;" />
+                        <input type="date" id="marco_novo_data" style="width:150px;" />
+                        <button type="button" class="btn btn-sm btn-outline" onclick="_marcoAdicionar('${obraId}')"><i class="fas fa-plus"></i> Adicionar marco</button>
+                    </div>
+                ` : ''}
+            `;
+        }
+        function _marcoAdicionar(obraId) {
+            const obra = (dados.obras || []).find(o => o.id === obraId); if (!obra) return;
+            const nomeEl = document.getElementById('marco_novo_nome');
+            const dataEl = document.getElementById('marco_novo_data');
+            const nome = (nomeEl?.value || '').trim();
+            if (!nome) { alert('Indica o nome do marco.'); return; }
+            obra.marcos = obra.marcos || [];
+            obra.marcos.push({ id: gerarId(), nome, concluido: false, dataPrevista: dataEl?.value || null });
+            guardarDados(dados, ['obras']).catch(() => alert('⚠️ Ficou no ecrã, mas ainda não foi possível confirmar no servidor.'));
+            _renderizarMarcosObra(obraId);
+        }
+        function _marcoToggle(obraId, indice) {
+            const obra = (dados.obras || []).find(o => o.id === obraId); if (!obra || !obra.marcos || !obra.marcos[indice]) return;
+            obra.marcos[indice].concluido = !obra.marcos[indice].concluido;
+            guardarDados(dados, ['obras']).catch(() => alert('⚠️ Ficou no ecrã, mas ainda não foi possível confirmar no servidor.'));
+            _renderizarMarcosObra(obraId);
+        }
+        function _marcoRemover(obraId, indice) {
+            const obra = (dados.obras || []).find(o => o.id === obraId); if (!obra || !obra.marcos) return;
+            if (!confirm('Remover este marco?')) return;
+            obra.marcos.splice(indice, 1);
+            guardarDados(dados, ['obras']).catch(() => alert('⚠️ Ficou no ecrã, mas ainda não foi possível confirmar no servidor.'));
+            _renderizarMarcosObra(obraId);
+        }
+        // Checklist de qualidade/segurança: os ITENS são definidos uma vez pelo admin (nas
+        // Definições da empresa) e aplicam-se a TODAS as obras — cada obra tem o seu próprio
+        // estado de marcação (obra.checklist = { itemId: true/false }). Isto impede concluir
+        // uma obra sem cumprir os pontos de verificação da empresa (ex: EPIs, sinalização).
+        function _renderizarChecklistObra(obraId) {
+            const obra = (dados.obras || []).find(o => o.id === obraId); if (!obra) return;
+            const cont = document.getElementById('verObraConteudo');
+            if (!cont) return;
+            const admin = dados.administradores?.find(a => a.id === obra.adminId);
+            const itens = admin?.obrasChecklistItens || [];
+            const podeEditar = usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin' || usuarioLogado?.role === 'encarregado';
+            if (!itens.length) {
+                cont.innerHTML = `<p class="help-text">A empresa ainda não definiu nenhum ponto de verificação. ${(usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin') ? 'Define-os em Definições → Checklist de Qualidade/Segurança das Obras.' : ''}</p>`;
+                return;
+            }
+            obra.checklist = obra.checklist || {};
+            const linhas = itens.map(it => `
+                <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9;">
+                    <input type="checkbox" ${obra.checklist[it.id] ? 'checked' : ''} ${podeEditar ? '' : 'disabled'} onchange="_checklistObraToggle('${obraId}', '${it.id}')" style="width:18px;height:18px;flex-shrink:0;" />
+                    <span style="flex:1;${obra.checklist[it.id] ? 'text-decoration:line-through;color:#94a3b8;' : ''}">${escapeHtmlSimples(it.texto)}</span>
+                </div>
+            `).join('');
+            const concl = itens.filter(it => obra.checklist[it.id]).length;
+            cont.innerHTML = `
+                <div style="display:flex;justify-content:space-between;font-size:.78rem;color:#64748b;margin-bottom:8px;"><span>Checklist de qualidade/segurança</span><span>${concl}/${itens.length}</span></div>
+                <div>${linhas}</div>
+                ${concl < itens.length ? `<div class="help-text" style="color:#b3492f;margin-top:10px;"><i class="fas fa-triangle-exclamation"></i> Todos os pontos têm de estar marcados antes de a obra poder ser concluída.</div>` : `<div class="help-text" style="color:#16a34a;margin-top:10px;"><i class="fas fa-circle-check"></i> Checklist completo.</div>`}
+            `;
+        }
+        function _checklistObraToggle(obraId, itemId) {
+            const obra = (dados.obras || []).find(o => o.id === obraId); if (!obra) return;
+            obra.checklist = obra.checklist || {};
+            obra.checklist[itemId] = !obra.checklist[itemId];
+            guardarDados(dados, ['obras']).catch(() => alert('⚠️ Ficou no ecrã, mas ainda não foi possível confirmar no servidor.'));
+            _renderizarChecklistObra(obraId);
+        }
+        // Gestão dos pontos do checklist (Definições → só admin/subadmin). Os itens ficam
+        // guardados no admin (obrasChecklistItens), por isso são os mesmos para todas as obras
+        // da empresa — mais simples de manter do que configurar por obra ou por tipo de obra.
+        function abrirGestaoChecklistObras() {
+            const admin = adminAtual(); if (!admin) return;
+            document.getElementById('modalGenericoTitulo').innerHTML = '<i class="fas fa-shield-halved"></i> Checklist de Qualidade/Segurança das Obras';
+            document.getElementById('modalGenericoCampos').innerHTML = `
+                <p class="help-text" style="margin-bottom:12px;">Estes pontos vão aparecer em todas as obras. Uma obra só pode ser marcada como concluída depois de todos estarem marcados.</p>
+                <div id="checklist_itens_lista" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;"></div>
+                <div style="display:flex;gap:8px;">
+                    <input type="text" id="checklist_novo_item" placeholder="Ex: EPIs verificados" style="flex:1;" />
+                    <button type="button" class="btn btn-sm btn-outline" onclick="_checklistAdicionarItem()"><i class="fas fa-plus"></i> Adicionar</button>
+                </div>
+            `;
+            document.getElementById('modalGenericoForm').onsubmit = ev => ev.preventDefault();
+            const _bgCk = document.querySelector('#modalGenericoOverlay .modal-actions .btn-success'); if (_bgCk) { _bgCk.style.display = ''; _bgCk.innerHTML = '<i class="fas fa-check"></i> Fechar'; }
+            document.getElementById('modalGenericoOverlay').classList.add('open');
+            _checklistRenderLista();
+        }
+        function _checklistRenderLista() {
+            const admin = adminAtual(); if (!admin) return;
+            const lista = document.getElementById('checklist_itens_lista'); if (!lista) return;
+            const itens = admin.obrasChecklistItens || [];
+            lista.innerHTML = itens.length ? itens.map((it, i) => `
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <span style="flex:1;">${escapeHtmlSimples(it.texto)}</span>
+                    <button type="button" class="btn btn-sm" style="background:#fee2e2;color:#991b1b;" onclick="_checklistRemoverItem(${i})"><i class="fas fa-trash"></i></button>
+                </div>
+            `).join('') : `<p class="help-text">Ainda sem pontos definidos.</p>`;
+        }
+        function _checklistAdicionarItem() {
+            const admin = adminAtual(); if (!admin) return;
+            const input = document.getElementById('checklist_novo_item');
+            const texto = (input?.value || '').trim();
+            if (!texto) { alert('Escreve o texto do ponto de verificação.'); return; }
+            admin.obrasChecklistItens = admin.obrasChecklistItens || [];
+            admin.obrasChecklistItens.push({ id: gerarId(), texto });
+            guardarDados(dados, ['administradores']).catch(() => alert('⚠️ Ficou no ecrã, mas ainda não foi possível confirmar no servidor.'));
+            input.value = '';
+            _checklistRenderLista();
+        }
+        function _checklistRemoverItem(indice) {
+            const admin = adminAtual(); if (!admin || !admin.obrasChecklistItens) return;
+            if (!confirm('Remover este ponto do checklist? Deixa de ser exigido em todas as obras.')) return;
+            admin.obrasChecklistItens.splice(indice, 1);
+            guardarDados(dados, ['administradores']).catch(() => alert('⚠️ Ficou no ecrã, mas ainda não foi possível confirmar no servidor.'));
+            _checklistRenderLista();
+        }
+        // Painel financeiro da obra (só admin/subadmin) — mesma lógica de custos e margem já usada
+        // na exportação em PDF do relatório de obra, mas aqui visível diretamente no ecrã, sem
+        // ser preciso gerar/abrir um PDF só para ver se a obra está a dar lucro.
+        function _renderizarFinanceiroObra(obraId) {
+            const obra = (dados.obras || []).find(o => o.id === obraId); if (!obra) return;
+            const cont = document.getElementById('verObraConteudo');
+            if (!cont) return;
+            const horas = totalHorasObra(obraId);
+            const matRows = _obraMatRows(obraId).filter(r => r.cons > 0 || r.prev > 0);
+            const totalMateriais = matRows.reduce((s, r) => s + (r.valorConsumido || 0), 0);
+            const valorFaturado = obra.valor != null ? Number(obra.valor) : (dados.servicos || []).filter(s => s.obraId === obraId).reduce((s, x) => s + (Number(x.valor) || 0), 0);
+            const custoMaoDeObra = obra.custoHora != null ? horas * Number(obra.custoHora) : null;
+            const custoTotal = custoMaoDeObra != null ? custoMaoDeObra + totalMateriais : null;
+            const margem = custoTotal != null ? (valorFaturado - custoTotal) : null;
+            const margemPct = (margem != null && valorFaturado) ? Math.round((margem / valorFaturado) * 100) : null;
+            const corMargem = margem != null ? (margem >= 0 ? '#16a34a' : '#dc2626') : '#94a3b8';
+            cont.innerHTML = `
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px;">
+                    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 12px;">
+                        <div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.3px;color:#64748b;margin-bottom:4px;">Valor faturado</div>
+                        <div style="font-size:1.15rem;font-weight:700;">${_finEur(valorFaturado)}</div>
+                    </div>
+                    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 12px;">
+                        <div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.3px;color:#64748b;margin-bottom:4px;">Custo mão de obra</div>
+                        <div style="font-size:1.15rem;font-weight:700;">${custoMaoDeObra != null ? _finEur(custoMaoDeObra) : '—'}</div>
+                    </div>
+                    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 12px;">
+                        <div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.3px;color:#64748b;margin-bottom:4px;">Custo materiais</div>
+                        <div style="font-size:1.15rem;font-weight:700;">${_finEur(totalMateriais)}</div>
+                    </div>
+                    <div style="background:${margem != null ? (margem >= 0 ? '#f0fdf4' : '#fef2f2') : '#f8fafc'};border:1px solid ${margem != null ? (margem >= 0 ? '#bbf7d0' : '#fecaca') : '#e2e8f0'};border-radius:8px;padding:10px 12px;">
+                        <div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.3px;color:#64748b;margin-bottom:4px;">Margem bruta</div>
+                        <div style="font-size:1.15rem;font-weight:700;color:${corMargem};">${margem != null ? _finEur(margem) + (margemPct != null ? ` (${margemPct}%)` : '') : '—'}</div>
+                    </div>
+                </div>
+                ${obra.custoHora == null ? `<div class="help-text" style="color:#b3492f;"><i class="fas fa-triangle-exclamation"></i> Esta obra não tem "Custo/hora" definido — o custo de mão de obra e a margem não podem ser calculados. Define-o na edição da obra.</div>` : ''}
+                ${obra.valor == null ? `<div class="help-text" style="color:#b3492f;"><i class="fas fa-triangle-exclamation"></i> Esta obra não tem um valor de orçamento/faturação definido — está a ser usada a soma das OS ligadas a esta obra como valor faturado.</div>` : ''}
+                <table style="width:100%;font-size:.86rem;margin-top:8px;">
+                    <tbody>
+                        <tr><td style="padding:4px 0;color:#64748b;">Total de horas trabalhadas</td><td style="padding:4px 0;text-align:right;font-weight:600;">${horas.toFixed(1)}h</td></tr>
+                        <tr><td style="padding:4px 0;color:#64748b;">Custo/hora do funcionário</td><td style="padding:4px 0;text-align:right;font-weight:600;">${obra.custoHora != null ? _finEur(obra.custoHora) + '/h' : '—'}</td></tr>
+                        <tr><td style="padding:4px 0;color:#64748b;">Custo total da obra</td><td style="padding:4px 0;text-align:right;font-weight:600;">${custoTotal != null ? _finEur(custoTotal) : '—'}</td></tr>
+                    </tbody>
+                </table>
+                <button type="button" class="btn btn-outline" style="margin-top:12px;" onclick="_fecharModalGenerico();abrirModalObraLonga('${obraId}')"><i class="fas fa-pen"></i> Editar orçamento / custo-hora desta obra</button>
+            `;
         }
         function abrirCriarAutoMedicao(obraId) {
             const obra = dados.obras?.find(o => o.id === obraId); if (!obra) return;
@@ -16631,6 +16874,39 @@
             }
             h += _portalAccordion('contratos', 'fa-file-signature', `Contratos de manutenção (${contratos.length})`, hContratos, false);
 
+            // As minhas Obras — só aparece se "Obras Avançado" estiver ativo para esta empresa.
+            // Dá ao cliente uma visão do estado, progresso (marcos) e datas previstas, sem
+            // precisar de contactar a empresa para saber "como vai a obra".
+            if (obrasAvancadoAtivo(adminCli)) {
+                const obrasCliente = (dados.obras || []).filter(o => o.adminId === cli.adminId && o.clienteId === cli.id)
+                    .sort((a, b) => (a.estado === 'concluida' ? 1 : 0) - (b.estado === 'concluida' ? 1 : 0));
+                let hObras = '';
+                if (!obrasCliente.length) hObras = `<p style="color:#64748b;">Ainda não há obras associadas.</p>`;
+                else {
+                    hObras = obrasCliente.map(o => {
+                        const estLabelPortal = e => e === 'concluida' ? 'Concluída' : e === 'suspensa' ? 'Suspensa' : e === 'preparacao' ? 'Em preparação' : 'Em curso';
+                        const corEstado = o.estado === 'concluida' ? '#16a34a' : o.estado === 'suspensa' ? '#dc2626' : '#0ea5e9';
+                        const marcos = o.marcos || [];
+                        const concl = marcos.filter(m => m.concluido).length;
+                        const pct = marcos.length ? Math.round((concl / marcos.length) * 100) : null;
+                        const emAtraso = o.dataFimPrevista && o.estado !== 'concluida' && o.dataFimPrevista < getDataHoje();
+                        return `<div style="border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px;margin-bottom:10px;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:6px;">
+                                <strong>${escapeHtmlSimples(o.nome)}</strong>
+                                <span style="background:${corEstado}22;color:${corEstado};padding:3px 10px;border-radius:99px;font-size:.78rem;font-weight:600;">${estLabelPortal(o.estado)}</span>
+                            </div>
+                            ${emAtraso ? `<div style="color:#dc2626;font-size:.82rem;margin-bottom:6px;"><i class="fas fa-triangle-exclamation"></i> Prazo previsto ultrapassado</div>` : ''}
+                            ${(o.dataInicioPrevista || o.dataFimPrevista) ? `<div style="font-size:.82rem;color:#64748b;margin-bottom:6px;">Previsto: ${o.dataInicioPrevista ? o.dataInicioPrevista.split('-').reverse().join('/') : '—'} a ${o.dataFimPrevista ? o.dataFimPrevista.split('-').reverse().join('/') : '—'}</div>` : ''}
+                            ${pct != null ? `
+                                <div style="display:flex;justify-content:space-between;font-size:.78rem;color:#64748b;margin-bottom:3px;"><span>Progresso</span><span>${concl}/${marcos.length} (${pct}%)</span></div>
+                                <div style="background:#e2e8f0;border-radius:99px;height:7px;overflow:hidden;"><div style="background:${pct === 100 ? '#16a34a' : '#0ea5e9'};height:100%;width:${pct}%;"></div></div>
+                            ` : ''}
+                        </div>`;
+                    }).join('');
+                }
+                h += _portalAccordion('obras', 'fa-building-shield', `As minhas Obras (${obrasCliente.length})`, hObras, false);
+            }
+
             // Folhas de obra
             let hFolhas = '';
             if (!folhas.length) hFolhas = `<p style="color:#64748b;">Ainda não há folhas de obra para assinar ou consultar.</p>`;
@@ -16647,6 +16923,7 @@
                 hFolhas += `</tbody></table></div>`;
             }
             h += _portalAccordion('folhas', 'fa-clipboard-check', `Folhas de obra (${folhas.length})`, hFolhas, false);
+
 
             let hFaturas = '';
             if (!faturasCliente.length) {
@@ -20244,6 +20521,10 @@ async function salvarAdmin(e) {
                         <label><input type="checkbox" id="edit_admin_preco_fundador" ${admin.precoFundador ? 'checked' : ''} /> <i class="fas fa-star" style="color:#d97706;"></i> Preço Fundador (-10% permanente)</label>
                         <div class="help-text" style="margin-top:4px;">Aplica um desconto de 10% ao preço de catálogo da licença base, para sempre — em todas as renovações futuras, não só nesta.</div>
                     </div>
+                    <div class="form-group" style="background:#ecfeff;padding:12px;border-radius:8px;">
+                        <label><input type="checkbox" id="edit_admin_obras_avancado" ${admin.obrasAvancadoAtivo ? 'checked' : ''} /> <i class="fas fa-building-shield" style="color:#0e7490;"></i> Obras Avançado</label>
+                        <div class="help-text" style="margin-top:4px;">Desbloqueia no módulo Obras: painel Financeiro (margem/custos), datas previstas com aviso de atraso, e Marcos/fases com barra de progresso. Requer que o cliente tenha comprado o pacote de Obras — esta caixa é o que efetivamente liga o modo avançado.</div>
+                    </div>
                     <div class="form-group" style="background:#f5f3ff;padding:12px;border-radius:8px;">
                         <label><input type="checkbox" id="edit_admin_eh_distribuidor" ${admin.ehDistribuidor ? 'checked' : ''} onchange="_editAdminToggleDistribuidor(this.checked)" /> É Distribuidor</label>
                         <div id="edit_admin_desconto_bloco" style="display:${admin.ehDistribuidor ? 'block' : 'none'};margin-top:8px;">
@@ -20374,6 +20655,7 @@ async function salvarAdmin(e) {
             admin.empresa = empresa;
             const ehDistribuidorEd = document.getElementById('edit_admin_eh_distribuidor')?.checked || false;
             admin.precoFundador = document.getElementById('edit_admin_preco_fundador')?.checked || false;
+            admin.obrasAvancadoAtivo = document.getElementById('edit_admin_obras_avancado')?.checked || false;
             admin.ehDistribuidor = ehDistribuidorEd;
             admin.distribuidorDesconto = ehDistribuidorEd ? Math.min(90, Math.max(0, parseFloat(document.getElementById('edit_admin_distribuidor_desconto').value) || 0)) : null;
             // Plano de licença
@@ -21537,6 +21819,17 @@ async function salvarAdmin(e) {
                             </div>
                         </div>
                         ` : ''}
+                        ${obrasAvancadoAtivo(adminAtual()) ? `
+                        <div class="ff-secao ff-tint-id">
+                            <div class="ff-secao-head"><i class="fas fa-shield-halved"></i> Checklist de Qualidade/Segurança das Obras</div>
+                            <div class="ff-secao-body">
+                                <div class="form-group ff-span2">
+                                    <div class="help-text" style="margin-bottom:8px;">Estes pontos aplicam-se a todas as obras. Todos têm de estar marcados antes de uma obra poder ser finalizada.</div>
+                                    <button type="button" class="btn btn-sm" style="background:#ecfeff;color:#0e7490;" onclick="abrirGestaoChecklistObras()"><i class="fas fa-pen"></i> Gerir pontos do checklist</button>
+                                </div>
+                            </div>
+                        </div>
+                        ` : ''}
 
                         <div class="ff-secao ff-tint-prof">
                             <div class="ff-secao-head"><i class="fas fa-note-sticky"></i> Detalhes</div>
@@ -21900,6 +22193,15 @@ async function salvarAdmin(e) {
                                 <select id="ob_relatorio_responsavel"></select>
                                 <div class="help-text">Só esta pessoa vai ser convidada a preencher, ao dar saída. Os restantes atribuídos só picam entrada/saída.</div>
                             </div>
+                            ${obrasAvancadoAtivo(adminAtual()) ? `
+                            <div class="form-group"><label>Início previsto</label>
+                                <input type="date" id="ob_data_inicio_prevista" value="${item && item.dataInicioPrevista ? item.dataInicioPrevista : ''}" />
+                            </div>
+                            <div class="form-group"><label>Fim previsto</label>
+                                <input type="date" id="ob_data_fim_prevista" value="${item && item.dataFimPrevista ? item.dataFimPrevista : ''}" />
+                                <div class="help-text">Se a obra ainda não estiver concluída depois desta data, a app avisa que está em atraso.</div>
+                            </div>
+                            ` : ''}
                             ${usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin' ? `
                             <div class="form-group"><label>Valor a faturar (€)</label>
                                 <input type="number" id="ob_valor" step="0.01" min="0" value="${item && item.valor != null ? item.valor : ''}" placeholder="opcional" />
@@ -22761,7 +23063,7 @@ async function salvarAdmin(e) {
                     _obMorada = _obCliente?.morada || _obCliente?.endereco || ''; _obCp = _obCliente?.codigoPostal || ''; _obCidade = _obCliente?.cidade || '';
                 }
                 const _obIdsAtribuidos = [...document.querySelectorAll('.ob-func-check:checked')].map(c => c.value);
-                obj = { nome, clienteId: _obClienteId, localId: _obLocalId, morada: _obMorada, codigoPostal: _obCp || null, cidade: _obCidade || null, estado: novoEstado, observacoes: document.getElementById('ob_obs').value.trim(), longaDuracao: document.getElementById('ob_longa_duracao')?.checked === true, responsavelId: _obIdsAtribuidos[0] || null, responsaveisIds: _obIdsAtribuidos, relatorioResponsavelId: document.getElementById('ob_relatorio_responsavel') ? (document.getElementById('ob_relatorio_responsavel').value || null) : null, valor: document.getElementById('ob_valor')?.value !== '' ? parseFloat(document.getElementById('ob_valor').value) : null, custoHora: document.getElementById('ob_custo_hora')?.value !== '' ? parseFloat(document.getElementById('ob_custo_hora').value) : null, temAutosMedicao: document.getElementById('ob_tem_autos_medicao')?.checked === true, adminId: _obAdminId };
+                obj = { nome, clienteId: _obClienteId, localId: _obLocalId, morada: _obMorada, codigoPostal: _obCp || null, cidade: _obCidade || null, estado: novoEstado, observacoes: document.getElementById('ob_obs').value.trim(), longaDuracao: document.getElementById('ob_longa_duracao')?.checked === true, responsavelId: _obIdsAtribuidos[0] || null, responsaveisIds: _obIdsAtribuidos, relatorioResponsavelId: document.getElementById('ob_relatorio_responsavel') ? (document.getElementById('ob_relatorio_responsavel').value || null) : null, dataInicioPrevista: document.getElementById('ob_data_inicio_prevista')?.value || null, dataFimPrevista: document.getElementById('ob_data_fim_prevista')?.value || null, valor: document.getElementById('ob_valor')?.value !== '' ? parseFloat(document.getElementById('ob_valor').value) : null, custoHora: document.getElementById('ob_custo_hora')?.value !== '' ? parseFloat(document.getElementById('ob_custo_hora').value) : null, temAutosMedicao: document.getElementById('ob_tem_autos_medicao')?.checked === true, adminId: _obAdminId };
                 _guardarArmazem('obras', obj, isEdit);
                 if (isEdit && estadoAnterior === 'preparacao' && novoEstado === 'ativa') {
                     setTimeout(() => {
