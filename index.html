@@ -5393,46 +5393,31 @@
             // esta obra mais cedo e ainda continuar noutra tarefa no mesmo dia. O Ponto Geral só
             // fecha quando a pessoa picar explicitamente "Saída ao Serviço" em Ponto Geral.
             if (finalizarTambem) {
-                const adminQ = dados.administradores?.find(a => a.id === _tenantQuiosque());
-                const itensChkQ = adminQ?.obrasChecklistItens || [];
-                let tiposEspecialidadePendentes = [];
-                if (s.tipo === 'servico') {
-                    const os = dados.servicos?.find(x => x.id === s.id);
-                    if (os) {
-                        const conclChkQ = os.checklist || {};
-                        const porMarcarQ = itensChkQ.filter(it => !conclChkQ[it.id]);
-                        if (porMarcarQ.length) {
-                            alert('⚠️ Não é possível concluir esta OS: falta marcar ' + porMarcarQ.length + ' ponto(s) do checklist de qualidade/segurança.\n\nPede a alguém com acesso a "Ver OS" na app para marcar esses pontos primeiro.\n\n(A saída ficou registada na mesma — só a conclusão da OS é que não avançou.)');
-                            _quiosqueAgendaGrid();
-                            return;
+                const adminIdQ = _tenantQuiosque();
+                _checklistSaidaVerificar(adminIdQ, () => {
+                    let tiposEspecialidadePendentes = [];
+                    if (s.tipo === 'servico') {
+                        const os = dados.servicos?.find(x => x.id === s.id);
+                        if (os) {
+                            os.status = 'concluído';
+                            _sincronizarAssistenciaAoConcluirOS(os);
+                            _fecharPontosAbertosAoConcluirOS(os);
+                            tiposEspecialidadePendentes = (os.tiposTrabalho || []).filter(t => (typeof TIPOS_ESPECIALIDADE !== 'undefined' ? TIPOS_ESPECIALIDADE : []).includes(t));
                         }
-                        os.status = 'concluído';
-                        _sincronizarAssistenciaAoConcluirOS(os);
-                        _fecharPontosAbertosAoConcluirOS(os);
-                        tiposEspecialidadePendentes = (os.tiposTrabalho || []).filter(t => (typeof TIPOS_ESPECIALIDADE !== 'undefined' ? TIPOS_ESPECIALIDADE : []).includes(t));
+                    } else {
+                        const obra = dados.obras?.find(x => x.id === s.id);
+                        if (obra) { obra.estado = 'concluida'; obra.dataConclusao = getDataHoje(); }
                     }
-                } else {
-                    const obra = dados.obras?.find(x => x.id === s.id);
-                    if (obra) {
-                        const conclChkQ = obra.checklist || {};
-                        const porMarcarQ = itensChkQ.filter(it => !conclChkQ[it.id]);
-                        if (porMarcarQ.length) {
-                            alert('⚠️ Não é possível concluir esta obra: falta marcar ' + porMarcarQ.length + ' ponto(s) do checklist de qualidade/segurança.\n\nPede a alguém com acesso a "Ver Obra" na app para marcar esses pontos primeiro.\n\n(A saída ficou registada na mesma — só a conclusão da obra é que não avançou.)');
-                            _quiosqueAgendaGrid();
-                            return;
-                        }
-                        obra.estado = 'concluida'; obra.dataConclusao = getDataHoje();
+                    guardarDados(dados);
+                    if (tiposEspecialidadePendentes.length) {
+                        alert('✅ OS terminada.\n\n⚠️ Esta OS tem relatório(s) de especialidade por preencher: ' + tiposEspecialidadePendentes.join(', ') + '.\n\nVai a "Ordens Serviço" e clica no nome desta OS para os preencher — o Modo Quiosque não faz isso aqui.');
+                        const admin = dados.administradores?.find(a => a.id === adminIdQ);
+                        if (admin) _notificarFuncionario(admin.id, '📋 Relatório de especialidade por preencher', `A OS terminada no Modo Quiosque tem relatório(s) pendente(s): ${tiposEspecialidadePendentes.join(', ')}. Vai a "Ordens Serviço" e clica no nome desta OS para os preencher.`, admin.id, `abrirSecao('servicos');`);
+                    } else {
+                        alert('✅ ' + (s.tipo === 'servico' ? 'OS' : 'Obra') + ' terminada. Obrigado!');
                     }
-                }
-                guardarDados(dados);
-                if (tiposEspecialidadePendentes.length) {
-                    alert('✅ OS terminada.\n\n⚠️ Esta OS tem relatório(s) de especialidade por preencher: ' + tiposEspecialidadePendentes.join(', ') + '.\n\nVai a "Ordens Serviço" e clica no nome desta OS para os preencher — o Modo Quiosque não faz isso aqui.');
-                    const admin = dados.administradores?.find(a => a.id === _tenantQuiosque());
-                    if (admin) _notificarFuncionario(admin.id, '📋 Relatório de especialidade por preencher', `A OS terminada no Modo Quiosque tem relatório(s) pendente(s): ${tiposEspecialidadePendentes.join(', ')}. Vai a "Ordens Serviço" e clica no nome desta OS para os preencher.`, admin.id, `abrirSecao('servicos');`);
-                } else {
-                    alert('✅ ' + (s.tipo === 'servico' ? 'OS' : 'Obra') + ' terminada. Obrigado!');
-                }
-                _quiosqueAgendaSairSessao();
+                    _quiosqueAgendaSairSessao();
+                });
             } else {
                 alert('✅ Saída registada. Até já!');
                 _quiosqueAgendaGrid();
@@ -7540,10 +7525,10 @@
             });
             if (aba === 'checklist') {
                 const adminChk = dados.administradores?.find(a => a.id === os.adminId);
-                const itensChk = adminChk?.obrasChecklistItens || [];
+                const itensChk = (adminChk?.obrasChecklistItens || []).filter(it => it.ativo !== false);
                 const podeEditarChk = usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin' || usuarioLogado?.role === 'encarregado';
                 if (!itensChk.length) {
-                    cont.innerHTML = `<p class="help-text">A empresa ainda não definiu nenhum ponto de verificação para o checklist de qualidade/segurança.</p>`;
+                    cont.innerHTML = `<p class="help-text">A empresa ainda não definiu nenhum ponto de verificação para o checklist de saída.</p>`;
                     return;
                 }
                 os.checklist = os.checklist || {};
@@ -13378,11 +13363,11 @@
             const aviso = emAberto ? ('\n\nAtenção: ' + emAberto + ' funcionário(s) ainda ' + (emAberto === 1 ? 'tem' : 'têm') + ' entrada em aberto nesta obra.') : '';
             const _adminObra = dados.administradores?.find(a => a.id === obra.adminId);
             if (obrasAvancadoAtivo(_adminObra)) {
-                const _itensChecklist = _adminObra?.obrasChecklistItens || [];
+                const _itensChecklist = (_adminObra?.obrasChecklistItens || []).filter(it => it.ativo !== false);
                 const _concl = obra.checklist || {};
                 const _porMarcar = _itensChecklist.filter(it => !_concl[it.id]);
                 if (_porMarcar.length) {
-                    alert('Não é possível concluir esta obra: falta marcar ' + _porMarcar.length + ' ponto(s) do checklist de qualidade/segurança:\n\n' + _porMarcar.map(it => '• ' + it.texto).join('\n') + '\n\nAbre "Checklist" na ficha da obra para os marcar.');
+                    alert('Não é possível concluir esta obra: falta marcar ' + _porMarcar.length + ' ponto(s) do checklist de saída:\n\n' + _porMarcar.map(it => '• ' + it.texto).join('\n') + '\n\nAbre "Checklist" na ficha da obra para os marcar.');
                     return;
                 }
             }
@@ -14366,10 +14351,10 @@
             const cont = document.getElementById('verObraConteudo');
             if (!cont) return;
             const admin = dados.administradores?.find(a => a.id === obra.adminId);
-            const itens = admin?.obrasChecklistItens || [];
+            const itens = (admin?.obrasChecklistItens || []).filter(it => it.ativo !== false);
             const podeEditar = usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin' || usuarioLogado?.role === 'encarregado';
             if (!itens.length) {
-                cont.innerHTML = `<p class="help-text">A empresa ainda não definiu nenhum ponto de verificação. ${(usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin') ? 'Define-os em Definições → Checklist de Qualidade/Segurança das Obras e OS.' : ''}</p>`;
+                cont.innerHTML = `<p class="help-text">A empresa ainda não definiu nenhum ponto de verificação. ${(usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin') ? 'Define-os em Definições → Checklist de Saída em OS / Obra.' : ''}</p>`;
                 return;
             }
             obra.checklist = obra.checklist || {};
@@ -14405,7 +14390,7 @@
         // da empresa — mais simples de manter do que configurar por obra ou por tipo de obra.
         function abrirGestaoChecklistObras() {
             const admin = adminAtual(); if (!admin) return;
-            document.getElementById('modalGenericoTitulo').innerHTML = '<i class="fas fa-clipboard-check"></i> Checklist de Qualidade/Segurança das Obras e OS';
+            document.getElementById('modalGenericoTitulo').innerHTML = '<i class="fas fa-clipboard-check"></i> Checklist de Saída em OS / Obra';
             document.getElementById('modalGenericoCampos').innerHTML = `
                 <p class="help-text" style="margin-bottom:12px;">Estes pontos vão aparecer em todas as obras. Uma obra só pode ser marcada como concluída depois de todos estarem marcados.</p>
                 <div id="checklist_itens_lista" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;"></div>
@@ -14426,13 +14411,20 @@
             lista.innerHTML = itens.length ? itens.map((it, i) => `
                 <div class="checklist-item-linha" style="border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;">
                     <div style="display:flex;align-items:center;gap:8px;">
-                        <span style="flex:1;">${escapeHtmlSimples(it.texto)}</span>
+                        <input type="checkbox" ${it.ativo !== false ? 'checked' : ''} onchange="_checklistToggleAtivo(${i}, this.checked)" title="Só perguntas com o visto marcado é que são feitas ao técnico" style="width:auto;flex-shrink:0;" />
+                        <span style="flex:1;${it.ativo === false ? 'color:#94a3b8;' : ''}">${escapeHtmlSimples(it.texto)}</span>
                         <span style="background:#f1f5f9;color:#64748b;font-size:.75rem;font-weight:600;padding:4px 10px;border-radius:99px;white-space:nowrap;">Sim / Não</span>
                         <button type="button" class="btn btn-sm btn-outline" onclick="_checklistEditarItem(${i})" title="Editar"><i class="fas fa-pen"></i></button>
                         <button type="button" class="btn btn-sm" style="background:#fee2e2;color:#991b1b;" onclick="_checklistRemoverItem(${i})" title="Remover"><i class="fas fa-trash"></i></button>
                     </div>
                 </div>
             `).join('') : `<p class="help-text">Ainda sem pontos definidos.</p>`;
+        }
+        function _checklistToggleAtivo(indice, ativo) {
+            const admin = adminAtual(); if (!admin || !admin.obrasChecklistItens?.[indice]) return;
+            admin.obrasChecklistItens[indice].ativo = ativo;
+            guardarDados(dados, ['administradores']).catch(() => alert('⚠️ Ficou no ecrã, mas ainda não foi possível confirmar no servidor.'));
+            _checklistRenderLista();
         }
         function _checklistEditarItem(indice) {
             const admin = adminAtual(); if (!admin) return;
@@ -14462,7 +14454,7 @@
             const texto = (input?.value || '').trim();
             if (!texto) { alert('Escreve o texto do ponto de verificação.'); return; }
             admin.obrasChecklistItens = admin.obrasChecklistItens || [];
-            admin.obrasChecklistItens.push({ id: gerarId(), texto });
+            admin.obrasChecklistItens.push({ id: gerarId(), texto, ativo: true });
             guardarDados(dados, ['administradores']).catch(() => alert('⚠️ Ficou no ecrã, mas ainda não foi possível confirmar no servidor.'));
             input.value = '';
             _checklistRenderLista();
@@ -14501,13 +14493,20 @@
             lista.innerHTML = itens.length ? itens.map((it, i) => `
                 <div class="checklist-item-linha" style="border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;">
                     <div style="display:flex;align-items:center;gap:8px;">
-                        <span style="flex:1;">${escapeHtmlSimples(it.texto)}</span>
+                        <input type="checkbox" ${it.ativo !== false ? 'checked' : ''} onchange="_checklistEntradaToggleAtivo(${i}, this.checked)" title="Só perguntas com o visto marcado é que são feitas ao técnico" style="width:auto;flex-shrink:0;" />
+                        <span style="flex:1;${it.ativo === false ? 'color:#94a3b8;' : ''}">${escapeHtmlSimples(it.texto)}</span>
                         <span style="background:#f1f5f9;color:#64748b;font-size:.75rem;font-weight:600;padding:4px 10px;border-radius:99px;white-space:nowrap;">Sim / Não</span>
                         <button type="button" class="btn btn-sm btn-outline" onclick="_checklistEntradaEditarItem(${i})" title="Editar"><i class="fas fa-pen"></i></button>
                         <button type="button" class="btn btn-sm" style="background:#fee2e2;color:#991b1b;" onclick="_checklistEntradaRemoverItem(${i})" title="Remover"><i class="fas fa-trash"></i></button>
                     </div>
                 </div>
             `).join('') : `<p class="help-text">Ainda sem pontos definidos — sem pontos, não aparece nenhuma pergunta ao dar entrada.</p>`;
+        }
+        function _checklistEntradaToggleAtivo(indice, ativo) {
+            const admin = adminAtual(); if (!admin || !admin.checklistEntradaItens?.[indice]) return;
+            admin.checklistEntradaItens[indice].ativo = ativo;
+            guardarDados(dados, ['administradores']).catch(() => alert('⚠️ Ficou no ecrã, mas ainda não foi possível confirmar no servidor.'));
+            _checklistEntradaRenderLista();
         }
         function _checklistEntradaEditarItem(indice) {
             const admin = adminAtual(); if (!admin) return;
@@ -14537,7 +14536,7 @@
             const texto = (input?.value || '').trim();
             if (!texto) { alert('Escreve o texto da pergunta.'); return; }
             admin.checklistEntradaItens = admin.checklistEntradaItens || [];
-            admin.checklistEntradaItens.push({ id: gerarId(), texto });
+            admin.checklistEntradaItens.push({ id: gerarId(), texto, ativo: true });
             guardarDados(dados, ['administradores']).catch(() => alert('⚠️ Ficou no ecrã, mas ainda não foi possível confirmar no servidor.'));
             input.value = '';
             _checklistEntradaRenderLista();
@@ -14554,7 +14553,7 @@
         // definidos pelo admin, passa direto ao callback sem mostrar nada.
         function _checklistEntradaVerificar(adminId, callback) {
             const admin = dados.administradores?.find(a => a.id === adminId);
-            const itens = admin?.checklistEntradaItens || [];
+            const itens = (admin?.checklistEntradaItens || []).filter(it => it.ativo !== false);
             if (!itens.length) { callback(); return; }
             _checklistEntradaCallbackPendente = callback;
             _checklistEntradaRespostas = {};
@@ -14609,6 +14608,66 @@
         function _checklistEntradaCancelar() {
             document.getElementById('checklistEntradaOverlay')?.remove();
             _checklistEntradaCallbackPendente = null;
+        }
+        // --- Checklist de Saída, no Modo Quiosque: mesmo padrão de popup Sim/Não do
+        // Checklist de Entrada, mas perguntado ao TERMINAR a OS/Obra em vez de ao começar.
+        let _checklistSaidaCallbackPendente = null, _checklistSaidaRespostas = {};
+        function _checklistSaidaVerificar(adminId, callback) {
+            const admin = dados.administradores?.find(a => a.id === adminId);
+            const itens = (admin?.obrasChecklistItens || []).filter(it => it.ativo !== false);
+            if (!itens.length) { callback(); return; }
+            _checklistSaidaCallbackPendente = callback;
+            _checklistSaidaRespostas = {};
+            _checklistSaidaMostrarModal(itens);
+        }
+        function _checklistSaidaMostrarModal(itens) {
+            const wrap = document.createElement('div');
+            wrap.id = 'checklistSaidaOverlay';
+            wrap.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:100000;display:flex;align-items:center;justify-content:center;padding:16px;';
+            wrap.innerHTML = `
+                <div style="background:#fff;border-radius:16px;padding:22px;max-width:420px;width:100%;max-height:88vh;overflow-y:auto;">
+                    <div style="font-weight:800;font-size:1.05rem;margin-bottom:4px;"><i class="fas fa-clipboard-check" style="color:#3730a3;"></i> Checklist de Saída</div>
+                    <div class="help-text" style="margin-bottom:14px;">Responde antes de terminar.</div>
+                    <div id="checklistSaidaPerguntas" style="display:flex;flex-direction:column;gap:14px;"></div>
+                    <button type="button" class="btn btn-success" style="width:100%;margin-top:16px;" onclick="_checklistSaidaConfirmar(${JSON.stringify(itens).replace(/"/g, '&quot;')})"><i class="fas fa-check"></i> Confirmar e terminar</button>
+                    <button type="button" class="btn" style="width:100%;margin-top:8px;background:#f1f5f9;" onclick="_checklistSaidaCancelar()">Cancelar</button>
+                </div>
+            `;
+            document.body.appendChild(wrap);
+            const cont = wrap.querySelector('#checklistSaidaPerguntas');
+            cont.innerHTML = itens.map(it => `
+                <div>
+                    <div style="font-weight:600;margin-bottom:6px;font-size:.92rem;">${escapeHtmlSimples(it.texto)}</div>
+                    <div style="display:flex;gap:8px;">
+                        <button type="button" class="btn btn-sm" data-item="${it.id}" data-val="sim" onclick="_checklistSaidaResponder('${it.id}', true, this)" style="flex:1;background:#f1f5f9;color:#334155;">Sim</button>
+                        <button type="button" class="btn btn-sm" data-item="${it.id}" data-val="nao" onclick="_checklistSaidaResponder('${it.id}', false, this)" style="flex:1;background:#f1f5f9;color:#334155;">Não</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        function _checklistSaidaResponder(itemId, valor, btnEl) {
+            _checklistSaidaRespostas[itemId] = valor;
+            const grupo = btnEl.parentElement.querySelectorAll('button');
+            grupo.forEach(b => { b.style.background = '#f1f5f9'; b.style.color = '#334155'; });
+            btnEl.style.background = valor ? '#16a34a' : '#dc2626';
+            btnEl.style.color = '#fff';
+        }
+        function _checklistSaidaConfirmar(itens) {
+            const semResposta = itens.filter(it => !(it.id in _checklistSaidaRespostas));
+            if (semResposta.length) { alert('Responde a todas as perguntas antes de continuar.'); return; }
+            const comNao = itens.filter(it => _checklistSaidaRespostas[it.id] === false);
+            if (comNao.length) {
+                alert('⚠️ Não é possível terminar:\n\n' + comNao.map(it => '• ' + it.texto).join('\n') + '\n\nResolve estes pontos antes de terminar.');
+                return;
+            }
+            document.getElementById('checklistSaidaOverlay')?.remove();
+            const cb = _checklistSaidaCallbackPendente;
+            _checklistSaidaCallbackPendente = null;
+            if (typeof cb === 'function') cb();
+        }
+        function _checklistSaidaCancelar() {
+            document.getElementById('checklistSaidaOverlay')?.remove();
+            _checklistSaidaCallbackPendente = null;
         }
         // Painel financeiro da obra (só admin/subadmin) — mesma lógica de custos e margem já usada
         // na exportação em PDF do relatório de obra, mas aqui visível diretamente no ecrã, sem
@@ -22399,7 +22458,7 @@ async function salvarAdmin(e) {
                         ` : ''}
                         ${obrasAvancadoAtivo(adminAtual()) ? `
                         <div class="ff-secao ff-tint-id">
-                            <div class="ff-secao-head"><i class="fas fa-clipboard-check"></i> Checklist de Qualidade/Segurança das Obras e OS</div>
+                            <div class="ff-secao-head"><i class="fas fa-clipboard-check"></i> Checklist de Saída em OS / Obra</div>
                             <div class="ff-secao-body">
                                 <div class="form-group ff-span2">
                                     <div class="help-text" style="margin-bottom:8px;">Todos os pontos devem estar marcados no final da Obra ou da OS.</div>
@@ -23539,15 +23598,15 @@ async function salvarAdmin(e) {
                     return;
                 }
                 // Se esta OS estiver a passar para "concluído" agora (não estava já), exige
-                // primeiro o checklist de qualidade/segurança, tal como já acontece nas obras.
+                // primeiro o checklist de saída, tal como já acontece nas obras.
                 const _sStatusNovo = document.getElementById('s_status')?.value;
                 if (_sStatusNovo === 'concluído' && (!isEdit || item?.status !== 'concluído')) {
                     const _sAdminChk = dados.administradores?.find(a => a.id === (usuarioLogado.role === 'admin' ? usuarioLogado.id : usuarioLogado.adminId));
-                    const _sItensChk = _sAdminChk?.obrasChecklistItens || [];
+                    const _sItensChk = (_sAdminChk?.obrasChecklistItens || []).filter(it => it.ativo !== false);
                     const _sConclChk = item?.checklist || {};
                     const _sPorMarcarChk = _sItensChk.filter(it => !_sConclChk[it.id]);
                     if (_sPorMarcarChk.length) {
-                        alert('Não é possível concluir esta OS: falta marcar ' + _sPorMarcarChk.length + ' ponto(s) do checklist de qualidade/segurança:\n\n' + _sPorMarcarChk.map(it => '• ' + it.texto).join('\n') + '\n\nAbre "Checklist de Qualidade/Segurança das Obras e OS" para os marcar.');
+                        alert('Não é possível concluir esta OS: falta marcar ' + _sPorMarcarChk.length + ' ponto(s) do checklist de saída:\n\n' + _sPorMarcarChk.map(it => '• ' + it.texto).join('\n') + '\n\nAbre "Checklist de Saída em OS / Obra" para os marcar.');
                         return;
                     }
                 }
