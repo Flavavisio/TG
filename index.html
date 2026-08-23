@@ -14363,7 +14363,7 @@
                     <button type="button" class="btn btn-sm btn-outline" onclick="_checklistAdicionarItem()"><i class="fas fa-plus"></i> Adicionar</button>
                 </div>
             `;
-            document.getElementById('modalGenericoForm').onsubmit = ev => ev.preventDefault();
+            document.getElementById('modalGenericoForm').onsubmit = ev => { ev.preventDefault(); _fecharModalGenerico(); };
             const _bgCk = document.querySelector('#modalGenericoOverlay .modal-actions .btn-success'); if (_bgCk) { _bgCk.style.display = ''; _bgCk.innerHTML = '<i class="fas fa-check"></i> Fechar'; }
             document.getElementById('modalGenericoOverlay').classList.add('open');
             _checklistRenderLista();
@@ -14412,8 +14412,8 @@
                     <button type="button" class="btn btn-sm btn-outline" onclick="_checklistEntradaAdicionarItem()"><i class="fas fa-plus"></i> Adicionar</button>
                 </div>
             `;
-            document.getElementById('modalGenericoForm').onsubmit = ev => ev.preventDefault();
-            const _bgCke = document.querySelector('#modalGenericoOverlay .modal-actions .btn-success'); if (_bgCke) { _bgCke.style.display = ''; _bgCke.innerHTML = '<i class="fas fa-check"></i> Fechar'; }
+            document.getElementById('modalGenericoForm').onsubmit = ev => { ev.preventDefault(); _fecharModalGenerico(); };
+            const _bgCke = document.querySelector('#modalGenericoOverlay .modal-actions .btn-success'); if (_bgCke) { _bgCke.style.display = ''; _bgCke.innerHTML = '<i class="fas fa-check"></i> Concluir'; }
             document.getElementById('modalGenericoOverlay').classList.add('open');
             _checklistEntradaRenderLista();
         }
@@ -22748,7 +22748,8 @@ async function salvarAdmin(e) {
             guardarDados(dados, ['administradores']).catch(() => alert('⚠️ Ficou no ecrã, mas ainda não foi possível confirmar no servidor.'));
         }
         function _osWizardAtivar() {
-            const wrap = document.querySelector('#modalGenericoCampos .ff-wrap');
+          try {
+            const wrap = document.querySelector('#modalCampos .ff-wrap');
             if (!wrap) return;
             const secoes = Array.from(wrap.querySelectorAll(':scope > .ff-secao'));
             const secAtribuicao = secoes.find(s => s.querySelector('#s_data'));
@@ -22866,10 +22867,13 @@ async function salvarAdmin(e) {
             `;
             wrap.appendChild(nav);
             // Esconde os botões normais do rodapé do modal (Cancelar/Criar) — o wizard usa os seus próprios
-            const modalActions = document.querySelector('#modalGenericoOverlay .modal-actions');
+            const modalActions = document.querySelector('#modalOverlay .modal-actions');
             if (modalActions) modalActions.style.display = 'none';
             _osWizPasso = 0;
             _osWizRenderBarra();
+          } catch (e) {
+            console.error('Erro ao ativar o Modo Wizard de OS:', e);
+          }
         }
         function _osWizRelatorios(sim) {
             const secTipos = document.getElementById('s_tipos_trabalho_cont')?.closest('.ff-secao');
@@ -22912,7 +22916,7 @@ async function salvarAdmin(e) {
             } else {
                 // Último passo — dispara o submit real do formulário, com toda a validação e
                 // gravação de sempre, sem duplicar nenhuma lógica aqui.
-                document.getElementById('modalGenericoForm')?.requestSubmit();
+                document.getElementById('modalForm')?.requestSubmit();
             }
         }
         function _osWizVoltar() {
@@ -22928,7 +22932,7 @@ async function salvarAdmin(e) {
             _osWizPassos.forEach(p => { p.el.style.display = ''; });
             document.getElementById('osWizBarra')?.remove();
             document.getElementById('osWizVoltar')?.closest('div')?.remove();
-            const modalActions = document.querySelector('#modalGenericoOverlay .modal-actions');
+            const modalActions = document.querySelector('#modalOverlay .modal-actions');
             if (modalActions) modalActions.style.display = '';
             _osWizPassos = []; _osWizPasso = 0;
         }
@@ -24595,7 +24599,7 @@ async function salvarAdmin(e) {
                 </div>
                 <div id="rfm_resultado"></div>
             `;
-            document.getElementById('modalGenericoForm').onsubmit = ev => ev.preventDefault();
+            document.getElementById('modalGenericoForm').onsubmit = ev => { ev.preventDefault(); _fecharModalGenerico(); };
             const _bgRfm = document.querySelector('#modalGenericoOverlay .modal-actions .btn-success'); if (_bgRfm) { _bgRfm.style.display = ''; _bgRfm.innerHTML = '<i class="fas fa-check"></i> Fechar'; }
             const _modalElRfm = document.querySelector('#modalGenericoOverlay .modal');
             if (_modalElRfm) { _modalElRfm.dataset.maxWidthOriginal = _modalElRfm.style.maxWidth || ''; _modalElRfm.style.maxWidth = '760px'; }
@@ -24660,7 +24664,7 @@ async function salvarAdmin(e) {
                 </div>
                 <div id="rkm_resultado"></div>
             `;
-            document.getElementById('modalGenericoForm').onsubmit = ev => ev.preventDefault();
+            document.getElementById('modalGenericoForm').onsubmit = ev => { ev.preventDefault(); _fecharModalGenerico(); };
             const _bgRkm = document.querySelector('#modalGenericoOverlay .modal-actions .btn-success'); if (_bgRkm) { _bgRkm.style.display = ''; _bgRkm.innerHTML = '<i class="fas fa-check"></i> Fechar'; }
             document.getElementById('modalGenericoOverlay').classList.add('open');
             _renderizarRelatorioKm();
@@ -24709,7 +24713,7 @@ async function salvarAdmin(e) {
                     ` : `<p class="help-text">Ainda não criaste nenhum tipo de trabalho próprio. Cria um primeiro no campo "Novo tipo de trabalho" ao editar uma OS.</p>`}
                 </div>
             `;
-            document.getElementById('modalGenericoForm').onsubmit = ev => ev.preventDefault();
+            document.getElementById('modalGenericoForm').onsubmit = ev => { ev.preventDefault(); _fecharModalGenerico(); };
             const _bgRp = document.querySelector('#modalGenericoOverlay .modal-actions .btn-success'); if (_bgRp) { _bgRp.style.display = ''; _bgRp.innerHTML = '<i class="fas fa-check"></i> Fechar'; }
             document.getElementById('modalGenericoOverlay').classList.add('open', 'modal-veros');
         }
@@ -29264,7 +29268,7 @@ window._relPrefill = function(msg){
                     };
                     document.getElementById('_beqCancelar2').onclick = () => { overlay.classList.remove('open'); resolve({ cancelado: true }); };
                 };
-                document.getElementById('modalGenericoForm').onsubmit = ev => ev.preventDefault();
+                document.getElementById('modalGenericoForm').onsubmit = ev => { ev.preventDefault(); _fecharModalGenerico(); };
                 passo1();
                 overlay.classList.add('open');
             });
