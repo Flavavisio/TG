@@ -3150,8 +3150,8 @@
             },
             servicos: {
                 tabela: 'servicos',
-                from: r => ({ id: r.id, numeroRegisto: r.numero_registo, clienteId: r.cliente_id, funcionarioId: r.funcionario_id, funcionariosIds: Array.isArray(r.funcionarios_ids) ? r.funcionarios_ids : [], relatorioResponsavelId: r.relatorio_responsavel_id || null, contratoId: r.contrato_id, obraId: r.obra_id, localId: r.local_id || null, assistenciaId: r.assistencia_id || null, valor: r.valor != null ? Number(r.valor) : null, duracao: r.duracao != null ? Number(r.duracao) : null, duracaoDias: r.duracao_dias != null ? Number(r.duracao_dias) : null, morada: r.morada || null, numeroPorta: r.numero_porta || null, codigoPostal: r.codigo_postal || null, cidade: r.cidade || null, freguesia: r.freguesia || null, data: r.data || '', hora: hhmm(r.hora) || '', descricao: r.descricao, observacoes: r.observacoes || null, status: r.status, origem: r.origem || null, tiposTrabalho: Array.isArray(r.tipos_trabalho) ? r.tipos_trabalho : [], adminId: r.admin_id, pagamentoLocal: r.pagamento_local === true, pago: r.pago == null ? null : (r.pago === true), faturaMoloniId: r.fatura_moloni_id || null, faturaMoloniUrl: r.fatura_moloni_url || null, reciboMoloniId: r.recibo_moloni_id || null, reciboMoloniUrl: r.recibo_moloni_url || null, guiaMoloniId: r.guia_moloni_id || null, guiaMoloniUrl: r.guia_moloni_url || null, notaCreditoMoloniId: r.nota_credito_moloni_id || null, notaCreditoMoloniUrl: r.nota_credito_moloni_url || null }),
-                to:   o => ({ id: o.id, numero_registo: o.numeroRegisto || null, cliente_id: o.clienteId || null, funcionario_id: o.funcionarioId || null, funcionarios_ids: o.funcionariosIds || [], relatorio_responsavel_id: o.relatorioResponsavelId || null, contrato_id: o.contratoId || null, obra_id: o.obraId || null, local_id: o.localId || null, assistencia_id: o.assistenciaId || null, valor: (o.valor === '' || o.valor == null) ? null : Number(o.valor), duracao: (o.duracao === '' || o.duracao == null) ? null : parseInt(o.duracao,10), duracao_dias: (o.duracaoDias === '' || o.duracaoDias == null) ? null : parseInt(o.duracaoDias,10), morada: o.morada || null, numero_porta: o.numeroPorta || null, codigo_postal: o.codigoPostal || null, cidade: o.cidade || null, freguesia: o.freguesia || null, data: nn(o.data), hora: nn(o.hora), descricao: o.descricao || null, observacoes: o.observacoes || null, status: o.status || 'pendente', origem: o.origem || null, tipos_trabalho: o.tiposTrabalho || [], admin_id: o.adminId, pagamento_local: o.pagamentoLocal === true, pago: o.pago === undefined ? null : o.pago, fatura_moloni_id: o.faturaMoloniId || null, fatura_moloni_url: o.faturaMoloniUrl || null, recibo_moloni_id: o.reciboMoloniId || null, recibo_moloni_url: o.reciboMoloniUrl || null, guia_moloni_id: o.guiaMoloniId || null, guia_moloni_url: o.guiaMoloniUrl || null, nota_credito_moloni_id: o.notaCreditoMoloniId || null, nota_credito_moloni_url: o.notaCreditoMoloniUrl || null })
+                from: r => ({ id: r.id, numeroRegisto: r.numero_registo, clienteId: r.cliente_id, funcionarioId: r.funcionario_id, funcionariosIds: Array.isArray(r.funcionarios_ids) ? r.funcionarios_ids : [], relatorioResponsavelId: r.relatorio_responsavel_id || null, contratoId: r.contrato_id, obraId: r.obra_id, localId: r.local_id || null, assistenciaId: r.assistencia_id || null, valor: r.valor != null ? Number(r.valor) : null, duracao: r.duracao != null ? Number(r.duracao) : null, duracaoDias: r.duracao_dias != null ? Number(r.duracao_dias) : null, morada: r.morada || null, numeroPorta: r.numero_porta || null, codigoPostal: r.codigo_postal || null, cidade: r.cidade || null, freguesia: r.freguesia || null, data: r.data || '', hora: hhmm(r.hora) || '', descricao: r.descricao, observacoes: r.observacoes || null, checklist: r.checklist || {}, status: r.status, origem: r.origem || null, tiposTrabalho: Array.isArray(r.tipos_trabalho) ? r.tipos_trabalho : [], adminId: r.admin_id, pagamentoLocal: r.pagamento_local === true, pago: r.pago == null ? null : (r.pago === true), faturaMoloniId: r.fatura_moloni_id || null, faturaMoloniUrl: r.fatura_moloni_url || null, reciboMoloniId: r.recibo_moloni_id || null, reciboMoloniUrl: r.recibo_moloni_url || null, guiaMoloniId: r.guia_moloni_id || null, guiaMoloniUrl: r.guia_moloni_url || null, notaCreditoMoloniId: r.nota_credito_moloni_id || null, notaCreditoMoloniUrl: r.nota_credito_moloni_url || null }),
+                to:   o => ({ id: o.id, numero_registo: o.numeroRegisto || null, cliente_id: o.clienteId || null, funcionario_id: o.funcionarioId || null, funcionarios_ids: o.funcionariosIds || [], relatorio_responsavel_id: o.relatorioResponsavelId || null, contrato_id: o.contratoId || null, obra_id: o.obraId || null, local_id: o.localId || null, assistencia_id: o.assistenciaId || null, valor: (o.valor === '' || o.valor == null) ? null : Number(o.valor), duracao: (o.duracao === '' || o.duracao == null) ? null : parseInt(o.duracao,10), duracao_dias: (o.duracaoDias === '' || o.duracaoDias == null) ? null : parseInt(o.duracaoDias,10), morada: o.morada || null, numero_porta: o.numeroPorta || null, codigo_postal: o.codigoPostal || null, cidade: o.cidade || null, freguesia: o.freguesia || null, data: nn(o.data), hora: nn(o.hora), descricao: o.descricao || null, observacoes: o.observacoes || null, checklist: o.checklist || {}, status: o.status || 'pendente', origem: o.origem || null, tipos_trabalho: o.tiposTrabalho || [], admin_id: o.adminId, pagamento_local: o.pagamentoLocal === true, pago: o.pago === undefined ? null : o.pago, fatura_moloni_id: o.faturaMoloniId || null, fatura_moloni_url: o.faturaMoloniUrl || null, recibo_moloni_id: o.reciboMoloniId || null, recibo_moloni_url: o.reciboMoloniUrl || null, guia_moloni_id: o.guiaMoloniId || null, guia_moloni_url: o.guiaMoloniUrl || null, nota_credito_moloni_id: o.notaCreditoMoloniId || null, nota_credito_moloni_url: o.notaCreditoMoloniUrl || null })
             },
             assistencias: {
                 tabela: 'assistencias',
@@ -5393,17 +5393,36 @@
             // esta obra mais cedo e ainda continuar noutra tarefa no mesmo dia. O Ponto Geral só
             // fecha quando a pessoa picar explicitamente "Saída ao Serviço" em Ponto Geral.
             if (finalizarTambem) {
+                const adminQ = dados.administradores?.find(a => a.id === _tenantQuiosque());
+                const itensChkQ = adminQ?.obrasChecklistItens || [];
                 let tiposEspecialidadePendentes = [];
                 if (s.tipo === 'servico') {
                     const os = dados.servicos?.find(x => x.id === s.id);
                     if (os) {
+                        const conclChkQ = os.checklist || {};
+                        const porMarcarQ = itensChkQ.filter(it => !conclChkQ[it.id]);
+                        if (porMarcarQ.length) {
+                            alert('⚠️ Não é possível concluir esta OS: falta marcar ' + porMarcarQ.length + ' ponto(s) do checklist de qualidade/segurança.\n\nPede a alguém com acesso a "Ver OS" na app para marcar esses pontos primeiro.\n\n(A saída ficou registada na mesma — só a conclusão da OS é que não avançou.)');
+                            _quiosqueAgendaGrid();
+                            return;
+                        }
                         os.status = 'concluído';
                         _sincronizarAssistenciaAoConcluirOS(os);
                         _fecharPontosAbertosAoConcluirOS(os);
                         tiposEspecialidadePendentes = (os.tiposTrabalho || []).filter(t => (typeof TIPOS_ESPECIALIDADE !== 'undefined' ? TIPOS_ESPECIALIDADE : []).includes(t));
                     }
                 } else {
-                    const obra = dados.obras?.find(x => x.id === s.id); if (obra) { obra.estado = 'concluida'; obra.dataConclusao = getDataHoje(); }
+                    const obra = dados.obras?.find(x => x.id === s.id);
+                    if (obra) {
+                        const conclChkQ = obra.checklist || {};
+                        const porMarcarQ = itensChkQ.filter(it => !conclChkQ[it.id]);
+                        if (porMarcarQ.length) {
+                            alert('⚠️ Não é possível concluir esta obra: falta marcar ' + porMarcarQ.length + ' ponto(s) do checklist de qualidade/segurança.\n\nPede a alguém com acesso a "Ver Obra" na app para marcar esses pontos primeiro.\n\n(A saída ficou registada na mesma — só a conclusão da obra é que não avançou.)');
+                            _quiosqueAgendaGrid();
+                            return;
+                        }
+                        obra.estado = 'concluida'; obra.dataConclusao = getDataHoje();
+                    }
                 }
                 guardarDados(dados);
                 if (tiposEspecialidadePendentes.length) {
@@ -7497,6 +7516,7 @@
                     <button type="button" class="btn btn-sm" id="verOsBtnFolhas" onclick="_verOsMostrar('${osId}','folhas')" style="flex:1;min-width:110px;background:#0ea5e9;color:#fff;"><i class="fas fa-clipboard-list"></i> Folhas de obra</button>
                     <button type="button" class="btn btn-sm" id="verOsBtnRelatorios" onclick="_verOsMostrar('${osId}','relatorios')" style="flex:1;min-width:110px;background:#f1f5f9;color:#334155;"><i class="fas fa-file-signature"></i> Relatórios</button>
                     <button type="button" class="btn btn-sm" id="verOsBtnMateriais" onclick="_verOsMostrar('${osId}','materiais')" style="flex:1;min-width:110px;background:#f1f5f9;color:#334155;"><i class="fas fa-boxes-stacked"></i> Materiais</button>
+                    <button type="button" class="btn btn-sm" id="verOsBtnChecklist" onclick="_verOsMostrar('${osId}','checklist')" style="flex:1;min-width:110px;background:#f1f5f9;color:#334155;"><i class="fas fa-clipboard-check"></i> Checklist</button>
                 </div>
                 <div id="verOsConteudo"></div>
             `;
@@ -7512,11 +7532,35 @@
             const btnFolhas = document.getElementById('verOsBtnFolhas');
             const btnRelatorios = document.getElementById('verOsBtnRelatorios');
             const btnMateriais = document.getElementById('verOsBtnMateriais');
-            [['folhas', btnFolhas], ['relatorios', btnRelatorios], ['materiais', btnMateriais]].forEach(([chave, btn]) => {
+            const btnChecklist = document.getElementById('verOsBtnChecklist');
+            [['folhas', btnFolhas], ['relatorios', btnRelatorios], ['materiais', btnMateriais], ['checklist', btnChecklist]].forEach(([chave, btn]) => {
                 if (!btn) return;
                 btn.style.background = aba === chave ? '#0ea5e9' : '#f1f5f9';
                 btn.style.color = aba === chave ? '#fff' : '#334155';
             });
+            if (aba === 'checklist') {
+                const adminChk = dados.administradores?.find(a => a.id === os.adminId);
+                const itensChk = adminChk?.obrasChecklistItens || [];
+                const podeEditarChk = usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin' || usuarioLogado?.role === 'encarregado';
+                if (!itensChk.length) {
+                    cont.innerHTML = `<p class="help-text">A empresa ainda não definiu nenhum ponto de verificação para o checklist de qualidade/segurança.</p>`;
+                    return;
+                }
+                os.checklist = os.checklist || {};
+                const linhasChk = itensChk.map(it => `
+                    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9;">
+                        <input type="checkbox" ${os.checklist[it.id] ? 'checked' : ''} ${podeEditarChk ? '' : 'disabled'} onchange="_checklistOsToggle('${osId}', '${it.id}')" style="width:18px;height:18px;flex-shrink:0;" />
+                        <span style="flex:1;${os.checklist[it.id] ? 'text-decoration:line-through;color:#94a3b8;' : ''}">${escapeHtmlSimples(it.texto)}</span>
+                    </div>
+                `).join('');
+                const conclChk = itensChk.filter(it => os.checklist[it.id]).length;
+                cont.innerHTML = `
+                    <div style="display:flex;justify-content:space-between;font-size:.78rem;color:#64748b;margin-bottom:8px;"><span>Checklist de qualidade/segurança</span><span>${conclChk}/${itensChk.length}</span></div>
+                    <div>${linhasChk}</div>
+                    ${conclChk < itensChk.length ? `<div class="help-text" style="color:#b3492f;margin-top:10px;"><i class="fas fa-triangle-exclamation"></i> Todos os pontos têm de estar marcados antes de a OS poder ser concluída.</div>` : `<div class="help-text" style="color:#16a34a;margin-top:10px;"><i class="fas fa-circle-check"></i> Checklist completo.</div>`}
+                `;
+                return;
+            }
             const folhas = (dados.folhasObra || []).filter(f => f.servicoId === osId).sort((a, b) => (b.data || '').localeCompare(a.data || ''));
             if (aba === 'relatorios') {
                 const tiposDaOS = (os.tiposTrabalho || []).filter(t => TIPOS_ESPECIALIDADE.includes(t));
@@ -14325,7 +14369,7 @@
             const itens = admin?.obrasChecklistItens || [];
             const podeEditar = usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin' || usuarioLogado?.role === 'encarregado';
             if (!itens.length) {
-                cont.innerHTML = `<p class="help-text">A empresa ainda não definiu nenhum ponto de verificação. ${(usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin') ? 'Define-os em Definições → Checklist de Qualidade/Segurança das Obras.' : ''}</p>`;
+                cont.innerHTML = `<p class="help-text">A empresa ainda não definiu nenhum ponto de verificação. ${(usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin') ? 'Define-os em Definições → Checklist de Qualidade/Segurança das Obras e OS.' : ''}</p>`;
                 return;
             }
             obra.checklist = obra.checklist || {};
@@ -14349,12 +14393,19 @@
             guardarDados(dados, ['obras']).catch(() => alert('⚠️ Ficou no ecrã, mas ainda não foi possível confirmar no servidor.'));
             _renderizarChecklistObra(obraId);
         }
+        function _checklistOsToggle(osId, itemId) {
+            const os = dados.servicos?.find(s => s.id === osId); if (!os) return;
+            os.checklist = os.checklist || {};
+            os.checklist[itemId] = !os.checklist[itemId];
+            guardarDados(dados, ['servicos']).catch(() => alert('⚠️ Ficou no ecrã, mas ainda não foi possível confirmar no servidor.'));
+            _verOsMostrar(osId, 'checklist');
+        }
         // Gestão dos pontos do checklist (Definições → só admin/subadmin). Os itens ficam
         // guardados no admin (obrasChecklistItens), por isso são os mesmos para todas as obras
         // da empresa — mais simples de manter do que configurar por obra ou por tipo de obra.
         function abrirGestaoChecklistObras() {
             const admin = adminAtual(); if (!admin) return;
-            document.getElementById('modalGenericoTitulo').innerHTML = '<i class="fas fa-shield-halved"></i> Checklist de Qualidade/Segurança das Obras';
+            document.getElementById('modalGenericoTitulo').innerHTML = '<i class="fas fa-clipboard-check"></i> Checklist de Qualidade/Segurança das Obras e OS';
             document.getElementById('modalGenericoCampos').innerHTML = `
                 <p class="help-text" style="margin-bottom:12px;">Estes pontos vão aparecer em todas as obras. Uma obra só pode ser marcada como concluída depois de todos estarem marcados.</p>
                 <div id="checklist_itens_lista" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;"></div>
@@ -14373,11 +14424,35 @@
             const lista = document.getElementById('checklist_itens_lista'); if (!lista) return;
             const itens = admin.obrasChecklistItens || [];
             lista.innerHTML = itens.length ? itens.map((it, i) => `
-                <div style="display:flex;align-items:center;gap:8px;">
-                    <span style="flex:1;">${escapeHtmlSimples(it.texto)}</span>
-                    <button type="button" class="btn btn-sm" style="background:#fee2e2;color:#991b1b;" onclick="_checklistRemoverItem(${i})"><i class="fas fa-trash"></i></button>
+                <div class="checklist-item-linha" style="border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <input type="checkbox" onchange="_checklistPreviewPergunta('${escapeHtmlSimples(it.texto).replace(/'/g, "\\'")}', this)" style="width:auto;flex-shrink:0;" />
+                        <span style="flex:1;">${escapeHtmlSimples(it.texto)}</span>
+                        <button type="button" class="btn btn-sm" style="background:#fee2e2;color:#991b1b;" onclick="_checklistRemoverItem(${i})"><i class="fas fa-trash"></i></button>
+                    </div>
                 </div>
             `).join('') : `<p class="help-text">Ainda sem pontos definidos.</p>`;
+        }
+        // Pré-visualização: marcar a checkbox de um ponto mostra como a pergunta Sim/Não vai
+        // aparecer ao técnico — não fica gravado, é só para o admin conferir. Desmarca sozinha
+        // ao escolher Sim ou Não.
+        function _checklistPreviewPergunta(textoItem, checkboxEl) {
+            const linha = checkboxEl.closest('.checklist-item-linha');
+            let preview = linha.querySelector('.checklist-preview-pergunta');
+            if (!checkboxEl.checked) { preview?.remove(); return; }
+            if (preview) return;
+            preview = document.createElement('div');
+            preview.className = 'checklist-preview-pergunta';
+            preview.style.cssText = 'margin-top:8px;padding:10px;background:#f8fafc;border-radius:8px;font-size:.82rem;';
+            preview.innerHTML = `
+                <div style="color:#64748b;margin-bottom:6px;"><i class="fas fa-eye"></i> Pré-visualização de como o técnico vai ver:</div>
+                <div style="font-weight:600;margin-bottom:8px;">${escapeHtmlSimples(textoItem)}</div>
+                <div style="display:flex;gap:8px;">
+                    <button type="button" class="btn btn-sm" style="flex:1;background:#f1f5f9;color:#334155;" onclick="this.closest('.checklist-preview-pergunta').remove();this.closest('.checklist-item-linha').querySelector('input[type=checkbox]').checked=false;">Sim</button>
+                    <button type="button" class="btn btn-sm" style="flex:1;background:#f1f5f9;color:#334155;" onclick="this.closest('.checklist-preview-pergunta').remove();this.closest('.checklist-item-linha').querySelector('input[type=checkbox]').checked=false;">Não</button>
+                </div>
+            `;
+            linha.appendChild(preview);
         }
         function _checklistAdicionarItem() {
             const admin = adminAtual(); if (!admin) return;
@@ -14422,9 +14497,12 @@
             const lista = document.getElementById('checklist_entrada_itens_lista'); if (!lista) return;
             const itens = admin.checklistEntradaItens || [];
             lista.innerHTML = itens.length ? itens.map((it, i) => `
-                <div style="display:flex;align-items:center;gap:8px;">
-                    <span style="flex:1;">${escapeHtmlSimples(it.texto)}</span>
-                    <button type="button" class="btn btn-sm" style="background:#fee2e2;color:#991b1b;" onclick="_checklistEntradaRemoverItem(${i})"><i class="fas fa-trash"></i></button>
+                <div class="checklist-item-linha" style="border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <input type="checkbox" onchange="_checklistPreviewPergunta('${escapeHtmlSimples(it.texto).replace(/'/g, "\\'")}', this)" style="width:auto;flex-shrink:0;" />
+                        <span style="flex:1;">${escapeHtmlSimples(it.texto)}</span>
+                        <button type="button" class="btn btn-sm" style="background:#fee2e2;color:#991b1b;" onclick="_checklistEntradaRemoverItem(${i})"><i class="fas fa-trash"></i></button>
+                    </div>
                 </div>
             `).join('') : `<p class="help-text">Ainda sem pontos definidos — sem pontos, não aparece nenhuma pergunta ao dar entrada.</p>`;
         }
@@ -22296,10 +22374,10 @@ async function salvarAdmin(e) {
                         ` : ''}
                         ${obrasAvancadoAtivo(adminAtual()) ? `
                         <div class="ff-secao ff-tint-id">
-                            <div class="ff-secao-head"><i class="fas fa-shield-halved"></i> Checklist de Qualidade/Segurança das Obras</div>
+                            <div class="ff-secao-head"><i class="fas fa-clipboard-check"></i> Checklist de Qualidade/Segurança das Obras e OS</div>
                             <div class="ff-secao-body">
                                 <div class="form-group ff-span2">
-                                    <div class="help-text" style="margin-bottom:8px;">Estes pontos aplicam-se a todas as obras. Todos têm de estar marcados antes de uma obra poder ser finalizada.</div>
+                                    <div class="help-text" style="margin-bottom:8px;">Todos os pontos devem estar marcados no final da Obra ou da OS.</div>
                                     <button type="button" class="btn btn-sm" style="background:#ecfeff;color:#0e7490;" onclick="abrirGestaoChecklistObras()"><i class="fas fa-pen"></i> Gerir pontos do checklist</button>
                                 </div>
                             </div>
@@ -22781,14 +22859,9 @@ async function salvarAdmin(e) {
                 passo1.appendChild(criarClienteHelp);
             }
 
-            // Passo 3: descrição — acrescenta botões rápidos por cima da caixa de texto
-            const admin = adminAtual();
-            const rapidas = (admin && Array.isArray(admin.descricoesRapidasOS) && admin.descricoesRapidasOS.length) ? admin.descricoesRapidasOS : ['Instalação', 'Manutenção', 'Visita', 'Formação'];
-            const rapidasWrap = document.createElement('div');
-            rapidasWrap.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;';
-            rapidasWrap.innerHTML = rapidas.map(txt => `<button type="button" class="btn btn-sm btn-outline" onclick="document.getElementById('s_descricao').value=(document.getElementById('s_descricao').value?document.getElementById('s_descricao').value+' — ':'')+'${escapeHtmlSimples(txt).replace(/'/g, "\\'")}';">${escapeHtmlSimples(txt)}</button>`).join('');
-            const descTextarea = secDescricao.querySelector('#s_descricao');
-            if (descTextarea) descTextarea.parentElement.insertBefore(rapidasWrap, descTextarea.previousElementSibling?.nextSibling || descTextarea);
+            // Passo 3: descrição — já tem os botões rápidos de etiquetas embutidos no
+            // formulário (o editor de tags no topo, com lápis/lixo), por isso o wizard não
+            // acrescenta nenhum botão extra aqui — evita ter duas fileiras de botões repetidas.
 
             // Passo 4: "Requer relatórios?" — Sim/Não a controlar a visibilidade da secção de tipos
             let passo4 = null;
@@ -22806,6 +22879,10 @@ async function salvarAdmin(e) {
                 passo4.appendChild(pergunta4);
                 secTipos.style.display = 'none';
                 passo4.appendChild(secTipos);
+                // Transforma as colunas "Incêndio" e "Segurança" em acordeão (fecham por
+                // omissão, abrem ao clicar) — só nesta secção do wizard, sem alterar o
+                // formulário normal nem outros sítios que reaproveitam o mesmo componente.
+                _osWizTornarAcordeaoTiposTrabalho(secTipos);
             }
 
             // Passo 5: checklist de segurança de entrada (+ qualidade, se existir) — só se algum
@@ -22875,6 +22952,36 @@ async function salvarAdmin(e) {
             console.error('Erro ao ativar o Modo Wizard de OS:', e);
           }
         }
+        // Transforma as duas colunas (Incêndio / Segurança) dentro do contentor de tipos de
+        // trabalho num acordeão: título clicável com seta, conteúdo fechado por omissão.
+        function _osWizTornarAcordeaoTiposTrabalho(secTipos) {
+            try {
+                const cont = secTipos.querySelector('#s_tipos_trabalho_cont');
+                const linhaFlex = cont?.firstElementChild;
+                if (!linhaFlex) return;
+                const colunas = Array.from(linhaFlex.children).filter(c => c.style && c.style.flex); // ignora o separador de 1px
+                colunas.forEach(coluna => {
+                    const titulo = coluna.children[0];
+                    const resto = Array.from(coluna.children).slice(1);
+                    if (!titulo || !resto.length) return;
+                    const corpo = document.createElement('div');
+                    corpo.style.display = 'none';
+                    resto.forEach(el => corpo.appendChild(el));
+                    const seta = document.createElement('i');
+                    seta.className = 'fas fa-chevron-down';
+                    seta.style.cssText = 'margin-left:6px;font-size:.7rem;transition:transform .15s;';
+                    titulo.appendChild(seta);
+                    titulo.style.cursor = 'pointer';
+                    titulo.style.userSelect = 'none';
+                    titulo.onclick = () => {
+                        const aberto = corpo.style.display !== 'none';
+                        corpo.style.display = aberto ? 'none' : '';
+                        seta.style.transform = aberto ? '' : 'rotate(180deg)';
+                    };
+                    coluna.appendChild(corpo);
+                });
+            } catch (e) { console.error('Acordeão de tipos de trabalho:', e); }
+        }
         function _osWizRelatorios(sim) {
             const secTipos = document.getElementById('s_tipos_trabalho_cont')?.closest('.ff-secao');
             const btnSim = document.getElementById('osw_rel_sim'), btnNao = document.getElementById('osw_rel_nao');
@@ -22903,6 +23010,13 @@ async function salvarAdmin(e) {
             for (const campo of obrigatorios) {
                 if (campo.offsetParent === null) continue; // escondido (ex.: campo de outra pergunta) — não bloqueia
                 if (!campo.reportValidity()) return false;
+            }
+            // Passo da equipa: exige pelo menos um funcionário selecionado (a checkbox "Selecionar
+            // todos" não conta, só as pessoas de facto).
+            const funcChecks = el.querySelectorAll('.s-func-check');
+            if (funcChecks.length && !Array.from(funcChecks).some(c => c.checked)) {
+                alert('Seleciona pelo menos um funcionário para esta Ordem de Serviço.');
+                return false;
             }
             return true;
         }
@@ -23398,6 +23512,19 @@ async function salvarAdmin(e) {
                     mostrarErro('Descreve o trabalho a realizar nesta Ordem de Serviço (pelo menos 3 caracteres).');
                     document.getElementById('s_descricao')?.focus();
                     return;
+                }
+                // Se esta OS estiver a passar para "concluído" agora (não estava já), exige
+                // primeiro o checklist de qualidade/segurança, tal como já acontece nas obras.
+                const _sStatusNovo = document.getElementById('s_status')?.value;
+                if (_sStatusNovo === 'concluído' && (!isEdit || item?.status !== 'concluído')) {
+                    const _sAdminChk = dados.administradores?.find(a => a.id === (usuarioLogado.role === 'admin' ? usuarioLogado.id : usuarioLogado.adminId));
+                    const _sItensChk = _sAdminChk?.obrasChecklistItens || [];
+                    const _sConclChk = item?.checklist || {};
+                    const _sPorMarcarChk = _sItensChk.filter(it => !_sConclChk[it.id]);
+                    if (_sPorMarcarChk.length) {
+                        alert('Não é possível concluir esta OS: falta marcar ' + _sPorMarcarChk.length + ' ponto(s) do checklist de qualidade/segurança:\n\n' + _sPorMarcarChk.map(it => '• ' + it.texto).join('\n') + '\n\nAbre "Checklist de Qualidade/Segurança das Obras e OS" para os marcar.');
+                        return;
+                    }
                 }
                 let funcionarioId = document.getElementById('s_funcionario').value || null;
                 if (funcionarioId === '') funcionarioId = null;
