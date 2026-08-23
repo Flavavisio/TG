@@ -7521,7 +7521,7 @@
                 <div id="verOsConteudo"></div>
             `;
             if (form) form.onsubmit = e => { e.preventDefault(); _fecharModalGenerico(); };
-            const _bgVerOs = document.querySelector('#modalGenericoOverlay .modal-actions .btn-success'); if (_bgVerOs) { _bgVerOs.style.display = ''; _bgVerOs.innerHTML = '<i class="fas fa-check"></i> Fechar'; }
+            const _bgVerOs = document.querySelector('#modalGenericoOverlay .modal-actions .btn-success'); if (_bgVerOs) { _bgVerOs.style.display = ''; _bgVerOs.innerHTML = '<i class="fas fa-check"></i> Finalizar'; }
             overlay.classList.add('open', 'modal-veros');
             _verOsMostrar(osId, 'folhas');
         }
@@ -14155,7 +14155,7 @@
                 <div id="verObraConteudo"></div>
             `;
             document.getElementById('modalGenericoForm').onsubmit = function (ev) { ev.preventDefault(); _fecharModalGenerico(); };
-            const _bg = document.querySelector('#modalGenericoOverlay .modal-actions .btn-success'); if (_bg) { _bg.style.display = ''; _bg.innerHTML = '<i class="fas fa-check"></i> Fechar'; }
+            const _bg = document.querySelector('#modalGenericoOverlay .modal-actions .btn-success'); if (_bg) { _bg.style.display = ''; _bg.innerHTML = '<i class="fas fa-check"></i> Finalizar'; }
             document.getElementById('modalGenericoOverlay').classList.add('open', 'modal-veros');
             _verObraMostrar(obraId, 'folhas');
         }
@@ -14415,7 +14415,7 @@
                 </div>
             `;
             document.getElementById('modalGenericoForm').onsubmit = ev => { ev.preventDefault(); _fecharModalGenerico(); };
-            const _bgCk = document.querySelector('#modalGenericoOverlay .modal-actions .btn-success'); if (_bgCk) { _bgCk.style.display = ''; _bgCk.innerHTML = '<i class="fas fa-check"></i> Fechar'; }
+            const _bgCk = document.querySelector('#modalGenericoOverlay .modal-actions .btn-success'); if (_bgCk) { _bgCk.style.display = ''; _bgCk.innerHTML = '<i class="fas fa-check"></i> Finalizar'; }
             document.getElementById('modalGenericoOverlay').classList.add('open');
             _checklistRenderLista();
         }
@@ -14426,33 +14426,35 @@
             lista.innerHTML = itens.length ? itens.map((it, i) => `
                 <div class="checklist-item-linha" style="border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;">
                     <div style="display:flex;align-items:center;gap:8px;">
-                        <input type="checkbox" onchange="_checklistPreviewPergunta('${escapeHtmlSimples(it.texto).replace(/'/g, "\\'")}', this)" style="width:auto;flex-shrink:0;" />
                         <span style="flex:1;">${escapeHtmlSimples(it.texto)}</span>
-                        <button type="button" class="btn btn-sm" style="background:#fee2e2;color:#991b1b;" onclick="_checklistRemoverItem(${i})"><i class="fas fa-trash"></i></button>
+                        <span style="background:#f1f5f9;color:#64748b;font-size:.75rem;font-weight:600;padding:4px 10px;border-radius:99px;white-space:nowrap;">Sim / Não</span>
+                        <button type="button" class="btn btn-sm btn-outline" onclick="_checklistEditarItem(${i})" title="Editar"><i class="fas fa-pen"></i></button>
+                        <button type="button" class="btn btn-sm" style="background:#fee2e2;color:#991b1b;" onclick="_checklistRemoverItem(${i})" title="Remover"><i class="fas fa-trash"></i></button>
                     </div>
                 </div>
             `).join('') : `<p class="help-text">Ainda sem pontos definidos.</p>`;
         }
-        // Pré-visualização: marcar a checkbox de um ponto mostra como a pergunta Sim/Não vai
-        // aparecer ao técnico — não fica gravado, é só para o admin conferir. Desmarca sozinha
-        // ao escolher Sim ou Não.
-        function _checklistPreviewPergunta(textoItem, checkboxEl) {
-            const linha = checkboxEl.closest('.checklist-item-linha');
-            let preview = linha.querySelector('.checklist-preview-pergunta');
-            if (!checkboxEl.checked) { preview?.remove(); return; }
-            if (preview) return;
-            preview = document.createElement('div');
-            preview.className = 'checklist-preview-pergunta';
-            preview.style.cssText = 'margin-top:8px;padding:10px;background:#f8fafc;border-radius:8px;font-size:.82rem;';
-            preview.innerHTML = `
-                <div style="color:#64748b;margin-bottom:6px;"><i class="fas fa-eye"></i> Pré-visualização de como o técnico vai ver:</div>
-                <div style="font-weight:600;margin-bottom:8px;">${escapeHtmlSimples(textoItem)}</div>
-                <div style="display:flex;gap:8px;">
-                    <button type="button" class="btn btn-sm" style="flex:1;background:#f1f5f9;color:#334155;" onclick="this.closest('.checklist-preview-pergunta').remove();this.closest('.checklist-item-linha').querySelector('input[type=checkbox]').checked=false;">Sim</button>
-                    <button type="button" class="btn btn-sm" style="flex:1;background:#f1f5f9;color:#334155;" onclick="this.closest('.checklist-preview-pergunta').remove();this.closest('.checklist-item-linha').querySelector('input[type=checkbox]').checked=false;">Não</button>
+        function _checklistEditarItem(indice) {
+            const admin = adminAtual(); if (!admin) return;
+            const it = admin.obrasChecklistItens?.[indice]; if (!it) return;
+            const linha = document.querySelectorAll('#checklist_itens_lista .checklist-item-linha')[indice]; if (!linha) return;
+            linha.innerHTML = `
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <input type="text" id="checklist_edit_input_${indice}" value="${escapeHtmlSimples(it.texto)}" style="flex:1;" />
+                    <button type="button" class="btn btn-sm" style="background:#dcfce7;color:#166534;" onclick="_checklistGuardarEdicao(${indice})" title="Guardar"><i class="fas fa-check"></i></button>
+                    <button type="button" class="btn btn-sm" style="background:#f1f5f9;color:#334155;" onclick="_checklistRenderLista()" title="Cancelar"><i class="fas fa-xmark"></i></button>
                 </div>
             `;
-            linha.appendChild(preview);
+            document.getElementById(`checklist_edit_input_${indice}`)?.focus();
+        }
+        function _checklistGuardarEdicao(indice) {
+            const admin = adminAtual(); if (!admin) return;
+            const input = document.getElementById('checklist_edit_input_' + indice);
+            const novoTexto = (input?.value || '').trim();
+            if (!novoTexto) { alert('O texto não pode ficar vazio.'); return; }
+            admin.obrasChecklistItens[indice].texto = novoTexto;
+            guardarDados(dados, ['administradores']).catch(() => alert('⚠️ Ficou no ecrã, mas ainda não foi possível confirmar no servidor.'));
+            _checklistRenderLista();
         }
         function _checklistAdicionarItem() {
             const admin = adminAtual(); if (!admin) return;
@@ -14499,12 +14501,35 @@
             lista.innerHTML = itens.length ? itens.map((it, i) => `
                 <div class="checklist-item-linha" style="border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;">
                     <div style="display:flex;align-items:center;gap:8px;">
-                        <input type="checkbox" onchange="_checklistPreviewPergunta('${escapeHtmlSimples(it.texto).replace(/'/g, "\\'")}', this)" style="width:auto;flex-shrink:0;" />
                         <span style="flex:1;">${escapeHtmlSimples(it.texto)}</span>
-                        <button type="button" class="btn btn-sm" style="background:#fee2e2;color:#991b1b;" onclick="_checklistEntradaRemoverItem(${i})"><i class="fas fa-trash"></i></button>
+                        <span style="background:#f1f5f9;color:#64748b;font-size:.75rem;font-weight:600;padding:4px 10px;border-radius:99px;white-space:nowrap;">Sim / Não</span>
+                        <button type="button" class="btn btn-sm btn-outline" onclick="_checklistEntradaEditarItem(${i})" title="Editar"><i class="fas fa-pen"></i></button>
+                        <button type="button" class="btn btn-sm" style="background:#fee2e2;color:#991b1b;" onclick="_checklistEntradaRemoverItem(${i})" title="Remover"><i class="fas fa-trash"></i></button>
                     </div>
                 </div>
             `).join('') : `<p class="help-text">Ainda sem pontos definidos — sem pontos, não aparece nenhuma pergunta ao dar entrada.</p>`;
+        }
+        function _checklistEntradaEditarItem(indice) {
+            const admin = adminAtual(); if (!admin) return;
+            const it = admin.checklistEntradaItens?.[indice]; if (!it) return;
+            const linha = document.querySelectorAll('#checklist_entrada_itens_lista .checklist-item-linha')[indice]; if (!linha) return;
+            linha.innerHTML = `
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <input type="text" id="checklist_entrada_edit_input_${indice}" value="${escapeHtmlSimples(it.texto)}" style="flex:1;" />
+                    <button type="button" class="btn btn-sm" style="background:#dcfce7;color:#166534;" onclick="_checklistEntradaGuardarEdicao(${indice})" title="Guardar"><i class="fas fa-check"></i></button>
+                    <button type="button" class="btn btn-sm" style="background:#f1f5f9;color:#334155;" onclick="_checklistEntradaRenderLista()" title="Cancelar"><i class="fas fa-xmark"></i></button>
+                </div>
+            `;
+            document.getElementById(`checklist_entrada_edit_input_${indice}`)?.focus();
+        }
+        function _checklistEntradaGuardarEdicao(indice) {
+            const admin = adminAtual(); if (!admin) return;
+            const input = document.getElementById('checklist_entrada_edit_input_' + indice);
+            const novoTexto = (input?.value || '').trim();
+            if (!novoTexto) { alert('O texto não pode ficar vazio.'); return; }
+            admin.checklistEntradaItens[indice].texto = novoTexto;
+            guardarDados(dados, ['administradores']).catch(() => alert('⚠️ Ficou no ecrã, mas ainda não foi possível confirmar no servidor.'));
+            _checklistEntradaRenderLista();
         }
         function _checklistEntradaAdicionarItem() {
             const admin = adminAtual(); if (!admin) return;
@@ -14796,7 +14821,7 @@
             `;
             document.getElementById('modalGenericoForm').onsubmit = function (ev) { ev.preventDefault(); _fecharModalGenerico(); };
             const _bgVerAm = document.querySelector('#modalGenericoOverlay .modal-actions .btn-success');
-            if (_bgVerAm) { _bgVerAm.style.display = ''; _bgVerAm.innerHTML = '<i class="fas fa-check"></i> Fechar'; }
+            if (_bgVerAm) { _bgVerAm.style.display = ''; _bgVerAm.innerHTML = '<i class="fas fa-check"></i> Finalizar'; }
             document.getElementById('modalGenericoOverlay').classList.add('open');
         }
         async function faturarAutoMedicao(autoId) {
@@ -24727,7 +24752,7 @@ async function salvarAdmin(e) {
                 <div id="rfm_resultado"></div>
             `;
             document.getElementById('modalGenericoForm').onsubmit = ev => { ev.preventDefault(); _fecharModalGenerico(); };
-            const _bgRfm = document.querySelector('#modalGenericoOverlay .modal-actions .btn-success'); if (_bgRfm) { _bgRfm.style.display = ''; _bgRfm.innerHTML = '<i class="fas fa-check"></i> Fechar'; }
+            const _bgRfm = document.querySelector('#modalGenericoOverlay .modal-actions .btn-success'); if (_bgRfm) { _bgRfm.style.display = ''; _bgRfm.innerHTML = '<i class="fas fa-check"></i> Finalizar'; }
             const _modalElRfm = document.querySelector('#modalGenericoOverlay .modal');
             if (_modalElRfm) { _modalElRfm.dataset.maxWidthOriginal = _modalElRfm.style.maxWidth || ''; _modalElRfm.style.maxWidth = '760px'; }
             document.getElementById('modalGenericoOverlay').classList.add('open');
@@ -24792,7 +24817,7 @@ async function salvarAdmin(e) {
                 <div id="rkm_resultado"></div>
             `;
             document.getElementById('modalGenericoForm').onsubmit = ev => { ev.preventDefault(); _fecharModalGenerico(); };
-            const _bgRkm = document.querySelector('#modalGenericoOverlay .modal-actions .btn-success'); if (_bgRkm) { _bgRkm.style.display = ''; _bgRkm.innerHTML = '<i class="fas fa-check"></i> Fechar'; }
+            const _bgRkm = document.querySelector('#modalGenericoOverlay .modal-actions .btn-success'); if (_bgRkm) { _bgRkm.style.display = ''; _bgRkm.innerHTML = '<i class="fas fa-check"></i> Finalizar'; }
             document.getElementById('modalGenericoOverlay').classList.add('open');
             _renderizarRelatorioKm();
         }
@@ -24841,7 +24866,7 @@ async function salvarAdmin(e) {
                 </div>
             `;
             document.getElementById('modalGenericoForm').onsubmit = ev => { ev.preventDefault(); _fecharModalGenerico(); };
-            const _bgRp = document.querySelector('#modalGenericoOverlay .modal-actions .btn-success'); if (_bgRp) { _bgRp.style.display = ''; _bgRp.innerHTML = '<i class="fas fa-check"></i> Fechar'; }
+            const _bgRp = document.querySelector('#modalGenericoOverlay .modal-actions .btn-success'); if (_bgRp) { _bgRp.style.display = ''; _bgRp.innerHTML = '<i class="fas fa-check"></i> Finalizar'; }
             document.getElementById('modalGenericoOverlay').classList.add('open', 'modal-veros');
         }
         function _rpRenderCampos(codigo) {
