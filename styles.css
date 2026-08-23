@@ -914,6 +914,7 @@
         body.dark-mode .tg-toast { background:#1e293b; color:#e2e8f0; }
         @media (max-width:600px) { #tgToastContainer { left:12px; right:12px; top:12px; max-width:none; } }
         @media (max-width:600px) { .ff-secao-body { grid-template-columns:1fr; } .ff-hero { flex-direction:column; align-items:flex-start; } }
+        @media (max-width:600px) { .tg-ligacao-texto { display:none; } } /* em ecrã pequeno mostra só o ponto colorido, poupa espaço no cabeçalho */
 
         /* ===== MODO ESCURO ===== */
         body.dark-mode { background:#0f172a; color:#e2e8f0; }

@@ -744,6 +744,10 @@
                     <i class="fas fa-chevron-down tg-header-extras-seta"></i>
                 </div>
                 <div id="headerExtras" class="tg-header-extras">
+                    <span id="ligacaoIndicador" title="A verificar ligação…" style="display:inline-flex;align-items:center;gap:5px;font-size:.78rem;font-weight:600;color:#64748b;padding:0 6px;">
+                        <span id="ligacaoDot" style="width:8px;height:8px;border-radius:50%;background:#94a3b8;flex-shrink:0;"></span>
+                        <span id="ligacaoTexto" class="tg-ligacao-texto">A verificar…</span>
+                    </span>
                     <div id="sinoWrap" style="position:relative; display:none;">
                         <button id="btnSino" class="btn-sino" onclick="toggleSino(event)" title="Notificações"><i class="fas fa-bell"></i><span id="sinoBadge" class="sino-badge" style="display:none;">0</span></button>
                         <div id="sinoDropdown" class="sino-dropdown" style="display:none;"></div>
@@ -1058,7 +1062,7 @@
     </div>
 
     <div class="modal-overlay" id="modalQuiosqueSetupOverlay">
-        <div class="modal" style="max-width:460px;">
+        <div class="modal" style="max-width:640px;max-height:92vh;overflow-y:auto;">
             <h3><i class="fas fa-tablet-screen-button"></i> Configurar Modo Quiosque</h3>
             <div class="form-group">
                 <label>Modo de funcionamento *</label>
@@ -1902,6 +1906,8 @@
             <div style="display:flex;gap:10px;flex-wrap:wrap;">
                 <button class="btn btn-danger" onclick="gerarRelatorioOS('pdf')"><i class="fas fa-file-pdf"></i> Gerar PDF</button>
                 <button class="btn btn-success" onclick="gerarRelatorioOS('excel')"><i class="fas fa-file-excel"></i> Gerar Excel</button>
+                <button id="btnRelatorioKm" class="btn btn-outline" style="display:none;" onclick="abrirRelatorioKm()"><i class="fas fa-route"></i> Km Percorridos (estimados)</button>
+                <button id="btnRelatorioFaturasMoloni" class="btn btn-outline" style="display:none;" onclick="abrirRelatorioFaturasMoloni()"><i class="fas fa-file-invoice-dollar"></i> Faturas Moloni</button>
             </div>
         </div>
     </div>
@@ -3144,8 +3150,8 @@
             },
             servicos: {
                 tabela: 'servicos',
-                from: r => ({ id: r.id, numeroRegisto: r.numero_registo, clienteId: r.cliente_id, funcionarioId: r.funcionario_id, funcionariosIds: Array.isArray(r.funcionarios_ids) ? r.funcionarios_ids : [], relatorioResponsavelId: r.relatorio_responsavel_id || null, contratoId: r.contrato_id, obraId: r.obra_id, localId: r.local_id || null, assistenciaId: r.assistencia_id || null, valor: r.valor != null ? Number(r.valor) : null, duracao: r.duracao != null ? Number(r.duracao) : null, duracaoDias: r.duracao_dias != null ? Number(r.duracao_dias) : null, morada: r.morada || null, numeroPorta: r.numero_porta || null, codigoPostal: r.codigo_postal || null, cidade: r.cidade || null, freguesia: r.freguesia || null, data: r.data || '', hora: hhmm(r.hora) || '', descricao: r.descricao, status: r.status, origem: r.origem || null, tiposTrabalho: Array.isArray(r.tipos_trabalho) ? r.tipos_trabalho : [], adminId: r.admin_id, pagamentoLocal: r.pagamento_local === true, pago: r.pago == null ? null : (r.pago === true), faturaMoloniId: r.fatura_moloni_id || null, faturaMoloniUrl: r.fatura_moloni_url || null, reciboMoloniId: r.recibo_moloni_id || null, reciboMoloniUrl: r.recibo_moloni_url || null, guiaMoloniId: r.guia_moloni_id || null, guiaMoloniUrl: r.guia_moloni_url || null, notaCreditoMoloniId: r.nota_credito_moloni_id || null, notaCreditoMoloniUrl: r.nota_credito_moloni_url || null }),
-                to:   o => ({ id: o.id, numero_registo: o.numeroRegisto || null, cliente_id: o.clienteId || null, funcionario_id: o.funcionarioId || null, funcionarios_ids: o.funcionariosIds || [], relatorio_responsavel_id: o.relatorioResponsavelId || null, contrato_id: o.contratoId || null, obra_id: o.obraId || null, local_id: o.localId || null, assistencia_id: o.assistenciaId || null, valor: (o.valor === '' || o.valor == null) ? null : Number(o.valor), duracao: (o.duracao === '' || o.duracao == null) ? null : parseInt(o.duracao,10), duracao_dias: (o.duracaoDias === '' || o.duracaoDias == null) ? null : parseInt(o.duracaoDias,10), morada: o.morada || null, numero_porta: o.numeroPorta || null, codigo_postal: o.codigoPostal || null, cidade: o.cidade || null, freguesia: o.freguesia || null, data: nn(o.data), hora: nn(o.hora), descricao: o.descricao || null, status: o.status || 'pendente', origem: o.origem || null, tipos_trabalho: o.tiposTrabalho || [], admin_id: o.adminId, pagamento_local: o.pagamentoLocal === true, pago: o.pago === undefined ? null : o.pago, fatura_moloni_id: o.faturaMoloniId || null, fatura_moloni_url: o.faturaMoloniUrl || null, recibo_moloni_id: o.reciboMoloniId || null, recibo_moloni_url: o.reciboMoloniUrl || null, guia_moloni_id: o.guiaMoloniId || null, guia_moloni_url: o.guiaMoloniUrl || null, nota_credito_moloni_id: o.notaCreditoMoloniId || null, nota_credito_moloni_url: o.notaCreditoMoloniUrl || null })
+                from: r => ({ id: r.id, numeroRegisto: r.numero_registo, clienteId: r.cliente_id, funcionarioId: r.funcionario_id, funcionariosIds: Array.isArray(r.funcionarios_ids) ? r.funcionarios_ids : [], relatorioResponsavelId: r.relatorio_responsavel_id || null, contratoId: r.contrato_id, obraId: r.obra_id, localId: r.local_id || null, assistenciaId: r.assistencia_id || null, valor: r.valor != null ? Number(r.valor) : null, duracao: r.duracao != null ? Number(r.duracao) : null, duracaoDias: r.duracao_dias != null ? Number(r.duracao_dias) : null, morada: r.morada || null, numeroPorta: r.numero_porta || null, codigoPostal: r.codigo_postal || null, cidade: r.cidade || null, freguesia: r.freguesia || null, data: r.data || '', hora: hhmm(r.hora) || '', descricao: r.descricao, observacoes: r.observacoes || null, status: r.status, origem: r.origem || null, tiposTrabalho: Array.isArray(r.tipos_trabalho) ? r.tipos_trabalho : [], adminId: r.admin_id, pagamentoLocal: r.pagamento_local === true, pago: r.pago == null ? null : (r.pago === true), faturaMoloniId: r.fatura_moloni_id || null, faturaMoloniUrl: r.fatura_moloni_url || null, reciboMoloniId: r.recibo_moloni_id || null, reciboMoloniUrl: r.recibo_moloni_url || null, guiaMoloniId: r.guia_moloni_id || null, guiaMoloniUrl: r.guia_moloni_url || null, notaCreditoMoloniId: r.nota_credito_moloni_id || null, notaCreditoMoloniUrl: r.nota_credito_moloni_url || null }),
+                to:   o => ({ id: o.id, numero_registo: o.numeroRegisto || null, cliente_id: o.clienteId || null, funcionario_id: o.funcionarioId || null, funcionarios_ids: o.funcionariosIds || [], relatorio_responsavel_id: o.relatorioResponsavelId || null, contrato_id: o.contratoId || null, obra_id: o.obraId || null, local_id: o.localId || null, assistencia_id: o.assistenciaId || null, valor: (o.valor === '' || o.valor == null) ? null : Number(o.valor), duracao: (o.duracao === '' || o.duracao == null) ? null : parseInt(o.duracao,10), duracao_dias: (o.duracaoDias === '' || o.duracaoDias == null) ? null : parseInt(o.duracaoDias,10), morada: o.morada || null, numero_porta: o.numeroPorta || null, codigo_postal: o.codigoPostal || null, cidade: o.cidade || null, freguesia: o.freguesia || null, data: nn(o.data), hora: nn(o.hora), descricao: o.descricao || null, observacoes: o.observacoes || null, status: o.status || 'pendente', origem: o.origem || null, tipos_trabalho: o.tiposTrabalho || [], admin_id: o.adminId, pagamento_local: o.pagamentoLocal === true, pago: o.pago === undefined ? null : o.pago, fatura_moloni_id: o.faturaMoloniId || null, fatura_moloni_url: o.faturaMoloniUrl || null, recibo_moloni_id: o.reciboMoloniId || null, recibo_moloni_url: o.reciboMoloniUrl || null, guia_moloni_id: o.guiaMoloniId || null, guia_moloni_url: o.guiaMoloniUrl || null, nota_credito_moloni_id: o.notaCreditoMoloniId || null, nota_credito_moloni_url: o.notaCreditoMoloniUrl || null })
             },
             assistencias: {
                 tabela: 'assistencias',
@@ -3176,6 +3182,11 @@
                 tabela: 'folhas_obra',
                 from: r => ({ id: r.id, servicoId: r.servico_id, contratoId: r.contrato_id, clienteId: r.cliente_id || null, localId: r.local_id || null, obraDescricao: r.obra_descricao, descricao: r.descricao, materiais: r.materiais, horasTrabalhadas: Number(r.horas_trabalhadas) || 0, data: r.data || '', funcionarioId: r.funcionario_id, adminId: r.admin_id, obraId: r.obra_id, assinatura: r.assinatura, assinaturaPath: r.assinatura_path || null, assinaturaNome: r.assinatura_nome, dataAtualizacao: isoToMs(r.data_atualizacao), folhaFinal: r.folha_final === true, origem: r.origem || null }),
                 to:   o => ({ id: o.id, servico_id: o.servicoId || null, contrato_id: o.contratoId || null, local_id: o.localId || null, obra_descricao: o.obraDescricao || 'Sem descrição', descricao: o.descricao || null, materiais: o.materiais || null, horas_trabalhadas: o.horasTrabalhadas || 0, data: nn(o.data), funcionario_id: o.funcionarioId || null, admin_id: o.adminId, obra_id: o.obraId || null, assinatura: o.assinatura || null, assinatura_path: o.assinaturaPath || null, assinatura_nome: o.assinaturaNome || null, data_atualizacao: msToISO(o.dataAtualizacao), folha_final: o.folhaFinal === true, origem: o.origem || null })
+            },
+            kmViagens: {
+                tabela: 'km_viagens',
+                from: r => ({ id: r.id, funcionarioId: r.funcionario_id, servicoId: r.servico_id, adminId: r.admin_id, data: r.data || '', origemLat: r.origem_lat, origemLng: r.origem_lng, destinoLat: r.destino_lat, destinoLng: r.destino_lng, kmEstimados: Number(r.km_estimados) || 0, criadoEm: isoToMs(r.criado_em) }),
+                to:   o => ({ id: o.id, funcionario_id: o.funcionarioId || null, servico_id: o.servicoId || null, admin_id: o.adminId, data: nn(o.data), origem_lat: o.origemLat, origem_lng: o.origemLng, destino_lat: o.destinoLat, destino_lng: o.destinoLng, km_estimados: o.kmEstimados || 0, criado_em: msToISO(o.criadoEm) })
             },
             requisicoes: {
                 tabela: 'requisicoes',
@@ -3812,8 +3823,32 @@
             }
         }
 
-        window.addEventListener('offline', () => mostrarStatusOffline());
-        window.addEventListener('online', () => { mostrarStatusOffline(); guardarDados(); });
+        function _atualizarIndicadorLigacao() {
+            const dot = document.getElementById('ligacaoDot');
+            const txt = document.getElementById('ligacaoTexto');
+            const wrap = document.getElementById('ligacaoIndicador');
+            if (!dot || !txt || !wrap) return;
+            const offline = !navigator.onLine;
+            const pendentes = _contarAlteracoesPendentes();
+            if (offline) {
+                dot.style.background = '#dc2626';
+                txt.textContent = 'Offline';
+                wrap.title = 'Sem ligação — a trabalhar offline.' + (pendentes ? ' ' + pendentes + ' alteração(ões) por sincronizar.' : '');
+            } else if (pendentes) {
+                dot.style.background = '#d97706';
+                txt.textContent = 'A sincronizar';
+                wrap.title = pendentes + ' alteração(ões) por sincronizar…';
+            } else {
+                dot.style.background = '#16a34a';
+                txt.textContent = 'Online';
+                wrap.title = 'Ligado e sincronizado.';
+            }
+        }
+        window.addEventListener('offline', () => { mostrarStatusOffline(); _atualizarIndicadorLigacao(); });
+        window.addEventListener('online', () => { mostrarStatusOffline(); guardarDados(); _atualizarIndicadorLigacao(); });
+        setInterval(_atualizarIndicadorLigacao, 4000);
+        document.addEventListener('DOMContentLoaded', _atualizarIndicadorLigacao);
+        if (document.readyState !== 'loading') _atualizarIndicadorLigacao();
 
         function guardarDados() {
             // serializa as gravações para evitar corridas; UI já foi atualizada em memória
@@ -4223,10 +4258,43 @@
             if (pin) {
                 if (/^https?:\/\//i.test(pin)) return { url: pin, exato: true };
                 const m = pin.match(/(-?\d{1,3}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)/);
-                if (m) return { url: `https://www.google.com/maps?q=${m[1]},${m[2]}`, exato: true };
+                if (m) return { url: `https://www.google.com/maps/dir/?api=1&destination=${m[1]},${m[2]}`, wazeUrl: `https://waze.com/ul?ll=${m[1]},${m[2]}&navigate=yes`, exato: true, lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
             }
-            if (morada) return { url: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(morada)}`, exato: false };
+            if (morada) return { url: `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(morada)}`, wazeUrl: `https://waze.com/ul?q=${encodeURIComponent(morada)}&navigate=yes`, exato: false };
             return null;
+        }
+        // Fórmula de Haversine — distância em linha reta (km) entre duas coordenadas GPS.
+        function _distanciaKmHaversine(lat1, lng1, lat2, lng2) {
+            const R = 6371;
+            const toRad = g => g * Math.PI / 180;
+            const dLat = toRad(lat2 - lat1), dLng = toRad(lng2 - lng1);
+            const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        }
+        // Regista uma estimativa de km percorridos ao tocar em "Navegar" para uma OS: só é
+        // possível quando o cliente/local tem um pin exato (lat/lng) — sem isso não há como
+        // calcular sem recorrer a uma API paga de geocodificação. É só uma estimativa (linha reta
+        // × fator de correção de estrada), não o valor exato do trajeto percorrido.
+        const _FATOR_CORRECAO_ESTRADA = 1.3;
+        async function _registarKmViagemOS(servicoId) {
+            const s = (dados.servicos || []).find(x => x.id === servicoId); if (!s) return;
+            const cliente = dados.clientes?.find(c => c.id === s.clienteId);
+            const morada = cliente ? [cliente.morada, cliente.codigoPostal, cliente.localidade].filter(Boolean).join(', ') : '';
+            const urlInfo = _osMapaInfo(s.clienteId, s.morada || morada, s.localId);
+            if (!urlInfo || urlInfo.lat == null || urlInfo.lng == null) return; // sem coordenadas exatas, não regista nada
+            const loc = await obterLocalizacao(5000);
+            if (!loc) return; // sem GPS disponível, não bloqueia a navegação — só não regista
+            const kmLinhaReta = _distanciaKmHaversine(loc.lat, loc.lng, urlInfo.lat, urlInfo.lng);
+            const kmEstimados = +(kmLinhaReta * _FATOR_CORRECAO_ESTRADA).toFixed(1);
+            if (kmEstimados < 0.1) return; // já está no local, não vale a pena registar
+            dados.kmViagens = dados.kmViagens || [];
+            dados.kmViagens.push({
+                id: gerarId(), funcionarioId: usuarioLogado?.id || null, servicoId: servicoId || null,
+                adminId: _tenantIdAtual() || usuarioLogado?.adminId || null, data: getDataHoje(),
+                origemLat: loc.lat, origemLng: loc.lng, destinoLat: urlInfo.lat, destinoLng: urlInfo.lng,
+                kmEstimados, criadoEm: Date.now()
+            });
+            guardarDados(dados, ['kmViagens']).catch(() => {}); // falha silenciosa — é só uma estimativa, não vale a pena incomodar o técnico
         }
         // Igual à lógica acima, mas a partir do texto ainda por gravar (usada no formulário do cliente,
         // para mostrar logo o link por baixo do campo assim que se cola o pin).
@@ -4310,6 +4378,35 @@
             }
         }
 
+        // Preenche automaticamente nome/morada do cliente a partir do NIF, indo consultar a
+        // Moloni (que por sua vez consulta o registo comercial). Poupa escrever tudo à mão.
+        async function _consultarNifMoloni() {
+            const admin = adminAtual(); if (!admin) return;
+            const nifEl = document.getElementById('c_nif');
+            const nif = (nifEl?.value || '').trim();
+            if (!/^\d{9}$/.test(nif)) { alert('Escreve um NIF válido (9 dígitos) antes de ir buscar os dados.'); return; }
+            const cfg = admin.integracaoFaturacao;
+            if (!cfg || cfg.provider !== 'moloni' || !cfg.moloni?.companyId) { alert('Ainda não configuraste a Moloni. Vai a Financeiro → "Faturação (Moloni)".'); return; }
+            _mostrarCarregando('A procurar dados do NIF…');
+            try {
+                const { data, error } = await supa.functions.invoke('faturar-moloni', { body: { admin_id: admin.id, acao: 'consultar_nif', nif } });
+                if (error) throw error;
+                if (data?.erro) throw new Error(data.erro);
+                if (!data || !data.encontrado) { mostrarToast('Não foram encontrados dados para este NIF.', 'aviso'); return; }
+                const setVal = (id, v) => { const el = document.getElementById(id); if (el && v) el.value = v; };
+                setVal('c_nome', data.nome);
+                setVal('c_morada', data.morada);
+                setVal('c_cp', data.codigoPostal);
+                setVal('c_cidade', data.cidade);
+                mostrarToast('✅ Dados preenchidos a partir do NIF.', 'sucesso');
+            } catch (err) {
+                console.error('consultar_nif moloni:', err);
+                const motivo = await _erroMoloniDetalhado(err);
+                alert('⚠️ Não foi possível consultar o NIF: ' + motivo);
+            } finally {
+                _esconderCarregando();
+            }
+        }
         function obterNomeEmpresa(adminId) {
             const a = dados.administradores?.find(a => a.id === adminId);
             return a ? (a.empresa || a.nome) : '(removida)';
@@ -4423,11 +4520,14 @@
                 if (getComputedStyle(input.parentElement).position === 'static') input.parentElement.style.position = 'relative';
                 input.parentElement.appendChild(dd);
             }
-            if (!q) { dd.style.display = 'none'; return; }
             const mapa = window._clienteBuscaMapa || {};
-            const resultados = Object.keys(mapa).filter(label => label.toLowerCase().includes(q)).slice(0, 40);
+            const todasLabels = Object.keys(mapa);
+            // Sem texto escrito ainda: mostra logo uma lista (como já acontece na pesquisa de
+            // artigos), em vez de esconder o dropdown à espera da primeira letra — assim a
+            // pessoa já vê opções para escolher antes mesmo de começar a escrever.
+            const resultados = (q ? todasLabels.filter(label => label.toLowerCase().includes(q)) : todasLabels).slice(0, 40);
             if (!resultados.length) {
-                dd.innerHTML = '<div style="padding:10px 12px;color:#94a3b8;font-size:.9rem;">Sem clientes encontrados</div>';
+                dd.innerHTML = `<div style="padding:10px 12px;color:#94a3b8;font-size:.9rem;">${q ? 'Sem clientes encontrados' : 'Sem clientes registados ainda'}</div>`;
                 dd.style.display = 'block';
                 return;
             }
@@ -4446,8 +4546,7 @@
             });
         }
         function clienteBuscaFoco(inputId) {
-            const input = document.getElementById(inputId);
-            if (input && input.value.trim()) clienteBuscaInput(inputId, input.id.replace('_busca', ''));
+            clienteBuscaInput(inputId, inputId.replace('_busca', ''));
         }
         function clienteBuscaEsconder(inputId) {
             setTimeout(() => { const dd = document.getElementById(inputId + '_dd'); if (dd) dd.style.display = 'none'; }, 200);
@@ -4955,6 +5054,108 @@
             _quiosqueAgendaSessaoAtual = sessao;
             _quiosqueAgendaGrid();
         }
+        // Garante que existe SEMPRE um registo de ponto geral (Registo de Ponto) aberto antes de
+        // picar entrada numa OS/Obra pelo Modo Quiosque — para técnicos que nunca usam o telemóvel
+        // próprio, o quiosque é o ÚNICO sítio onde a entrada/saída geral fica registada, por isso
+        // tem de garantir isso sozinho, sem depender de a pessoa picar o ponto geral à parte.
+        function _quiosqueGarantirEntradaGeral(pessoaId, adminId, hora, lat, lng) {
+            dados.ponto = dados.ponto || [];
+            const hoje = getDataHoje();
+            const jaAberto = dados.ponto.find(r => r.funcionarioId === pessoaId && r.data === hoje && r.entrada && !r.saida);
+            if (!jaAberto) {
+                dados.ponto.push({ id: gerarId(), funcionarioId: pessoaId, adminId, data: hoje, entrada: hora, saida: null, lat: lat ?? null, lng: lng ?? null, origem: 'quiosque_auto' });
+            }
+        }
+        function _quiosqueFecharEntradaGeral(pessoaId, hora) {
+            const hoje = getDataHoje();
+            const aberto = (dados.ponto || []).find(r => r.funcionarioId === pessoaId && r.data === hoje && r.entrada && !r.saida);
+            if (aberto) aberto.saida = hora;
+        }
+        function _quiosqueAgendaAbrirGeral() {
+            const painel = document.getElementById('tgqPainel');
+            const pessoas = _quiosqueAgendaPessoasEmpresa();
+            painel.innerHTML = `
+                <div style="text-align:center;color:#fff;margin-bottom:14px;">
+                    <div style="font-weight:700;"><i class="fas fa-clock"></i> Ponto Geral (sem OS/Obra)</div>
+                    <div style="font-size:.8rem;opacity:.85;margin-top:2px;">Entrada ao serviço e saída final do dia</div>
+                    <button type="button" onclick="_quiosqueAgendaRender()" style="margin-top:8px;background:none;border:1px solid rgba(255,255,255,.4);color:#fff;padding:5px 14px;border-radius:100px;font-size:.78rem;cursor:pointer;"><i class="fas fa-arrow-left"></i> Voltar à agenda</button>
+                </div>
+                <div class="tgq-grid" style="position:static;">
+                    ${pessoas.map(p => `
+                        <div class="tgq-pessoa" onclick="_quiosqueAgendaGeralPessoaClick('${p.id}','${p._tipo}')">
+                            ${p.foto ? `<img class="tgq-avatar" src="${p.foto}" />` : `<div class="tgq-avatar">${(p.nome || '?').charAt(0).toUpperCase()}</div>`}
+                            <div class="tgq-nome">${escapeHtmlSimples(p.nome)}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        let _quiosqueAgendaGeralPessoaSel = null, _quiosqueAgendaGeralPin = '';
+        function _quiosqueAgendaGeralPessoaClick(id, tipo) {
+            const pessoa = _quiosqueAgendaPessoasEmpresa().find(p => p.id === id && p._tipo === tipo);
+            if (!pessoa) return;
+            if (!pessoa.pin) { alert('Esta pessoa ainda não tem um PIN definido. Peça ao administrador para o configurar.'); return; }
+            _quiosqueAgendaGeralPessoaSel = pessoa;
+            _quiosqueAgendaGeralPin = '';
+            _quiosqueAgendaGeralRenderPin();
+        }
+        function _quiosqueAgendaGeralRenderPin() {
+            const p = _quiosqueAgendaGeralPessoaSel; if (!p) return;
+            const painel = document.getElementById('tgqPainel');
+            painel.innerHTML = `
+                <div style="text-align:center;color:#fff;">
+                    <div style="font-weight:700;margin-bottom:10px;">${escapeHtmlSimples(p.nome)}</div>
+                    <div style="font-size:1.6rem;letter-spacing:6px;min-height:36px;">${'•'.repeat(_quiosqueAgendaGeralPin.length)}</div>
+                    <div style="display:grid;grid-template-columns:repeat(3,64px);gap:10px;justify-content:center;margin:16px auto;">
+                        ${[1,2,3,4,5,6,7,8,9].map(n => `<button type="button" class="tgq-tecla" onclick="_quiosqueAgendaGeralPinDigito(${n})">${n}</button>`).join('')}
+                        <div></div>
+                        <button type="button" class="tgq-tecla" onclick="_quiosqueAgendaGeralPinDigito(0)">0</button>
+                        <button type="button" class="tgq-tecla" onclick="_quiosqueAgendaGeralPinApagar()"><i class="fas fa-backspace"></i></button>
+                    </div>
+                    <button type="button" class="tgq-acao-btn" style="background:#64748b;max-width:220px;margin:0 auto;" onclick="_quiosqueAgendaAbrirGeral()">Cancelar</button>
+                </div>
+            `;
+        }
+        function _quiosqueAgendaGeralPinDigito(n) {
+            if (_quiosqueAgendaGeralPin.length >= 4) return;
+            _quiosqueAgendaGeralPin += String(n);
+            _quiosqueAgendaGeralRenderPin();
+            if (_quiosqueAgendaGeralPin.length === 4) _quiosqueAgendaGeralVerificarPin();
+        }
+        function _quiosqueAgendaGeralPinApagar() {
+            _quiosqueAgendaGeralPin = _quiosqueAgendaGeralPin.slice(0, -1);
+            _quiosqueAgendaGeralRenderPin();
+        }
+        function _quiosqueAgendaGeralVerificarPin() {
+            const p = _quiosqueAgendaGeralPessoaSel;
+            if (!p || p.pin !== _quiosqueAgendaGeralPin) { alert('PIN incorreto.'); _quiosqueAgendaGeralPin = ''; _quiosqueAgendaGeralRenderPin(); return; }
+            const hoje = getDataHoje();
+            const aberto = (dados.ponto || []).find(r => r.funcionarioId === p.id && r.data === hoje && r.entrada && !r.saida);
+            const painel = document.getElementById('tgqPainel');
+            painel.innerHTML = `
+                <div style="text-align:center;color:#fff;">
+                    <div style="font-size:1.1rem;font-weight:700;">${escapeHtmlSimples(p.nome)}</div>
+                    <div style="font-size:.85rem;opacity:.85;margin-bottom:16px;">${new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}</div>
+                </div>
+                <div style="max-width:340px;margin:0 auto;">
+                    ${!aberto
+                        ? `<button type="button" class="tgq-acao-btn" style="background:#16a34a;" onclick="_quiosqueAgendaGeralPicar('entrada')"><i class="fas fa-sign-in-alt"></i> Entrada ao Serviço</button>`
+                        : `<button type="button" class="tgq-acao-btn" style="background:#dc2626;" onclick="_quiosqueAgendaGeralPicar('saida')"><i class="fas fa-sign-out-alt"></i> Saída ao Serviço</button>`}
+                    <button type="button" class="tgq-acao-btn" style="background:#64748b;" onclick="_quiosqueAgendaAbrirGeral()">Cancelar</button>
+                </div>
+            `;
+        }
+        function _quiosqueAgendaGeralPicar(acao) {
+            const p = _quiosqueAgendaGeralPessoaSel; if (!p) return;
+            const adminId = _tenantQuiosque();
+            const hora = new Date().toTimeString().slice(0, 5);
+            if (acao === 'entrada') _quiosqueGarantirEntradaGeral(p.id, adminId, hora);
+            else _quiosqueFecharEntradaGeral(p.id, hora);
+            guardarDados(dados);
+            const painel = document.getElementById('tgqPainel');
+            painel.innerHTML = `<div style="text-align:center;color:#fff;"><div style="font-size:2.4rem;color:#16a34a;"><i class="fas fa-circle-check"></i></div><div style="font-weight:700;margin-top:8px;">${acao === 'entrada' ? 'Entrada registada!' : 'Saída registada!'}</div></div>`;
+            setTimeout(_quiosqueAgendaRender, 1800);
+        }
         function _quiosqueAgendaRender() {
             _quiosqueAgendaSessaoAtual = null;
             try { localStorage.removeItem('tg_quiosque_agenda_sessao'); } catch (e) {}
@@ -4983,6 +5184,9 @@
                         ${data === hoje ? '<div style="color:#16a34a;font-size:.72rem;font-weight:700;">● HOJE</div>' : ''}
                     </div>
                     <button type="button" onclick="_quiosqueAgendaNavegarDia(1)" style="width:48px;height:48px;border:none;border-radius:12px;background:#334155;color:#fff;font-size:1.1rem;cursor:pointer;flex-shrink:0;"><i class="fas fa-chevron-right"></i></button>
+                </div>
+                <div style="text-align:center;margin-bottom:14px;">
+                    <button type="button" onclick="_quiosqueAgendaAbrirGeral()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.4);color:#fff;padding:8px 18px;border-radius:100px;font-size:.82rem;font-weight:600;cursor:pointer;"><i class="fas fa-clock"></i> Ponto Geral (sem OS/Obra) — Entrada / Saída</button>
                 </div>
                 <div style="display:grid;gap:10px;max-width:520px;margin:0 auto;">
                     ${itens.length ? itens.map(it => `
@@ -5144,6 +5348,13 @@
             const hoje = getDataHoje();
             const hora = new Date().toTimeString().slice(0, 5);
             if (acao === 'entrada') {
+                // Obrigatório picar primeiro o Ponto Geral — sem isso, não entra em OS/Obra.
+                const geralAberto = (dados.ponto || []).find(r => r.funcionarioId === p.id && r.data === hoje && r.entrada && !r.saida);
+                if (!geralAberto) {
+                    alert('⚠️ ' + p.nome.split(' ')[0] + ' ainda não picou o Ponto Geral hoje.\n\nÉ preciso picar primeiro a Entrada ao Serviço em "Ponto Geral" antes de entrar numa OS/Obra.');
+                    _quiosqueAgendaAbrirGeral();
+                    return;
+                }
                 if (s.tipo === 'obra') {
                     dados.obraPontoLonga = dados.obraPontoLonga || [];
                     dados.obraPontoLonga.push({ id: gerarId(), obraId: s.id, funcionarioId: p.id, adminId, data: hoje, entrada: hora, saida: null });
@@ -5176,6 +5387,9 @@
             const s = _quiosqueAgendaSessaoAtual;
             const aberto = _quiosqueAgendaAberto(pessoa.id);
             if (aberto) { aberto.saida = hora; guardarDados(dados); }
+            // Importante: terminar uma OS/Obra NÃO fecha o Ponto Geral — a pessoa pode acabar
+            // esta obra mais cedo e ainda continuar noutra tarefa no mesmo dia. O Ponto Geral só
+            // fecha quando a pessoa picar explicitamente "Saída ao Serviço" em Ponto Geral.
             if (finalizarTambem) {
                 let tiposEspecialidadePendentes = [];
                 if (s.tipo === 'servico') {
@@ -5369,7 +5583,7 @@
             _quiosquePinAtual = ''; _quiosquePessoaSelecionada = null;
             document.getElementById('tgqPainel').style.display = 'none';
             document.getElementById('tgqGrid').style.display = 'grid';
-            document.getElementById('tgqSubtitulo').textContent = 'Toca no teu nome para picar o ponto';
+            document.getElementById('tgqSubtitulo').innerHTML = 'Toca no teu nome para picar o ponto<br><button type="button" onclick="_quiosqueFixaAbrirGeral()" style="margin-top:8px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.4);color:#fff;padding:6px 16px;border-radius:100px;font-size:.78rem;font-weight:600;cursor:pointer;"><i class="fas fa-clock"></i> Ponto Geral (Entrada / Saída do dia)</button>';
             const pessoas = _quiosquePessoas();
             document.getElementById('tgqGrid').innerHTML = pessoas.length ? pessoas.map(p => `
                 <div class="tgq-pessoa" onclick="quiosquePessoaClick('${p.id}','${p._tipo}')">
@@ -5377,6 +5591,95 @@
                     <div class="tgq-nome">${p.nome}</div>
                 </div>
             `).join('') : '<p style="color:#fff;">Sem funcionários ou encarregados com PIN definido ainda.</p>';
+        }
+        // Ponto Geral no modo Obra Fixa — mesma lógica do modo Agenda, mas reaproveita a lista
+        // de pessoas atribuídas a esta obra/aparelho (_quiosquePessoas) e volta ao grid da obra.
+        let _quiosqueFixaGeralPessoaSel = null, _quiosqueFixaGeralPin = '';
+        function _quiosqueFixaAbrirGeral() {
+            document.getElementById('tgqGrid').style.display = 'none';
+            const painel = document.getElementById('tgqPainel');
+            painel.style.display = 'block';
+            const pessoas = _quiosquePessoas();
+            painel.innerHTML = `
+                <div style="text-align:center;color:#fff;margin-bottom:14px;">
+                    <div style="font-weight:700;"><i class="fas fa-clock"></i> Ponto Geral</div>
+                    <div style="font-size:.8rem;opacity:.85;margin-top:2px;">Entrada ao serviço e saída final do dia</div>
+                    <button type="button" onclick="_quiosqueMostrarGrid()" style="margin-top:8px;background:none;border:1px solid rgba(255,255,255,.4);color:#fff;padding:5px 14px;border-radius:100px;font-size:.78rem;cursor:pointer;"><i class="fas fa-arrow-left"></i> Voltar</button>
+                </div>
+                <div class="tgq-grid" style="position:static;">
+                    ${pessoas.map(p => `
+                        <div class="tgq-pessoa" onclick="_quiosqueFixaGeralPessoaClick('${p.id}','${p._tipo}')">
+                            ${p.foto ? `<img class="tgq-avatar" src="${p.foto}" />` : `<div class="tgq-avatar">${(p.nome || '?').charAt(0).toUpperCase()}</div>`}
+                            <div class="tgq-nome">${escapeHtmlSimples(p.nome)}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        function _quiosqueFixaGeralPessoaClick(id, tipo) {
+            const pessoa = _quiosquePessoas().find(p => p.id === id && p._tipo === tipo);
+            if (!pessoa) return;
+            if (!pessoa.pin) { alert('Esta pessoa ainda não tem um PIN definido. Peça ao administrador para o configurar.'); return; }
+            _quiosqueFixaGeralPessoaSel = pessoa;
+            _quiosqueFixaGeralPin = '';
+            _quiosqueFixaGeralRenderPin();
+        }
+        function _quiosqueFixaGeralRenderPin() {
+            const p = _quiosqueFixaGeralPessoaSel; if (!p) return;
+            const painel = document.getElementById('tgqPainel');
+            painel.innerHTML = `
+                <div style="text-align:center;color:#fff;">
+                    <div style="font-weight:700;margin-bottom:10px;">${escapeHtmlSimples(p.nome)}</div>
+                    <div style="font-size:1.6rem;letter-spacing:6px;min-height:36px;">${'•'.repeat(_quiosqueFixaGeralPin.length)}</div>
+                    <div style="display:grid;grid-template-columns:repeat(3,64px);gap:10px;justify-content:center;margin:16px auto;">
+                        ${[1,2,3,4,5,6,7,8,9].map(n => `<button type="button" class="tgq-tecla" onclick="_quiosqueFixaGeralPinDigito(${n})">${n}</button>`).join('')}
+                        <div></div>
+                        <button type="button" class="tgq-tecla" onclick="_quiosqueFixaGeralPinDigito(0)">0</button>
+                        <button type="button" class="tgq-tecla" onclick="_quiosqueFixaGeralPinApagar()"><i class="fas fa-backspace"></i></button>
+                    </div>
+                    <button type="button" class="tgq-acao-btn" style="background:#64748b;max-width:220px;margin:0 auto;" onclick="_quiosqueFixaAbrirGeral()">Cancelar</button>
+                </div>
+            `;
+        }
+        function _quiosqueFixaGeralPinDigito(n) {
+            if (_quiosqueFixaGeralPin.length >= 4) return;
+            _quiosqueFixaGeralPin += String(n);
+            _quiosqueFixaGeralRenderPin();
+            if (_quiosqueFixaGeralPin.length === 4) _quiosqueFixaGeralVerificarPin();
+        }
+        function _quiosqueFixaGeralPinApagar() {
+            _quiosqueFixaGeralPin = _quiosqueFixaGeralPin.slice(0, -1);
+            _quiosqueFixaGeralRenderPin();
+        }
+        function _quiosqueFixaGeralVerificarPin() {
+            const p = _quiosqueFixaGeralPessoaSel;
+            if (!p || p.pin !== _quiosqueFixaGeralPin) { alert('PIN incorreto.'); _quiosqueFixaGeralPin = ''; _quiosqueFixaGeralRenderPin(); return; }
+            const hoje = getDataHoje();
+            const aberto = (dados.ponto || []).find(r => r.funcionarioId === p.id && r.data === hoje && r.entrada && !r.saida);
+            const painel = document.getElementById('tgqPainel');
+            painel.innerHTML = `
+                <div style="text-align:center;color:#fff;">
+                    <div style="font-size:1.1rem;font-weight:700;">${escapeHtmlSimples(p.nome)}</div>
+                    <div style="font-size:.85rem;opacity:.85;margin-bottom:16px;">${new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}</div>
+                </div>
+                <div style="max-width:340px;margin:0 auto;">
+                    ${!aberto
+                        ? `<button type="button" class="tgq-acao-btn" style="background:#16a34a;" onclick="_quiosqueFixaGeralPicar('entrada')"><i class="fas fa-sign-in-alt"></i> Entrada ao Serviço</button>`
+                        : `<button type="button" class="tgq-acao-btn" style="background:#dc2626;" onclick="_quiosqueFixaGeralPicar('saida')"><i class="fas fa-sign-out-alt"></i> Saída ao Serviço</button>`}
+                    <button type="button" class="tgq-acao-btn" style="background:#64748b;" onclick="_quiosqueFixaAbrirGeral()">Cancelar</button>
+                </div>
+            `;
+        }
+        function _quiosqueFixaGeralPicar(acao) {
+            const p = _quiosqueFixaGeralPessoaSel; if (!p) return;
+            const adminId = _tenantQuiosque();
+            const hora = new Date().toTimeString().slice(0, 5);
+            if (acao === 'entrada') _quiosqueGarantirEntradaGeral(p.id, adminId, hora);
+            else _quiosqueFecharEntradaGeral(p.id, hora);
+            guardarDados(dados);
+            const painel = document.getElementById('tgqPainel');
+            painel.innerHTML = `<div style="text-align:center;color:#fff;"><div style="font-size:2.4rem;color:#16a34a;"><i class="fas fa-circle-check"></i></div><div style="font-weight:700;margin-top:8px;">${acao === 'entrada' ? 'Entrada registada!' : 'Saída registada!'}</div></div>`;
+            setTimeout(_quiosqueMostrarGrid, 1800);
         }
         function quiosquePessoaClick(id, tipo) {
             const pessoas = _quiosquePessoas();
@@ -5457,7 +5760,17 @@
                         dataAtualizacao: Date.now(), origem: 'quiosque_saida'
                     });
                 }
+                // Importante: dar saída da obra NÃO fecha o Ponto Geral — a pessoa pode acabar
+                // esta obra mais cedo e ainda continuar a trabalhar noutro sítio no mesmo dia. O
+                // Ponto Geral só fecha quando picar explicitamente "Saída ao Serviço" em Ponto Geral.
             } else {
+                // Obrigatório picar primeiro o Ponto Geral — sem isso, não entra na obra.
+                const geralAberto = (dados.ponto || []).find(r => r.funcionarioId === p.id && r.data === hoje && r.entrada && !r.saida);
+                if (!geralAberto) {
+                    alert('⚠️ ' + p.nome.split(' ')[0] + ' ainda não picou o Ponto Geral hoje.\n\nÉ preciso picar primeiro a Entrada ao Serviço em "Ponto Geral" antes de entrar na obra.');
+                    _quiosqueFixaAbrirGeral();
+                    return;
+                }
                 dados.obraPontoLonga.push({
                     id: gerarId(), funcionarioId: p.id, adminId, obraId, data: hoje, entrada: hora, saida: null,
                     lat: !isNaN(lat) ? lat : null, lng: !isNaN(lng) ? lng : null
@@ -6980,6 +7293,7 @@
                                         ${s.pagamentoLocal ? `<button class="btn btn-sm" style="background:${s.pago === true ? '#16a34a' : '#dc2626'};color:#fff;font-weight:700;" onclick="_pagoTogglarOS('${s.id}')" title="${s.pago === true ? ('Pago — clica para alterar' + (s.reciboMoloniId ? ' (recibo emitido na Moloni)' : '')) : 'Não pago — clica para confirmar'}">${s.pago === true ? '€ Pago' : '<span style="text-decoration:line-through;">€</span> Não pago'}</button>` : ''}
                                         ${(s.status === 'concluído' && s.valor != null && (usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin') && moduloErpAtivo(dados.administradores?.find(a => a.id === s.adminId))) ? `<button class="btn btn-sm" style="background:${s.faturaMoloniId ? '#64748b' : '#7c3aed'};color:#fff;" onclick="faturarOSViaMoloni('${s.id}')" title="${s.faturaMoloniId ? 'Já faturado — clica para faturar de novo' : 'Faturar via Moloni'}"><i class="fas fa-file-invoice"></i> ${s.faturaMoloniId ? 'Faturado' : 'Faturar'}</button>` : ''}
                                         ${s.faturaMoloniUrl ? `<a href="${s.faturaMoloniUrl}" target="_blank" class="btn btn-sm btn-outline" title="Abrir o PDF da fatura na Moloni"><i class="fas fa-file-pdf"></i> Fatura</a>` : ''}
+                                        ${(s.faturaMoloniId && !s.reciboMoloniId && !s.pagamentoLocal && (usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin')) ? `<button class="btn btn-sm btn-outline" onclick="_verificarPagamentoMoloni('${s.id}')" title="Ir verificar à Moloni se esta fatura já foi paga"><i class="fas fa-rotate"></i> Verificar pagamento</button>` : ''}
                                         ${s.reciboMoloniUrl ? `<a href="${s.reciboMoloniUrl}" target="_blank" class="btn btn-sm btn-outline" title="Abrir o PDF do recibo na Moloni"><i class="fas fa-receipt"></i> Recibo</a>` : ''}
                                         ${(s.valor != null && (usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin') && moduloErpAtivo(dados.administradores?.find(a => a.id === s.adminId))) ? `<button class="btn btn-sm" style="background:${s.guiaMoloniId ? '#64748b' : '#0e7490'};color:#fff;" onclick="emitirGuiaTransporteMoloni('${s.id}')" title="${s.guiaMoloniId ? 'Já tem guia — clica para emitir outra' : 'Emitir Guia de Transporte na Moloni (materiais desta OS)'}"><i class="fas fa-truck"></i> ${s.guiaMoloniId ? 'Guia emitida' : 'Guia de Transporte'}</button>` : ''}
                                         ${s.guiaMoloniUrl ? `<a href="${s.guiaMoloniUrl}" target="_blank" class="btn btn-sm btn-outline" title="Abrir o PDF da guia de transporte na Moloni"><i class="fas fa-file-pdf"></i> Guia</a>` : ''}
@@ -7117,6 +7431,32 @@
                 console.warn('recibo moloni:', err);
             }
         }
+        async function _verificarPagamentoMoloni(osId) {
+            const s = dados.servicos?.find(x => x.id === osId); if (!s) return;
+            if (!s.faturaMoloniId) return;
+            const admin = adminAtual(); if (!admin) return;
+            _mostrarCarregando('A verificar pagamento na Moloni…');
+            try {
+                const { data, error } = await supa.functions.invoke('faturar-moloni', { body: { admin_id: admin.id, acao: 'verificar_pagamento', document_id: s.faturaMoloniId } });
+                if (error) throw error;
+                if (data?.erro) throw new Error(data.erro);
+                if (data?.pago) {
+                    s.pago = true;
+                    if (data.reciboId) { s.reciboMoloniId = data.reciboId; s.reciboMoloniUrl = data.reciboUrl || null; }
+                    guardarDados(dados);
+                    renderizarTudo();
+                    mostrarToast('✅ Esta fatura já está paga na Moloni.', 'sucesso');
+                } else {
+                    mostrarToast('Ainda não há registo de pagamento desta fatura na Moloni.', 'aviso');
+                }
+            } catch (err) {
+                console.error('verificar_pagamento moloni:', err);
+                const motivo = await _erroMoloniDetalhado(err);
+                alert('⚠️ Não foi possível verificar o pagamento: ' + motivo);
+            } finally {
+                _esconderCarregando();
+            }
+        }
         async function _pagoTogglarOS(osId) {
             const s = dados.servicos?.find(x => x.id === osId); if (!s) return;
             if (usuarioLogado?.role === 'funcionario') return;
@@ -7140,6 +7480,8 @@
             const form = document.getElementById('modalGenericoForm');
             if (!overlay || !campos) return;
             titulo.innerHTML = `<i class="fas fa-eye"></i> OS ${os.numeroRegisto || ''} — ${obterNomeCliente(os.clienteId)}`;
+            const _modalElVerOs = document.querySelector('#modalGenericoOverlay .modal');
+            if (_modalElVerOs) _modalElVerOs.style.maxWidth = '860px'; // mesma largura do "Ver Obra" — evita saltos ao alternar entre os dois
             const _mapaInfoVerOs = _osMapaInfo(os.clienteId, os.morada, os.localId);
             campos.innerHTML = `
                 ${os.morada ? `<div style="margin-bottom:12px;color:#334155;font-size:.88rem;"><i class="fas fa-location-dot" style="color:#94a3b8;"></i> ${escapeHtmlSimples(os.morada)} ${_mapaInfoVerOs ? `<a href="${_mapaInfoVerOs.url}" target="_blank" rel="noopener" title="${_mapaInfoVerOs.exato ? 'Ver pin exato no mapa' : 'Ver morada no mapa (aproximado)'}" style="color:${_mapaInfoVerOs.exato ? '#16a34a' : '#dc2626'};margin-left:4px;"><i class="fas fa-map-location-dot"></i></a>` : ''}</div>` : ''}
@@ -13593,7 +13935,7 @@
             const minhasObras = (dados.obras || []).filter(o => o.adminId === adminId && o.estado !== 'concluida'
                 && (_vejoTudo || (((o.responsaveisIds && o.responsaveisIds.length) ? o.responsaveisIds : [o.responsavelId].filter(Boolean)).includes(meuId))));
 
-            const _botaoMapa = (urlInfo) => urlInfo ? `<a href="${urlInfo.url}" target="_blank" rel="noopener" onclick="event.stopPropagation();" class="tgm-btn-mapa" title="${urlInfo.exato ? 'Ver no pin exato' : 'Ver no mapa (por morada)'}"><i class="fas fa-map"></i></a>` : '';
+            const _botaoMapa = (urlInfo, servicoId) => urlInfo ? `<a href="${urlInfo.url}" target="_blank" rel="noopener" onclick="event.stopPropagation();${servicoId ? `_registarKmViagemOS('${servicoId}');` : ''}" class="tgm-btn-mapa" title="${urlInfo.exato ? 'Navegar (Google Maps)' : 'Navegar por morada (Google Maps)'}"><i class="fas fa-diamond-turn-right"></i></a>${urlInfo?.wazeUrl ? `<a href="${urlInfo.wazeUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation();${servicoId ? `_registarKmViagemOS('${servicoId}');` : ''}" class="tgm-btn-mapa" title="Navegar no Waze"><i class="fas fa-w" style="font-family:sans-serif;font-style:normal;font-weight:800;">W</i></a>` : ''}` : '';
 
             const linhaOS = s => {
                 const aberto = (dados.ponto || []).find(p => p.servicoId === s.id && p.funcionarioId === meuId && p.entrada && !p.saida);
@@ -13619,7 +13961,7 @@
                         ${btnVer}
                     </div>
                 </div>
-                ${(btnObs || btnLigar || _botaoMapa(urlInfo)) ? `<div class="tgm-row-extra" style="display:flex;gap:8px;justify-content:flex-end;margin:-6px 0 8px;padding-right:2px;">${btnObs}${btnLigar}${_botaoMapa(urlInfo)}</div>` : ''}`;
+                ${(btnObs || btnLigar || _botaoMapa(urlInfo, s.id)) ? `<div class="tgm-row-extra" style="display:flex;gap:8px;justify-content:flex-end;margin:-6px 0 8px;padding-right:2px;">${btnObs}${btnLigar}${_botaoMapa(urlInfo, s.id)}</div>` : ''}`;
             };
             // Ligar ao cliente: pergunta explicitamente pelo nome antes de abrir o marcador
             // (tel:), para evitar toques acidentais no botão a ligarem sem querer.
@@ -13728,7 +14070,7 @@
             const _obrasAv = obrasAvancadoAtivo(dados.administradores?.find(a => a.id === obra.adminId));
             const _emAtraso = _obrasAv && obra.dataFimPrevista && obra.estado !== 'concluida' && obra.dataFimPrevista < getDataHoje();
             const _modalEl = document.querySelector('#modalGenericoOverlay .modal');
-            if (_modalEl) _modalEl.style.maxWidth = '680px'; // este ecrã tem mais botões numa linha do que os outros modais genéricos
+            if (_modalEl) _modalEl.style.maxWidth = '860px'; // mesma largura do "Ver OS" — evita saltos ao alternar entre os dois
             document.getElementById('modalGenericoTitulo').innerHTML = '<i class="fas fa-building-shield"></i> ' + obra.nome;
             document.getElementById('modalGenericoCampos').innerHTML = `
                 ${_emAtraso ? `<div style="background:#fef2f2;border:1px solid #fecaca;color:#991b1b;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:.85rem;"><i class="fas fa-triangle-exclamation"></i> Obra em atraso — fim previsto era ${obra.dataFimPrevista.split('-').reverse().join('/')}.</div>` : ''}
@@ -17633,6 +17975,12 @@
             }
             const geo = (dados.alertasGeofence || []).filter(g => g.adminId === aid && !g.lida).length;
             if (geo) itens.push({ icon: 'fa-location-crosshairs', titulo: `${geo} ${geo === 1 ? 'alerta de localização' : 'alertas de localização'}`, sub: 'Tablet do Modo Quiosque saiu da zona', secao: 'alertas-geofence', count: geo });
+            // Ponto Geral esquecido em aberto: entradas de DIAS ANTERIORES (não hoje — hoje a
+            // pessoa pode mesmo ainda estar a trabalhar) sem saída picada. Mais comum desde que o
+            // Modo Quiosque passou a exigir o Ponto Geral picado à parte da OS/Obra.
+            const hojeAid = getDataHoje();
+            const pontosEsquecidos = (dados.ponto || []).filter(p => p.adminId === aid && p.entrada && !p.saida && p.data && p.data < hojeAid).length;
+            if (pontosEsquecidos) itens.push({ icon: 'fa-clock', titulo: `${pontosEsquecidos} ${pontosEsquecidos === 1 ? 'Ponto Geral esquecido' : 'Pontos Gerais esquecidos'}`, sub: 'Entrada em aberto de dia(s) anterior(es), sem saída picada', secao: 'ponto', count: pontosEsquecidos });
             return itens;
         }
         function atualizarSino() {
@@ -17772,6 +18120,8 @@
                 if (btnTour) btnTour.style.display = (usuarioLogado.role === 'admin' || usuarioLogado.role === 'subadmin') ? 'inline-flex' : 'none';
                 if (btnOnboarding) btnOnboarding.style.display = (usuarioLogado.role === 'admin' && !adminAtual()?.ehDistribuidor) ? 'inline-flex' : 'none';
                 if (btnEnviarNotif) btnEnviarNotif.style.display = ((usuarioLogado.role === 'admin' || usuarioLogado.role === 'subadmin' || usuarioLogado.role === 'encarregado') && moduloNotificacoesAtivo(adminDoUtilizador())) ? 'inline-flex' : 'none';
+                const btnRelKm = document.getElementById('btnRelatorioKm'); if (btnRelKm) btnRelKm.style.display = (usuarioLogado.role === 'admin' || usuarioLogado.role === 'subadmin') ? 'inline-flex' : 'none';
+                const btnRelFatMol = document.getElementById('btnRelatorioFaturasMoloni'); if (btnRelFatMol) btnRelFatMol.style.display = ((usuarioLogado.role === 'admin' || usuarioLogado.role === 'subadmin') && moduloErpAtivo(adminDoUtilizador())) ? 'inline-flex' : 'none';
                 if (btnNovaOS) {
                     btnNovaOS.style.display = (usuarioLogado.role === 'admin' || usuarioLogado.role === 'encarregado' ||
                         usuarioLogado.role === 'funcionario') ? 'inline-flex' : 'none';
@@ -21635,7 +21985,10 @@ async function salvarAdmin(e) {
                             </div>
                             <div class="ff-hero-fields">
                                 <input type="text" id="c_nome" class="ff-nome-input" placeholder="Nome do cliente" value="${item ? (item.nome||'') : ''}" />
-                                <input type="text" id="c_nif" class="ff-cargo-input" placeholder="NIF *" value="${item ? (item.nif||'') : ''}" maxlength="9" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/\D/g,'').slice(0,9);" required />
+                                <div style="display:flex;gap:6px;align-items:center;">
+                                    <input type="text" id="c_nif" class="ff-cargo-input" style="flex:1;" placeholder="NIF *" value="${item ? (item.nif||'') : ''}" maxlength="9" inputmode="numeric" pattern="[0-9]*" oninput="this.value=this.value.replace(/\D/g,'').slice(0,9);" required />
+                                    ${moduloErpAtivo(adminAtual()) ? `<button type="button" class="btn btn-sm" style="background:#7c3aed;color:#fff;white-space:nowrap;" onclick="_consultarNifMoloni()" title="Preencher nome e morada automaticamente a partir do NIF"><i class="fas fa-magnifying-glass"></i> Ir buscar</button>` : ''}
+                                </div>
                             </div>
                         </div>
 
@@ -21799,6 +22152,10 @@ async function salvarAdmin(e) {
                                     <div id="s_descricao_tags" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;"></div>
                                     <label style="display:block;font-size:.85rem;font-weight:700;margin-bottom:4px;">Descrição do trabalho * <span class="help-text" style="font-weight:400;">(mínimo 3 caracteres)</span></label>
                                     <textarea id="s_descricao" required minlength="3" placeholder="Ex.: Instalação de câmara CCTV no piso 1...">${item ? (item.descricao || '') : ''}</textarea>
+                                </div>
+                                <div class="form-group ff-span2">
+                                    <label style="display:block;font-size:.85rem;font-weight:700;margin-bottom:4px;">Observações <span class="help-text" style="font-weight:400;">(opcional — visível ao técnico em "O Meu Dia")</span></label>
+                                    <textarea id="s_observacoes" placeholder="Ex.: Cliente só pode receber depois das 14h, cão solto no quintal...">${item ? (item.observacoes || '') : ''}</textarea>
                                 </div>
                             </div>
                         </div>
@@ -22774,6 +23131,7 @@ async function salvarAdmin(e) {
                     data: document.getElementById('s_data').value,
                     hora: document.getElementById('s_hora').value,
                     descricao: document.getElementById('s_descricao').value.trim(),
+                    observacoes: document.getElementById('s_observacoes')?.value.trim() || null,
                     status: document.getElementById('s_status').value,
                     tiposTrabalho: _sTiposTrabalhoSelecionados(),
                     adminId: adminId
@@ -23877,6 +24235,120 @@ async function salvarAdmin(e) {
             { valor: 'checkbox', label: 'Sim / Não', icon: 'fa-square-check' },
             { valor: 'checklist', label: 'Passo do checklist (obrigatório)', icon: 'fa-list-check' },
         ];
+        // Relatório de Km Percorridos (estimados) — só admin/subadmin. Junta os registos de
+        // dados.kmViagens (capturados ao tocar em "Navegar" nas OS) por técnico, com total do
+        // período. São estimativas em linha reta × fator de correção, não o valor exato da
+        // estrada — o texto do relatório deixa isso claro para não ser mal interpretado.
+        // Relatório de Faturas Moloni — lista as OS já faturadas através da app num período,
+        // com estado (paga/não paga) e total faturado. Não vai à Moloni consultar nada em
+        // tempo real (isso é o botão "Verificar pagamento" já existente); mostra o que já
+        // está guardado localmente a partir das faturas emitidas por aqui.
+        function abrirRelatorioFaturasMoloni() {
+            if (!(usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin')) return;
+            const hoje = new Date();
+            const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().slice(0, 10);
+            document.getElementById('modalGenericoTitulo').innerHTML = '<i class="fas fa-file-invoice-dollar"></i> Faturas Moloni';
+            document.getElementById('modalGenericoCampos').innerHTML = `
+                <p class="help-text" style="margin-bottom:12px;">Ordens de Serviço faturadas através da app neste período. Mostra o que já está guardado localmente — usa "Verificar pagamento" em cada OS para confirmar o estado atual na Moloni.</p>
+                <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:12px;">
+                    <div class="form-group" style="flex:1;min-width:150px;"><label>Data início</label><input type="date" id="rfm_inicio" value="${inicioMes}" onchange="_renderizarRelatorioFaturasMoloni()" /></div>
+                    <div class="form-group" style="flex:1;min-width:150px;"><label>Data fim</label><input type="date" id="rfm_fim" value="${getDataHoje()}" onchange="_renderizarRelatorioFaturasMoloni()" /></div>
+                </div>
+                <div id="rfm_resultado"></div>
+            `;
+            document.getElementById('modalGenericoForm').onsubmit = ev => ev.preventDefault();
+            const _bgRfm = document.querySelector('#modalGenericoOverlay .modal-actions .btn-success'); if (_bgRfm) { _bgRfm.style.display = ''; _bgRfm.innerHTML = '<i class="fas fa-check"></i> Fechar'; }
+            const _modalElRfm = document.querySelector('#modalGenericoOverlay .modal');
+            if (_modalElRfm) { _modalElRfm.dataset.maxWidthOriginal = _modalElRfm.style.maxWidth || ''; _modalElRfm.style.maxWidth = '760px'; }
+            document.getElementById('modalGenericoOverlay').classList.add('open');
+            _renderizarRelatorioFaturasMoloni();
+        }
+        function _renderizarRelatorioFaturasMoloni() {
+            const adminId = _tenantIdAtual() || usuarioLogado.adminId || usuarioLogado.id;
+            const ini = document.getElementById('rfm_inicio')?.value || '';
+            const fim = document.getElementById('rfm_fim')?.value || '';
+            const cont = document.getElementById('rfm_resultado'); if (!cont) return;
+            const faturadas = (dados.servicos || []).filter(s => s.adminId === adminId && s.faturaMoloniId && (!ini || (s.data || '') >= ini) && (!fim || (s.data || '') <= fim))
+                .sort((a, b) => (b.data || '').localeCompare(a.data || ''));
+            if (!faturadas.length) { cont.innerHTML = `<p class="help-text">Sem faturas emitidas neste período.</p>`; return; }
+            const totalFaturado = faturadas.reduce((s, x) => s + (Number(x.valor) || 0), 0);
+            const totalPago = faturadas.filter(x => x.pago === true).reduce((s, x) => s + (Number(x.valor) || 0), 0);
+            const linhas = faturadas.map(s => `
+                <tr>
+                    <td>${s.data ? s.data.split('-').reverse().join('/') : '—'}</td>
+                    <td>${escapeHtmlSimples(obterNomeCliente(s.clienteId) || '—')}</td>
+                    <td>${escapeHtmlSimples((s.descricao || '').slice(0, 40))}</td>
+                    <td style="text-align:right;">${_finEur(s.valor || 0)}</td>
+                    <td style="text-align:center;">${s.pago === true ? '<span style="color:#16a34a;font-weight:700;">Paga</span>' : '<span style="color:#dc2626;">Por pagar</span>'}</td>
+                    <td>${s.faturaMoloniUrl ? `<a href="${s.faturaMoloniUrl}" target="_blank" class="btn btn-sm btn-outline"><i class="fas fa-file-pdf"></i></a>` : '—'}</td>
+                </tr>
+            `).join('');
+            cont.innerHTML = `
+                <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+                    <div style="flex:1;min-width:140px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 12px;">
+                        <div style="font-size:.68rem;text-transform:uppercase;color:#64748b;">Total faturado</div>
+                        <div style="font-size:1.1rem;font-weight:700;">${_finEur(totalFaturado)}</div>
+                    </div>
+                    <div style="flex:1;min-width:140px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 12px;">
+                        <div style="font-size:.68rem;text-transform:uppercase;color:#64748b;">Total pago</div>
+                        <div style="font-size:1.1rem;font-weight:700;color:#16a34a;">${_finEur(totalPago)}</div>
+                    </div>
+                    <div style="flex:1;min-width:140px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 12px;">
+                        <div style="font-size:.68rem;text-transform:uppercase;color:#64748b;">Por receber</div>
+                        <div style="font-size:1.1rem;font-weight:700;color:#dc2626;">${_finEur(totalFaturado - totalPago)}</div>
+                    </div>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%;font-size:.85rem;">
+                        <thead><tr><th style="text-align:left;">Data</th><th style="text-align:left;">Cliente</th><th style="text-align:left;">Descrição</th><th style="text-align:right;">Valor</th><th>Estado</th><th></th></tr></thead>
+                        <tbody>${linhas}</tbody>
+                    </table>
+                </div>
+                <div class="help-text" style="margin-top:10px;">${faturadas.length} fatura${faturadas.length === 1 ? '' : 's'} neste período.</div>
+            `;
+        }
+        function abrirRelatorioKm() {
+            if (!(usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin')) return;
+            const adminId = _tenantIdAtual() || usuarioLogado.adminId || usuarioLogado.id;
+            const hoje = new Date();
+            const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().slice(0, 10);
+            document.getElementById('modalGenericoTitulo').innerHTML = '<i class="fas fa-route"></i> Km Percorridos (estimados)';
+            document.getElementById('modalGenericoCampos').innerHTML = `
+                <p class="help-text" style="margin-bottom:12px;">Estimativa (linha reta × fator de correção de estrada), calculada só para OS com pin exato de localização — não é o valor exato do trajeto real. Serve como referência para subsídio de deslocação.</p>
+                <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:12px;">
+                    <div class="form-group" style="flex:1;min-width:150px;"><label>Data início</label><input type="date" id="rkm_inicio" value="${inicioMes}" onchange="_renderizarRelatorioKm()" /></div>
+                    <div class="form-group" style="flex:1;min-width:150px;"><label>Data fim</label><input type="date" id="rkm_fim" value="${getDataHoje()}" onchange="_renderizarRelatorioKm()" /></div>
+                </div>
+                <div id="rkm_resultado"></div>
+            `;
+            document.getElementById('modalGenericoForm').onsubmit = ev => ev.preventDefault();
+            const _bgRkm = document.querySelector('#modalGenericoOverlay .modal-actions .btn-success'); if (_bgRkm) { _bgRkm.style.display = ''; _bgRkm.innerHTML = '<i class="fas fa-check"></i> Fechar'; }
+            document.getElementById('modalGenericoOverlay').classList.add('open');
+            _renderizarRelatorioKm();
+        }
+        function _renderizarRelatorioKm() {
+            const adminId = _tenantIdAtual() || usuarioLogado.adminId || usuarioLogado.id;
+            const ini = document.getElementById('rkm_inicio')?.value || '';
+            const fim = document.getElementById('rkm_fim')?.value || '';
+            const cont = document.getElementById('rkm_resultado'); if (!cont) return;
+            const registos = (dados.kmViagens || []).filter(k => k.adminId === adminId && (!ini || k.data >= ini) && (!fim || k.data <= fim));
+            if (!registos.length) { cont.innerHTML = `<p class="help-text">Sem registos de km neste período.</p>`; return; }
+            const porFunc = {};
+            registos.forEach(k => { const id = k.funcionarioId || '—'; porFunc[id] = (porFunc[id] || 0) + (k.kmEstimados || 0); });
+            const totalGeral = registos.reduce((s, k) => s + (k.kmEstimados || 0), 0);
+            const nomeFunc = id => obterNomeFuncionario(id) || (dados.encarregados?.find(e => e.id === id)?.nome) || 'Desconhecido';
+            const linhas = Object.entries(porFunc).sort((a, b) => b[1] - a[1]).map(([id, km]) => `
+                <tr><td>${escapeHtmlSimples(nomeFunc(id))}</td><td style="text-align:right;font-weight:600;">${km.toFixed(1)} km</td></tr>
+            `).join('');
+            cont.innerHTML = `
+                <table style="width:100%;font-size:.88rem;">
+                    <thead><tr><th style="text-align:left;">Técnico</th><th style="text-align:right;">Total estimado</th></tr></thead>
+                    <tbody>${linhas}</tbody>
+                    <tfoot><tr style="border-top:2px solid #e2e8f0;"><td style="font-weight:700;padding-top:6px;">Total geral</td><td style="text-align:right;font-weight:700;padding-top:6px;">${totalGeral.toFixed(1)} km</td></tr></tfoot>
+                </table>
+                <div class="help-text" style="margin-top:10px;">${registos.length} viagem${registos.length === 1 ? '' : 'ns'} registada${registos.length === 1 ? '' : 's'} neste período.</div>
+            `;
+        }
         function abrirGestaoRelatoriosPersonalizados() {
             const tid = _tenantId();
             const tipos = (dados.tiposTrabalhoCustom || []).filter(t => t.adminId === tid);
@@ -26249,7 +26721,7 @@ window._relPrefill = function(msg){
             const _bg = document.querySelector('#modalGenericoOverlay .modal-actions .btn-success');
             if (_bg) { _bg.style.display = ''; _bg.innerHTML = '<i class="fas fa-save"></i> Guardar'; }
             const _modalEl = document.querySelector('#modalGenericoOverlay .modal');
-            if (_modalEl) _modalEl.style.maxWidth = '520px'; // repõe a largura padrão (o "Ver Obra" aumenta-a temporariamente)
+            if (_modalEl) _modalEl.style.maxWidth = ''; // repõe a largura padrão do CSS (720px) — os ecrãs "Ver OS"/"Ver Obra" tinham um valor fixo próprio
         }
         // ---- Arrastar para confirmar (picagem de entrada) ----
         let _peSlideDragging = false, _peSlideConfirmed = false, _peSlideStartX = 0, _peSlideMax = 0;
