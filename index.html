@@ -5430,7 +5430,7 @@
                     guardarDados(dados);
                     alert('✅ Entrada registada às ' + hora + '.');
                     _quiosqueAgendaGrid();
-                });
+                }, { tipo: s.tipo === 'obra' ? 'obra' : 'servico', id: s.id });
                 return;
             }
             if (acao === 'almoco') {
@@ -5481,7 +5481,7 @@
                         alert('✅ ' + (s.tipo === 'servico' ? 'OS' : 'Obra') + ' terminada. Obrigado!');
                     }
                     _quiosqueAgendaSairSessao();
-                });
+                }, { tipo: s.tipo === 'obra' ? 'obra' : 'servico', id: s.id });
             } else {
                 alert('✅ Saída registada. Até já!');
                 _quiosqueAgendaGrid();
@@ -5854,7 +5854,7 @@
                     const painelE = document.getElementById('tgqPainel');
                     painelE.innerHTML = `<div style="font-size:2.4rem;color:#16a34a;"><i class="fas fa-circle-check"></i></div><div style="font-weight:700;margin-top:8px;">Entrada registada!</div><div style="color:#64748b;font-size:.85rem;margin-top:4px;">${obraNome}</div>`;
                     setTimeout(_quiosqueMostrarGrid, 1800);
-                });
+                }, { tipo: 'obra', id: obraId });
             }
         }
         const CATALOGO_PERMISSOES = [
@@ -7591,7 +7591,9 @@
                 const adminChk = dados.administradores?.find(a => a.id === os.adminId);
                 const itensEntradaChk = (adminChk?.checklistEntradaItens || []).filter(it => it.ativo !== false);
                 const itensSaidaChk = (adminChk?.obrasChecklistItens || []).filter(it => it.ativo !== false);
-                const podeEditarChk = usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin' || usuarioLogado?.role === 'encarregado';
+                // Só consulta — quem marca os pontos é sempre o técnico (ao dar entrada/saída,
+                // no telemóvel ou no Modo Quiosque), nunca aqui.
+                const podeEditarChk = false;
                 if (!itensEntradaChk.length && !itensSaidaChk.length) {
                     cont.innerHTML = `<p class="help-text">A empresa ainda não definiu pontos de verificação para o checklist de entrada nem para o de saída.</p>`;
                     return;
@@ -14631,16 +14633,20 @@
         }
         // Mostra o checklist de entrada (se houver pontos definidos) e só chama o callback
         // (a entrada real) depois de todas as respostas serem "Sim". Se não houver pontos
-        // definidos pelo admin, passa direto ao callback sem mostrar nada.
-        function _checklistEntradaVerificar(adminId, callback) {
+        // definidos pelo admin, passa direto ao callback sem mostrar nada. "alvo" (opcional)
+        // identifica a OS/Obra a que isto se refere ({tipo:'servico'|'obra', id}) — quando
+        // indicado, as respostas ficam gravadas lá, para depois serem consultadas em "Ver OS"
+        // / "Ver Obra" (só consulta — quem marca é sempre o técnico, aqui ou no telemóvel).
+        function _checklistEntradaVerificar(adminId, callback, alvo) {
             const admin = dados.administradores?.find(a => a.id === adminId);
             const itens = (admin?.checklistEntradaItens || []).filter(it => it.ativo !== false);
             if (!itens.length) { callback(); return; }
             _checklistEntradaCallbackPendente = callback;
+            _checklistEntradaAlvoPendente = alvo || null;
             _checklistEntradaRespostas = {};
             _checklistEntradaMostrarModal(itens);
         }
-        let _checklistEntradaCallbackPendente = null, _checklistEntradaRespostas = {};
+        let _checklistEntradaCallbackPendente = null, _checklistEntradaRespostas = {}, _checklistEntradaAlvoPendente = null;
         function _checklistEntradaMostrarModal(itens) {
             const wrap = document.createElement('div');
             wrap.id = 'checklistEntradaOverlay';
@@ -14681,23 +14687,37 @@
                 alert('⚠️ Não é possível dar entrada:\n\n' + comNao.map(it => '• ' + it.texto).join('\n') + '\n\nResolve estes pontos antes de começar a trabalhar.');
                 return;
             }
+            // Grava as respostas na OS/Obra (se soubermos qual) — para depois se poder consultar
+            // em "Ver OS"/"Ver Obra" exatamente o que o técnico respondeu.
+            if (_checklistEntradaAlvoPendente) {
+                const { tipo, id } = _checklistEntradaAlvoPendente;
+                const alvoObj = tipo === 'obra' ? dados.obras?.find(x => x.id === id) : dados.servicos?.find(x => x.id === id);
+                if (alvoObj) {
+                    alvoObj.checklistEntrada = alvoObj.checklistEntrada || {};
+                    Object.assign(alvoObj.checklistEntrada, _checklistEntradaRespostas);
+                    guardarDados(dados, [tipo === 'obra' ? 'obras' : 'servicos']).catch(() => {});
+                }
+            }
             document.getElementById('checklistEntradaOverlay')?.remove();
             const cb = _checklistEntradaCallbackPendente;
             _checklistEntradaCallbackPendente = null;
+            _checklistEntradaAlvoPendente = null;
             if (typeof cb === 'function') cb();
         }
         function _checklistEntradaCancelar() {
             document.getElementById('checklistEntradaOverlay')?.remove();
             _checklistEntradaCallbackPendente = null;
+            _checklistEntradaAlvoPendente = null;
         }
         // --- Checklist de Saída, no Modo Quiosque: mesmo padrão de popup Sim/Não do
         // Checklist de Entrada, mas perguntado ao TERMINAR a OS/Obra em vez de ao começar.
-        let _checklistSaidaCallbackPendente = null, _checklistSaidaRespostas = {};
-        function _checklistSaidaVerificar(adminId, callback) {
+        let _checklistSaidaCallbackPendente = null, _checklistSaidaRespostas = {}, _checklistSaidaAlvoPendente = null;
+        function _checklistSaidaVerificar(adminId, callback, alvo) {
             const admin = dados.administradores?.find(a => a.id === adminId);
             const itens = (admin?.obrasChecklistItens || []).filter(it => it.ativo !== false);
             if (!itens.length) { callback(); return; }
             _checklistSaidaCallbackPendente = callback;
+            _checklistSaidaAlvoPendente = alvo || null;
             _checklistSaidaRespostas = {};
             _checklistSaidaMostrarModal(itens);
         }
@@ -14741,14 +14761,25 @@
                 alert('⚠️ Não é possível terminar:\n\n' + comNao.map(it => '• ' + it.texto).join('\n') + '\n\nResolve estes pontos antes de terminar.');
                 return;
             }
+            if (_checklistSaidaAlvoPendente) {
+                const { tipo, id } = _checklistSaidaAlvoPendente;
+                const alvoObj = tipo === 'obra' ? dados.obras?.find(x => x.id === id) : dados.servicos?.find(x => x.id === id);
+                if (alvoObj) {
+                    alvoObj.checklist = alvoObj.checklist || {};
+                    Object.assign(alvoObj.checklist, _checklistSaidaRespostas);
+                    guardarDados(dados, [tipo === 'obra' ? 'obras' : 'servicos']).catch(() => {});
+                }
+            }
             document.getElementById('checklistSaidaOverlay')?.remove();
             const cb = _checklistSaidaCallbackPendente;
             _checklistSaidaCallbackPendente = null;
+            _checklistSaidaAlvoPendente = null;
             if (typeof cb === 'function') cb();
         }
         function _checklistSaidaCancelar() {
             document.getElementById('checklistSaidaOverlay')?.remove();
             _checklistSaidaCallbackPendente = null;
+            _checklistSaidaAlvoPendente = null;
         }
         // Painel financeiro da obra (só admin/subadmin) — mesma lógica de custos e margem já usada
         // na exportação em PDF do relatório de obra, mas aqui visível diretamente no ecrã, sem
@@ -24604,7 +24635,7 @@ async function salvarAdmin(e) {
                     renderizarTudo();
                     alert('✅ Entrada picada nesta obra às ' + hora + '. Estado da OS passou para "Em andamento".' + (voltaDeAlmocoOS ? '\n\n🍽️ Regresso do almoço — o relógio de ponto geral também voltou a contar automaticamente.' : ''));
                 });
-                });
+                }, { tipo: 'servico', id: os.id });
                 return;
             } else {
                 const aberto = (dados.ponto || []).find(p => p.servicoId === os.id && p.funcionarioId === usuarioLogado.id && p.entrada && !p.saida);
@@ -27701,40 +27732,43 @@ window._relPrefill = function(msg){
                 _folhaObrigModo = 'obra'; _folhaObrigOsId = null; _folhaObrigOsRec = null;
                 _folhaObrigObraId = null; _folhaObrigUsouMateriais = null; _folhaObrigTerminou = null;
                 const _finalizarOS = async () => {
-                    os.status = 'concluído';
-                    _sincronizarAssistenciaAoConcluirOS(os);
-                    _fecharPontosAbertosAoConcluirOS(os);
-                    // Garantia automática: se a descrição da OS indicar uma instalação nova,
-                    // cria logo um lembrete de fim de garantia (2 anos por defeito) sem precisares
-                    // de fazer nada à mão — aparece junto com o resto na secção "Agenda".
-                    const _descOsLower = (os.descricao || '').toLowerCase();
-                    if (_descOsLower.includes('instala')) {
-                        dados.garantias = dados.garantias || [];
-                        const jaTemGarantia = dados.garantias.some(g => g.osId === os.id);
-                        if (!jaTemGarantia) {
-                            dados.garantias.push({
-                                id: gerarId(), osId: os.id, clienteId: os.clienteId || null,
-                                descricao: os.descricao || 'Instalação', adminId: usuarioLogado.adminId || usuarioLogado.id,
-                                dataInstalacao: Date.now(), dataFimGarantia: Date.now() + 2 * 365 * 86400000
-                            });
+                    const _adminIdFin = usuarioLogado.adminId || usuarioLogado.id;
+                    _checklistSaidaVerificar(_adminIdFin, async () => {
+                        os.status = 'concluído';
+                        _sincronizarAssistenciaAoConcluirOS(os);
+                        _fecharPontosAbertosAoConcluirOS(os);
+                        // Garantia automática: se a descrição da OS indicar uma instalação nova,
+                        // cria logo um lembrete de fim de garantia (2 anos por defeito) sem precisares
+                        // de fazer nada à mão — aparece junto com o resto na secção "Agenda".
+                        const _descOsLower = (os.descricao || '').toLowerCase();
+                        if (_descOsLower.includes('instala')) {
+                            dados.garantias = dados.garantias || [];
+                            const jaTemGarantia = dados.garantias.some(g => g.osId === os.id);
+                            if (!jaTemGarantia) {
+                                dados.garantias.push({
+                                    id: gerarId(), osId: os.id, clienteId: os.clienteId || null,
+                                    descricao: os.descricao || 'Instalação', adminId: usuarioLogado.adminId || usuarioLogado.id,
+                                    dataInstalacao: Date.now(), dataFimGarantia: Date.now() + 2 * 365 * 86400000
+                                });
+                            }
                         }
-                    }
-                    guardarDados(dados);
-                    renderizarAgendaObras();
-                    if (typeof renderizarPonto === 'function') renderizarPonto();
-                    renderizarTudo();
-                    if (os.pagamentoLocal) {
-                        const _valorTxtConf = os.valor != null ? _finEur(os.valor) : '';
-                        const recebeu = await tgConfirm('Recebeste o pagamento' + (_valorTxtConf ? ' de ' + _valorTxtConf : '') + ' correspondente a esta OS?', { titulo: 'Confirmar pagamento', tipo: 'aviso', icone: 'fa-euro-sign', textoOk: 'Sim', textoCancelar: 'Não' });
-                        os.pago = recebeu === true;
                         guardarDados(dados);
+                        renderizarAgendaObras();
+                        if (typeof renderizarPonto === 'function') renderizarPonto();
                         renderizarTudo();
-                        await _registarReciboMoloniSeAplicavel(os);
-                        renderizarTudo();
-                        alert('Folha de obra guardada ✓ Obra marcada como Concluída.\n\n' + (os.pago ? '✅ Pagamento registado como recebido.' : '⚠️ Pagamento registado como NÃO recebido.'));
-                    } else {
-                        alert('Folha de obra guardada ✓ Obra marcada como Concluída.');
-                    }
+                        if (os.pagamentoLocal) {
+                            const _valorTxtConf = os.valor != null ? _finEur(os.valor) : '';
+                            const recebeu = await tgConfirm('Recebeste o pagamento' + (_valorTxtConf ? ' de ' + _valorTxtConf : '') + ' correspondente a esta OS?', { titulo: 'Confirmar pagamento', tipo: 'aviso', icone: 'fa-euro-sign', textoOk: 'Sim', textoCancelar: 'Não' });
+                            os.pago = recebeu === true;
+                            guardarDados(dados);
+                            renderizarTudo();
+                            await _registarReciboMoloniSeAplicavel(os);
+                            renderizarTudo();
+                            alert('Folha de obra guardada ✓ Obra marcada como Concluída.\n\n' + (os.pago ? '✅ Pagamento registado como recebido.' : '⚠️ Pagamento registado como NÃO recebido.'));
+                        } else {
+                            alert('Folha de obra guardada ✓ Obra marcada como Concluída.');
+                        }
+                    }, { tipo: 'servico', id: os.id });
                 };
                 if (_terminouObra) {
                     const pendentesEspec = _tiposEspecialidadePendentes(os.id);
