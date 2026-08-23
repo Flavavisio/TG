@@ -3150,8 +3150,8 @@
             },
             servicos: {
                 tabela: 'servicos',
-                from: r => ({ id: r.id, numeroRegisto: r.numero_registo, clienteId: r.cliente_id, funcionarioId: r.funcionario_id, funcionariosIds: Array.isArray(r.funcionarios_ids) ? r.funcionarios_ids : [], relatorioResponsavelId: r.relatorio_responsavel_id || null, contratoId: r.contrato_id, obraId: r.obra_id, localId: r.local_id || null, assistenciaId: r.assistencia_id || null, valor: r.valor != null ? Number(r.valor) : null, duracao: r.duracao != null ? Number(r.duracao) : null, duracaoDias: r.duracao_dias != null ? Number(r.duracao_dias) : null, morada: r.morada || null, numeroPorta: r.numero_porta || null, codigoPostal: r.codigo_postal || null, cidade: r.cidade || null, freguesia: r.freguesia || null, data: r.data || '', hora: hhmm(r.hora) || '', descricao: r.descricao, observacoes: r.observacoes || null, checklist: r.checklist || {}, status: r.status, origem: r.origem || null, tiposTrabalho: Array.isArray(r.tipos_trabalho) ? r.tipos_trabalho : [], adminId: r.admin_id, pagamentoLocal: r.pagamento_local === true, pago: r.pago == null ? null : (r.pago === true), faturaMoloniId: r.fatura_moloni_id || null, faturaMoloniUrl: r.fatura_moloni_url || null, reciboMoloniId: r.recibo_moloni_id || null, reciboMoloniUrl: r.recibo_moloni_url || null, guiaMoloniId: r.guia_moloni_id || null, guiaMoloniUrl: r.guia_moloni_url || null, notaCreditoMoloniId: r.nota_credito_moloni_id || null, notaCreditoMoloniUrl: r.nota_credito_moloni_url || null }),
-                to:   o => ({ id: o.id, numero_registo: o.numeroRegisto || null, cliente_id: o.clienteId || null, funcionario_id: o.funcionarioId || null, funcionarios_ids: o.funcionariosIds || [], relatorio_responsavel_id: o.relatorioResponsavelId || null, contrato_id: o.contratoId || null, obra_id: o.obraId || null, local_id: o.localId || null, assistencia_id: o.assistenciaId || null, valor: (o.valor === '' || o.valor == null) ? null : Number(o.valor), duracao: (o.duracao === '' || o.duracao == null) ? null : parseInt(o.duracao,10), duracao_dias: (o.duracaoDias === '' || o.duracaoDias == null) ? null : parseInt(o.duracaoDias,10), morada: o.morada || null, numero_porta: o.numeroPorta || null, codigo_postal: o.codigoPostal || null, cidade: o.cidade || null, freguesia: o.freguesia || null, data: nn(o.data), hora: nn(o.hora), descricao: o.descricao || null, observacoes: o.observacoes || null, checklist: o.checklist || {}, status: o.status || 'pendente', origem: o.origem || null, tipos_trabalho: o.tiposTrabalho || [], admin_id: o.adminId, pagamento_local: o.pagamentoLocal === true, pago: o.pago === undefined ? null : o.pago, fatura_moloni_id: o.faturaMoloniId || null, fatura_moloni_url: o.faturaMoloniUrl || null, recibo_moloni_id: o.reciboMoloniId || null, recibo_moloni_url: o.reciboMoloniUrl || null, guia_moloni_id: o.guiaMoloniId || null, guia_moloni_url: o.guiaMoloniUrl || null, nota_credito_moloni_id: o.notaCreditoMoloniId || null, nota_credito_moloni_url: o.notaCreditoMoloniUrl || null })
+                from: r => ({ id: r.id, numeroRegisto: r.numero_registo, clienteId: r.cliente_id, funcionarioId: r.funcionario_id, funcionariosIds: Array.isArray(r.funcionarios_ids) ? r.funcionarios_ids : [], relatorioResponsavelId: r.relatorio_responsavel_id || null, contratoId: r.contrato_id, obraId: r.obra_id, localId: r.local_id || null, assistenciaId: r.assistencia_id || null, valor: r.valor != null ? Number(r.valor) : null, duracao: r.duracao != null ? Number(r.duracao) : null, duracaoDias: r.duracao_dias != null ? Number(r.duracao_dias) : null, morada: r.morada || null, numeroPorta: r.numero_porta || null, codigoPostal: r.codigo_postal || null, cidade: r.cidade || null, freguesia: r.freguesia || null, data: r.data || '', hora: hhmm(r.hora) || '', descricao: r.descricao, observacoes: r.observacoes || null, checklist: r.checklist || {}, checklistEntrada: r.checklist_entrada || {}, status: r.status, origem: r.origem || null, tiposTrabalho: Array.isArray(r.tipos_trabalho) ? r.tipos_trabalho : [], adminId: r.admin_id, pagamentoLocal: r.pagamento_local === true, pago: r.pago == null ? null : (r.pago === true), faturaMoloniId: r.fatura_moloni_id || null, faturaMoloniUrl: r.fatura_moloni_url || null, reciboMoloniId: r.recibo_moloni_id || null, reciboMoloniUrl: r.recibo_moloni_url || null, guiaMoloniId: r.guia_moloni_id || null, guiaMoloniUrl: r.guia_moloni_url || null, notaCreditoMoloniId: r.nota_credito_moloni_id || null, notaCreditoMoloniUrl: r.nota_credito_moloni_url || null }),
+                to:   o => ({ id: o.id, numero_registo: o.numeroRegisto || null, cliente_id: o.clienteId || null, funcionario_id: o.funcionarioId || null, funcionarios_ids: o.funcionariosIds || [], relatorio_responsavel_id: o.relatorioResponsavelId || null, contrato_id: o.contratoId || null, obra_id: o.obraId || null, local_id: o.localId || null, assistencia_id: o.assistenciaId || null, valor: (o.valor === '' || o.valor == null) ? null : Number(o.valor), duracao: (o.duracao === '' || o.duracao == null) ? null : parseInt(o.duracao,10), duracao_dias: (o.duracaoDias === '' || o.duracaoDias == null) ? null : parseInt(o.duracaoDias,10), morada: o.morada || null, numero_porta: o.numeroPorta || null, codigo_postal: o.codigoPostal || null, cidade: o.cidade || null, freguesia: o.freguesia || null, data: nn(o.data), hora: nn(o.hora), descricao: o.descricao || null, observacoes: o.observacoes || null, checklist: o.checklist || {}, checklist_entrada: o.checklistEntrada || {}, status: o.status || 'pendente', origem: o.origem || null, tipos_trabalho: o.tiposTrabalho || [], admin_id: o.adminId, pagamento_local: o.pagamentoLocal === true, pago: o.pago === undefined ? null : o.pago, fatura_moloni_id: o.faturaMoloniId || null, fatura_moloni_url: o.faturaMoloniUrl || null, recibo_moloni_id: o.reciboMoloniId || null, recibo_moloni_url: o.reciboMoloniUrl || null, guia_moloni_id: o.guiaMoloniId || null, guia_moloni_url: o.guiaMoloniUrl || null, nota_credito_moloni_id: o.notaCreditoMoloniId || null, nota_credito_moloni_url: o.notaCreditoMoloniUrl || null })
             },
             assistencias: {
                 tabela: 'assistencias',
@@ -4307,13 +4307,77 @@
             return null;
         }
         function _clienteAtualizarLinkPin(idCampo, idAlvo) {
-            const el = document.getElementById(idCampo || 'c_pin_mapa');
+            const idCampoReal = idCampo || 'c_pin_mapa';
+            const el = document.getElementById(idCampoReal);
             const alvo = document.getElementById(idAlvo || 'c_pin_mapa_link');
             if (!el || !alvo) return;
             const url = _pinParaUrlMapa(el.value);
             alvo.innerHTML = url
-                ? `<a href="${url}" target="_blank" rel="noopener" style="color:#16a34a;font-weight:600;text-decoration:none;"><i class="fas fa-map-location-dot"></i> Abrir no Google Maps</a>`
+                ? `<a href="${url}" target="_blank" rel="noopener" style="color:#16a34a;font-weight:600;text-decoration:none;"><i class="fas fa-map-location-dot"></i> Abrir no Google Maps</a> <span id="${idCampoReal}_geostatus" style="margin-left:8px;color:#64748b;"></span>`
                 : (el.value.trim() ? '<span style="color:#dc2626;">Não consegui reconhecer coordenadas neste texto — confirma se colaste o link certo.</span>' : '');
+            _pinPreencherMoradaAutomatica(idCampoReal, el.value);
+        }
+        // Extrai lat/lng de qualquer formato comum de pin do Google Maps (coordenadas soltas,
+        // link com "@lat,lng", link com "q=lat,lng", ou o formato interno "!3dlat!4dlng").
+        // Links encurtados (maps.app.goo.gl) não têm coordenadas visíveis no texto — nesses
+        // casos não há como preencher automaticamente, sem incomodar ninguém com erro.
+        function _pinParaLatLng(pin) {
+            pin = (pin || '').trim();
+            if (!pin) return null;
+            let m = pin.match(/(-?\d{1,3}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)/);
+            if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+            m = pin.match(/!3d(-?\d{1,3}\.\d+)!4d(-?\d{1,3}\.\d+)/);
+            if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+            return null;
+        }
+        // Preenche automaticamente Morada, Código Postal, Cidade e Freguesia a partir das
+        // coordenadas do pin (reverse geocoding, via Nominatim/OpenStreetMap — gratuito, sem
+        // chave de API). Código Postal, Cidade e Freguesia acabam por vir da base de dados dos
+        // CTT (mais fiável para Portugal) assim que o código postal é conhecido. Só preenche
+        // campos que ainda estejam vazios — nunca substitui o que já foi escrito à mão.
+        const _PIN_CAMPOS_POR_FORM = {
+            nc_pin_mapa:       { morada: 'nc_morada',       cp: 'nc_cp',            cidade: 'nc_cidade',       freguesia: 'nc_freguesia' },
+            c_pin_mapa:        { morada: 'c_morada',        cp: 'c_cp',             cidade: 'c_cidade',        freguesia: 'c_freguesia' },
+            ct_local_pin_mapa: { morada: 'ct_local_morada', cp: 'ct_local_cp',      cidade: 'ct_local_cidade', freguesia: 'ct_local_freguesia' },
+            s_local_pin_mapa:  { morada: 's_morada',        cp: 's_codigo_postal',  cidade: 's_cidade',        freguesia: 's_freguesia' },
+            ob_local_pin_mapa: { morada: 'ob_morada',       cp: 'ob_cp',            cidade: 'ob_cidade',       freguesia: 'ob_local_freguesia' },
+            nl_pin_mapa:       { morada: 'nl_morada',       cp: 'nl_cp',            cidade: 'nl_cidade',       freguesia: 'nl_freguesia' },
+        };
+        let _pinGeocodeEmCurso = 0;
+        async function _pinPreencherMoradaAutomatica(idCampoPin, pinValor) {
+            const mapa = _PIN_CAMPOS_POR_FORM[idCampoPin];
+            if (!mapa) return;
+            const coords = _pinParaLatLng(pinValor);
+            if (!coords) return;
+            const statusEl = document.getElementById(idCampoPin + '_geostatus');
+            const idDesteChamada = ++_pinGeocodeEmCurso;
+            if (statusEl) statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> A localizar morada…';
+            try {
+                const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${coords.lat}&lon=${coords.lng}&addressdetails=1&accept-language=pt`, { headers: { 'Accept': 'application/json' } });
+                if (idDesteChamada !== _pinGeocodeEmCurso) return; // entretanto colou outro pin — ignora esta resposta atrasada
+                if (!resp.ok) { if (statusEl) statusEl.textContent = ''; return; }
+                const data = await resp.json();
+                const addr = data.address || {};
+                const moradaEl = mapa.morada ? document.getElementById(mapa.morada) : null;
+                const cpEl = mapa.cp ? document.getElementById(mapa.cp) : null;
+                if (moradaEl && !moradaEl.value.trim()) {
+                    const rua = addr.road || addr.pedestrian || addr.residential || addr.footway || '';
+                    if (rua) moradaEl.value = rua;
+                }
+                const cpValor = (addr.postcode || '').trim();
+                if (cpEl && !cpEl.value.trim() && cpValor) {
+                    cpEl.value = cpValor;
+                    if (typeof aplicarMascaraCP === 'function') aplicarMascaraCP(cpEl);
+                }
+                // Cidade/Freguesia vêm sempre da base de dados dos CTT (mais fiável para PT do
+                // que o OpenStreetMap), a partir do código postal agora conhecido.
+                if (cpValor) await _cttPreencherPorCP(cpEl ? cpEl.value : cpValor, { cidade: mapa.cidade, freguesia: mapa.freguesia, morada: mapa.morada });
+                if (statusEl) statusEl.innerHTML = '<i class="fas fa-check" style="color:#16a34a;"></i> Morada preenchida automaticamente';
+                setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 3000);
+            } catch (e) {
+                console.warn('Reverse geocoding indisponível:', e);
+                if (statusEl) statusEl.textContent = '';
+            }
         }
 
         // Base de dados de códigos postais (CP7 -> Distrito/Concelho/Freguesia), carregada uma vez
@@ -7525,25 +7589,35 @@
             });
             if (aba === 'checklist') {
                 const adminChk = dados.administradores?.find(a => a.id === os.adminId);
-                const itensChk = (adminChk?.obrasChecklistItens || []).filter(it => it.ativo !== false);
+                const itensEntradaChk = (adminChk?.checklistEntradaItens || []).filter(it => it.ativo !== false);
+                const itensSaidaChk = (adminChk?.obrasChecklistItens || []).filter(it => it.ativo !== false);
                 const podeEditarChk = usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin' || usuarioLogado?.role === 'encarregado';
-                if (!itensChk.length) {
-                    cont.innerHTML = `<p class="help-text">A empresa ainda não definiu nenhum ponto de verificação para o checklist de saída.</p>`;
+                if (!itensEntradaChk.length && !itensSaidaChk.length) {
+                    cont.innerHTML = `<p class="help-text">A empresa ainda não definiu pontos de verificação para o checklist de entrada nem para o de saída.</p>`;
                     return;
                 }
                 os.checklist = os.checklist || {};
-                const linhasChk = itensChk.map(it => `
-                    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9;">
-                        <input type="checkbox" ${os.checklist[it.id] ? 'checked' : ''} ${podeEditarChk ? '' : 'disabled'} onchange="_checklistOsToggle('${osId}', '${it.id}')" style="width:18px;height:18px;flex-shrink:0;" />
-                        <span style="flex:1;${os.checklist[it.id] ? 'text-decoration:line-through;color:#94a3b8;' : ''}">${escapeHtmlSimples(it.texto)}</span>
-                    </div>
-                `).join('');
-                const conclChk = itensChk.filter(it => os.checklist[it.id]).length;
-                cont.innerHTML = `
-                    <div style="display:flex;justify-content:space-between;font-size:.78rem;color:#64748b;margin-bottom:8px;"><span>Checklist de qualidade/segurança</span><span>${conclChk}/${itensChk.length}</span></div>
-                    <div>${linhasChk}</div>
-                    ${conclChk < itensChk.length ? `<div class="help-text" style="color:#b3492f;margin-top:10px;"><i class="fas fa-triangle-exclamation"></i> Todos os pontos têm de estar marcados antes de a OS poder ser concluída.</div>` : `<div class="help-text" style="color:#16a34a;margin-top:10px;"><i class="fas fa-circle-check"></i> Checklist completo.</div>`}
-                `;
+                os.checklistEntrada = os.checklistEntrada || {};
+                const _blocoChk = (titulo, itens, estadoObj, toggleFn, semPontosTexto) => {
+                    if (!itens.length) return `<div style="margin-bottom:18px;"><div style="font-weight:700;font-size:.85rem;margin-bottom:6px;">${titulo}</div><p class="help-text">${semPontosTexto}</p></div>`;
+                    const linhas = itens.map(it => `
+                        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9;">
+                            <input type="checkbox" ${estadoObj[it.id] ? 'checked' : ''} ${podeEditarChk ? '' : 'disabled'} onchange="${toggleFn}('${osId}', '${it.id}')" style="width:18px;height:18px;flex-shrink:0;" />
+                            <span style="flex:1;${estadoObj[it.id] ? 'text-decoration:line-through;color:#94a3b8;' : ''}">${escapeHtmlSimples(it.texto)}</span>
+                        </div>
+                    `).join('');
+                    const concl = itens.filter(it => estadoObj[it.id]).length;
+                    return `<div style="margin-bottom:18px;">
+                        <div style="display:flex;justify-content:space-between;font-size:.78rem;color:#64748b;margin-bottom:8px;"><span style="font-weight:700;color:#334155;">${titulo}</span><span>${concl}/${itens.length}</span></div>
+                        <div>${linhas}</div>
+                    </div>`;
+                };
+                cont.innerHTML =
+                    _blocoChk('Checklist de Entrada', itensEntradaChk, os.checklistEntrada, '_checklistOsEntradaToggle', 'Sem pontos de entrada definidos.') +
+                    _blocoChk('Checklist de Saída', itensSaidaChk, os.checklist, '_checklistOsToggle', 'Sem pontos de saída definidos.') +
+                    (itensSaidaChk.length && itensSaidaChk.filter(it => os.checklist[it.id]).length < itensSaidaChk.length
+                        ? `<div class="help-text" style="color:#b3492f;"><i class="fas fa-triangle-exclamation"></i> Todos os pontos de saída têm de estar marcados antes de a OS poder ser concluída.</div>`
+                        : (itensSaidaChk.length ? `<div class="help-text" style="color:#16a34a;"><i class="fas fa-circle-check"></i> Checklist de saída completo.</div>` : ''));
                 return;
             }
             const folhas = (dados.folhasObra || []).filter(f => f.servicoId === osId).sort((a, b) => (b.data || '').localeCompare(a.data || ''));
@@ -14382,6 +14456,13 @@
             const os = dados.servicos?.find(s => s.id === osId); if (!os) return;
             os.checklist = os.checklist || {};
             os.checklist[itemId] = !os.checklist[itemId];
+            guardarDados(dados, ['servicos']).catch(() => alert('⚠️ Ficou no ecrã, mas ainda não foi possível confirmar no servidor.'));
+            _verOsMostrar(osId, 'checklist');
+        }
+        function _checklistOsEntradaToggle(osId, itemId) {
+            const os = dados.servicos?.find(s => s.id === osId); if (!os) return;
+            os.checklistEntrada = os.checklistEntrada || {};
+            os.checklistEntrada[itemId] = !os.checklistEntrada[itemId];
             guardarDados(dados, ['servicos']).catch(() => alert('⚠️ Ficou no ecrã, mas ainda não foi possível confirmar no servidor.'));
             _verOsMostrar(osId, 'checklist');
         }
@@ -22117,6 +22198,10 @@ async function salvarAdmin(e) {
             const titulo = document.getElementById('modalTitulo');
             const campos = document.getElementById('modalCampos');
             const submitBtn = document.getElementById('modalSubmitBtn');
+            // Segurança extra: garante que os botões normais do rodapé estão visíveis ao abrir
+            // qualquer formulário, mesmo que uma sessão anterior do Modo Wizard os tenha escondido.
+            const _modalActionsAbrir = document.querySelector('#modalOverlay .modal-actions');
+            if (_modalActionsAbrir) _modalActionsAbrir.style.display = '';
             let item = null;
             let lista = [];
             if (entidade === 'funcionario') lista = dados.funcionarios || [];
@@ -23351,6 +23436,11 @@ async function salvarAdmin(e) {
             _novaOSObraFoiCriacaoNova = false;
             _aprovandoAssistenciaId = null;
             _folhaOSPendente = null;
+            // Repõe sempre os botões normais do rodapé (Cancelar/Guardar) — o Modo Wizard de OS
+            // esconde-os enquanto está ativo, e se se sair do wizard sem passar por "Ver
+            // formulário completo" (ex.: fechar com o X), ficariam escondidos na próxima vez.
+            const _modalActionsReset = document.querySelector('#modalOverlay .modal-actions');
+            if (_modalActionsReset) _modalActionsReset.style.display = '';
         }
 
         // Popup "a processar..." + proteção contra duplo-clique — usado em botões cuja ação
