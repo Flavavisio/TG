@@ -29956,7 +29956,7 @@ window._relPrefill = function(msg){
                         </div>
                         </div>
                     `;
-            } else if (usuarioLogado.role === 'admin') {
+            } else if (usuarioLogado.role === 'admin' || usuarioLogado.role === 'subadmin') {
                 const admin = adminAtual();
                 const func = dados.funcionarios?.find(f => f.id === usuarioLogado.id);
                 campos.innerHTML = `
@@ -30052,6 +30052,19 @@ window._relPrefill = function(msg){
                                 <p class="help-text" style="margin:0 0 10px;">Usado para avisar no Registo de Ponto quando alguém chega atrasado.</p>
                                 <div class="form-group"><label>Hora de entrada habitual</label><input type="time" id="perf_hora_entrada" value="${admin?.horaEntradaHabitual || '09:00'}" /></div>
                                 <div class="form-group"><label>Tolerância (minutos)</label><input type="number" id="perf_tolerancia_atraso" value="${admin?.toleranciaAtrasoMin != null ? admin.toleranciaAtrasoMin : 15}" min="0" max="120" /></div>
+                            </div>
+                        </div>
+
+                        <div class="ff-secao ff-tint-doc">
+                            <div class="ff-secao-head"><i class="fas fa-list-ol"></i> Criação de Ordens de Serviço</div>
+                            <div class="ff-secao-body">
+                                <div class="form-group ff-span2">
+                                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                                        <input type="checkbox" id="perf_os_modo_wizard" ${admin?.osModoWizard ? 'checked' : ''} style="width:auto;margin:0;" />
+                                        Criar novas OS em modo Wizard (passo a passo)
+                                    </label>
+                                    <div class="help-text" style="margin-top:4px;">Em vez do formulário único, a criação de uma nova Ordem de Serviço passa a ser feita por perguntas, uma de cada vez.</div>
+                                </div>
                             </div>
                         </div>
                         </div>
@@ -30268,7 +30281,7 @@ window._relPrefill = function(msg){
                 } else {
                     aplicarDist(undefined);
                 }
-            } else if (usuarioLogado.role === 'admin') {
+            } else if (usuarioLogado.role === 'admin' || usuarioLogado.role === 'subadmin') {
                 const admin = adminAtual();
                 if (!admin) return;
                 const empresa = document.getElementById('perf_empresa')?.value.trim() || '';
@@ -30300,6 +30313,7 @@ window._relPrefill = function(msg){
                     admin.horaEntradaHabitual = document.getElementById('perf_hora_entrada')?.value || '09:00';
                     const _tolerP = document.getElementById('perf_tolerancia_atraso')?.value;
                     admin.toleranciaAtrasoMin = _tolerP !== '' && _tolerP != null ? parseInt(_tolerP, 10) : 15;
+                    admin.osModoWizard = document.getElementById('perf_os_modo_wizard')?.checked || false;
                     if (senha) admin.senha = senha;
                     if (logoData !== undefined) admin.logo = logoData;
                     if (window._perfCertificadoraLogoRemover) { admin.certificadoraLogo = null; window._perfCertificadoraLogoRemover = false; }
