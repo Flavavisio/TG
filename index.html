@@ -16768,7 +16768,7 @@
                 const _ehNovoItemOm = !omRec;
                 return `<div style="border:1px solid #e6eaf2;border-radius:8px;padding:8px;margin-bottom:8px;">
                     <div style="position:relative;margin-bottom:6px;">
-                        <input type="text" placeholder="Pesquisar artigo (nome ou referência)…" value="${escapeHtmlSimples(it._pesquisaTexto || (art ? `${art.nome}${art.referencia ? ' — ' + art.referencia : ''}` : ''))}" oninput="omPesquisarArtigo(${idx}, this.value)" onfocus="omPesquisarArtigo(${idx}, this.value)" autocomplete="off" style="width:100%;" />
+                        <input type="text" placeholder="Pesquisar artigo (nome ou referência)…" value="${escapeHtmlSimples(it._pesquisaTexto || (art ? `${art.nome}${art.referencia ? ' — ' + art.referencia : ''}` : ''))}" oninput="omPesquisarArtigo(${idx}, this.value)" onfocus="omPesquisarArtigo(${idx}, this.value)" onblur="setTimeout(() => { const dd = document.getElementById('om_pesquisa_dd_${idx}'); if (dd) dd.style.display = 'none'; }, 150)" autocomplete="off" style="width:100%;" />
                         <div id="om_pesquisa_dd_${idx}" style="display:none;position:absolute;z-index:99999;background:#fff;border:1px solid #e2e8f0;border-radius:8px;box-shadow:0 10px 28px rgba(0,0,0,.14);max-height:240px;overflow-y:auto;margin-top:4px;left:0;right:0;"></div>
                     </div>
                     <div style="display:flex;gap:6px;margin-bottom:6px;">
