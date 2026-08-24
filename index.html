@@ -5523,7 +5523,6 @@
                         <button type="button" class="tgq-acao-btn" style="background:#dc2626;" onclick="_quiosqueAgendaPicar('terminar_hoje')"><i class="fas fa-sign-out-alt"></i> Terminar por Hoje</button>
                         ${ehResponsavel ? `<button type="button" class="tgq-acao-btn" style="background:#7c3aed;" onclick="_quiosqueAgendaPicar('terminar_servico')"><i class="fas fa-flag-checkered"></i> Terminar ${s.tipo === 'servico' ? 'OS' : 'Obra'}</button>` : ''}
                         `}
-                    <button type="button" class="tgq-acao-btn" style="background:#152a52;" onclick="_quiosqueAgendaAbrirGeral()"><i class="fas fa-power-off"></i> Terminar o Dia</button>
                     <button type="button" class="tgq-acao-btn" style="background:#64748b;" onclick="_quiosqueAgendaGrid()">Cancelar</button>
                 </div>
             `;
@@ -5943,7 +5942,6 @@
                 ${aberto
                     ? `<button type="button" class="tgq-acao-btn" style="background:#dc2626;" onclick="quiosquePicar('saida')"><i class="fas fa-sign-out-alt"></i> Dar Saída</button>`
                     : `<button type="button" class="tgq-acao-btn" style="background:#16a34a;" onclick="quiosquePicar('entrada')"><i class="fas fa-sign-in-alt"></i> Dar Entrada</button>`}
-                <button type="button" class="tgq-acao-btn" style="background:#152a52;" onclick="_quiosqueFixaAbrirGeral()"><i class="fas fa-power-off"></i> Terminar o Dia</button>
                 <button type="button" class="tgq-acao-btn" style="background:#64748b;" onclick="_quiosqueMostrarGrid()">Cancelar</button>
             `;
         }
