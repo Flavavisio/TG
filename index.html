@@ -5137,6 +5137,99 @@
             const aberto = (dados.ponto || []).find(r => r.funcionarioId === pessoaId && r.data === hoje && r.entrada && !r.saida);
             if (aberto) aberto.saida = hora;
         }
+        // Popup de "ainda não deste entrada geral hoje" — nome da pessoa, Sim/Não, e ao
+        // escolher Sim, arrastar o dedo para confirmar (mesmo padrão do telemóvel). Ao
+        // confirmar, pica logo a entrada geral e chama o callback (retomar a entrada na OS/Obra).
+        let _kioskSlideConfirmada = false, _kioskSlideDragging = false, _kioskSlideStartX = 0, _kioskSlideMax = 0;
+        function _quiosquePerguntarEntradaGeral(nomePessoa, aoConfirmar) {
+            const wrap = document.createElement('div');
+            wrap.id = 'kioskEntradaGeralPerguntaOverlay';
+            wrap.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.7);z-index:300000;display:flex;align-items:center;justify-content:center;padding:16px;';
+            wrap.innerHTML = `
+                <div style="background:#fff;border-radius:18px;padding:26px 22px;max-width:380px;width:100%;text-align:center;">
+                    <div style="font-size:1.15rem;font-weight:800;color:#152a52;margin-bottom:6px;">${escapeHtmlSimples(nomePessoa)}</div>
+                    <div style="color:#64748b;margin-bottom:20px;">Ainda não deste entrada ao serviço hoje. Queres dar entrada agora?</div>
+                    <div id="kioskEntradaGeralPergConteudo">
+                        <div style="display:flex;gap:10px;">
+                            <button type="button" class="tgq-acao-btn" style="background:#dc2626;flex:1;" onclick="document.getElementById('kioskEntradaGeralPerguntaOverlay').remove();">Não</button>
+                            <button type="button" class="tgq-acao-btn" style="background:#16a34a;flex:1;" onclick="_kioskMostrarSlideEntrada()">Sim</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(wrap);
+            window._kioskSlideCallback = aoConfirmar;
+        }
+        function _kioskMostrarSlideEntrada() {
+            const cont = document.getElementById('kioskEntradaGeralPergConteudo'); if (!cont) return;
+            cont.innerHTML = `
+                <div id="kiosk_slide_track" style="position:relative;height:56px;background:#e2e8f0;border-radius:28px;overflow:hidden;user-select:none;touch-action:none;">
+                    <div id="kiosk_slide_fill" style="position:absolute;left:0;top:0;bottom:0;width:56px;background:#bbf7d0;border-radius:28px;"></div>
+                    <div id="kiosk_slide_label" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:700;color:#166534;font-size:.9rem;">Arrasta para confirmar entrada →</div>
+                    <div id="kiosk_slide_handle" style="position:absolute;top:3px;left:3px;width:50px;height:50px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;cursor:grab;"><i class="fas fa-chevron-right" style="color:#16a34a;"></i></div>
+                </div>
+            `;
+            _kioskSlideInit();
+        }
+        function _kioskSlideCalcMax() {
+            const track = document.getElementById('kiosk_slide_track');
+            const w = (track && track.clientWidth) || 300;
+            _kioskSlideMax = Math.max(10, w - 56);
+        }
+        function _kioskSlideSetPos(x) {
+            const handle = document.getElementById('kiosk_slide_handle');
+            const fill = document.getElementById('kiosk_slide_fill');
+            if (!handle || !fill) return;
+            x = Math.max(0, Math.min(_kioskSlideMax, x));
+            handle.style.left = (3 + x) + 'px';
+            fill.style.width = (x + 56) + 'px';
+        }
+        function _kioskSlideDown(ev) {
+            if (_kioskSlideConfirmada || !document.getElementById('kiosk_slide_track')) return;
+            _kioskSlideCalcMax();
+            _kioskSlideDragging = true;
+            const cx = ev.touches ? ev.touches[0].clientX : ev.clientX;
+            const handle = document.getElementById('kiosk_slide_handle');
+            _kioskSlideStartX = cx - (handle ? (parseFloat(handle.style.left) || 3) : 3);
+            if (ev.cancelable) ev.preventDefault();
+        }
+        function _kioskSlideMove(ev) {
+            if (!_kioskSlideDragging || _kioskSlideConfirmada) return;
+            const cx = ev.touches ? ev.touches[0].clientX : ev.clientX;
+            _kioskSlideSetPos(cx - _kioskSlideStartX);
+            if (ev.cancelable) ev.preventDefault();
+        }
+        function _kioskSlideUp() {
+            if (!_kioskSlideDragging || _kioskSlideConfirmada) return;
+            _kioskSlideDragging = false;
+            const handle = document.getElementById('kiosk_slide_handle');
+            const cur = (handle ? (parseFloat(handle.style.left) || 0) : 0) - 3;
+            if (cur >= _kioskSlideMax * 0.8) {
+                _kioskSlideConfirmada = true;
+                _kioskSlideSetPos(_kioskSlideMax);
+                const label = document.getElementById('kiosk_slide_label'); if (label) label.textContent = 'A confirmar…';
+                setTimeout(() => {
+                    document.getElementById('kioskEntradaGeralPerguntaOverlay')?.remove();
+                    const cb = window._kioskSlideCallback; window._kioskSlideCallback = null;
+                    _kioskSlideConfirmada = false;
+                    if (typeof cb === 'function') cb();
+                }, 400);
+            } else {
+                _kioskSlideSetPos(0);
+            }
+        }
+        function _kioskSlideInit() {
+            _kioskSlideConfirmada = false; _kioskSlideDragging = false;
+            _kioskSlideCalcMax(); _kioskSlideSetPos(0);
+            const handle = document.getElementById('kiosk_slide_handle');
+            if (!handle) return;
+            handle.addEventListener('mousedown', _kioskSlideDown);
+            handle.addEventListener('touchstart', _kioskSlideDown, { passive: false });
+            document.addEventListener('mousemove', _kioskSlideMove);
+            document.addEventListener('touchmove', _kioskSlideMove, { passive: false });
+            document.addEventListener('mouseup', _kioskSlideUp);
+            document.addEventListener('touchend', _kioskSlideUp);
+        }
         function _quiosqueAgendaAbrirGeral() {
             const painel = document.getElementById('tgqPainel');
             const pessoas = _quiosqueAgendaPessoasEmpresa();
@@ -5156,7 +5249,7 @@
                 </div>
             `;
         }
-        let _quiosqueAgendaGeralPessoaSel = null, _quiosqueAgendaGeralPin = '';
+        let _quiosqueAgendaGeralPessoaSel = null, _quiosqueAgendaGeralPin = '', _quiosqueAgendaRetomarAposGeral = null;
         function _quiosqueAgendaGeralPessoaClick(id, tipo) {
             const pessoa = _quiosqueAgendaPessoasEmpresa().find(p => p.id === id && p._tipo === tipo);
             if (!pessoa) return;
@@ -5218,6 +5311,22 @@
             if (acao === 'entrada') _quiosqueGarantirEntradaGeral(p.id, adminId, hora);
             else _quiosqueFecharEntradaGeral(p.id, hora);
             guardarDados(dados);
+            // Se esta entrada geral era mesmo a que faltava para entrar numa OS/Obra específica,
+            // retoma essa entrada automaticamente — sem precisar de voltar a escolher a OS nem
+            // a introduzir o PIN outra vez.
+            if (acao === 'entrada' && _quiosqueAgendaRetomarAposGeral && _quiosqueAgendaRetomarAposGeral.pessoaId === p.id) {
+                const retomar = _quiosqueAgendaRetomarAposGeral;
+                _quiosqueAgendaRetomarAposGeral = null;
+                _quiosqueAgendaPessoaSelecionada = p;
+                _quiosqueAgendaSessaoAtual = retomar.sessao;
+                const itemR = retomar.sessao.tipo === 'servico' ? dados.servicos?.find(x => x.id === retomar.sessao.id) : dados.obras?.find(x => x.id === retomar.sessao.id);
+                const tituloR = retomar.sessao.tipo === 'servico' ? (obterNomeCliente(itemR?.clienteId) || 'OS') : itemR?.nome;
+                const painelR = document.getElementById('tgqPainel');
+                painelR.innerHTML = `<div style="text-align:center;color:#fff;"><div style="font-size:2.4rem;color:#16a34a;"><i class="fas fa-circle-check"></i></div><div style="font-weight:700;margin-top:8px;">Entrada geral registada!</div><div style="opacity:.85;font-size:.85rem;margin-top:4px;">A continuar a entrada em ${escapeHtmlSimples(tituloR || '')}…</div></div>`;
+                setTimeout(() => _quiosqueAgendaPicar('entrada'), 1200);
+                return;
+            }
+            _quiosqueAgendaRetomarAposGeral = null;
             const painel = document.getElementById('tgqPainel');
             painel.innerHTML = `<div style="text-align:center;color:#fff;"><div style="font-size:2.4rem;color:#16a34a;"><i class="fas fa-circle-check"></i></div><div style="font-weight:700;margin-top:8px;">${acao === 'entrada' ? 'Entrada registada!' : 'Saída registada!'}</div></div>`;
             setTimeout(_quiosqueAgendaRender, 1800);
@@ -5254,17 +5363,27 @@
                 <div style="text-align:center;margin-bottom:14px;">
                     <button type="button" onclick="_quiosqueAgendaAbrirGeral()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.4);color:#fff;padding:8px 18px;border-radius:100px;font-size:.82rem;font-weight:600;cursor:pointer;"><i class="fas fa-clock"></i> Ponto Geral (sem OS/Obra) — Entrada / Saída</button>
                 </div>
-                <div style="display:grid;gap:10px;max-width:520px;margin:0 auto;">
-                    ${itens.length ? itens.map(it => `
-                        <div onclick="_quiosqueAgendaSelecionarItem('${it.tipo}','${it.id}')" style="background:#fff;border-radius:12px;padding:14px 16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;">
-                            <div>
-                                <div style="font-weight:700;color:#152a52;">${escapeHtmlSimples(it.titulo)}</div>
-                                <div style="color:#64748b;font-size:.82rem;">${escapeHtmlSimples(it.sub)}</div>
-                                <div style="color:#94a3b8;font-size:.72rem;margin-top:2px;"><i class="fas fa-calendar-day"></i> ${dataFmtCurta(it.data)}</div>
+                <div style="display:grid;gap:14px;max-width:560px;margin:0 auto;">
+                    ${itens.length ? itens.map(it => {
+                        const corTipo = it.tipo === 'servico' ? '#fb923c' : '#0ea5e9';
+                        const bgIcon = it.tipo === 'servico' ? 'rgba(251,146,60,.14)' : 'rgba(14,165,233,.14)';
+                        const icone = it.tipo === 'servico' ? 'fa-wrench' : 'fa-hard-hat';
+                        const osOriginal = it.tipo === 'servico' ? dados.servicos?.find(x => x.id === it.id) : null;
+                        const atrasada = osOriginal && osOriginal.hora && osOriginal.status !== 'em andamento' && osOriginal.hora < new Date().toTimeString().slice(0, 5);
+                        return `
+                        <div onclick="_quiosqueAgendaSelecionarItem('${it.tipo}','${it.id}')" style="background:#fff;border-left:5px solid ${corTipo};border-radius:14px;padding:16px 18px;cursor:pointer;display:flex;align-items:center;gap:14px;box-shadow:0 4px 14px rgba(0,0,0,.12);transition:transform .1s;">
+                            <div style="width:46px;height:46px;border-radius:12px;background:${bgIcon};color:${corTipo};display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;"><i class="fas ${icone}"></i></div>
+                            <div style="flex:1;min-width:0;">
+                                <div style="font-weight:800;color:#152a52;font-size:1.02rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtmlSimples(it.titulo)}</div>
+                                <div style="color:#64748b;font-size:.85rem;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtmlSimples(it.sub)}${atrasada ? ' <span style="color:#dc2626;font-weight:700;">· Atrasada</span>' : ''}</div>
+                                <div style="color:#94a3b8;font-size:.74rem;margin-top:3px;"><i class="fas fa-calendar-day"></i> ${dataFmtCurta(it.data)}</div>
                             </div>
-                            <span style="background:${it.cor};color:#fff;font-size:.7rem;padding:3px 10px;border-radius:100px;white-space:nowrap;">${it.badge}</span>
+                            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;">
+                                <span style="background:${it.cor};color:#fff;font-size:.72rem;font-weight:600;padding:4px 12px;border-radius:100px;white-space:nowrap;">${it.badge}</span>
+                                <i class="fas fa-chevron-right" style="color:#cbd5e1;font-size:.85rem;"></i>
+                            </div>
                         </div>
-                    `).join('') : '<p style="color:#fff;text-align:center;">Sem OS nem Obras para este dia.</p>'}
+                    `; }).join('') : '<p style="color:#fff;text-align:center;">Sem OS nem Obras para este dia.</p>'}
                 </div>
             `;
         }
@@ -5417,8 +5536,11 @@
                 // Obrigatório picar primeiro o Ponto Geral — sem isso, não entra em OS/Obra.
                 const geralAberto = (dados.ponto || []).find(r => r.funcionarioId === p.id && r.data === hoje && r.entrada && !r.saida);
                 if (!geralAberto) {
-                    alert('⚠️ ' + p.nome.split(' ')[0] + ' ainda não picou o Ponto Geral hoje.\n\nÉ preciso picar primeiro a Entrada ao Serviço em "Ponto Geral" antes de entrar numa OS/Obra.');
-                    _quiosqueAgendaAbrirGeral();
+                    _quiosquePerguntarEntradaGeral(p.nome, () => {
+                        _quiosqueGarantirEntradaGeral(p.id, adminId, hora);
+                        guardarDados(dados);
+                        _quiosqueAgendaPicar('entrada'); // retoma sozinho a entrada nesta OS/Obra
+                    });
                     return;
                 }
                 _checklistEntradaVerificar(adminId, () => {
@@ -5843,8 +5965,11 @@
                 // Obrigatório picar primeiro o Ponto Geral — sem isso, não entra na obra.
                 const geralAberto = (dados.ponto || []).find(r => r.funcionarioId === p.id && r.data === hoje && r.entrada && !r.saida);
                 if (!geralAberto) {
-                    alert('⚠️ ' + p.nome.split(' ')[0] + ' ainda não picou o Ponto Geral hoje.\n\nÉ preciso picar primeiro a Entrada ao Serviço em "Ponto Geral" antes de entrar na obra.');
-                    _quiosqueFixaAbrirGeral();
+                    _quiosquePerguntarEntradaGeral(p.nome, () => {
+                        _quiosqueGarantirEntradaGeral(p.id, adminId, hora);
+                        guardarDados(dados);
+                        quiosquePicar(tipo); // retoma sozinho a entrada nesta obra
+                    });
                     return;
                 }
                 _checklistEntradaVerificar(adminId, () => {
@@ -8555,7 +8680,7 @@
             if (!usuarioLogado || (usuarioLogado.role !== 'admin' && usuarioLogado.role !== 'subadmin' && usuarioLogado.role !== 'encarregado')) return;
             const wrap = document.createElement('div');
             wrap.id = 'exportCalOverlay';
-            wrap.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:100000;display:flex;align-items:center;justify-content:center;padding:16px;';
+            wrap.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:300000;display:flex;align-items:center;justify-content:center;padding:16px;';
             wrap.innerHTML = `
                 <div style="background:#fff;border-radius:16px;padding:22px;max-width:360px;width:100%;">
                     <div style="font-weight:800;font-size:1.05rem;margin-bottom:4px;"><i class="fas fa-file-excel" style="color:#16a34a;"></i> Exportar Calendário</div>
@@ -14850,7 +14975,7 @@
         function _checklistEntradaMostrarModal(itens) {
             const wrap = document.createElement('div');
             wrap.id = 'checklistEntradaOverlay';
-            wrap.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:100000;display:flex;align-items:center;justify-content:center;padding:16px;';
+            wrap.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:300000;display:flex;align-items:center;justify-content:center;padding:16px;';
             wrap.innerHTML = `
                 <div style="background:#fff;border-radius:16px;padding:22px;max-width:420px;width:100%;max-height:88vh;overflow-y:auto;">
                     <div style="font-weight:800;font-size:1.05rem;margin-bottom:4px;"><i class="fas fa-clipboard-check" style="color:#3730a3;"></i> Checklist de Entrada</div>
@@ -14924,7 +15049,7 @@
         function _checklistSaidaMostrarModal(itens) {
             const wrap = document.createElement('div');
             wrap.id = 'checklistSaidaOverlay';
-            wrap.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:100000;display:flex;align-items:center;justify-content:center;padding:16px;';
+            wrap.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:300000;display:flex;align-items:center;justify-content:center;padding:16px;';
             wrap.innerHTML = `
                 <div style="background:#fff;border-radius:16px;padding:22px;max-width:420px;width:100%;max-height:88vh;overflow-y:auto;">
                     <div style="font-weight:800;font-size:1.05rem;margin-bottom:4px;"><i class="fas fa-clipboard-check" style="color:#3730a3;"></i> Checklist de Saída</div>
