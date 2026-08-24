@@ -3112,8 +3112,8 @@
         const M = {
             administradores: {
                 tabela: 'administradores',
-                from: r => ({ id: r.id, nome: r.nome, email: r.email, empresa: r.empresa || '', nif: r.nif || null, logo: r.logo || null, licencaFeedback: r.licenca_feedback || null, contratosPlano: r.contratos_plano || null, contratosExpiracao: isoToMs(r.contratos_expiracao), frotaPlano: r.frota_plano || null, frotaExpiracao: isoToMs(r.frota_expiracao), armazemPlano: r.armazem_plano || null, armazemExpiracao: isoToMs(r.armazem_expiracao), portalPlano: r.portal_plano || null, portalExpiracao: isoToMs(r.portal_expiracao), crmPlano: r.crm_plano || null, crmExpiracao: isoToMs(r.crm_expiracao), assistPlano: r.assist_plano || null, assistExpiracao: isoToMs(r.assist_expiracao), erpPlano: r.erp_plano || null, erpExpiracao: isoToMs(r.erp_expiracao), notificacoesPlano: r.notificacoes_plano || null, notificacoesExpiracao: isoToMs(r.notificacoes_expiracao), dadosBancarios: r.dados_bancarios || null, integracaoFaturacao: r.integracao_faturacao || null, ativo: r.ativo, mudarSenha: r.mudar_senha === true, ultimoLogin: isoToMs(r.ultimo_login), ultimaAtividade: isoToMs(r.ultima_atividade), mostrarEstadoOnline: r.mostrar_estado_online === true, layout: r.layout || null, tiposEquipamento: r.tipos_equipamento || [], logo: r.logo, notificarAprovacao: r.notificar_aprovacao === true, numeroRegistoPrevio: r.numero_registo_previo || null, dataRegistoPrevio: r.data_registo_previo || null, numeroAnepc: r.numero_anepc || null, dataAnepc: r.data_anepc || null, anepcValidade: r.anepc_validade || null, registoPrevioValidade: r.registo_previo_validade || null, corCorporativa: r.cor_corporativa || null, favoritos: Array.isArray(r.favoritos) ? r.favoritos : [], ivaPeriodicidade: r.iva_periodicidade || 'mensal', irsPeriodicidade: r.irs_periodicidade || 'semestral', painelTvAtivo: r.painel_tv_ativo === true, descricoesRapidasOS: Array.isArray(r.descricoes_rapidas_os) ? r.descricoes_rapidas_os : ['Instalação', 'Manutenção', 'Visita', 'Formação'], horaEntradaHabitual: r.hora_entrada_habitual || '09:00', toleranciaAtrasoMin: r.tolerancia_atraso_min != null ? r.tolerancia_atraso_min : 15, certificadoraLogo: r.certificadora_logo || null, ehDistribuidor: r.eh_distribuidor === true, distribuidorDesconto: r.distribuidor_desconto != null ? Number(r.distribuidor_desconto) : null, distribuidorId: r.distribuidor_id || null, precoDistribuidorCobrado: r.preco_distribuidor_cobrado != null ? Number(r.preco_distribuidor_cobrado) : null, distribuidorPagamentoPrazo: isoToMs(r.distribuidor_pagamento_prazo), precoFundador: r.preco_fundador === true, obrasAvancadoAtivo: r.obras_avancado_ativo === true, obrasChecklistItens: Array.isArray(r.obras_checklist_itens) ? r.obras_checklist_itens : [], checklistEntradaItens: Array.isArray(r.checklist_entrada_itens) ? r.checklist_entrada_itens : [], osModoWizard: r.os_modo_wizard === true, concelho: r.concelho || null, contratosDemoDias: r.contratos_demo_dias || null, frotaDemoDias: r.frota_demo_dias || null, armazemDemoDias: r.armazem_demo_dias || null, crmDemoDias: r.crm_demo_dias || null, erpDemoDias: r.erp_demo_dias || null, rondasPlano: r.rondas_plano || null, rondasExpiracao: isoToMs(r.rondas_expiracao), rondasDemoDias: r.rondas_demo_dias || null, usoSecoes: r.uso_secoes ? (typeof r.uso_secoes === 'string' ? JSON.parse(r.uso_secoes) : r.uso_secoes) : {}, usoSecoesUltima: isoToMs(r.uso_secoes_ultima), dataCriacao: isoToMs(r.data_criacao) }),
-                to:   o => ({ id: o.id, nome: o.nome, email: o.email, senha: o.senha, empresa: o.empresa || null, nif: o.nif || null, logo: o.logo || null, licenca_feedback: o.licencaFeedback || null, contratos_plano: o.contratosPlano || null, contratos_expiracao: msToISO(o.contratosExpiracao), frota_plano: o.frotaPlano || null, frota_expiracao: msToISO(o.frotaExpiracao), armazem_plano: o.armazemPlano || null, armazem_expiracao: msToISO(o.armazemExpiracao), portal_plano: o.portalPlano || null, portal_expiracao: msToISO(o.portalExpiracao), crm_plano: o.crmPlano || null, crm_expiracao: msToISO(o.crmExpiracao), assist_plano: o.assistPlano || null, assist_expiracao: msToISO(o.assistExpiracao), erp_plano: o.erpPlano || null, erp_expiracao: msToISO(o.erpExpiracao), notificacoes_plano: o.notificacoesPlano || null, notificacoes_expiracao: msToISO(o.notificacoesExpiracao), dados_bancarios: o.dadosBancarios || null, integracao_faturacao: o.integracaoFaturacao || null, ativo: o.ativo !== false, mudar_senha: o.mudarSenha === true, ultimo_login: o.ultimoLogin ? msToISO(o.ultimoLogin) : null, ultima_atividade: o.ultimaAtividade ? msToISO(o.ultimaAtividade) : null, mostrar_estado_online: o.mostrarEstadoOnline === true, layout: o.layout || null, tipos_equipamento: o.tiposEquipamento || [], logo: o.logo || null, notificar_aprovacao: o.notificarAprovacao === true, numero_registo_previo: o.numeroRegistoPrevio || null, data_registo_previo: o.dataRegistoPrevio || null, numero_anepc: o.numeroAnepc || null, data_anepc: o.dataAnepc || null, anepc_validade: o.anepcValidade || null, registo_previo_validade: o.registoPrevioValidade || null, cor_corporativa: o.corCorporativa || null, favoritos: o.favoritos || [], iva_periodicidade: o.ivaPeriodicidade || 'mensal', irs_periodicidade: o.irsPeriodicidade || 'semestral', painel_tv_ativo: o.painelTvAtivo === true, descricoes_rapidas_os: o.descricoesRapidasOS || null, hora_entrada_habitual: o.horaEntradaHabitual || '09:00', tolerancia_atraso_min: o.toleranciaAtrasoMin != null ? o.toleranciaAtrasoMin : 15, certificadora_logo: o.certificadoraLogo || null, eh_distribuidor: o.ehDistribuidor === true, distribuidor_desconto: o.distribuidorDesconto ?? null, distribuidor_id: o.distribuidorId || null, preco_distribuidor_cobrado: o.precoDistribuidorCobrado ?? null, distribuidor_pagamento_prazo: o.distribuidorPagamentoPrazo ? msToISO(o.distribuidorPagamentoPrazo) : null, preco_fundador: o.precoFundador === true, obras_avancado_ativo: o.obrasAvancadoAtivo === true, obras_checklist_itens: o.obrasChecklistItens || [], checklist_entrada_itens: o.checklistEntradaItens || [], os_modo_wizard: o.osModoWizard === true, concelho: o.concelho || null, contratos_demo_dias: o.contratosDemoDias || null, frota_demo_dias: o.frotaDemoDias || null, armazem_demo_dias: o.armazemDemoDias || null, crm_demo_dias: o.crmDemoDias || null, erp_demo_dias: o.erpDemoDias || null, rondas_plano: o.rondasPlano || null, rondas_expiracao: msToISO(o.rondasExpiracao), rondas_demo_dias: o.rondasDemoDias || null, uso_secoes: JSON.stringify(o.usoSecoes || {}), uso_secoes_ultima: o.usoSecoesUltima ? msToISO(o.usoSecoesUltima) : null, data_criacao: msToISO(o.dataCriacao) })
+                from: r => ({ id: r.id, nome: r.nome, email: r.email, empresa: r.empresa || '', nif: r.nif || null, logo: r.logo || null, licencaFeedback: r.licenca_feedback || null, contratosPlano: r.contratos_plano || null, contratosExpiracao: isoToMs(r.contratos_expiracao), frotaPlano: r.frota_plano || null, frotaExpiracao: isoToMs(r.frota_expiracao), armazemPlano: r.armazem_plano || null, armazemExpiracao: isoToMs(r.armazem_expiracao), portalPlano: r.portal_plano || null, portalExpiracao: isoToMs(r.portal_expiracao), crmPlano: r.crm_plano || null, crmExpiracao: isoToMs(r.crm_expiracao), assistPlano: r.assist_plano || null, assistExpiracao: isoToMs(r.assist_expiracao), erpPlano: r.erp_plano || null, erpExpiracao: isoToMs(r.erp_expiracao), notificacoesPlano: r.notificacoes_plano || null, notificacoesExpiracao: isoToMs(r.notificacoes_expiracao), dadosBancarios: r.dados_bancarios || null, integracaoFaturacao: r.integracao_faturacao || null, ativo: r.ativo, mudarSenha: r.mudar_senha === true, ultimoLogin: isoToMs(r.ultimo_login), ultimaAtividade: isoToMs(r.ultima_atividade), mostrarEstadoOnline: r.mostrar_estado_online === true, layout: r.layout || null, tiposEquipamento: r.tipos_equipamento || [], logo: r.logo, notificarAprovacao: r.notificar_aprovacao === true, numeroRegistoPrevio: r.numero_registo_previo || null, dataRegistoPrevio: r.data_registo_previo || null, numeroAnepc: r.numero_anepc || null, dataAnepc: r.data_anepc || null, anepcValidade: r.anepc_validade || null, registoPrevioValidade: r.registo_previo_validade || null, corCorporativa: r.cor_corporativa || null, favoritos: Array.isArray(r.favoritos) ? r.favoritos : [], ivaPeriodicidade: r.iva_periodicidade || 'mensal', irsPeriodicidade: r.irs_periodicidade || 'semestral', painelTvAtivo: r.painel_tv_ativo === true, descricoesRapidasOS: Array.isArray(r.descricoes_rapidas_os) ? r.descricoes_rapidas_os : ['Instalação', 'Manutenção', 'Visita', 'Formação'], horaEntradaHabitual: r.hora_entrada_habitual || '09:00', toleranciaAtrasoMin: r.tolerancia_atraso_min != null ? r.tolerancia_atraso_min : 15, certificadoraLogo: r.certificadora_logo || null, ehDistribuidor: r.eh_distribuidor === true, distribuidorDesconto: r.distribuidor_desconto != null ? Number(r.distribuidor_desconto) : null, distribuidorId: r.distribuidor_id || null, precoDistribuidorCobrado: r.preco_distribuidor_cobrado != null ? Number(r.preco_distribuidor_cobrado) : null, distribuidorPagamentoPrazo: isoToMs(r.distribuidor_pagamento_prazo), precoFundador: r.preco_fundador === true, obrasAvancadoAtivo: r.obras_avancado_ativo === true, obrasChecklistItens: Array.isArray(r.obras_checklist_itens) ? r.obras_checklist_itens : [], checklistEntradaItens: Array.isArray(r.checklist_entrada_itens) ? r.checklist_entrada_itens : [], osModoWizard: r.os_modo_wizard === true, contratoModoWizard: r.contrato_modo_wizard === true, concelho: r.concelho || null, contratosDemoDias: r.contratos_demo_dias || null, frotaDemoDias: r.frota_demo_dias || null, armazemDemoDias: r.armazem_demo_dias || null, crmDemoDias: r.crm_demo_dias || null, erpDemoDias: r.erp_demo_dias || null, rondasPlano: r.rondas_plano || null, rondasExpiracao: isoToMs(r.rondas_expiracao), rondasDemoDias: r.rondas_demo_dias || null, usoSecoes: r.uso_secoes ? (typeof r.uso_secoes === 'string' ? JSON.parse(r.uso_secoes) : r.uso_secoes) : {}, usoSecoesUltima: isoToMs(r.uso_secoes_ultima), dataCriacao: isoToMs(r.data_criacao) }),
+                to:   o => ({ id: o.id, nome: o.nome, email: o.email, senha: o.senha, empresa: o.empresa || null, nif: o.nif || null, logo: o.logo || null, licenca_feedback: o.licencaFeedback || null, contratos_plano: o.contratosPlano || null, contratos_expiracao: msToISO(o.contratosExpiracao), frota_plano: o.frotaPlano || null, frota_expiracao: msToISO(o.frotaExpiracao), armazem_plano: o.armazemPlano || null, armazem_expiracao: msToISO(o.armazemExpiracao), portal_plano: o.portalPlano || null, portal_expiracao: msToISO(o.portalExpiracao), crm_plano: o.crmPlano || null, crm_expiracao: msToISO(o.crmExpiracao), assist_plano: o.assistPlano || null, assist_expiracao: msToISO(o.assistExpiracao), erp_plano: o.erpPlano || null, erp_expiracao: msToISO(o.erpExpiracao), notificacoes_plano: o.notificacoesPlano || null, notificacoes_expiracao: msToISO(o.notificacoesExpiracao), dados_bancarios: o.dadosBancarios || null, integracao_faturacao: o.integracaoFaturacao || null, ativo: o.ativo !== false, mudar_senha: o.mudarSenha === true, ultimo_login: o.ultimoLogin ? msToISO(o.ultimoLogin) : null, ultima_atividade: o.ultimaAtividade ? msToISO(o.ultimaAtividade) : null, mostrar_estado_online: o.mostrarEstadoOnline === true, layout: o.layout || null, tipos_equipamento: o.tiposEquipamento || [], logo: o.logo || null, notificar_aprovacao: o.notificarAprovacao === true, numero_registo_previo: o.numeroRegistoPrevio || null, data_registo_previo: o.dataRegistoPrevio || null, numero_anepc: o.numeroAnepc || null, data_anepc: o.dataAnepc || null, anepc_validade: o.anepcValidade || null, registo_previo_validade: o.registoPrevioValidade || null, cor_corporativa: o.corCorporativa || null, favoritos: o.favoritos || [], iva_periodicidade: o.ivaPeriodicidade || 'mensal', irs_periodicidade: o.irsPeriodicidade || 'semestral', painel_tv_ativo: o.painelTvAtivo === true, descricoes_rapidas_os: o.descricoesRapidasOS || null, hora_entrada_habitual: o.horaEntradaHabitual || '09:00', tolerancia_atraso_min: o.toleranciaAtrasoMin != null ? o.toleranciaAtrasoMin : 15, certificadora_logo: o.certificadoraLogo || null, eh_distribuidor: o.ehDistribuidor === true, distribuidor_desconto: o.distribuidorDesconto ?? null, distribuidor_id: o.distribuidorId || null, preco_distribuidor_cobrado: o.precoDistribuidorCobrado ?? null, distribuidor_pagamento_prazo: o.distribuidorPagamentoPrazo ? msToISO(o.distribuidorPagamentoPrazo) : null, preco_fundador: o.precoFundador === true, obras_avancado_ativo: o.obrasAvancadoAtivo === true, obras_checklist_itens: o.obrasChecklistItens || [], checklist_entrada_itens: o.checklistEntradaItens || [], os_modo_wizard: o.osModoWizard === true, contrato_modo_wizard: o.contratoModoWizard === true, concelho: o.concelho || null, contratos_demo_dias: o.contratosDemoDias || null, frota_demo_dias: o.frotaDemoDias || null, armazem_demo_dias: o.armazemDemoDias || null, crm_demo_dias: o.crmDemoDias || null, erp_demo_dias: o.erpDemoDias || null, rondas_plano: o.rondasPlano || null, rondas_expiracao: msToISO(o.rondasExpiracao), rondas_demo_dias: o.rondasDemoDias || null, uso_secoes: JSON.stringify(o.usoSecoes || {}), uso_secoes_ultima: o.usoSecoesUltima ? msToISO(o.usoSecoesUltima) : null, data_criacao: msToISO(o.dataCriacao) })
             },
             funcionarios: {
                 tabela: 'funcionarios',
@@ -10674,6 +10674,7 @@
                 _renderListaEquipContrato();
             }
             document.getElementById('modalContratoOverlay').classList.add('open');
+            if (!id && adminAtual()?.contratoModoWizard) setTimeout(_ctWizardAtivar, 30);
         }
 
         function apagarLocalContrato() {
@@ -10905,8 +10906,126 @@
             }
         }
 
+        // ============================================================================
+        //  MODO WIZARD para criar Contrato (passo a passo) — mesmo padrão do wizard de
+        //  OS, mas adaptado ao modal próprio do Contrato (modalContratoOverlay/Campos),
+        //  que não usa o sistema de modal genérico nem um <form> com submit.
+        // ============================================================================
+        let _ctWizPasso = 0, _ctWizPassos = [];
+        function _ctWizardAtivar() {
+          try {
+            const wrap = document.querySelector('#modalContratoCampos .ff-wrap');
+            if (!wrap) return;
+            const secoes = Array.from(wrap.querySelectorAll(':scope > .ff-secao'));
+            const secLocal = secoes.find(s => s.querySelector('#ct_local'));
+            const secPeriodicidade = secoes.find(s => s.querySelector('#ct_period'));
+            const secEspecialidades = secoes.find(s => s.querySelector('#ct_tipos_trabalho_cont'));
+            const secDatasValor = secoes.find(s => s.querySelector('#ct_inicio'));
+            const secVigilancia = secoes.find(s => s.querySelector('#ct_vigilancia'));
+            if (!secLocal || !secPeriodicidade || !secDatasValor) return; // estrutura inesperada — não arrisca, fica no formulário normal
+
+            const heroEl = wrap.querySelector(':scope > .ff-hero');
+            const criarClienteHelp = Array.from(wrap.querySelectorAll(':scope > .help-text')).find(d => d.textContent.includes('Não existe'));
+            const passo1 = document.createElement('div');
+            if (heroEl) passo1.appendChild(heroEl);
+            if (criarClienteHelp) {
+                criarClienteHelp.innerHTML = '';
+                const btnCriarCliente = document.createElement('button');
+                btnCriarCliente.type = 'button';
+                btnCriarCliente.className = 'btn btn-sm btn-outline';
+                btnCriarCliente.style.marginBottom = '10px';
+                btnCriarCliente.innerHTML = '<i class="fas fa-user-plus"></i> Cliente não existe? Criar cliente';
+                btnCriarCliente.onclick = () => { _ncTargetSelect = 'ct_cliente'; _abrirNovoClienteModal(); };
+                criarClienteHelp.appendChild(btnCriarCliente);
+                passo1.appendChild(criarClienteHelp);
+            }
+
+            _ctWizPassos = [
+                { titulo: 'Cliente', el: passo1 },
+                { titulo: 'Local e Equipamento', el: secLocal },
+                { titulo: 'Periodicidade e Responsável', el: secPeriodicidade },
+                secEspecialidades ? { titulo: 'Especialidades', el: secEspecialidades } : null,
+                { titulo: 'Datas e Valor', el: secDatasValor },
+                secVigilancia ? { titulo: 'Vigilância/Monitorização', el: secVigilancia } : null,
+            ].filter(Boolean);
+
+            wrap.innerHTML = '';
+            const barra = document.createElement('div');
+            barra.id = 'ctWizBarra';
+            barra.style.cssText = 'margin-bottom:16px;';
+            wrap.appendChild(barra);
+            _ctWizPassos.forEach((p, i) => { p.el.dataset.ctwPasso = i; p.el.style.display = i === 0 ? '' : 'none'; wrap.appendChild(p.el); });
+            const nav = document.createElement('div');
+            nav.style.cssText = 'display:flex;gap:10px;margin-top:16px;';
+            nav.innerHTML = `
+                <button type="button" id="ctWizVoltar" class="btn" style="background:#f1f5f9;flex:1;" onclick="_ctWizVoltar()">Voltar</button>
+                <button type="button" id="ctWizSeguinte" class="btn btn-primary" style="flex:2;" onclick="_ctWizSeguinte()">Seguinte</button>
+            `;
+            wrap.appendChild(nav);
+            const modalActions = document.querySelector('#modalContratoOverlay .modal-actions');
+            if (modalActions) modalActions.style.display = 'none';
+            _ctWizPasso = 0;
+            _ctWizRenderBarra();
+          } catch (e) {
+            console.error('Erro ao ativar o Modo Wizard de Contrato:', e);
+          }
+        }
+        function _ctWizRenderBarra() {
+            const barra = document.getElementById('ctWizBarra'); if (!barra) return;
+            const total = _ctWizPassos.length;
+            barra.innerHTML = `
+                <div style="display:flex;justify-content:space-between;font-size:.78rem;color:#64748b;margin-bottom:6px;">
+                    <span>Passo ${_ctWizPasso + 1} de ${total} — ${escapeHtmlSimples(_ctWizPassos[_ctWizPasso].titulo)}</span>
+                    <a href="#" onclick="_ctWizSair();return false;" style="color:#94a3b8;text-decoration:underline;">Ver formulário completo</a>
+                </div>
+                <div style="background:#e2e8f0;border-radius:99px;height:6px;overflow:hidden;"><div style="background:#0ea5e9;height:100%;width:${((_ctWizPasso + 1) / total) * 100}%;transition:width .2s;"></div></div>
+            `;
+            const btnVoltar = document.getElementById('ctWizVoltar');
+            const btnSeguinte = document.getElementById('ctWizSeguinte');
+            if (btnVoltar) btnVoltar.style.visibility = _ctWizPasso === 0 ? 'hidden' : 'visible';
+            if (btnSeguinte) btnSeguinte.innerHTML = _ctWizPasso === total - 1 ? '<i class="fas fa-check"></i> Finalizar' : 'Seguinte <i class="fas fa-arrow-right"></i>';
+        }
+        function _ctWizValidarPassoAtual() {
+            const el = _ctWizPassos[_ctWizPasso].el;
+            const obrigatorios = el.querySelectorAll('[required]');
+            for (const campo of obrigatorios) {
+                if (campo.offsetParent === null) continue;
+                if (!campo.reportValidity()) return false;
+            }
+            return true;
+        }
+        function _ctWizSeguinte() {
+            if (!_ctWizValidarPassoAtual()) return;
+            _ctWizPassos[_ctWizPasso].el.style.display = 'none';
+            if (_ctWizPasso < _ctWizPassos.length - 1) {
+                _ctWizPasso++;
+                _ctWizPassos[_ctWizPasso].el.style.display = '';
+                _ctWizRenderBarra();
+            } else {
+                salvarContrato(); // reaproveita a validação e gravação normais, sem duplicar nada aqui
+            }
+        }
+        function _ctWizVoltar() {
+            if (_ctWizPasso === 0) return;
+            _ctWizPassos[_ctWizPasso].el.style.display = 'none';
+            _ctWizPasso--;
+            _ctWizPassos[_ctWizPasso].el.style.display = '';
+            _ctWizRenderBarra();
+        }
+        function _ctWizSair() {
+            _ctWizPassos.forEach(p => { p.el.style.display = ''; });
+            document.getElementById('ctWizBarra')?.remove();
+            document.getElementById('ctWizVoltar')?.closest('div')?.remove();
+            const modalActions = document.querySelector('#modalContratoOverlay .modal-actions');
+            if (modalActions) modalActions.style.display = '';
+            _ctWizPassos = []; _ctWizPasso = 0;
+        }
         function fecharModalContrato() {
             document.getElementById('modalContratoOverlay').classList.remove('open');
+            // Repõe sempre os botões normais do rodapé — o Modo Wizard de Contrato esconde-os
+            // enquanto está ativo; sem isto, ficariam escondidos na próxima vez que se abrisse.
+            const _modalActionsReset = document.querySelector('#modalContratoOverlay .modal-actions');
+            if (_modalActionsReset) _modalActionsReset.style.display = '';
         }
 
         function gerarNumeroContrato(clienteId) {
@@ -30855,6 +30974,21 @@ window._relPrefill = function(msg){
                                 </div>
                             </div>
                         </div>
+
+                        ${moduloContratosAtivo(admin) ? `
+                        <div class="ff-secao ff-tint-doc">
+                            <div class="ff-secao-head"><i class="fas fa-list-ol"></i> Criação de Contratos de Manutenção</div>
+                            <div class="ff-secao-body">
+                                <div class="form-group ff-span2">
+                                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                                        <input type="checkbox" id="perf_contrato_modo_wizard" ${admin?.contratoModoWizard ? 'checked' : ''} style="width:auto;margin:0;" />
+                                        Criar novos Contratos em modo Wizard (passo a passo)
+                                    </label>
+                                    <div class="help-text" style="margin-top:4px;">Em vez do formulário único, a criação de um novo Contrato de Manutenção passa a ser feita por perguntas, uma de cada vez.</div>
+                                </div>
+                            </div>
+                        </div>
+                        ` : ''}
                         </div>
                     `;
             } else {
@@ -31102,6 +31236,7 @@ window._relPrefill = function(msg){
                     const _tolerP = document.getElementById('perf_tolerancia_atraso')?.value;
                     admin.toleranciaAtrasoMin = _tolerP !== '' && _tolerP != null ? parseInt(_tolerP, 10) : 15;
                     admin.osModoWizard = document.getElementById('perf_os_modo_wizard')?.checked || false;
+                    admin.contratoModoWizard = document.getElementById('perf_contrato_modo_wizard')?.checked || false;
                     admin.concelho = document.getElementById('perf_concelho')?.value || null;
                     if (senha) admin.senha = senha;
                     if (logoData !== undefined) admin.logo = logoData;
