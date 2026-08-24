@@ -5235,8 +5235,8 @@
             const pessoas = _quiosqueAgendaPessoasEmpresa();
             painel.innerHTML = `
                 <div style="text-align:center;color:#152a52;margin-bottom:14px;">
-                    <div style="font-weight:700;"><i class="fas fa-clock"></i> Ponto Geral (sem OS/Obra)</div>
-                    <div style="font-size:.8rem;color:#64748b;margin-top:2px;">Entrada ao serviço e saída final do dia</div>
+                    <div style="font-weight:700;"><i class="fas fa-clock"></i> Entrada / Saída de Serviço</div>
+                    <div style="font-size:.8rem;color:#64748b;margin-top:2px;">Sem estar ligado a nenhuma OS ou Obra</div>
                     <button type="button" onclick="_quiosqueAgendaRender()" style="margin-top:8px;background:#f1f5f9;border:none;color:#334155;padding:7px 16px;border-radius:100px;font-size:.78rem;font-weight:600;cursor:pointer;"><i class="fas fa-arrow-left"></i> Voltar à agenda</button>
                 </div>
                 <div class="tgq-grid" style="position:static;">
@@ -5262,9 +5262,9 @@
             const p = _quiosqueAgendaGeralPessoaSel; if (!p) return;
             const painel = document.getElementById('tgqPainel');
             painel.innerHTML = `
-                <div style="text-align:center;color:#fff;">
+                <div style="text-align:center;color:#152a52;">
                     <div style="font-weight:700;margin-bottom:10px;">${escapeHtmlSimples(p.nome)}</div>
-                    <div style="font-size:1.6rem;letter-spacing:6px;min-height:36px;">${'•'.repeat(_quiosqueAgendaGeralPin.length)}</div>
+                    <div style="font-size:1.6rem;letter-spacing:6px;min-height:36px;color:#152a52;">${'•'.repeat(_quiosqueAgendaGeralPin.length)}</div>
                     <div style="display:grid;grid-template-columns:repeat(3,64px);gap:10px;justify-content:center;margin:16px auto;">
                         ${[1,2,3,4,5,6,7,8,9].map(n => `<button type="button" class="tgq-tecla" onclick="_quiosqueAgendaGeralPinDigito(${n})">${n}</button>`).join('')}
                         <div></div>
@@ -5292,17 +5292,22 @@
             const aberto = (dados.ponto || []).find(r => r.funcionarioId === p.id && r.data === hoje && r.entrada && !r.saida);
             const painel = document.getElementById('tgqPainel');
             painel.innerHTML = `
-                <div style="text-align:center;color:#fff;">
+                <div style="text-align:center;color:#152a52;">
                     <div style="font-size:1.1rem;font-weight:700;">${escapeHtmlSimples(p.nome)}</div>
-                    <div style="font-size:.85rem;opacity:.85;margin-bottom:16px;">${new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}</div>
+                    <div style="font-size:.85rem;color:#64748b;margin-bottom:16px;">${new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}</div>
                 </div>
                 <div style="max-width:340px;margin:0 auto;">
                     ${!aberto
-                        ? `<button type="button" class="tgq-acao-btn" style="background:#16a34a;" onclick="_quiosqueAgendaGeralPicar('entrada')"><i class="fas fa-sign-in-alt"></i> Entrada ao Serviço</button>`
+                        ? `<div id="kiosk_slide_track" style="position:relative;height:56px;background:#e2e8f0;border-radius:28px;overflow:hidden;user-select:none;touch-action:none;margin-bottom:10px;">
+                               <div id="kiosk_slide_fill" style="position:absolute;left:0;top:0;bottom:0;width:56px;background:#bbf7d0;border-radius:28px;"></div>
+                               <div id="kiosk_slide_label" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:700;color:#166534;font-size:.9rem;">Arrasta para dar entrada →</div>
+                               <div id="kiosk_slide_handle" style="position:absolute;top:3px;left:3px;width:50px;height:50px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;cursor:grab;"><i class="fas fa-chevron-right" style="color:#16a34a;"></i></div>
+                           </div>`
                         : `<button type="button" class="tgq-acao-btn" style="background:#dc2626;" onclick="_quiosqueAgendaGeralPicar('saida')"><i class="fas fa-sign-out-alt"></i> Saída ao Serviço</button>`}
                     <button type="button" class="tgq-acao-btn" style="background:#64748b;" onclick="_quiosqueAgendaAbrirGeral()">Cancelar</button>
                 </div>
             `;
+            if (!aberto) { window._kioskSlideCallback = () => _quiosqueAgendaGeralPicar('entrada'); _kioskSlideInit(); }
         }
         function _quiosqueAgendaGeralPicar(acao) {
             const p = _quiosqueAgendaGeralPessoaSel; if (!p) return;
@@ -5322,13 +5327,13 @@
                 const itemR = retomar.sessao.tipo === 'servico' ? dados.servicos?.find(x => x.id === retomar.sessao.id) : dados.obras?.find(x => x.id === retomar.sessao.id);
                 const tituloR = retomar.sessao.tipo === 'servico' ? (obterNomeCliente(itemR?.clienteId) || 'OS') : itemR?.nome;
                 const painelR = document.getElementById('tgqPainel');
-                painelR.innerHTML = `<div style="text-align:center;color:#fff;"><div style="font-size:2.4rem;color:#16a34a;"><i class="fas fa-circle-check"></i></div><div style="font-weight:700;margin-top:8px;">Entrada geral registada!</div><div style="opacity:.85;font-size:.85rem;margin-top:4px;">A continuar a entrada em ${escapeHtmlSimples(tituloR || '')}…</div></div>`;
+                painelR.innerHTML = `<div style="text-align:center;color:#152a52;"><div style="font-size:2.4rem;color:#16a34a;"><i class="fas fa-circle-check"></i></div><div style="font-weight:700;margin-top:8px;">Entrada registada às ${hora}!</div><div style="color:#64748b;font-size:.85rem;margin-top:4px;">A continuar a entrada em ${escapeHtmlSimples(tituloR || '')}…</div></div>`;
                 setTimeout(() => _quiosqueAgendaPicar('entrada'), 1200);
                 return;
             }
             _quiosqueAgendaRetomarAposGeral = null;
             const painel = document.getElementById('tgqPainel');
-            painel.innerHTML = `<div style="text-align:center;color:#fff;"><div style="font-size:2.4rem;color:#16a34a;"><i class="fas fa-circle-check"></i></div><div style="font-weight:700;margin-top:8px;">${acao === 'entrada' ? 'Entrada registada!' : 'Saída registada!'}</div></div>`;
+            painel.innerHTML = `<div style="text-align:center;color:#152a52;"><div style="font-size:2.4rem;color:#16a34a;"><i class="fas fa-circle-check"></i></div><div style="font-weight:700;margin-top:8px;">${acao === 'entrada' ? 'Entraste às ' + hora + '!' : 'Saíste às ' + hora + '!'}</div></div>`;
             setTimeout(_quiosqueAgendaRender, 1800);
         }
         function _quiosqueAgendaRender() {
@@ -5361,7 +5366,7 @@
                     <button type="button" onclick="_quiosqueAgendaNavegarDia(1)" style="width:48px;height:48px;border:none;border-radius:12px;background:#334155;color:#fff;font-size:1.1rem;cursor:pointer;flex-shrink:0;"><i class="fas fa-chevron-right"></i></button>
                 </div>
                 <div style="text-align:center;margin-bottom:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
-                    <button type="button" onclick="_quiosqueAgendaAbrirGeral()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.4);color:#fff;padding:8px 18px;border-radius:100px;font-size:.82rem;font-weight:600;cursor:pointer;"><i class="fas fa-clock"></i> Ponto Geral — Entrada</button>
+                    <button type="button" onclick="_quiosqueAgendaAbrirGeral()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.4);color:#fff;padding:8px 18px;border-radius:100px;font-size:.82rem;font-weight:600;cursor:pointer;"><i class="fas fa-clock"></i> Entrada / Saída de Serviço</button>
                     <button type="button" onclick="_quiosqueAgendaAbrirGeral()" style="background:#dc2626;border:1px solid #dc2626;color:#fff;padding:8px 18px;border-radius:100px;font-size:.82rem;font-weight:700;cursor:pointer;"><i class="fas fa-power-off"></i> Terminar o Dia</button>
                 </div>
                 <div style="display:grid;gap:14px;">
@@ -5793,7 +5798,7 @@
             _quiosquePinAtual = ''; _quiosquePessoaSelecionada = null;
             document.getElementById('tgqPainel').style.display = 'none';
             document.getElementById('tgqGrid').style.display = 'grid';
-            document.getElementById('tgqSubtitulo').innerHTML = 'Toca no teu nome para picar o ponto<br><button type="button" onclick="_quiosqueFixaAbrirGeral()" style="margin-top:8px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.4);color:#fff;padding:6px 16px;border-radius:100px;font-size:.78rem;font-weight:600;cursor:pointer;"><i class="fas fa-clock"></i> Ponto Geral (Entrada / Saída do dia)</button>';
+            document.getElementById('tgqSubtitulo').innerHTML = 'Toca no teu nome para picar o ponto<br><button type="button" onclick="_quiosqueFixaAbrirGeral()" style="margin-top:8px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.4);color:#fff;padding:6px 16px;border-radius:100px;font-size:.78rem;font-weight:600;cursor:pointer;"><i class="fas fa-clock"></i> Entrada / Saída de Serviço</button>';
             const pessoas = _quiosquePessoas();
             document.getElementById('tgqGrid').innerHTML = pessoas.length ? pessoas.map(p => `
                 <div class="tgq-pessoa" onclick="quiosquePessoaClick('${p.id}','${p._tipo}')">
@@ -5812,7 +5817,7 @@
             const pessoas = _quiosquePessoas();
             painel.innerHTML = `
                 <div style="text-align:center;color:#152a52;margin-bottom:14px;">
-                    <div style="font-weight:700;"><i class="fas fa-clock"></i> Ponto Geral</div>
+                    <div style="font-weight:700;"><i class="fas fa-clock"></i> Entrada / Saída de Serviço</div>
                     <div style="font-size:.8rem;color:#64748b;margin-top:2px;">Entrada ao serviço e saída final do dia</div>
                     <button type="button" onclick="_quiosqueMostrarGrid()" style="margin-top:8px;background:#f1f5f9;border:none;color:#334155;padding:7px 16px;border-radius:100px;font-size:.78rem;font-weight:600;cursor:pointer;"><i class="fas fa-arrow-left"></i> Voltar</button>
                 </div>
@@ -5838,9 +5843,9 @@
             const p = _quiosqueFixaGeralPessoaSel; if (!p) return;
             const painel = document.getElementById('tgqPainel');
             painel.innerHTML = `
-                <div style="text-align:center;color:#fff;">
+                <div style="text-align:center;color:#152a52;">
                     <div style="font-weight:700;margin-bottom:10px;">${escapeHtmlSimples(p.nome)}</div>
-                    <div style="font-size:1.6rem;letter-spacing:6px;min-height:36px;">${'•'.repeat(_quiosqueFixaGeralPin.length)}</div>
+                    <div style="font-size:1.6rem;letter-spacing:6px;min-height:36px;color:#152a52;">${'•'.repeat(_quiosqueFixaGeralPin.length)}</div>
                     <div style="display:grid;grid-template-columns:repeat(3,64px);gap:10px;justify-content:center;margin:16px auto;">
                         ${[1,2,3,4,5,6,7,8,9].map(n => `<button type="button" class="tgq-tecla" onclick="_quiosqueFixaGeralPinDigito(${n})">${n}</button>`).join('')}
                         <div></div>
@@ -5868,17 +5873,22 @@
             const aberto = (dados.ponto || []).find(r => r.funcionarioId === p.id && r.data === hoje && r.entrada && !r.saida);
             const painel = document.getElementById('tgqPainel');
             painel.innerHTML = `
-                <div style="text-align:center;color:#fff;">
+                <div style="text-align:center;color:#152a52;">
                     <div style="font-size:1.1rem;font-weight:700;">${escapeHtmlSimples(p.nome)}</div>
-                    <div style="font-size:.85rem;opacity:.85;margin-bottom:16px;">${new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}</div>
+                    <div style="font-size:.85rem;color:#64748b;margin-bottom:16px;">${new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}</div>
                 </div>
                 <div style="max-width:340px;margin:0 auto;">
                     ${!aberto
-                        ? `<button type="button" class="tgq-acao-btn" style="background:#16a34a;" onclick="_quiosqueFixaGeralPicar('entrada')"><i class="fas fa-sign-in-alt"></i> Entrada ao Serviço</button>`
+                        ? `<div id="kiosk_slide_track" style="position:relative;height:56px;background:#e2e8f0;border-radius:28px;overflow:hidden;user-select:none;touch-action:none;margin-bottom:10px;">
+                               <div id="kiosk_slide_fill" style="position:absolute;left:0;top:0;bottom:0;width:56px;background:#bbf7d0;border-radius:28px;"></div>
+                               <div id="kiosk_slide_label" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:700;color:#166534;font-size:.9rem;">Arrasta para dar entrada →</div>
+                               <div id="kiosk_slide_handle" style="position:absolute;top:3px;left:3px;width:50px;height:50px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;cursor:grab;"><i class="fas fa-chevron-right" style="color:#16a34a;"></i></div>
+                           </div>`
                         : `<button type="button" class="tgq-acao-btn" style="background:#dc2626;" onclick="_quiosqueFixaGeralPicar('saida')"><i class="fas fa-sign-out-alt"></i> Saída ao Serviço</button>`}
                     <button type="button" class="tgq-acao-btn" style="background:#64748b;" onclick="_quiosqueFixaAbrirGeral()">Cancelar</button>
                 </div>
             `;
+            if (!aberto) { window._kioskSlideCallback = () => _quiosqueFixaGeralPicar('entrada'); _kioskSlideInit(); }
         }
         function _quiosqueFixaGeralPicar(acao) {
             const p = _quiosqueFixaGeralPessoaSel; if (!p) return;
@@ -5888,7 +5898,7 @@
             else _quiosqueFecharEntradaGeral(p.id, hora);
             guardarDados(dados);
             const painel = document.getElementById('tgqPainel');
-            painel.innerHTML = `<div style="text-align:center;color:#fff;"><div style="font-size:2.4rem;color:#16a34a;"><i class="fas fa-circle-check"></i></div><div style="font-weight:700;margin-top:8px;">${acao === 'entrada' ? 'Entrada registada!' : 'Saída registada!'}</div></div>`;
+            painel.innerHTML = `<div style="text-align:center;color:#152a52;"><div style="font-size:2.4rem;color:#16a34a;"><i class="fas fa-circle-check"></i></div><div style="font-weight:700;margin-top:8px;">${acao === 'entrada' ? 'Entraste às ' + hora + '!' : 'Saíste às ' + hora + '!'}</div></div>`;
             setTimeout(_quiosqueMostrarGrid, 1800);
         }
         function quiosquePessoaClick(id, tipo) {
