@@ -5235,7 +5235,7 @@
             const pessoas = _quiosqueAgendaPessoasEmpresa();
             painel.innerHTML = `
                 <div style="text-align:center;color:#152a52;margin-bottom:14px;">
-                    <div style="font-weight:700;"><i class="fas fa-clock"></i> Entrada / Saída de Serviço</div>
+                    <div style="font-weight:700;"><i class="fas fa-clock"></i> Ponto Geral</div>
                     <div style="font-size:.8rem;color:#64748b;margin-top:2px;">Sem estar ligado a nenhuma OS ou Obra</div>
                     <button type="button" onclick="_quiosqueAgendaRender()" style="margin-top:8px;background:#f1f5f9;border:none;color:#334155;padding:7px 16px;border-radius:100px;font-size:.78rem;font-weight:600;cursor:pointer;"><i class="fas fa-arrow-left"></i> Voltar à agenda</button>
                 </div>
@@ -5366,8 +5366,7 @@
                     <button type="button" onclick="_quiosqueAgendaNavegarDia(1)" style="width:48px;height:48px;border:none;border-radius:12px;background:#334155;color:#fff;font-size:1.1rem;cursor:pointer;flex-shrink:0;"><i class="fas fa-chevron-right"></i></button>
                 </div>
                 <div style="text-align:center;margin-bottom:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
-                    <button type="button" onclick="_quiosqueAgendaAbrirGeral()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.4);color:#fff;padding:8px 18px;border-radius:100px;font-size:.82rem;font-weight:600;cursor:pointer;"><i class="fas fa-clock"></i> Entrada / Saída de Serviço</button>
-                    <button type="button" onclick="_quiosqueAgendaAbrirGeral()" style="background:#dc2626;border:1px solid #dc2626;color:#fff;padding:8px 18px;border-radius:100px;font-size:.82rem;font-weight:700;cursor:pointer;"><i class="fas fa-power-off"></i> Terminar o Dia</button>
+                    <button type="button" onclick="_quiosqueAgendaAbrirGeral()" style="background:#dc2626;border:1px solid #dc2626;color:#fff;padding:8px 18px;border-radius:100px;font-size:.82rem;font-weight:700;cursor:pointer;"><i class="fas fa-power-off"></i> Entrada / Saída de Serviço</button>
                 </div>
                 <div style="display:grid;gap:14px;">
                     ${itens.length ? itens.map(it => {
@@ -5798,7 +5797,7 @@
             _quiosquePinAtual = ''; _quiosquePessoaSelecionada = null;
             document.getElementById('tgqPainel').style.display = 'none';
             document.getElementById('tgqGrid').style.display = 'grid';
-            document.getElementById('tgqSubtitulo').innerHTML = 'Toca no teu nome para picar o ponto<br><button type="button" onclick="_quiosqueFixaAbrirGeral()" style="margin-top:8px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.4);color:#fff;padding:6px 16px;border-radius:100px;font-size:.78rem;font-weight:600;cursor:pointer;"><i class="fas fa-clock"></i> Entrada / Saída de Serviço</button>';
+            document.getElementById('tgqSubtitulo').innerHTML = 'Toca no teu nome para picar o ponto<br><button type="button" onclick="_quiosqueFixaAbrirGeral()" style="margin-top:8px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.4);color:#fff;padding:6px 16px;border-radius:100px;font-size:.78rem;font-weight:600;cursor:pointer;"><i class="fas fa-clock"></i> Ponto Geral</button>';
             const pessoas = _quiosquePessoas();
             document.getElementById('tgqGrid').innerHTML = pessoas.length ? pessoas.map(p => `
                 <div class="tgq-pessoa" onclick="quiosquePessoaClick('${p.id}','${p._tipo}')">
@@ -5817,7 +5816,7 @@
             const pessoas = _quiosquePessoas();
             painel.innerHTML = `
                 <div style="text-align:center;color:#152a52;margin-bottom:14px;">
-                    <div style="font-weight:700;"><i class="fas fa-clock"></i> Entrada / Saída de Serviço</div>
+                    <div style="font-weight:700;"><i class="fas fa-clock"></i> Ponto Geral</div>
                     <div style="font-size:.8rem;color:#64748b;margin-top:2px;">Entrada ao serviço e saída final do dia</div>
                     <button type="button" onclick="_quiosqueMostrarGrid()" style="margin-top:8px;background:#f1f5f9;border:none;color:#334155;padding:7px 16px;border-radius:100px;font-size:.78rem;font-weight:600;cursor:pointer;"><i class="fas fa-arrow-left"></i> Voltar</button>
                 </div>
