@@ -16623,11 +16623,11 @@
             const adminId = _tenantId();
             const todos = (dados.artigos || []).filter(a => a.adminId === adminId);
             let resultado = q ? todos.filter(a => (a.nome || '').toLowerCase().includes(q) || (a.referencia || '').toLowerCase().includes(q)) : todos;
-            // Mostra sempre pelo menos 5 (quando existirem artigos suficientes), mesmo que a
-            // pesquisa em si tenha menos correspondências — completa com outros artigos, para
-            // haver sempre opções rápidas a escolher.
+            // Mostra pelo menos 5 (quando existirem artigos suficientes) SÓ quando já há
+            // correspondências reais — completa a lista para haver mais opções rápidas. Se não
+            // houver correspondência nenhuma, não mostra nada (como as outras pesquisas da app).
             const MINIMO = 5;
-            if (q && resultado.length < MINIMO && todos.length > resultado.length) {
+            if (q && resultado.length > 0 && resultado.length < MINIMO && todos.length > resultado.length) {
                 const jaIncluidos = new Set(resultado.map(a => a.id));
                 for (const a of todos) {
                     if (resultado.length >= MINIMO) break;
@@ -16635,7 +16635,7 @@
                 }
             }
             if (!resultado.length) {
-                dd.innerHTML = '<div style="padding:10px 12px;color:#94a3b8;font-size:.85rem;">Sem artigos registados ainda</div>';
+                dd.innerHTML = q ? '<div style="padding:10px 12px;color:#94a3b8;font-size:.85rem;">Sem artigos encontrados</div>' : '<div style="padding:10px 12px;color:#94a3b8;font-size:.85rem;">Sem artigos registados ainda</div>';
                 dd.style.display = 'block';
                 return;
             }
