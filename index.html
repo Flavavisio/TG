@@ -1846,6 +1846,7 @@
                 <strong id="calMesLabel" style="min-width:150px;text-align:center;"></strong>
                 <button class="btn btn-outline" onclick="calMudarMes(1)"><i class="fas fa-chevron-right"></i></button>
                 <button class="btn btn-outline" onclick="calIrParaHoje()">Hoje</button>
+                <button class="btn btn-success" onclick="exportarCalendarioEquipa()"><i class="fas fa-file-excel"></i> Exportar</button>
             </div>
         </div>
         <div style="display:flex;gap:16px;margin-bottom:10px;flex-wrap:wrap;font-size:.82rem;color:#475569;">
@@ -1854,6 +1855,7 @@
             <span><span style="display:inline-block;width:12px;height:12px;background:#0ea5e9;border-radius:3px;vertical-align:middle;"></span> Baixa médica</span>
             <span><span style="display:inline-block;width:12px;height:12px;background:#eab308;border-radius:3px;vertical-align:middle;"></span> Licença</span>
             <span><span style="display:inline-block;width:12px;height:12px;background:#e2e8f0;border-radius:3px;vertical-align:middle;"></span> Fim de semana</span>
+            <span><span style="display:inline-block;width:12px;height:12px;background:#f1f5f9;border:2px solid #9333ea;border-radius:3px;vertical-align:middle;"></span> Feriado municipal</span>
         </div>
         <div class="table-wrapper" style="overflow-x:auto;">
             <table id="tabelaCalendarioEquipa" style="border-collapse:collapse;"></table>
@@ -3110,8 +3112,8 @@
         const M = {
             administradores: {
                 tabela: 'administradores',
-                from: r => ({ id: r.id, nome: r.nome, email: r.email, empresa: r.empresa || '', nif: r.nif || null, logo: r.logo || null, licencaFeedback: r.licenca_feedback || null, contratosPlano: r.contratos_plano || null, contratosExpiracao: isoToMs(r.contratos_expiracao), frotaPlano: r.frota_plano || null, frotaExpiracao: isoToMs(r.frota_expiracao), armazemPlano: r.armazem_plano || null, armazemExpiracao: isoToMs(r.armazem_expiracao), portalPlano: r.portal_plano || null, portalExpiracao: isoToMs(r.portal_expiracao), crmPlano: r.crm_plano || null, crmExpiracao: isoToMs(r.crm_expiracao), assistPlano: r.assist_plano || null, assistExpiracao: isoToMs(r.assist_expiracao), erpPlano: r.erp_plano || null, erpExpiracao: isoToMs(r.erp_expiracao), notificacoesPlano: r.notificacoes_plano || null, notificacoesExpiracao: isoToMs(r.notificacoes_expiracao), dadosBancarios: r.dados_bancarios || null, integracaoFaturacao: r.integracao_faturacao || null, ativo: r.ativo, mudarSenha: r.mudar_senha === true, ultimoLogin: isoToMs(r.ultimo_login), ultimaAtividade: isoToMs(r.ultima_atividade), mostrarEstadoOnline: r.mostrar_estado_online === true, layout: r.layout || null, tiposEquipamento: r.tipos_equipamento || [], logo: r.logo, notificarAprovacao: r.notificar_aprovacao === true, numeroRegistoPrevio: r.numero_registo_previo || null, dataRegistoPrevio: r.data_registo_previo || null, numeroAnepc: r.numero_anepc || null, dataAnepc: r.data_anepc || null, anepcValidade: r.anepc_validade || null, registoPrevioValidade: r.registo_previo_validade || null, corCorporativa: r.cor_corporativa || null, favoritos: Array.isArray(r.favoritos) ? r.favoritos : [], ivaPeriodicidade: r.iva_periodicidade || 'mensal', irsPeriodicidade: r.irs_periodicidade || 'semestral', painelTvAtivo: r.painel_tv_ativo === true, descricoesRapidasOS: Array.isArray(r.descricoes_rapidas_os) ? r.descricoes_rapidas_os : ['Instalação', 'Manutenção', 'Visita', 'Formação'], horaEntradaHabitual: r.hora_entrada_habitual || '09:00', toleranciaAtrasoMin: r.tolerancia_atraso_min != null ? r.tolerancia_atraso_min : 15, certificadoraLogo: r.certificadora_logo || null, ehDistribuidor: r.eh_distribuidor === true, distribuidorDesconto: r.distribuidor_desconto != null ? Number(r.distribuidor_desconto) : null, distribuidorId: r.distribuidor_id || null, precoDistribuidorCobrado: r.preco_distribuidor_cobrado != null ? Number(r.preco_distribuidor_cobrado) : null, distribuidorPagamentoPrazo: isoToMs(r.distribuidor_pagamento_prazo), precoFundador: r.preco_fundador === true, obrasAvancadoAtivo: r.obras_avancado_ativo === true, obrasChecklistItens: Array.isArray(r.obras_checklist_itens) ? r.obras_checklist_itens : [], checklistEntradaItens: Array.isArray(r.checklist_entrada_itens) ? r.checklist_entrada_itens : [], osModoWizard: r.os_modo_wizard === true, contratosDemoDias: r.contratos_demo_dias || null, frotaDemoDias: r.frota_demo_dias || null, armazemDemoDias: r.armazem_demo_dias || null, crmDemoDias: r.crm_demo_dias || null, erpDemoDias: r.erp_demo_dias || null, rondasPlano: r.rondas_plano || null, rondasExpiracao: isoToMs(r.rondas_expiracao), rondasDemoDias: r.rondas_demo_dias || null, usoSecoes: r.uso_secoes ? (typeof r.uso_secoes === 'string' ? JSON.parse(r.uso_secoes) : r.uso_secoes) : {}, usoSecoesUltima: isoToMs(r.uso_secoes_ultima), dataCriacao: isoToMs(r.data_criacao) }),
-                to:   o => ({ id: o.id, nome: o.nome, email: o.email, senha: o.senha, empresa: o.empresa || null, nif: o.nif || null, logo: o.logo || null, licenca_feedback: o.licencaFeedback || null, contratos_plano: o.contratosPlano || null, contratos_expiracao: msToISO(o.contratosExpiracao), frota_plano: o.frotaPlano || null, frota_expiracao: msToISO(o.frotaExpiracao), armazem_plano: o.armazemPlano || null, armazem_expiracao: msToISO(o.armazemExpiracao), portal_plano: o.portalPlano || null, portal_expiracao: msToISO(o.portalExpiracao), crm_plano: o.crmPlano || null, crm_expiracao: msToISO(o.crmExpiracao), assist_plano: o.assistPlano || null, assist_expiracao: msToISO(o.assistExpiracao), erp_plano: o.erpPlano || null, erp_expiracao: msToISO(o.erpExpiracao), notificacoes_plano: o.notificacoesPlano || null, notificacoes_expiracao: msToISO(o.notificacoesExpiracao), dados_bancarios: o.dadosBancarios || null, integracao_faturacao: o.integracaoFaturacao || null, ativo: o.ativo !== false, mudar_senha: o.mudarSenha === true, ultimo_login: o.ultimoLogin ? msToISO(o.ultimoLogin) : null, ultima_atividade: o.ultimaAtividade ? msToISO(o.ultimaAtividade) : null, mostrar_estado_online: o.mostrarEstadoOnline === true, layout: o.layout || null, tipos_equipamento: o.tiposEquipamento || [], logo: o.logo || null, notificar_aprovacao: o.notificarAprovacao === true, numero_registo_previo: o.numeroRegistoPrevio || null, data_registo_previo: o.dataRegistoPrevio || null, numero_anepc: o.numeroAnepc || null, data_anepc: o.dataAnepc || null, anepc_validade: o.anepcValidade || null, registo_previo_validade: o.registoPrevioValidade || null, cor_corporativa: o.corCorporativa || null, favoritos: o.favoritos || [], iva_periodicidade: o.ivaPeriodicidade || 'mensal', irs_periodicidade: o.irsPeriodicidade || 'semestral', painel_tv_ativo: o.painelTvAtivo === true, descricoes_rapidas_os: o.descricoesRapidasOS || null, hora_entrada_habitual: o.horaEntradaHabitual || '09:00', tolerancia_atraso_min: o.toleranciaAtrasoMin != null ? o.toleranciaAtrasoMin : 15, certificadora_logo: o.certificadoraLogo || null, eh_distribuidor: o.ehDistribuidor === true, distribuidor_desconto: o.distribuidorDesconto ?? null, distribuidor_id: o.distribuidorId || null, preco_distribuidor_cobrado: o.precoDistribuidorCobrado ?? null, distribuidor_pagamento_prazo: o.distribuidorPagamentoPrazo ? msToISO(o.distribuidorPagamentoPrazo) : null, preco_fundador: o.precoFundador === true, obras_avancado_ativo: o.obrasAvancadoAtivo === true, obras_checklist_itens: o.obrasChecklistItens || [], checklist_entrada_itens: o.checklistEntradaItens || [], os_modo_wizard: o.osModoWizard === true, contratos_demo_dias: o.contratosDemoDias || null, frota_demo_dias: o.frotaDemoDias || null, armazem_demo_dias: o.armazemDemoDias || null, crm_demo_dias: o.crmDemoDias || null, erp_demo_dias: o.erpDemoDias || null, rondas_plano: o.rondasPlano || null, rondas_expiracao: msToISO(o.rondasExpiracao), rondas_demo_dias: o.rondasDemoDias || null, uso_secoes: JSON.stringify(o.usoSecoes || {}), uso_secoes_ultima: o.usoSecoesUltima ? msToISO(o.usoSecoesUltima) : null, data_criacao: msToISO(o.dataCriacao) })
+                from: r => ({ id: r.id, nome: r.nome, email: r.email, empresa: r.empresa || '', nif: r.nif || null, logo: r.logo || null, licencaFeedback: r.licenca_feedback || null, contratosPlano: r.contratos_plano || null, contratosExpiracao: isoToMs(r.contratos_expiracao), frotaPlano: r.frota_plano || null, frotaExpiracao: isoToMs(r.frota_expiracao), armazemPlano: r.armazem_plano || null, armazemExpiracao: isoToMs(r.armazem_expiracao), portalPlano: r.portal_plano || null, portalExpiracao: isoToMs(r.portal_expiracao), crmPlano: r.crm_plano || null, crmExpiracao: isoToMs(r.crm_expiracao), assistPlano: r.assist_plano || null, assistExpiracao: isoToMs(r.assist_expiracao), erpPlano: r.erp_plano || null, erpExpiracao: isoToMs(r.erp_expiracao), notificacoesPlano: r.notificacoes_plano || null, notificacoesExpiracao: isoToMs(r.notificacoes_expiracao), dadosBancarios: r.dados_bancarios || null, integracaoFaturacao: r.integracao_faturacao || null, ativo: r.ativo, mudarSenha: r.mudar_senha === true, ultimoLogin: isoToMs(r.ultimo_login), ultimaAtividade: isoToMs(r.ultima_atividade), mostrarEstadoOnline: r.mostrar_estado_online === true, layout: r.layout || null, tiposEquipamento: r.tipos_equipamento || [], logo: r.logo, notificarAprovacao: r.notificar_aprovacao === true, numeroRegistoPrevio: r.numero_registo_previo || null, dataRegistoPrevio: r.data_registo_previo || null, numeroAnepc: r.numero_anepc || null, dataAnepc: r.data_anepc || null, anepcValidade: r.anepc_validade || null, registoPrevioValidade: r.registo_previo_validade || null, corCorporativa: r.cor_corporativa || null, favoritos: Array.isArray(r.favoritos) ? r.favoritos : [], ivaPeriodicidade: r.iva_periodicidade || 'mensal', irsPeriodicidade: r.irs_periodicidade || 'semestral', painelTvAtivo: r.painel_tv_ativo === true, descricoesRapidasOS: Array.isArray(r.descricoes_rapidas_os) ? r.descricoes_rapidas_os : ['Instalação', 'Manutenção', 'Visita', 'Formação'], horaEntradaHabitual: r.hora_entrada_habitual || '09:00', toleranciaAtrasoMin: r.tolerancia_atraso_min != null ? r.tolerancia_atraso_min : 15, certificadoraLogo: r.certificadora_logo || null, ehDistribuidor: r.eh_distribuidor === true, distribuidorDesconto: r.distribuidor_desconto != null ? Number(r.distribuidor_desconto) : null, distribuidorId: r.distribuidor_id || null, precoDistribuidorCobrado: r.preco_distribuidor_cobrado != null ? Number(r.preco_distribuidor_cobrado) : null, distribuidorPagamentoPrazo: isoToMs(r.distribuidor_pagamento_prazo), precoFundador: r.preco_fundador === true, obrasAvancadoAtivo: r.obras_avancado_ativo === true, obrasChecklistItens: Array.isArray(r.obras_checklist_itens) ? r.obras_checklist_itens : [], checklistEntradaItens: Array.isArray(r.checklist_entrada_itens) ? r.checklist_entrada_itens : [], osModoWizard: r.os_modo_wizard === true, concelho: r.concelho || null, contratosDemoDias: r.contratos_demo_dias || null, frotaDemoDias: r.frota_demo_dias || null, armazemDemoDias: r.armazem_demo_dias || null, crmDemoDias: r.crm_demo_dias || null, erpDemoDias: r.erp_demo_dias || null, rondasPlano: r.rondas_plano || null, rondasExpiracao: isoToMs(r.rondas_expiracao), rondasDemoDias: r.rondas_demo_dias || null, usoSecoes: r.uso_secoes ? (typeof r.uso_secoes === 'string' ? JSON.parse(r.uso_secoes) : r.uso_secoes) : {}, usoSecoesUltima: isoToMs(r.uso_secoes_ultima), dataCriacao: isoToMs(r.data_criacao) }),
+                to:   o => ({ id: o.id, nome: o.nome, email: o.email, senha: o.senha, empresa: o.empresa || null, nif: o.nif || null, logo: o.logo || null, licenca_feedback: o.licencaFeedback || null, contratos_plano: o.contratosPlano || null, contratos_expiracao: msToISO(o.contratosExpiracao), frota_plano: o.frotaPlano || null, frota_expiracao: msToISO(o.frotaExpiracao), armazem_plano: o.armazemPlano || null, armazem_expiracao: msToISO(o.armazemExpiracao), portal_plano: o.portalPlano || null, portal_expiracao: msToISO(o.portalExpiracao), crm_plano: o.crmPlano || null, crm_expiracao: msToISO(o.crmExpiracao), assist_plano: o.assistPlano || null, assist_expiracao: msToISO(o.assistExpiracao), erp_plano: o.erpPlano || null, erp_expiracao: msToISO(o.erpExpiracao), notificacoes_plano: o.notificacoesPlano || null, notificacoes_expiracao: msToISO(o.notificacoesExpiracao), dados_bancarios: o.dadosBancarios || null, integracao_faturacao: o.integracaoFaturacao || null, ativo: o.ativo !== false, mudar_senha: o.mudarSenha === true, ultimo_login: o.ultimoLogin ? msToISO(o.ultimoLogin) : null, ultima_atividade: o.ultimaAtividade ? msToISO(o.ultimaAtividade) : null, mostrar_estado_online: o.mostrarEstadoOnline === true, layout: o.layout || null, tipos_equipamento: o.tiposEquipamento || [], logo: o.logo || null, notificar_aprovacao: o.notificarAprovacao === true, numero_registo_previo: o.numeroRegistoPrevio || null, data_registo_previo: o.dataRegistoPrevio || null, numero_anepc: o.numeroAnepc || null, data_anepc: o.dataAnepc || null, anepc_validade: o.anepcValidade || null, registo_previo_validade: o.registoPrevioValidade || null, cor_corporativa: o.corCorporativa || null, favoritos: o.favoritos || [], iva_periodicidade: o.ivaPeriodicidade || 'mensal', irs_periodicidade: o.irsPeriodicidade || 'semestral', painel_tv_ativo: o.painelTvAtivo === true, descricoes_rapidas_os: o.descricoesRapidasOS || null, hora_entrada_habitual: o.horaEntradaHabitual || '09:00', tolerancia_atraso_min: o.toleranciaAtrasoMin != null ? o.toleranciaAtrasoMin : 15, certificadora_logo: o.certificadoraLogo || null, eh_distribuidor: o.ehDistribuidor === true, distribuidor_desconto: o.distribuidorDesconto ?? null, distribuidor_id: o.distribuidorId || null, preco_distribuidor_cobrado: o.precoDistribuidorCobrado ?? null, distribuidor_pagamento_prazo: o.distribuidorPagamentoPrazo ? msToISO(o.distribuidorPagamentoPrazo) : null, preco_fundador: o.precoFundador === true, obras_avancado_ativo: o.obrasAvancadoAtivo === true, obras_checklist_itens: o.obrasChecklistItens || [], checklist_entrada_itens: o.checklistEntradaItens || [], os_modo_wizard: o.osModoWizard === true, concelho: o.concelho || null, contratos_demo_dias: o.contratosDemoDias || null, frota_demo_dias: o.frotaDemoDias || null, armazem_demo_dias: o.armazemDemoDias || null, crm_demo_dias: o.crmDemoDias || null, erp_demo_dias: o.erpDemoDias || null, rondas_plano: o.rondasPlano || null, rondas_expiracao: msToISO(o.rondasExpiracao), rondas_demo_dias: o.rondasDemoDias || null, uso_secoes: JSON.stringify(o.usoSecoes || {}), uso_secoes_ultima: o.usoSecoesUltima ? msToISO(o.usoSecoesUltima) : null, data_criacao: msToISO(o.dataCriacao) })
             },
             funcionarios: {
                 tabela: 'funcionarios',
@@ -6844,6 +6846,45 @@
             add(60); // Corpo de Deus
             return fer;
         }
+        // Feriados municipais — data fixa (dia/mês) por concelho. Lista com os concelhos mais
+        // comuns/maiores de Portugal; fácil de alargar mais tarde, bastando acrescentar linhas.
+        // Fonte: datas habituais publicadas pelos próprios municípios (podem mudar por decisão
+        // da câmara em anos específicos — vale sempre a pena confirmar em anos de dúvida).
+        const FERIADOS_MUNICIPAIS = {
+            'Lisboa': { dia: 13, mes: 6, nome: 'Santo António' },
+            'Porto': { dia: 24, mes: 6, nome: 'São João' },
+            'Braga': { dia: 24, mes: 6, nome: 'São João' },
+            'Coimbra': { dia: 4, mes: 7, nome: 'Rainha Santa' },
+            'Aveiro': { dia: 12, mes: 5, nome: 'Nossa Senhora da Saúde' },
+            'Faro': { dia: 7, mes: 9, nome: 'Fundação de Faro' },
+            'Setúbal': { dia: 3, mes: 8, nome: 'Bocage' },
+            'Leiria': { dia: 22, mes: 5, nome: 'Nossa Senhora da Encarnação' },
+            'Évora': { dia: 29, mes: 6, nome: 'São Pedro e São Paulo' },
+            'Viseu': { dia: 25, mes: 8, nome: 'São Mateus' },
+            'Guarda': { dia: 27, mes: 11, nome: 'Nossa Senhora do Mileu' },
+            'Castelo Branco': { dia: 1, mes: 5, nome: 'Município' },
+            'Portalegre': { dia: 23, mes: 5, nome: 'Nossa Senhora da Alegria' },
+            'Beja': { dia: 20, mes: 1, nome: 'São Sebastião' },
+            'Santarém': { dia: 19, mes: 6, nome: 'Feriado municipal' },
+            'Viana do Castelo': { dia: 8, mes: 8, nome: 'Nossa Senhora da Agonia' },
+            'Vila Real': { dia: 28, mes: 6, nome: 'Feriado municipal' },
+            'Bragança': { dia: 22, mes: 5, nome: 'Feriado municipal' },
+            'Funchal': { dia: 21, mes: 8, nome: 'Nossa Senhora do Monte' },
+            'Ponta Delgada': { dia: 25, mes: 8, nome: 'Senhor Santo Cristo dos Milagres' },
+            'Cascais': { dia: 6, mes: 12, nome: 'Feriado municipal' },
+            'Sintra': { dia: 20, mes: 5, nome: 'Feriado municipal' },
+            'Oeiras': { dia: 18, mes: 7, nome: 'Feriado municipal' },
+            'Almada': { dia: 6, mes: 6, nome: 'Feriado municipal' },
+            'Gondomar': { dia: 15, mes: 5, nome: 'Feriado municipal' },
+            'Matosinhos': { dia: 9, mes: 8, nome: 'Feriado municipal' },
+            'Vila Nova de Gaia': { dia: 7, mes: 4, nome: 'Feriado municipal' },
+            'Guimarães': { dia: 25, mes: 1, nome: 'Feriado municipal' },
+        };
+        function feriadoMunicipal(ano, concelho) {
+            const f = FERIADOS_MUNICIPAIS[concelho];
+            if (!f) return null;
+            return { data: ano + '-' + String(f.mes).padStart(2, '0') + '-' + String(f.dia).padStart(2, '0'), nome: f.nome };
+        }
         function _feriadosSet(anos) { const set = new Set(); anos.forEach(a => feriadosNacionais(a).forEach(fd => set.add(fd))); return set; }
         // Dias úteis (2ª-6ª, exclui feriados nacionais) entre ini e fim inclusive. Se 'ano' definido, conta só os desse ano.
         function diasUteisFerias(ini, fim, ano) {
@@ -6863,12 +6904,32 @@
         }
         function _pessoaEquipa(id) { return (dados.funcionarios || []).find(x => x.id === id) || (dados.encarregados || []).find(x => x.id === id) || null; }
         function feriasTotaisPessoa(id) { const p = _pessoaEquipa(id); return (p && p.diasFerias != null) ? p.diasFerias : 22; }
+        // Saldo transitado do ano anterior: quota do ano passado menos o que foi realmente
+        // gasto nesse ano, sem poder ficar negativo (não se "deve" dias). Só olha um ano para
+        // trás — é o que sobrou do ano imediatamente anterior, como é habitual em Portugal.
+        function feriasSaldoTransitado(id, ano) {
+            const anoAnterior = (ano || new Date().getFullYear()) - 1;
+            const restoAnoAnterior = feriasTotaisPessoa(id) - feriasUsadas(id, anoAnterior);
+            return Math.max(0, restoAnoAnterior);
+        }
         function feriasUsadas(id, ano) {
             ano = ano || new Date().getFullYear();
             return (dados.pedidos || []).filter(p => p.funcionarioId === id && p.tipo === 'ferias' && p.status !== 'rejeitado' && p.dataInicio && p.dataFim)
                 .reduce((t, p) => t + diasUteisFerias(p.dataInicio, p.dataFim, ano), 0);
         }
-        function feriasDisponiveis(id, ano) { ano = ano || new Date().getFullYear(); return feriasTotaisPessoa(id) - feriasUsadas(id, ano); }
+        function feriasDisponiveis(id, ano) { ano = ano || new Date().getFullYear(); return feriasTotaisPessoa(id) + feriasSaldoTransitado(id, ano) - feriasUsadas(id, ano); }
+        // Detalhe de onde vêm os dias disponíveis: os transitados do ano passado gastam-se
+        // sempre primeiro (matematicamente — o que sobra deles é o que aparece aqui).
+        function feriasDetalheDisponiveis(id, ano) {
+            ano = ano || new Date().getFullYear();
+            const transitados = feriasSaldoTransitado(id, ano);
+            const quotaAno = feriasTotaisPessoa(id);
+            const usadas = feriasUsadas(id, ano);
+            const total = Math.max(0, transitados + quotaAno - usadas);
+            const transitadosRestantes = Math.max(0, transitados - usadas); // gastam-se primeiro
+            const quotaRestante = total - transitadosRestantes;
+            return { transitados, transitadosRestantes, quotaAno, quotaRestante, total };
+        }
         function renderizarFuncionarios() {
             const tbody = document.getElementById('tabelaFuncionarios');
             const empty = document.getElementById('emptyFunc');
@@ -8421,6 +8482,8 @@
             const lbl = document.getElementById('calMesLabel'); if (lbl) lbl.textContent = nomesMes[mes] + ' ' + ano;
             const numDias = new Date(ano, mes + 1, 0).getDate();
             const feriados = new Set(feriadosNacionais(ano));
+            const admin = dados.administradores?.find(a => a.id === adminId);
+            const feriadoMun = feriadoMunicipal(ano, admin?.concelho);
             const pessoas = [
                 ...(dados.funcionarios || []).filter(f => f.adminId === adminId && f.role !== 'admin' && f.role !== 'superadmin').map(f => ({ id: f.id, nome: f.nome })),
                 ...(dados.encarregados || []).filter(e => e.adminId === adminId).map(e => ({ id: e.id, nome: e.nome }))
@@ -8439,7 +8502,9 @@
             for (let d = 1; d <= numDias; d++) {
                 const dow = new Date(ano, mes, d).getDay();
                 const fimSemana = dow === 0 || dow === 6;
-                head += `<th style="padding:4px 2px;font-size:.7rem;min-width:26px;text-align:center;${fimSemana ? 'background:#f1f5f9;' : ''}">${d}</th>`;
+                const ymdCab = ano + '-' + String(mes + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+                const ehFeriadoMunCab = feriadoMun && feriadoMun.data === ymdCab;
+                head += `<th title="${ehFeriadoMunCab ? 'Feriado municipal — ' + feriadoMun.nome : ''}" style="padding:4px 2px;font-size:.7rem;min-width:26px;text-align:center;${fimSemana ? 'background:#f1f5f9;' : ''}${ehFeriadoMunCab ? 'color:#9333ea;font-weight:800;' : ''}">${d}</th>`;
             }
             head += '</tr></thead>';
             let body = '<tbody>';
@@ -8451,20 +8516,72 @@
                     const fimSemana = dow === 0 || dow === 6;
                     const ymd = ano + '-' + String(mes + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
                     const feriado = feriados.has(ymd);
+                    const ehFeriadoMun = feriadoMun && feriadoMun.data === ymd;
                     const marca = _diaMarcado(p.id, ymd);
-                    let bg = fimSemana || feriado ? '#f1f5f9' : '';
+                    let bg = fimSemana || feriado || ehFeriadoMun ? '#f1f5f9' : '';
                     if (marca === 'ferias') bg = '#16a34a';
                     else if (marca === 'baixa') bg = '#0ea5e9';
                     else if (marca === 'licenca') bg = '#eab308';
                     else if (marca === 'falta') bg = '#f59e0b';
                     const marcaLabel = { ferias: 'Férias', falta: 'Falta', baixa: 'Baixa médica', licenca: 'Licença' };
-                    const titulo = marca ? (marcaLabel[marca] || marca) + (feriado ? ' (feriado)' : '') : (feriado ? 'Feriado nacional' : '');
-                    body += `<td title="${titulo}" style="height:26px;${bg ? 'background:' + bg + ';' : ''}border:1px solid #f1f5f9;"></td>`;
+                    const tituloFeriado = feriado ? ' (feriado nacional)' : (ehFeriadoMun ? ` (feriado municipal — ${feriadoMun.nome})` : '');
+                    const titulo = marca ? (marcaLabel[marca] || marca) + tituloFeriado : (feriado ? 'Feriado nacional' : (ehFeriadoMun ? `Feriado municipal — ${feriadoMun.nome}` : ''));
+                    const bordaMun = (ehFeriadoMun && !marca) ? 'border:2px solid #9333ea;' : 'border:1px solid #f1f5f9;';
+                    body += `<td title="${titulo}" style="height:26px;${bg ? 'background:' + bg + ';' : ''}${bordaMun}"></td>`;
                 }
                 body += '</tr>';
             });
             body += '</tbody>';
             tabela.innerHTML = head + body;
+        }
+        // Exporta o mês/ano atualmente aberto no Calendário de Equipa para Excel: uma linha por
+        // pessoa, uma coluna por dia, com o tipo de ausência (Férias/Falta/Baixa/Licença) em
+        // cada célula onde aplicável — o mesmo que se vê no ecrã, pronto para imprimir/arquivar.
+        function exportarCalendarioEquipa() {
+            if (!usuarioLogado || (usuarioLogado.role !== 'admin' && usuarioLogado.role !== 'subadmin' && usuarioLogado.role !== 'encarregado')) return;
+            const adminId = usuarioLogado.role === 'admin' ? usuarioLogado.id : usuarioLogado.adminId;
+            const ano = _calMesRef.getFullYear(), mes = _calMesRef.getMonth();
+            const nomesMes = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+            const numDias = new Date(ano, mes + 1, 0).getDate();
+            const feriados = new Set(feriadosNacionais(ano));
+            const admin = dados.administradores?.find(a => a.id === adminId);
+            const feriadoMun = feriadoMunicipal(ano, admin?.concelho);
+            const pessoas = [
+                ...(dados.funcionarios || []).filter(f => f.adminId === adminId && f.role !== 'admin' && f.role !== 'superadmin').map(f => ({ id: f.id, nome: f.nome })),
+                ...(dados.encarregados || []).filter(e => e.adminId === adminId).map(e => ({ id: e.id, nome: e.nome }))
+            ];
+            if (!pessoas.length) { alert('Sem funcionários/encarregados para exportar.'); return; }
+            const pedidosMes = (dados.pedidos || []).filter(p => p.adminId === adminId && p.status === 'aprovado_ped' && p.dataInicio && p.dataFim);
+            const marcaLabel = { ferias: 'Férias', falta: 'Falta', baixa: 'Baixa', licenca: 'Licença' };
+            const _diaMarcado = (funcionarioId, ymd) => {
+                const p = pedidosMes.find(x => x.funcionarioId === funcionarioId && x.dataInicio <= ymd && x.dataFim >= ymd);
+                if (!p) return '';
+                if (p.tipo === 'falta' && (p.classificacaoFalta === 'baixa' || p.classificacaoFalta === 'licenca')) return marcaLabel[p.classificacaoFalta];
+                return marcaLabel[p.tipo] || '';
+            };
+            const cabecalho = ['Funcionário'];
+            for (let d = 1; d <= numDias; d++) cabecalho.push(String(d).padStart(2, '0'));
+            cabecalho.push('Total Férias', 'Total Faltas');
+            const linhas = pessoas.map(p => {
+                const linha = [p.nome];
+                let totalFerias = 0, totalFaltas = 0;
+                for (let d = 1; d <= numDias; d++) {
+                    const ymd = ano + '-' + String(mes + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+                    const marca = _diaMarcado(p.id, ymd);
+                    const dow = new Date(ano, mes, d).getDay();
+                    const feriado = feriados.has(ymd);
+                    const ehFeriadoMun = feriadoMun && feriadoMun.data === ymd;
+                    linha.push(marca || (dow === 0 || dow === 6 ? 'FDS' : (feriado ? 'Feriado' : (ehFeriadoMun ? 'Feriado Mun.' : ''))));
+                    if (marca === 'Férias') totalFerias++;
+                    else if (marca === 'Falta' || marca === 'Baixa' || marca === 'Licença') totalFaltas++;
+                }
+                linha.push(totalFerias, totalFaltas);
+                return linha;
+            });
+            const ws = XLSX.utils.aoa_to_sheet([cabecalho, ...linhas]);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, nomesMes[mes] + ' ' + ano);
+            XLSX.writeFile(wb, `calendario_equipa_${nomesMes[mes].toLowerCase()}_${ano}.xlsx`);
         }
         function renderizarPedidosFunc() {
             const tbody = document.getElementById('tabelaPedidosFunc');
@@ -16439,6 +16556,50 @@
             if (campo === 'marca') { _omItens[idx].categoria = ''; _omItens[idx].artigoId = ''; renderOmItens(); }
             else if (campo === 'categoria') { _omItens[idx].artigoId = ''; renderOmItens(); }
         }
+        // Pesquisa por nome/referência que preenche marca, categoria e artigo de uma só vez —
+        // evita ter de andar a navegar pelos três dropdowns em cascata quando já se sabe o
+        // nome ou a referência do artigo.
+        function omPesquisarArtigo(idx, texto) {
+            if (!_omItens[idx]) return;
+            _omItens[idx]._pesquisaTexto = texto;
+            const dd = document.getElementById('om_pesquisa_dd_' + idx);
+            if (!dd) return;
+            const q = (texto || '').trim().toLowerCase();
+            const adminId = _tenantId();
+            const todos = (dados.artigos || []).filter(a => a.adminId === adminId);
+            let resultado = q ? todos.filter(a => (a.nome || '').toLowerCase().includes(q) || (a.referencia || '').toLowerCase().includes(q)) : todos;
+            // Mostra sempre pelo menos 5 (quando existirem artigos suficientes), mesmo que a
+            // pesquisa em si tenha menos correspondências — completa com outros artigos, para
+            // haver sempre opções rápidas a escolher.
+            const MINIMO = 5;
+            if (q && resultado.length < MINIMO && todos.length > resultado.length) {
+                const jaIncluidos = new Set(resultado.map(a => a.id));
+                for (const a of todos) {
+                    if (resultado.length >= MINIMO) break;
+                    if (!jaIncluidos.has(a.id)) { resultado.push(a); jaIncluidos.add(a.id); }
+                }
+            }
+            if (!resultado.length) {
+                dd.innerHTML = '<div style="padding:10px 12px;color:#94a3b8;font-size:.85rem;">Sem artigos registados ainda</div>';
+                dd.style.display = 'block';
+                return;
+            }
+            dd.innerHTML = resultado.slice(0, 30).map(a => `
+                <div style="padding:8px 12px;cursor:pointer;font-size:.88rem;" onmouseenter="this.style.background='#f1f5f9'" onmouseleave="this.style.background=''" onmousedown="event.preventDefault();omEscolherArtigoPesquisa(${idx}, '${a.id}')">
+                    <div style="font-weight:600;">${escapeHtmlSimples(a.nome)}</div>
+                    <div style="color:#64748b;font-size:.78rem;">${[a.marca, a.categoria, a.referencia].filter(Boolean).map(escapeHtmlSimples).join(' · ')}</div>
+                </div>
+            `).join('');
+            dd.style.display = 'block';
+        }
+        function omEscolherArtigoPesquisa(idx, artigoId) {
+            const art = dados.artigos?.find(a => a.id === artigoId); if (!art || !_omItens[idx]) return;
+            _omItens[idx].marca = art.marca || '';
+            _omItens[idx].categoria = art.categoria || '';
+            _omItens[idx].artigoId = art.id;
+            _omItens[idx]._pesquisaTexto = `${art.nome}${art.referencia ? ' — ' + art.referencia : ''}`;
+            renderOmItens();
+        }
         function omNovoItem(idx) {
             const it = _omItens[idx]; if (!it) return;
             const nome = (prompt('Nome do novo artigo:') || '').trim(); if (!nome) return;
@@ -16551,6 +16712,10 @@
                 }
                 const _ehNovoItemOm = !omRec;
                 return `<div style="border:1px solid #e6eaf2;border-radius:8px;padding:8px;margin-bottom:8px;">
+                    <div style="position:relative;margin-bottom:6px;">
+                        <input type="text" placeholder="Pesquisar artigo (nome ou referência)…" value="${escapeHtmlSimples(it._pesquisaTexto || (art ? `${art.nome}${art.referencia ? ' — ' + art.referencia : ''}` : ''))}" oninput="omPesquisarArtigo(${idx}, this.value)" onfocus="omPesquisarArtigo(${idx}, this.value)" autocomplete="off" style="width:100%;" />
+                        <div id="om_pesquisa_dd_${idx}" style="display:none;position:absolute;z-index:99999;background:#fff;border:1px solid #e2e8f0;border-radius:8px;box-shadow:0 10px 28px rgba(0,0,0,.14);max-height:240px;overflow-y:auto;margin-top:4px;left:0;right:0;"></div>
+                    </div>
                     <div style="display:flex;gap:6px;margin-bottom:6px;">
                         <select onchange="omSetItem(${idx},'marca',this.value)" style="flex:1;">${marcaOpts}</select>
                         <select onchange="omSetItem(${idx},'categoria',this.value)" style="flex:1;" ${it.marca ? '' : 'disabled'}>${catOpts}</select>
@@ -18401,6 +18566,14 @@
             const hojeAid = getDataHoje();
             const pontosEsquecidos = (dados.ponto || []).filter(p => p.adminId === aid && p.entrada && !p.saida && p.data && p.data < hojeAid).length;
             if (pontosEsquecidos) itens.push({ icon: 'fa-clock', titulo: `${pontosEsquecidos} ${pontosEsquecidos === 1 ? 'Ponto Geral esquecido' : 'Pontos Gerais esquecidos'}`, sub: 'Entrada em aberto de dia(s) anterior(es), sem saída picada', secao: 'ponto', count: pontosEsquecidos });
+            // Dias de férias transitados do ano anterior por gastar — avisa o admin para não
+            // se perderem sem ninguém reparar.
+            const _anoAtualFer = new Date().getFullYear();
+            const _pessoasComTransitado = [
+                ...(dados.funcionarios || []).filter(f => f.adminId === aid && f.role !== 'admin'),
+                ...(dados.encarregados || []).filter(e => e.adminId === aid)
+            ].filter(p => feriasSaldoTransitado(p.id, _anoAtualFer) > 0).length;
+            if (_pessoasComTransitado) itens.push({ icon: 'fa-umbrella-beach', titulo: `${_pessoasComTransitado} ${_pessoasComTransitado === 1 ? 'pessoa tem' : 'pessoas têm'} férias de ${_anoAtualFer - 1} por gastar`, sub: `Dias transitados de ${_anoAtualFer - 1} ainda disponíveis`, secao: 'calendario-equipa', count: _pessoasComTransitado });
             return itens;
         }
         function atualizarSino() {
@@ -26967,7 +27140,13 @@ window._relPrefill = function(msg){
             titulo.innerHTML = `<i class="fas ${tipo === 'ferias' ? 'fa-umbrella-beach' : 'fa-user-times'}"></i> Marcar ${label}`;
             submitBtn.textContent = 'Enviar Pedido';
             campos.innerHTML = `
-                    ${tipo === 'ferias' ? `<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px;margin-bottom:12px;color:#1e40af;"><i class="fas fa-umbrella-beach"></i> Tens <strong>${feriasDisponiveis(usuarioLogado.id)}</strong> dia(s) de férias disponíveis este ano (de ${feriasTotaisPessoa(usuarioLogado.id)}).</div>` : ''}
+                    ${tipo === 'ferias' ? (() => {
+                        const det = feriasDetalheDisponiveis(usuarioLogado.id);
+                        return `<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px;margin-bottom:12px;color:#1e40af;">
+                            <i class="fas fa-umbrella-beach"></i> Tens <strong>${det.total}</strong> dia(s) de férias disponíveis este ano.
+                            ${det.transitadosRestantes > 0 ? `<div style="margin-top:4px;font-size:.85rem;">Desses, <strong>${det.transitadosRestantes}</strong> ${det.transitadosRestantes === 1 ? 'é' : 'são'} de ${new Date().getFullYear() - 1} (transitado${det.transitadosRestantes === 1 ? '' : 's'} do ano passado) — gastam-se primeiro.</div>` : ''}
+                        </div>`;
+                    })() : ''}
                     <div class="form-group">
                         <label>Data Início *</label>
                         <input type="date" id="ped_dataInicio" required onchange="verificarOSnoPeriodo()" />
@@ -30427,6 +30606,20 @@ window._relPrefill = function(msg){
                         </div>
 
                         <div class="ff-secao ff-tint-doc">
+                            <div class="ff-secao-head"><i class="fas fa-calendar-days"></i> Feriado Municipal</div>
+                            <div class="ff-secao-body">
+                                <div class="form-group ff-span2">
+                                    <label>Concelho</label>
+                                    <select id="perf_concelho">
+                                        <option value="">— Não mostrar feriado municipal —</option>
+                                        ${Object.keys(FERIADOS_MUNICIPAIS).sort().map(c => `<option value="${c}" ${admin?.concelho === c ? 'selected' : ''}>${c}</option>`).join('')}
+                                    </select>
+                                    <div class="help-text" style="margin-top:4px;">O feriado municipal deste concelho passa a aparecer no Calendário de Equipa, junto com os feriados nacionais.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="ff-secao ff-tint-doc">
                             <div class="ff-secao-head"><i class="fas fa-list-ol"></i> Criação de Ordens de Serviço</div>
                             <div class="ff-secao-body">
                                 <div class="form-group ff-span2">
@@ -30685,6 +30878,7 @@ window._relPrefill = function(msg){
                     const _tolerP = document.getElementById('perf_tolerancia_atraso')?.value;
                     admin.toleranciaAtrasoMin = _tolerP !== '' && _tolerP != null ? parseInt(_tolerP, 10) : 15;
                     admin.osModoWizard = document.getElementById('perf_os_modo_wizard')?.checked || false;
+                    admin.concelho = document.getElementById('perf_concelho')?.value || null;
                     if (senha) admin.senha = senha;
                     if (logoData !== undefined) admin.logo = logoData;
                     if (window._perfCertificadoraLogoRemover) { admin.certificadoraLogo = null; window._perfCertificadoraLogoRemover = false; }
