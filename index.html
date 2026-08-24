@@ -6909,6 +6909,22 @@
         // trás — é o que sobrou do ano imediatamente anterior, como é habitual em Portugal.
         function feriasSaldoTransitado(id, ano) {
             const anoAnterior = (ano || new Date().getFullYear()) - 1;
+            // Só transita saldo se houver mesmo histórico fiável desse ano anterior — sem isso,
+            // assumir "não gastou nada" estaria a inventar dias que a pessoa nunca teve.
+            // 1) Se o funcionário tem data de criação de conta própria, usa-a.
+            // 2) Senão, usa a data de criação da conta da EMPRESA (admin) — cobre o caso de
+            //    empresas que só começaram a usar a app este ano, mesmo que o registo do
+            //    funcionário em si não tenha essa data preenchida.
+            const p = _pessoaEquipa(id);
+            let referenciaMs = p?.contaCriadaEm || null;
+            if (!referenciaMs) {
+                const admin = dados.administradores?.find(a => a.id === (p?.adminId));
+                referenciaMs = admin?.dataCriacao || null;
+            }
+            if (referenciaMs) {
+                const anoReferencia = new Date(referenciaMs).getFullYear();
+                if (anoReferencia >= anoAnterior) return 0;
+            }
             const restoAnoAnterior = feriasTotaisPessoa(id) - feriasUsadas(id, anoAnterior);
             return Math.max(0, restoAnoAnterior);
         }
@@ -8534,14 +8550,26 @@
             body += '</tbody>';
             tabela.innerHTML = head + body;
         }
-        // Exporta o mês/ano atualmente aberto no Calendário de Equipa para Excel: uma linha por
-        // pessoa, uma coluna por dia, com o tipo de ausência (Férias/Falta/Baixa/Licença) em
-        // cada célula onde aplicável — o mesmo que se vê no ecrã, pronto para imprimir/arquivar.
+        // Pergunta Mensal ou Anual antes de exportar, e executa logo a seguir à escolha.
         function exportarCalendarioEquipa() {
             if (!usuarioLogado || (usuarioLogado.role !== 'admin' && usuarioLogado.role !== 'subadmin' && usuarioLogado.role !== 'encarregado')) return;
-            const adminId = usuarioLogado.role === 'admin' ? usuarioLogado.id : usuarioLogado.adminId;
-            const ano = _calMesRef.getFullYear(), mes = _calMesRef.getMonth();
-            const nomesMes = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+            const wrap = document.createElement('div');
+            wrap.id = 'exportCalOverlay';
+            wrap.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:100000;display:flex;align-items:center;justify-content:center;padding:16px;';
+            wrap.innerHTML = `
+                <div style="background:#fff;border-radius:16px;padding:22px;max-width:360px;width:100%;">
+                    <div style="font-weight:800;font-size:1.05rem;margin-bottom:4px;"><i class="fas fa-file-excel" style="color:#16a34a;"></i> Exportar Calendário</div>
+                    <div class="help-text" style="margin-bottom:16px;">Escolhe o período a exportar.</div>
+                    <button type="button" class="btn btn-success" style="width:100%;margin-bottom:8px;" onclick="document.getElementById('exportCalOverlay').remove(); _exportarCalendarioMensal();"><i class="fas fa-calendar-day"></i> Mensal (${['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'][_calMesRef.getMonth()]} ${_calMesRef.getFullYear()})</button>
+                    <button type="button" class="btn btn-success" style="width:100%;margin-bottom:8px;" onclick="document.getElementById('exportCalOverlay').remove(); _exportarCalendarioAnual();"><i class="fas fa-calendar"></i> Anual (${_calMesRef.getFullYear()})</button>
+                    <button type="button" class="btn" style="width:100%;background:#f1f5f9;" onclick="document.getElementById('exportCalOverlay').remove();">Cancelar</button>
+                </div>
+            `;
+            document.body.appendChild(wrap);
+        }
+        // Gera os dados (cabeçalho + linhas) de um único mês — reaproveitado tanto pela
+        // exportação mensal como pela anual (uma folha por mês, no mesmo ficheiro).
+        function _gerarLinhasCalendarioMes(adminId, ano, mes) {
             const numDias = new Date(ano, mes + 1, 0).getDate();
             const feriados = new Set(feriadosNacionais(ano));
             const admin = dados.administradores?.find(a => a.id === adminId);
@@ -8550,7 +8578,6 @@
                 ...(dados.funcionarios || []).filter(f => f.adminId === adminId && f.role !== 'admin' && f.role !== 'superadmin').map(f => ({ id: f.id, nome: f.nome })),
                 ...(dados.encarregados || []).filter(e => e.adminId === adminId).map(e => ({ id: e.id, nome: e.nome }))
             ];
-            if (!pessoas.length) { alert('Sem funcionários/encarregados para exportar.'); return; }
             const pedidosMes = (dados.pedidos || []).filter(p => p.adminId === adminId && p.status === 'aprovado_ped' && p.dataInicio && p.dataFim);
             const marcaLabel = { ferias: 'Férias', falta: 'Falta', baixa: 'Baixa', licenca: 'Licença' };
             const _diaMarcado = (funcionarioId, ymd) => {
@@ -8578,10 +8605,38 @@
                 linha.push(totalFerias, totalFaltas);
                 return linha;
             });
+            return { pessoas, cabecalho, linhas };
+        }
+        // Exporta o mês/ano atualmente aberto no Calendário de Equipa para Excel: uma linha por
+        // pessoa, uma coluna por dia, com o tipo de ausência (Férias/Falta/Baixa/Licença) em
+        // cada célula onde aplicável — o mesmo que se vê no ecrã, pronto para imprimir/arquivar.
+        function _exportarCalendarioMensal() {
+            const adminId = usuarioLogado.role === 'admin' ? usuarioLogado.id : usuarioLogado.adminId;
+            const ano = _calMesRef.getFullYear(), mes = _calMesRef.getMonth();
+            const nomesMes = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+            const { pessoas, cabecalho, linhas } = _gerarLinhasCalendarioMes(adminId, ano, mes);
+            if (!pessoas.length) { alert('Sem funcionários/encarregados para exportar.'); return; }
             const ws = XLSX.utils.aoa_to_sheet([cabecalho, ...linhas]);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, nomesMes[mes] + ' ' + ano);
             XLSX.writeFile(wb, `calendario_equipa_${nomesMes[mes].toLowerCase()}_${ano}.xlsx`);
+        }
+        // Exporta o ANO inteiro (o ano atualmente aberto no calendário) — um ficheiro Excel com
+        // uma folha por mês (Janeiro a Dezembro), cada uma igual ao formato da exportação mensal.
+        function _exportarCalendarioAnual() {
+            const adminId = usuarioLogado.role === 'admin' ? usuarioLogado.id : usuarioLogado.adminId;
+            const ano = _calMesRef.getFullYear();
+            const nomesMes = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+            const wb = XLSX.utils.book_new();
+            let totalPessoas = 0;
+            for (let mes = 0; mes < 12; mes++) {
+                const { pessoas, cabecalho, linhas } = _gerarLinhasCalendarioMes(adminId, ano, mes);
+                totalPessoas = Math.max(totalPessoas, pessoas.length);
+                const ws = XLSX.utils.aoa_to_sheet([cabecalho, ...linhas]);
+                XLSX.utils.book_append_sheet(wb, ws, nomesMes[mes]);
+            }
+            if (!totalPessoas) { alert('Sem funcionários/encarregados para exportar.'); return; }
+            XLSX.writeFile(wb, `calendario_equipa_${ano}_anual.xlsx`);
         }
         function renderizarPedidosFunc() {
             const tbody = document.getElementById('tabelaPedidosFunc');
