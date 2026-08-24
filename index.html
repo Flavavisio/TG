@@ -5132,10 +5132,15 @@
                 dados.ponto.push({ id: gerarId(), funcionarioId: pessoaId, adminId, data: hoje, entrada: hora, saida: null, lat: lat ?? null, lng: lng ?? null, origem: 'quiosque_auto' });
             }
         }
-        function _quiosqueFecharEntradaGeral(pessoaId, hora) {
+        function _quiosqueFecharEntradaGeral(pessoaId, hora, lat, lng) {
             const hoje = getDataHoje();
             const aberto = (dados.ponto || []).find(r => r.funcionarioId === pessoaId && r.data === hoje && r.entrada && !r.saida);
-            if (aberto) aberto.saida = hora;
+            if (aberto) { aberto.saida = hora; if (lat != null) aberto.latSaida = lat; if (lng != null) aberto.lngSaida = lng; }
+        }
+        // Pede ao browser a localização atual, com um limite de tempo curto — nunca bloqueia a
+        // picagem: se falhar ou demorar, devolve null e a picagem segue em frente sem coordenadas.
+        async function _quiosqueObterLocalizacaoAgora() {
+            try { return await obterLocalizacao(6000); } catch (e) { return null; }
         }
         // Popup de "ainda não deste entrada geral hoje" — nome da pessoa, Sim/Não, e ao
         // escolher Sim, arrastar o dedo para confirmar (mesmo padrão do telemóvel). Ao
@@ -5309,12 +5314,13 @@
             `;
             if (!aberto) { window._kioskSlideCallback = () => _quiosqueAgendaGeralPicar('entrada'); _kioskSlideInit(); }
         }
-        function _quiosqueAgendaGeralPicar(acao) {
+        async function _quiosqueAgendaGeralPicar(acao) {
             const p = _quiosqueAgendaGeralPessoaSel; if (!p) return;
             const adminId = _tenantQuiosque();
             const hora = new Date().toTimeString().slice(0, 5);
-            if (acao === 'entrada') _quiosqueGarantirEntradaGeral(p.id, adminId, hora);
-            else _quiosqueFecharEntradaGeral(p.id, hora);
+            const loc = await _quiosqueObterLocalizacaoAgora();
+            if (acao === 'entrada') _quiosqueGarantirEntradaGeral(p.id, adminId, hora, loc?.lat, loc?.lng);
+            else _quiosqueFecharEntradaGeral(p.id, hora, loc?.lat, loc?.lng);
             guardarDados(dados);
             // Se esta entrada geral era mesmo a que faltava para entrar numa OS/Obra específica,
             // retoma essa entrada automaticamente — sem precisar de voltar a escolher a OS nem
@@ -5531,7 +5537,7 @@
                 </div>
             `;
         }
-        function _quiosqueAgendaPicar(acao) {
+        async function _quiosqueAgendaPicar(acao) {
             const p = _quiosqueAgendaPessoaSelecionada; const s = _quiosqueAgendaSessaoAtual;
             if (!p || !s) return;
             const adminId = _tenantQuiosque();
@@ -5541,20 +5547,22 @@
                 // Obrigatório picar primeiro o Ponto Geral — sem isso, não entra em OS/Obra.
                 const geralAberto = (dados.ponto || []).find(r => r.funcionarioId === p.id && r.data === hoje && r.entrada && !r.saida);
                 if (!geralAberto) {
-                    _quiosquePerguntarEntradaGeral(p.nome, () => {
-                        _quiosqueGarantirEntradaGeral(p.id, adminId, hora);
+                    _quiosquePerguntarEntradaGeral(p.nome, async () => {
+                        const locG = await _quiosqueObterLocalizacaoAgora();
+                        _quiosqueGarantirEntradaGeral(p.id, adminId, hora, locG?.lat, locG?.lng);
                         guardarDados(dados);
                         _quiosqueAgendaPicar('entrada'); // retoma sozinho a entrada nesta OS/Obra
                     });
                     return;
                 }
+                const loc = await _quiosqueObterLocalizacaoAgora();
                 _checklistEntradaVerificar(adminId, () => {
                     if (s.tipo === 'obra') {
                         dados.obraPontoLonga = dados.obraPontoLonga || [];
-                        dados.obraPontoLonga.push({ id: gerarId(), obraId: s.id, funcionarioId: p.id, adminId, data: hoje, entrada: hora, saida: null });
+                        dados.obraPontoLonga.push({ id: gerarId(), obraId: s.id, funcionarioId: p.id, adminId, data: hoje, entrada: hora, saida: null, lat: loc?.lat ?? null, lng: loc?.lng ?? null });
                     } else {
                         dados.ponto = dados.ponto || [];
-                        dados.ponto.push({ id: gerarId(), servicoId: s.id, funcionarioId: p.id, adminId, data: hoje, entrada: hora, saida: null, origem: 'quiosque_agenda' });
+                        dados.ponto.push({ id: gerarId(), servicoId: s.id, funcionarioId: p.id, adminId, data: hoje, entrada: hora, saida: null, lat: loc?.lat ?? null, lng: loc?.lng ?? null, origem: 'quiosque_agenda' });
                     }
                     guardarDados(dados);
                     alert('✅ Entrada registada às ' + hora + '.');
@@ -5563,8 +5571,9 @@
                 return;
             }
             if (acao === 'almoco') {
+                const loc = await _quiosqueObterLocalizacaoAgora();
                 const aberto = _quiosqueAgendaAberto(p.id);
-                if (aberto) { aberto.saida = hora; aberto.motivoSaida = 'almoco'; guardarDados(dados); }
+                if (aberto) { aberto.saida = hora; aberto.motivoSaida = 'almoco'; if (loc) { aberto.latSaida = loc.lat; aberto.lngSaida = loc.lng; } guardarDados(dados); }
                 alert('🍽️ Boa refeição! Volta a picar quando regressares.');
                 _quiosqueAgendaGrid();
                 return;
@@ -5590,13 +5599,14 @@
             if (ehResponsavel) {
                 _quiosqueAgendaPedirFolha(acao);
             } else {
-                _quiosqueAgendaFecharSaida(p, hora, acao === 'terminar_servico');
+                const locSaida = await _quiosqueObterLocalizacaoAgora();
+                _quiosqueAgendaFecharSaida(p, hora, acao === 'terminar_servico', locSaida);
             }
         }
-        function _quiosqueAgendaFecharSaida(pessoa, hora, finalizarTambem) {
+        function _quiosqueAgendaFecharSaida(pessoa, hora, finalizarTambem, loc) {
             const s = _quiosqueAgendaSessaoAtual;
             const aberto = _quiosqueAgendaAberto(pessoa.id);
-            if (aberto) { aberto.saida = hora; guardarDados(dados); }
+            if (aberto) { aberto.saida = hora; if (loc) { aberto.latSaida = loc.lat; aberto.lngSaida = loc.lng; } guardarDados(dados); }
             // Importante: terminar uma OS/Obra NÃO fecha o Ponto Geral — a pessoa pode acabar
             // esta obra mais cedo e ainda continuar noutra tarefa no mesmo dia. O Ponto Geral só
             // fecha quando a pessoa picar explicitamente "Saída ao Serviço" em Ponto Geral.
@@ -5709,7 +5719,7 @@
             input.value = ''; input.dataset.id = ''; document.getElementById('qsa_novo_qtd').value = '';
             document.getElementById('qsa_materiais_lista').innerHTML = _quiosqueAgendaMateriaisTemp.map((m, i) => `<div style="display:flex;justify-content:space-between;background:#f8fafc;padding:6px 10px;border-radius:6px;font-size:.85rem;">${escapeHtmlSimples(m.nome)} × ${m.quantidade}<span onclick="_quiosqueAgendaMateriaisTemp.splice(${i},1);_quiosqueAgendaToggleMateriais(true);" style="cursor:pointer;color:#dc2626;">✕</span></div>`).join('');
         }
-        function _quiosqueAgendaConfirmarFolha(acaoPendente) {
+        async function _quiosqueAgendaConfirmarFolha(acaoPendente) {
             const desc = document.getElementById('qsa_folha_desc').value.trim();
             if (!desc || desc.length < 3) { alert('Escreve pelo menos 3 caracteres a descrever o trabalho.'); return; }
             const s = _quiosqueAgendaSessaoAtual; const p = _quiosqueAgendaPessoaSelecionada;
@@ -5741,7 +5751,8 @@
             }
             if (aberto) aberto.usadoEmFolha = true; // evita que esta mesma hora volte a ser somada por outra folha/auto mais tarde
             guardarDados(dados);
-            _quiosqueAgendaFecharSaida(p, new Date().toTimeString().slice(0, 5), acaoPendente === 'terminar_servico');
+            const locFolha = await _quiosqueObterLocalizacaoAgora();
+            _quiosqueAgendaFecharSaida(p, new Date().toTimeString().slice(0, 5), acaoPendente === 'terminar_servico', locFolha);
         }
         function _quiosqueIniciarMonitorizacaoGeofence() {
             if (_quiosqueIntervaloGeo) return;
@@ -5889,12 +5900,13 @@
             `;
             if (!aberto) { window._kioskSlideCallback = () => _quiosqueFixaGeralPicar('entrada'); _kioskSlideInit(); }
         }
-        function _quiosqueFixaGeralPicar(acao) {
+        async function _quiosqueFixaGeralPicar(acao) {
             const p = _quiosqueFixaGeralPessoaSel; if (!p) return;
             const adminId = _tenantQuiosque();
             const hora = new Date().toTimeString().slice(0, 5);
-            if (acao === 'entrada') _quiosqueGarantirEntradaGeral(p.id, adminId, hora);
-            else _quiosqueFecharEntradaGeral(p.id, hora);
+            const loc = await _quiosqueObterLocalizacaoAgora();
+            if (acao === 'entrada') _quiosqueGarantirEntradaGeral(p.id, adminId, hora, loc?.lat, loc?.lng);
+            else _quiosqueFecharEntradaGeral(p.id, hora, loc?.lat, loc?.lng);
             guardarDados(dados);
             const painel = document.getElementById('tgqPainel');
             painel.innerHTML = `<div style="text-align:center;color:#152a52;"><div style="font-size:2.4rem;color:#16a34a;"><i class="fas fa-circle-check"></i></div><div style="font-weight:700;margin-top:8px;">${acao === 'entrada' ? 'Entraste às ' + hora + '!' : 'Saíste às ' + hora + '!'}</div></div>`;
@@ -5954,15 +5966,22 @@
                 <button type="button" class="tgq-acao-btn" style="background:#64748b;" onclick="_quiosqueMostrarGrid()">Cancelar</button>
             `;
         }
-        function quiosquePicar(tipo) {
+        async function quiosquePicar(tipo) {
             const p = _quiosquePessoaSelecionada; if (!p) return;
             const obraId = localStorage.getItem('tg_quiosque_obra');
             const obraNome = localStorage.getItem('tg_quiosque_obra_nome') || 'Obra';
             const adminId = _tenantQuiosque();
             const hoje = getDataHoje();
             const hora = new Date().toTimeString().slice(0, 5);
-            const lat = parseFloat(localStorage.getItem('tg_quiosque_lat'));
-            const lng = parseFloat(localStorage.getItem('tg_quiosque_lng'));
+            // Localização capturada agora, no momento exato desta picagem — não reutiliza a
+            // localização fixa gravada quando o tablet foi configurado (essa era só um fallback
+            // do passado; agora tenta sempre uma leitura fresca do GPS a cada picagem).
+            const locAgora = await _quiosqueObterLocalizacaoAgora();
+            let lat = locAgora?.lat, lng = locAgora?.lng;
+            if (lat == null || lng == null) {
+                lat = parseFloat(localStorage.getItem('tg_quiosque_lat'));
+                lng = parseFloat(localStorage.getItem('tg_quiosque_lng'));
+            }
             dados.obraPontoLonga = dados.obraPontoLonga || [];
             if (tipo === 'saida') {
                 const aberto = dados.obraPontoLonga.find(r => r.funcionarioId === p.id && r.obraId === obraId && r.data === hoje && r.entrada && !r.saida);
