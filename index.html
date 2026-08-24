@@ -229,6 +229,7 @@
     <nav class="nav-links">
       <a href="#tg-vantagens">Vantagens</a>
       <a href="#tg-precos">Preços</a>
+      <a href="#" onclick="abrirWizardCalc();return false;" style="color:var(--orange);"><i class="fas fa-calculator" style="margin-right:5px;"></i>Calcule o seu sistema</a>
       <a href="#tg-faq">FAQ</a>
       <a href="/blog/">Blog</a>
       <a href="#tg-sobre">Sobre nós</a>
@@ -253,14 +254,15 @@
     <div>
       <span class="eyebrow" style="display:inline-block;margin-bottom:10px;">Plataforma SaaS de Gestão Operacional</span>
       <h1 style="font-size:clamp(1.8rem,3.6vw,2.7rem);">Toda a sua operação. <span class="accent">Uma só plataforma.</span></h1>
-      <p class="lead">Ordens de serviço, técnicos e agenda (FSM). Contratos, equipamentos e manutenções (CMMS). Ponto e localização da equipa. Obras, stock e fornecedores. CRM comercial com propostas e comissões. Portal do Cliente com pedidos de assistência. <span style="font-family:'Space Grotesk',sans-serif;color:var(--orange);">6 sistemas que normalmente compra à parte — numa só plataforma cloud, feita para PME portuguesas de instalação e manutenção.</span></p>
+      <p class="lead">Gerencie equipas, serviços, manutenção, clientes e stock num único lugar — no escritório ou no telemóvel.<br>30 dias grátis. Experimente com toda a sua equipa.</p>
+      <p class="lead">Ordens de serviço, equipas, manutenção, obras, stock e clientes num único sistema.<br>Experimente gratuitamente durante 30 dias com toda a sua equipa.</p>
       <div class="tagline">
         <svg viewBox="0 0 24 24" fill="none"><path d="M3 17l5-5 4 4 8-9" stroke="#f4520e" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 7h4v4" stroke="#f4520e" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Pague pela dimensão da operação, não por cada funcionário.
       </div>
       <div class="hero-cta">
         <a class="btn btn-ghost" href="https://wa.me/351900000000?text=Ol%C3%A1%2C%20quero%20saber%20mais%20sobre%20o%20Total%20Gest" target="_blank" rel="noopener" onclick="_tgRegistarEvento('clique_cta','whatsapp')"><i class="fab fa-whatsapp" style="color:#25D366;margin-right:6px;"></i> Ligue Agora</a>
-        <a class="btn btn-orange" href="#" onclick="_tgRegistarEvento('clique_cta','hero');abrirModalSignup();return false;">Começar Agora <span style="margin-left:4px;">→</span></a>
+        <a class="btn btn-orange" href="#" onclick="_tgRegistarEvento('clique_cta','hero');abrirModalSignup();return false;">Começar 30 dias grátis <span style="margin-left:4px;">→</span></a>
       </div>
       <div class="hero-trust">
         <span><b>Multiempresa</b> · cada equipa isolada</span>
@@ -278,27 +280,26 @@
           <b>100% português</b>
         </span>
         <span><b>Notificações</b> · avisos instantâneos de OS, ponto e prazos</span>
+        <span><b>Sem compromisso</b></span>
+        <span><b>Sem cartão de crédito</b></span>
       </div>
     </div>
 
-    <!-- MOCKUP EM CAMADAS: desktop + telemóvel sobreposto + card de oferta flutuante -->
+    <!-- MOCKUP: desktop + telemóvel sobreposto -->
     <div class="stage-mockup-wrap">
-      <div class="promo-card" onclick="abrirModalSignup();" style="cursor:pointer;" role="button" tabindex="0" onkeydown="if(event.key==='Enter'){abrirModalSignup();}">
-        <div class="promo-badge"><i class="fas fa-gift"></i></div>
-        <div class="promo-title">30 dias para <span style="color:#39ff14;">Testes</span> <span style="color:#39ff14;">Gratuito.</span></div>
-        <div class="promo-sub">Sem cartão de crédito. Ativa em 2 minutos.</div>
-      </div>
       <div class="mac-mockup">
         <div class="mac-screen-bezel">
           <div class="mac-camera"></div>
-          <div class="mac-screen"><img src="dashboard-mockup.jpg" alt="Dashboard Total Gest — gestão de ordens de serviço, ponto e assiduidade, clientes e SCIE" width="900" height="503" fetchpriority="high" style="width:100%;display:block;" /></div>
+          <div class="mac-screen">
+            <img src="dashboard-mockup.jpg" alt="Dashboard Total Gest — gestão de ordens de serviço, ponto e assiduidade, clientes e SCIE" width="1800" height="1015" fetchpriority="high" style="width:100%;height:auto;display:block;" />
+          </div>
         </div>
         <div class="mac-base"></div>
       </div>
       <div class="phone-mockup-wrap">
         <div class="phone-mockup">
           <div class="phone-screen">
-            <img src="hero-demo-mobile.jpg" alt="Total Gest — app de gestão para equipas técnicas, ecrã 'O Meu Dia'" title="Total Gest — app de gestão para equipas técnicas" width="320" height="693" fetchpriority="high" style="width:100%;height:100%;object-fit:cover;display:block;" />
+            <img src="hero-demo-mobile.jpg" alt="Total Gest — app de gestão para equipas técnicas, ecrã 'O Meu Dia'" title="Total Gest — app de gestão para equipas técnicas" width="320" height="693" fetchpriority="high" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.parentElement.classList.add('img-fallback');this.remove();" />
           </div>
         </div>
       </div>
@@ -324,6 +325,7 @@
           <a href="#" onclick="esqueciPassword(); return false;" style="font-size:.82rem;color:#64748b;">Esqueci-me da password</a>
         </div>
         <button class="btn btn-orange" type="submit">Entrar</button>
+        <button type="button" class="btn btn-orange" onclick="_tgRegistarEvento('clique_cta','login_card');abrirModalSignup();">Inscrever-se</button>
         <p class="login-foot">Ainda não é parceiro? <a href="#tg-precos">Veja os planos</a></p>
         <div class="login-note">
           <svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M12 2a5 5 0 00-5 5v3H6a2 2 0 00-2 2v7a2 2 0 002 2h12a2 2 0 002-2v-7a2 2 0 00-2-2h-1V7a5 5 0 00-5-5z" stroke="#5a6781" stroke-width="1.6"/></svg>
@@ -674,6 +676,86 @@
 </section>
 
 <!-- FOOTER / CONTACTOS -->
+<!-- WIZARD: Calcule o seu sistema -->
+<div id="tg-calc-wizard-overlay">
+  <div id="tg-calc-wizard-card">
+    <button type="button" class="close-x" onclick="fecharWizardCalc()">&times;</button>
+    <div class="tcw-head">
+      <i class="fas fa-calculator"></i>
+      <div>
+        <div class="tcw-eyebrow">Calcule o seu sistema</div>
+        <div id="tcw-titulo-passo">Quantos funcionários tem a sua equipa?</div>
+      </div>
+    </div>
+    <div class="tcw-progress"><div id="tcw-progress-fill"></div></div>
+
+    <div id="tcw-passo-1" class="tcw-passo">
+      <p class="tcw-sub">Isto define o plano base da Total Gest para a sua equipa.</p>
+      <div class="tcw-func-grid" id="tcw-func-chips">
+        <button type="button" data-v="5"><span class="n">Até 5</span><span class="p">29,99 €/mês</span></button>
+        <button type="button" data-v="10"><span class="n">Até 10</span><span class="p">34,99 €/mês</span></button>
+        <button type="button" data-v="25"><span class="n">Até 25</span><span class="p">39,99 €/mês</span></button>
+        <button type="button" data-v="50"><span class="n">Até 50</span><span class="p">59,99 €/mês</span></button>
+        <button type="button" data-v="100"><span class="n">Até 100</span><span class="p">89,99 €/mês</span></button>
+      </div>
+      <div class="tcw-field" style="margin-top:8px;">
+        <label>Tenho um número diferente de funcionários</label>
+        <input type="number" id="tcw_func" min="1" value="10" oninput="_tcwSyncFuncInput()" />
+      </div>
+      <div class="tcw-info-box">
+        <div class="tcw-info-title"><i class="fas fa-circle-check"></i> O que já vem incluído na Licença Base, sem custo extra:</div>
+        <div class="tcw-info-grid">
+          <span><i class="fas fa-check"></i> Ordens de Serviço</span>
+          <span><i class="fas fa-check"></i> Registo de Ponto e Gestão de Férias</span>
+          <span><i class="fas fa-check"></i> Gestão de Clientes</span>
+          <span><i class="fas fa-check"></i> Gestão de Funcionários</span>
+          <span><i class="fas fa-check"></i> Folhas de Obra</span>
+          <span><i class="fas fa-check"></i> Tempo e custos por serviço</span>
+          <span><i class="fas fa-check"></i> Mapa da equipa em tempo real</span>
+          <span><i class="fas fa-check"></i> Portal do Cliente</span>
+          <span><i class="fas fa-check"></i> Notificações e relatórios</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="tcw-passo-2" class="tcw-passo" style="display:none;">
+      <p class="tcw-sub">Escolha as áreas que precisa de gerir — usamos isto para sugerir os add-ons certos.</p>
+      <div class="tcw-addons">
+        <label class="tcw-addon"><input type="checkbox" value="frota" /><div><b>Frota</b><span>Viaturas, documentos, seguros e sinistros</span></div></label>
+        <label class="tcw-addon"><input type="checkbox" value="contratos" /><div><b>Contratos de Manutenção / SCIE</b><span>Manutenções periódicas, REX, RBI, RSI e outros relatórios</span></div></label>
+        <label class="tcw-addon"><input type="checkbox" value="armazem" /><div><b>Obras / Stock / Armazém</b><span>Materiais, obras, fornecedores e autos de medição</span></div></label>
+        <label class="tcw-addon"><input type="checkbox" value="crm" /><div><b>CRM Comercial + Assist</b><span>Propostas, comissões e pedidos de assistência do cliente</span></div></label>
+        <label class="tcw-addon"><input type="checkbox" value="erp" /><div><b>Integração com ERP (Moloni)</b><span>Faturação automática a partir das OS</span></div></label>
+      </div>
+    </div>
+
+    <div id="tcw-passo-3" class="tcw-passo" style="display:none;">
+      <p class="tcw-sub">Some o que já gasta hoje em tempo administrativo — papéis, WhatsApp, folhas soltas e registos perdidos.</p>
+      <div class="tcw-field">
+        <label>Quanto tempo perde cada funcionário, por semana, com isso? <span id="tcw_horas_val">3</span>h/semana</label>
+        <input type="range" id="tcw_horas" min="0.5" max="8" step="0.5" value="3" oninput="document.getElementById('tcw_horas_val').textContent=this.value.replace('.',',')" />
+      </div>
+      <div class="tcw-field">
+        <label>Quantos funcionários perdem este tempo?</label>
+        <input type="number" id="tcw_func_perdem" min="1" value="10" />
+      </div>
+      <div class="tcw-field">
+        <label>Custo médio de mão de obra por funcionário (€/hora)</label>
+        <input type="number" id="tcw_custo" min="1" step="0.5" value="12" />
+      </div>
+    </div>
+
+    <div id="tcw-passo-4" class="tcw-passo" style="display:none;">
+      <div class="tcw-resultado" id="tcw-resultado-conteudo"></div>
+    </div>
+
+    <div class="tcw-nav">
+      <button type="button" id="tcw-btn-voltar" class="btn" style="background:#f1f5f9;" onclick="_tcwVoltar()">Voltar</button>
+      <button type="button" id="tcw-btn-seguinte" class="btn btn-orange" onclick="_tcwSeguinte()">Seguinte <i class="fas fa-arrow-right"></i></button>
+    </div>
+  </div>
+</div>
+
 <footer id="tg-contactos">
   <div class="wrap foot-grid">
     <div class="foot-brand">
@@ -31732,6 +31814,103 @@ function abrirDetalheAddon(el) {
 }
 function fecharDetalheAddon() {
     document.getElementById('tg-addon-overlay').classList.remove('open');
+}
+// ===== Wizard: Calcule o seu sistema =====
+const TCW_ADDONS = {
+    frota:     { nome: 'Frota',                              m: 9.99,  a: 107.89 },
+    contratos: { nome: 'Contratos de Manutenção / SCIE',      m: 14.99, a: 161.89 },
+    armazem:   { nome: 'Obras / Stock / Armazém',             m: 9.99,  a: 107.89 },
+    crm:       { nome: 'CRM Comercial + Assist',              m: 19.99, a: 215.89 },
+    erp:       { nome: 'Integração com ERP (Moloni)',         m: 29.99, a: 323.89 },
+};
+const TCW_ESCALOES = [[5,29.99],[10,34.99],[25,39.99],[50,59.99],[100,89.99]];
+let _tcwPasso = 1;
+function abrirWizardCalc() {
+    _tcwPasso = 1;
+    document.querySelectorAll('.tcw-passo').forEach((el, i) => el.style.display = i === 0 ? '' : 'none');
+    _tcwRenderCabecalho();
+    document.getElementById('tg-calc-wizard-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+function fecharWizardCalc() {
+    document.getElementById('tg-calc-wizard-overlay').classList.remove('open');
+    document.body.style.overflow = '';
+}
+function _tcwSyncFuncInput() {
+    document.querySelectorAll('#tcw-func-chips button').forEach(b => b.classList.remove('on'));
+}
+document.addEventListener('click', e => {
+    const chip = e.target.closest('#tcw-func-chips button');
+    if (!chip) return;
+    document.querySelectorAll('#tcw-func-chips button').forEach(b => b.classList.remove('on'));
+    chip.classList.add('on');
+    document.getElementById('tcw_func').value = chip.dataset.v;
+});
+const TCW_TITULOS = [
+    'Quantos funcionários tem a sua equipa?',
+    'Que necessidades tem?',
+    'Quanto tempo perde hoje com papéis e WhatsApp?',
+    'O resultado',
+];
+function _tcwRenderCabecalho() {
+    document.getElementById('tcw-titulo-passo').textContent = TCW_TITULOS[_tcwPasso - 1];
+    document.getElementById('tcw-progress-fill').style.width = ((_tcwPasso / 4) * 100) + '%';
+    document.getElementById('tcw-btn-voltar').style.visibility = _tcwPasso === 1 ? 'hidden' : 'visible';
+    document.getElementById('tcw-btn-seguinte').style.display = _tcwPasso === 4 ? 'none' : 'inline-flex';
+}
+function _tcwSeguinte() {
+    if (_tcwPasso === 1) {
+        const v = parseFloat(document.getElementById('tcw_func').value) || 0;
+        if (v < 1) { alert('Indica quantos funcionários tem, pelo menos 1.'); return; }
+        const perdemEl = document.getElementById('tcw_func_perdem');
+        if (perdemEl) perdemEl.value = v; // valor por omissão, o utilizador pode ajustar no passo 3
+    }
+    document.getElementById('tcw-passo-' + _tcwPasso).style.display = 'none';
+    _tcwPasso++;
+    if (_tcwPasso === 4) _tcwCalcularResultado();
+    document.getElementById('tcw-passo-' + _tcwPasso).style.display = '';
+    _tcwRenderCabecalho();
+}
+function _tcwVoltar() {
+    if (_tcwPasso === 1) return;
+    document.getElementById('tcw-passo-' + _tcwPasso).style.display = 'none';
+    _tcwPasso--;
+    document.getElementById('tcw-passo-' + _tcwPasso).style.display = '';
+    _tcwRenderCabecalho();
+}
+function _tcwCalcularResultado() {
+    const func = parseFloat(document.getElementById('tcw_func').value) || 1;
+    const horas = parseFloat(document.getElementById('tcw_horas').value) || 0;
+    const funcPerdem = parseFloat(document.getElementById('tcw_func_perdem').value) || 0;
+    const custo = parseFloat(document.getElementById('tcw_custo').value) || 0;
+    const addonsEscolhidos = Array.from(document.querySelectorAll('.tcw-addon input:checked')).map(c => c.value);
+
+    let plano = TCW_ESCALOES[TCW_ESCALOES.length - 1];
+    for (const e of TCW_ESCALOES) { if (func <= e[0]) { plano = e; break; } }
+    const precoBase = plano[1];
+    const precoAddons = addonsEscolhidos.reduce((s, k) => s + TCW_ADDONS[k].m, 0);
+    const precoTotalGest = precoBase + precoAddons;
+
+    // Mesma fórmula da calculadora da secção de Preços: recupera-se ~70% das horas perdidas.
+    const horasRecuperadasMes = funcPerdem * horas * 4.33 * 0.7;
+    const custoPerdaMes = horasRecuperadasMes * custo;
+    const poupancaLiquida = custoPerdaMes - precoTotalGest;
+
+    const listaAddons = addonsEscolhidos.length
+        ? '<ul class="tcw-lista-addons">' + addonsEscolhidos.map(k => `<li>${TCW_ADDONS[k].nome} — ${TCW_ADDONS[k].m.toFixed(2).replace('.', ',')} €/mês</li>`).join('') + '</ul>'
+        : '<p class="tcw-sub" style="margin:0;">Nenhum add-on selecionado — só a Licença Base.</p>';
+
+    document.getElementById('tcw-resultado-conteudo').innerHTML = `
+        <div class="tcw-result-linha"><span>Está a perder hoje, em tempo administrativo</span><b class="neg">${custoPerdaMes.toLocaleString('pt-PT', { maximumFractionDigits: 0 })} €/mês</b></div>
+        <div class="tcw-result-linha"><span>Total Gest para ${func} funcionário${func === 1 ? '' : 's'} (Licença Base + add-ons)</span><b>${precoTotalGest.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €/mês</b></div>
+        ${listaAddons}
+        <div class="tcw-result-final ${poupancaLiquida >= 0 ? 'pos' : 'neg'}">
+            ${poupancaLiquida >= 0
+                ? `Mesmo a pagar a Total Gest, fica com <b>${poupancaLiquida.toLocaleString('pt-PT', { maximumFractionDigits: 0 })} € a mais no bolso, por mês</b> — cerca de <b>${(poupancaLiquida * 12).toLocaleString('pt-PT', { maximumFractionDigits: 0 })} € por ano</b>.`
+                : `Com os números indicados, o custo da plataforma fica perto da poupança administrativa — a poupança real tende a ser maior, porque isto não conta menos deslocações a mais nem menos erros de faturação.`}
+        </div>
+        <a class="btn btn-orange" href="#" style="width:100%;justify-content:center;margin-top:16px;" onclick="_tgRegistarEvento('clique_cta','wizard_calc');fecharWizardCalc();abrirModalSignup();return false;">Começar 30 dias grátis <span style="margin-left:4px;">→</span></a>
+    `;
 }
 function abrirModalSignup() {
     document.getElementById('tg-signup-overlay').classList.add('open');
