@@ -14687,6 +14687,7 @@
                         </div>
                         ${pontoHtml}
                     </div>
+                    <div id="tgmTempoWidget"></div>
                     ${minhasOS.length ? `<div class="tgm-lista">${minhasOS.map(linhaOS).join('')}</div>` : `<p class="tgm-vazio">${_vejoTudo ? 'Sem OS marcadas para hoje.' : 'Sem OS atribuídas a ti hoje.'}</p>`}
                 </div>
                 ${['admin', 'subadmin'].includes(usuarioLogado.role) ? _htmlResumoEquipaHoje(adminId, hoje) : ''}
@@ -14694,6 +14695,57 @@
                     <div class="tgm-eyebrow">Em curso</div>
                     <div class="tgm-title tgm-title--sm"><i class="fas fa-hard-hat"></i> Obras Ativas</div>
                     ${minhasObras.length ? `<div class="tgm-lista">${minhasObras.map(linhaObra).join('')}</div>` : `<p class="tgm-vazio">${_vejoTudo ? 'Sem obras ativas de momento.' : 'Sem obras ativas atribuídas a ti.'}</p>`}
+                </div>
+            `;
+            _tgmMostrarTempo();
+        }
+        // Widget de tempo (temperatura, humidade, vento, céu) junto a "O Meu Dia" — só aparece
+        // se o dispositivo tiver o GPS ativo e a pessoa tiver dado permissão; se não tiver,
+        // fica simplesmente sem aparecer nada, sem incomodar ninguém a pedir outra vez.
+        // Usa a Open-Meteo (serviço gratuito, sem chave de API), e guarda em cache 30 minutos
+        // para não pedir a localização nem ir à net a cada atualização do ecrã.
+        let _tgmTempoCache = null; // { quando, lat, lng, dados }
+        async function _tgmMostrarTempo() {
+            const alvo = document.getElementById('tgmTempoWidget');
+            if (!alvo) return;
+            const agora = Date.now();
+            if (_tgmTempoCache && (agora - _tgmTempoCache.quando) < 30 * 60 * 1000) {
+                _tgmRenderTempo(alvo, _tgmTempoCache.dados);
+                return;
+            }
+            if (!navigator.geolocation) return; // sem suporte a GPS neste dispositivo — não mostra nada
+            const loc = await obterLocalizacao(5000);
+            if (!loc) return; // sem permissão ou GPS desligado — não mostra nada, silenciosamente
+            try {
+                const resp = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lng}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&timezone=auto`);
+                if (!resp.ok) return;
+                const json = await resp.json();
+                const c = json?.current;
+                if (!c) return;
+                _tgmTempoCache = { quando: agora, lat: loc.lat, lng: loc.lng, dados: c };
+                const alvoAtual = document.getElementById('tgmTempoWidget'); // pode ter sido re-renderizado entretanto
+                if (alvoAtual) _tgmRenderTempo(alvoAtual, c);
+            } catch (e) { /* sem internet momentânea ou serviço em baixo — não mostra nada, sem alarmar ninguém */ }
+        }
+        function _tgmDescreverCeu(codigo) {
+            if (codigo === 0) return { icone: 'fa-sun', texto: 'Céu limpo' };
+            if ([1, 2].includes(codigo)) return { icone: 'fa-cloud-sun', texto: 'Poucas nuvens' };
+            if (codigo === 3) return { icone: 'fa-cloud', texto: 'Nublado' };
+            if ([45, 48].includes(codigo)) return { icone: 'fa-smog', texto: 'Nevoeiro' };
+            if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(codigo)) return { icone: 'fa-cloud-rain', texto: 'Chuva' };
+            if ([71, 73, 75, 77, 85, 86].includes(codigo)) return { icone: 'fa-snowflake', texto: 'Neve' };
+            if ([95, 96, 99].includes(codigo)) return { icone: 'fa-bolt', texto: 'Trovoada' };
+            return { icone: 'fa-cloud', texto: 'Nublado' };
+        }
+        function _tgmRenderTempo(alvo, c) {
+            const ceu = _tgmDescreverCeu(c.weather_code);
+            alvo.innerHTML = `
+                <div class="tgm-tempo">
+                    <i class="fas ${ceu.icone}"></i>
+                    <div class="tgm-tempo-info">
+                        <div class="tgm-tempo-temp">${Math.round(c.temperature_2m)}°C <span class="tgm-tempo-ceu">${ceu.texto}</span></div>
+                        <div class="tgm-tempo-extra"><i class="fas fa-droplet"></i> ${Math.round(c.relative_humidity_2m)}% &nbsp; <i class="fas fa-wind"></i> ${Math.round(c.wind_speed_10m)} km/h</div>
+                    </div>
                 </div>
             `;
         }
