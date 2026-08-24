@@ -31826,6 +31826,7 @@ const TCW_ADDONS = {
 const TCW_ESCALOES = [[5,29.99],[10,34.99],[25,39.99],[50,59.99],[100,89.99]];
 let _tcwPasso = 1;
 function abrirWizardCalc() {
+    _tgRegistarEvento('wizard_calc_abrir', null);
     _tcwPasso = 1;
     document.querySelectorAll('.tcw-passo').forEach((el, i) => el.style.display = i === 0 ? '' : 'none');
     _tcwRenderCabecalho();
@@ -31867,7 +31868,8 @@ function _tcwSeguinte() {
     }
     document.getElementById('tcw-passo-' + _tcwPasso).style.display = 'none';
     _tcwPasso++;
-    if (_tcwPasso === 4) _tcwCalcularResultado();
+    if (_tcwPasso === 4) { _tcwCalcularResultado(); _tgRegistarEvento('wizard_calc_resultado', Array.from(document.querySelectorAll('.tcw-addon input:checked')).map(c => c.value).join(',') || 'sem_addons'); }
+    else _tgRegistarEvento('wizard_calc_passo', 'passo_' + _tcwPasso);
     document.getElementById('tcw-passo-' + _tcwPasso).style.display = '';
     _tcwRenderCabecalho();
 }
