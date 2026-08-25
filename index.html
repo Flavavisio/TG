@@ -6923,12 +6923,7 @@
                 : `<div style="margin-top:14px; padding:12px; background:#f1f5f9; border-radius:8px;">
                             <strong>Contratos de Manutenção</strong> <span class="badge" style="background:#94a3b8;color:#fff;">Inativo</span>
                             <div style="margin-top:8px; font-size:13px; color:#475569;">Ative o módulo para gerir contratos de manutenção. A ativação é feita pelo Super Admin após confirmação do pagamento.</div>
-                            ${contratoPedidoPend
-                                ? blocoInstrucoesPagamento(contratoPedidoPend)
-                                : `<div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
-                                <button class="btn btn-sm btn-primary" onclick="solicitarContratos('mensal')"><i class="fas fa-calendar-day"></i> Pedir Plano Mensal — ${PRECO_CONTRATOS_MENSAL.toFixed(2)} €</button>
-                                <button class="btn btn-sm btn-success" onclick="solicitarContratos('anual')"><i class="fas fa-calendar"></i> Pedir Plano Anual — ${PRECO_CONTRATOS_ANUAL.toFixed(2)} € (-10%)</button>
-                            </div>`}
+                            ${contratoPedidoPend ? blocoInstrucoesPagamento(contratoPedidoPend) : ''}
                         </div>`;
             const frotaAtivo = moduloFrotaAtivo(admin);
             const frotaExp = admin.frotaExpiracao ? new Date(admin.frotaExpiracao).toLocaleDateString('pt-PT') : null;
@@ -6946,12 +6941,7 @@
                 : `<div style="margin-top:14px; padding:12px; background:#f1f5f9; border-radius:8px;">
                             <strong>Frota</strong> <span class="badge" style="background:#94a3b8;color:#fff;">Inativo</span>
                             <div style="margin-top:8px; font-size:13px; color:#475569;">Ative o módulo para gerir a frota de veículos. A ativação é feita pelo Super Admin após confirmação do pagamento.</div>
-                            ${frotaPedidoPend
-                                ? blocoInstrucoesPagamento(frotaPedidoPend)
-                                : `<div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
-                                <button class="btn btn-sm btn-primary" onclick="solicitarFrota('mensal')"><i class="fas fa-calendar-day"></i> Pedir Plano Mensal — ${PRECO_FROTA_MENSAL.toFixed(2)} €</button>
-                                <button class="btn btn-sm btn-success" onclick="solicitarFrota('anual')"><i class="fas fa-calendar"></i> Pedir Plano Anual — ${PRECO_FROTA_ANUAL.toFixed(2)} € (-10%)</button>
-                            </div>`}
+                            ${frotaPedidoPend ? blocoInstrucoesPagamento(frotaPedidoPend) : ''}
                         </div>`;
             const armazemAtivo = moduloArmazemAtivo(admin);
             const armazemExp = admin.armazemExpiracao ? new Date(admin.armazemExpiracao).toLocaleDateString('pt-PT') : null;
@@ -6969,12 +6959,7 @@
                 : `<div style="margin-top:14px; padding:12px; background:#f1f5f9; border-radius:8px;">
                             <strong>Armazém / Stock / Gestão de Obras</strong> <span class="badge" style="background:#94a3b8;color:#fff;">Inativo</span>
                             <div style="margin-top:8px; font-size:13px; color:#475569;">Add-on de gestão de stock: artigos, fornecedores, obras, encomendas e planos de materiais. A ativação é feita pelo Super Admin após confirmação do pagamento.</div>
-                            ${armazemPedidoPend
-                                ? blocoInstrucoesPagamento(armazemPedidoPend)
-                                : `<div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
-                                <button class="btn btn-sm btn-primary" onclick="solicitarArmazem('mensal')"><i class="fas fa-calendar-day"></i> Pedir Plano Mensal — ${PRECO_ARMAZEM_MENSAL.toFixed(2)} €</button>
-                                <button class="btn btn-sm btn-success" onclick="solicitarArmazem('anual')"><i class="fas fa-calendar"></i> Pedir Plano Anual — ${PRECO_ARMAZEM_ANUAL.toFixed(2)} € (-10%)</button>
-                            </div>`}
+                            ${armazemPedidoPend ? blocoInstrucoesPagamento(armazemPedidoPend) : ''}
                         </div>`;
             const portalBloco = `<div style="margin-top:10px;"><div class="report-item"><span>Portal do Cliente</span><span class="licenca-ativa">Incluído na licença base</span></div></div>`;
             const notificacoesBloco = `<div style="margin-top:10px;"><div class="report-item"><span>Notificações</span><span class="licenca-ativa">Incluído na licença base</span></div></div>`;
@@ -6994,12 +6979,7 @@
                 : `<div style="margin-top:14px; padding:12px; background:#f1f5f9; border-radius:8px;">
                             <strong>CRM Comercial + Assist</strong> <span class="badge" style="background:#7c3aed;color:#fff;">Inativo</span>
                             <div style="margin-top:8px; font-size:13px; color:#475569;">Gestão do ciclo comercial completo — leads, pipeline, propostas, mapa de visitas e conversão automática em cliente/contrato assim que um negócio é ganho — mais o Total Gest Assist (pedidos de suporte e assistência técnica com criação direta de OS), incluído sem custo extra. A ativação é feita pelo Super Admin após confirmação do pagamento.</div>
-                            ${crmPedidoPend
-                                ? blocoInstrucoesPagamento(crmPedidoPend)
-                                : `<div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
-                                <button class="btn btn-sm btn-primary" onclick="solicitarCrm('mensal')"><i class="fas fa-calendar-day"></i> Pedir Plano Mensal — ${PRECO_CRM_MENSAL.toFixed(2)} €</button>
-                                <button class="btn btn-sm btn-success" onclick="solicitarCrm('anual')"><i class="fas fa-calendar"></i> Pedir Plano Anual — ${PRECO_CRM_ANUAL.toFixed(2)} € (-10%)</button>
-                            </div>`}
+                            ${crmPedidoPend ? blocoInstrucoesPagamento(crmPedidoPend) : ''}
                         </div>`;
             const erpBloco = `<div style="margin-top:14px; padding:12px; background:#f1f5f9; border-radius:8px; opacity:.85;">
                         <strong>Integração com ERP's</strong> <span class="badge" style="background:#0891b2;color:#fff;">Em breve</span>
@@ -7013,7 +6993,7 @@
                             <div class="report-item"><span>Rondas / Vigilância</span><span class="licenca-ativa">Ativo — ${admin.rondasPlano === 'demo' ? 'Demo' : admin.rondasPlano === 'anual' ? 'Anual' : 'Mensal'} (até ${rondasExp}) — grátis</span></div>
                         </div>`
                 : `<div style="margin-top:14px; padding:12px; background:#f1f5f9; border-radius:8px;">
-                            <strong>Rondas / Vigilância</strong> <span class="badge" style="background:#0f766e;color:#fff;">Novo — Grátis</span>
+                            <strong>Rondas / Vigilância</strong> <span class="badge" style="background:#0f766e;color:#fff;">Novo — Grátis temporário</span>
                             <div style="margin-top:8px; font-size:13px; color:#475569;">Gestão de rondas de segurança: postos com QR/NFC, rotas com horário e SLA, execução com scanner no telemóvel e alertas automáticos de postos saltados ou fora de horário. Grátis por agora, fase de lançamento.</div>
                             ${rondasPedidoPend
                                 ? blocoInstrucoesPagamento(rondasPedidoPend)
@@ -7051,6 +7031,11 @@
                                 <button class="btn btn-sm btn-primary" onclick="abrirModalRenovacao('alteracao')"><i class="fas fa-exchange-alt"></i> Adquirir Licença</button>
                             </div>
                         `)}
+                        ${(!isDemo && (!modAtivo || !frotaAtivo || !armazemAtivo || !crmAtivo)) ? `
+                        <div style="margin-top:16px;">
+                            <button class="btn btn-sm" style="background:#0f766e;color:#fff;" onclick="_ativAddonsAbrir()"><i class="fas fa-puzzle-piece"></i> Ativar Add-ons</button>
+                        </div>
+                        ` : ''}
                         ${modBloco}
                         ${frotaBloco}
                         ${armazemBloco}
@@ -22575,8 +22560,8 @@ async function salvarAdmin(e) {
                     <p style="text-align:center;color:#64748b;margin-bottom:14px;">Precisas de algum módulo adicional? <span style="color:#94a3b8;">(opcional)</span></p>
                     <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px;">
                         ${_RENOVACAO_ADDONS.map(ad => `
-                            <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:2px solid ${_renWiz.addons.includes(ad.tipoBase) ? '#f4520e' : '#e2e8f0'};border-radius:10px;cursor:pointer;background:${_renWiz.addons.includes(ad.tipoBase) ? '#fef1ea' : '#fff'};" onclick="_renToggleAddonWiz('${ad.tipoBase}')">
-                                <input type="checkbox" ${_renWiz.addons.includes(ad.tipoBase) ? 'checked' : ''} style="width:auto;" onclick="event.stopPropagation();_renToggleAddonWiz('${ad.tipoBase}')" />
+                            <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:2px solid ${_renWiz.addons.includes(ad.tipoBase) ? '#f4520e' : '#e2e8f0'};border-radius:10px;cursor:pointer;background:${_renWiz.addons.includes(ad.tipoBase) ? '#fef1ea' : '#fff'};">
+                                <input type="checkbox" ${_renWiz.addons.includes(ad.tipoBase) ? 'checked' : ''} style="width:auto;" onchange="_renToggleAddonWiz('${ad.tipoBase}')" />
                                 <i class="fas ${ad.icone}" style="width:18px;color:#64748b;"></i>
                                 <span style="font-weight:600;flex:1;">${ad.label}</span>
                             </label>`).join('')}
@@ -22779,6 +22764,7 @@ async function salvarAdmin(e) {
             guardarDados(dados);
             // Um único email consolidado — não um por módulo — resumindo tudo o que foi pedido.
             _enviarEmailServidor('pedido_renovacao_consolidado', {
+                to_email: 'totalgestpro@gmail.com',
                 adminId: admin.id,
                 adminNome: admin.nome || '',
                 empresa: admin.empresa || admin.nome || '',
@@ -22789,6 +22775,116 @@ async function salvarAdmin(e) {
             }).catch(() => {});
             fecharModalRenovacao();
             alert('✅ Pedido de renovação enviado ao Super Admin — ' + resumoPartes.length + ' módulo(s), total ' + total.toFixed(2) + ' €.');
+        }
+        // ============================================================================
+        //  ATIVAR ADD-ONS — versão consolidada da ativação (a mesma ideia da renovação
+        //  consolidada): escolhe os módulos inativos que quer, tudo com o mesmo período
+        //  (mensal ou anual), vê o total, e envia tudo junto num único pedido/email.
+        // ============================================================================
+        let _ativAddonsPeriodo = 'mensal', _ativAddonsEscolhidos = [];
+        function _ativModulosInativos(admin) {
+            const mapa = [
+                { tipoBase: 'contrato', label: 'Contratos de Manutenção', icone: 'fa-file-signature', ativo: moduloContratosAtivo(admin), mensal: PRECO_CONTRATOS_MENSAL, anual: PRECO_CONTRATOS_ANUAL },
+                { tipoBase: 'frota', label: 'Frota', icone: 'fa-truck', ativo: moduloFrotaAtivo(admin), mensal: PRECO_FROTA_MENSAL, anual: PRECO_FROTA_ANUAL },
+                { tipoBase: 'armazem', label: 'Armazém / Stock / Gestão de Obras', icone: 'fa-warehouse', ativo: moduloArmazemAtivo(admin), mensal: PRECO_ARMAZEM_MENSAL, anual: PRECO_ARMAZEM_ANUAL },
+                { tipoBase: 'crm', label: 'CRM Comercial + Assist', icone: 'fa-handshake', ativo: moduloCrmAtivo(admin), mensal: PRECO_CRM_MENSAL, anual: PRECO_CRM_ANUAL },
+            ];
+            return mapa.filter(m => !m.ativo);
+        }
+        function _ativAddonsAbrir() {
+            const admin = adminAtual(); if (!admin) return;
+            _ativAddonsPeriodo = 'mensal';
+            _ativAddonsEscolhidos = [];
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay open';
+            overlay.id = 'ativAddonsOverlay';
+            overlay.innerHTML = `
+                <div class="modal" style="max-width:520px;">
+                    <div style="display:flex; align-items:center; justify-content:space-between;">
+                        <h3><i class="fas fa-puzzle-piece"></i> Ativar Add-ons</h3>
+                        <button class="close-modal" onclick="document.getElementById('ativAddonsOverlay').remove()">&times;</button>
+                    </div>
+                    <div id="ativAddonsConteudo"></div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+            _ativAddonsRender();
+        }
+        function _ativAddonsToggle(tipoBase) {
+            const i = _ativAddonsEscolhidos.indexOf(tipoBase);
+            if (i >= 0) _ativAddonsEscolhidos.splice(i, 1); else _ativAddonsEscolhidos.push(tipoBase);
+            _ativAddonsRender();
+        }
+        function _ativAddonsEscolherPeriodo(p) {
+            _ativAddonsPeriodo = p;
+            _ativAddonsRender();
+        }
+        function _ativAddonsRender() {
+            const admin = adminAtual(); if (!admin) return;
+            const inativos = _ativModulosInativos(admin);
+            const cont = document.getElementById('ativAddonsConteudo'); if (!cont) return;
+            if (!inativos.length) {
+                cont.innerHTML = `<p class="help-text" style="margin-top:14px;">Já tens todos os add-ons ativos — nada por ativar de momento.</p>`;
+                return;
+            }
+            let total = 0;
+            const linhas = inativos.map(m => {
+                const preco = _ativAddonsPeriodo === 'anual' ? m.anual : m.mensal;
+                const escolhido = _ativAddonsEscolhidos.includes(m.tipoBase);
+                if (escolhido) total += preco;
+                return `<label style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:2px solid ${escolhido ? '#0f766e' : '#e2e8f0'};border-radius:10px;cursor:pointer;background:${escolhido ? '#f0fdfa' : '#fff'};margin-bottom:8px;">
+                    <input type="checkbox" ${escolhido ? 'checked' : ''} style="width:auto;" onchange="_ativAddonsToggle('${m.tipoBase}')" />
+                    <i class="fas ${m.icone}" style="width:18px;color:#64748b;"></i>
+                    <span style="font-weight:600;flex:1;">${m.label}</span>
+                    <span style="font-size:.85rem;color:#64748b;">${preco.toFixed(2)} €</span>
+                </label>`;
+            }).join('');
+            cont.innerHTML = `
+                <p class="help-text" style="margin:10px 0 12px;">Escolhe os módulos que queres ativar — o pedido junta tudo e vai de uma vez só ao Super Admin.</p>
+                ${linhas}
+                <div class="form-group" style="margin-top:14px;">
+                    <label>Periodicidade</label>
+                    <div style="display:flex;gap:8px;">
+                        <button type="button" class="btn btn-sm ${_ativAddonsPeriodo === 'mensal' ? 'btn-primary' : 'btn-outline'}" onclick="_ativAddonsEscolherPeriodo('mensal')" style="flex:1;">Mensal</button>
+                        <button type="button" class="btn btn-sm ${_ativAddonsPeriodo === 'anual' ? 'btn-primary' : 'btn-outline'}" onclick="_ativAddonsEscolherPeriodo('anual')" style="flex:1;">Anual (-10%)</button>
+                    </div>
+                </div>
+                <div class="report-item" style="border-top:1px solid #e2e8f0;margin-top:12px;padding-top:10px;font-weight:700;"><span>Total</span><span>${total.toFixed(2)} €</span></div>
+                <button type="button" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:14px;" onclick="_ativAddonsSubmeter()"><i class="fas fa-paper-plane"></i> Enviar Pedido</button>
+            `;
+        }
+        function _ativAddonsSubmeter() {
+            if (!_ativAddonsEscolhidos.length) { alert('Escolhe pelo menos um add-on para ativar.'); return; }
+            const admin = adminAtual(); if (!admin) return;
+            const inativos = _ativModulosInativos(admin);
+            dados.pedidosRenovacao = dados.pedidosRenovacao || [];
+            const resumoPartes = [];
+            let total = 0;
+            let algumBloqueado = false;
+            _ativAddonsEscolhidos.forEach(tipoBase => {
+                const m = inativos.find(x => x.tipoBase === tipoBase); if (!m) return;
+                const jaPendente = (dados.pedidosRenovacao || []).some(p => p.adminId === admin.id && p.status === 'pendente' && (p.tipo || '').startsWith(tipoBase));
+                if (jaPendente) { algumBloqueado = true; return; }
+                const preco = _ativAddonsPeriodo === 'anual' ? m.anual : m.mensal;
+                dados.pedidosRenovacao.push({ id: gerarId(), adminId: admin.id, tipo: tipoBase + '_' + _ativAddonsPeriodo, planoAtual: null, planoPedido: null, observacao: 'Ativação de ' + m.label + ' (' + (_ativAddonsPeriodo === 'anual' ? 'Anual' : 'Mensal') + ') — pedida via Ativar Add-ons', status: 'pendente', dataCriacao: Date.now() });
+                total += preco;
+                resumoPartes.push(m.label + ' — ' + preco.toFixed(2) + ' €');
+            });
+            if (!resumoPartes.length) { alert(algumBloqueado ? 'Já tens um pedido pendente para os módulos escolhidos.' : 'Nada para enviar.'); return; }
+            guardarDados(dados);
+            _enviarEmailServidor('pedido_renovacao_consolidado', {
+                to_email: 'totalgestpro@gmail.com',
+                adminId: admin.id,
+                adminNome: admin.nome || '',
+                empresa: admin.empresa || admin.nome || '',
+                periodo: _ativAddonsPeriodo,
+                itens: resumoPartes,
+                total: total.toFixed(2),
+                observacao: 'Pedido de ativação de novos add-ons (via "Ativar Add-ons")'
+            }).catch(() => {});
+            document.getElementById('ativAddonsOverlay')?.remove();
+            renderizarTudo();
+            alert('✅ Pedido enviado ao Super Admin — ' + resumoPartes.length + ' módulo(s), total ' + total.toFixed(2) + ' €.' + (algumBloqueado ? '\n\n(Alguns módulos escolhidos já tinham um pedido pendente e não foram repetidos.)' : ''));
         }
         function salvarRenovacao(e) {
             e.preventDefault();
