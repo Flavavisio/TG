@@ -14687,6 +14687,32 @@
                 }).join('\n');
                 alert('Materiais desta OS — ' + (obterNomeCliente(s.clienteId) || '') + ':\n\n' + linhas);
             };
+            // Equivalentes das funções acima, mas para o card de Obra em "O Meu Dia" — mesmo
+            // padrão, só muda a entidade (obra em vez de OS).
+            window._ligarClienteObra = function(obraId) {
+                const o = (dados.obras || []).find(x => x.id === obraId); if (!o) return;
+                const cliente = dados.clientes?.find(c => c.id === o.clienteId);
+                if (!cliente?.telefone) { alert('Este cliente não tem telefone registado.'); return; }
+                if (!confirm('Ligar ao cliente ' + (cliente.nome || obterNomeCliente(o.clienteId) || '') + '?\n' + cliente.telefone)) return;
+                window.location.href = 'tel:' + cliente.telefone.replace(/\s+/g, '');
+            };
+            window._verObservacoesObra = function(obraId) {
+                const o = (dados.obras || []).find(x => x.id === obraId); if (!o) return;
+                alert('Observações da Obra — ' + (obterNomeCliente(o.clienteId) || '') + ':\n\n' + (o.observacoes || '(sem observações)'));
+            };
+            window._verMateriaisObra = function(obraId) {
+                const o = (dados.obras || []).find(x => x.id === obraId); if (!o) return;
+                const mats = (dados.obraMateriais || []).filter(m => m.obraId === obraId);
+                if (!mats.length) { alert('Sem materiais estipulados para esta Obra.'); return; }
+                const linhas = mats.map(m => {
+                    const art = dados.artigos?.find(a => a.id === m.artigoId);
+                    const prev = Number(m.qtdPrevista) || 0, cons = Number(m.qtdConsumida) || 0;
+                    const unid = art ? (art.unidade || 'un') : '';
+                    const estado = cons >= prev && prev > 0 ? '✅' : (cons > 0 ? '🟡' : '⚪');
+                    return estado + ' ' + (art ? art.nome : '(artigo removido)') + ' — Previsto: ' + prev + ' ' + unid + ' · Consumido: ' + cons + ' ' + unid;
+                }).join('\n');
+                alert('Materiais desta Obra — ' + (obterNomeCliente(o.clienteId) || '') + ':\n\n' + linhas);
+            };
             // Formata o telefone para o link do WhatsApp (wa.me exige indicativo de país,
             // sem espaços nem símbolos). Assume Portugal (351) quando o número já não tem
             // um indicativo (números portugueses normais têm 9 dígitos).
@@ -14702,17 +14728,31 @@
             const linhaObra = o => {
                 const aberto = _obraLongaPontoAberto ? _obraLongaPontoAberto(o.id) : null;
                 const btn = _botaoPontoObraHTML(o) || `<button type="button" class="btn btn-sm btn-outline" onclick="abrirObraLongaDetalhe('${o.id}')">Ver</button>`;
+                const btnVer = `<button type="button" class="btn btn-sm btn-outline tgm-btn-ver" onclick="abrirObraLongaDetalhe('${o.id}')"><i class="fas fa-eye"></i> Ver Obra</button>`;
                 const morada = _moradaCompletaObra(o);
                 const urlInfo = _osMapaInfo(o.clienteId, morada !== '—' ? morada : '', o.localId);
+                const cliente = dados.clientes?.find(c => c.id === o.clienteId);
+                // "Iniciada" — já houve pelo menos uma entrada registada nesta obra, alguma vez
+                // (não só hoje) — diferente de "Em curso" (tgm-live-dot), que é só agora mesmo.
+                const jaIniciou = (dados.obraPontoLonga || []).some(p => p.obraId === o.id && p.entrada);
+                const btnLigar = cliente?.telefone ? `<button type="button" class="tgm-btn-mapa" title="Ligar a ${escapeHtmlSimples(obterNomeCliente(o.clienteId) || 'cliente')}" onclick="event.stopPropagation();_ligarClienteObra('${o.id}')"><i class="fas fa-phone"></i></button>` : '';
+                const btnWhatsapp = cliente?.telefone ? `<a href="${_whatsappUrlOS(cliente.telefone)}" target="_blank" rel="noopener" class="tgm-btn-mapa" title="Abrir WhatsApp" onclick="event.stopPropagation();" style="color:#25D366;"><i class="fab fa-whatsapp"></i></a>` : '';
+                const btnObs = (o.observacoes && o.observacoes.trim()) ? `<button type="button" class="tgm-btn-mapa" title="Ver observações" onclick="event.stopPropagation();_verObservacoesObra('${o.id}')"><i class="fas fa-comment-dots"></i></button>` : '';
+                const _materiaisDestaObra = (dados.obraMateriais || []).filter(m => m.obraId === o.id);
+                const btnMateriais = _materiaisDestaObra.length ? `<button type="button" class="tgm-btn-mapa" title="Ver materiais desta Obra" onclick="event.stopPropagation();_verMateriaisObra('${o.id}')"><i class="fas fa-boxes-stacked"></i></button>` : '';
                 return `<div class="tgm-row tgm-row--obra">
                     ${aberto ? '<span class="tgm-live-dot" title="Em curso"></span>' : ''}
                     <div class="tgm-row-icon tgm-row-icon--obra"><i class="fas fa-hard-hat"></i></div>
                     <div class="tgm-row-txt">
                         <div class="tgm-row-title">${escapeHtmlSimples(o.nome)}</div>
-                        <div class="tgm-row-sub">${escapeHtmlSimples(obterNomeCliente(o.clienteId) || '')}</div>
+                        <div class="tgm-row-sub">${o.dataInicioPrevista ? `<span class="tgm-mono tgm-hora">${o.dataInicioPrevista.split('-').reverse().join('/')}</span> · ` : ''}${escapeHtmlSimples(obterNomeCliente(o.clienteId) || '')}${jaIniciou ? ' <span style="color:#16a34a;font-weight:700;">· Iniciada</span>' : ' <span style="color:#94a3b8;">· Ainda não iniciada</span>'}</div>
                     </div>
-                    <div class="tgm-row-acoes-inline">${_botaoMapa(urlInfo)}${btn}</div>
-                </div>`;
+                    <div class="tgm-row-acoes">
+                        <div class="tgm-row-acoes-top">${btn}</div>
+                        ${btnVer}
+                    </div>
+                </div>
+                ${(btnObs || btnMateriais || btnLigar || btnWhatsapp || _botaoMapa(urlInfo, null)) ? `<div class="tgm-row-extra" style="display:flex;gap:8px;justify-content:flex-end;margin:-6px 0 8px;padding-right:2px;">${btnObs}${btnMateriais}${btnLigar}${btnWhatsapp}${_botaoMapa(urlInfo, null)}</div>` : ''}`;
             };
 
             cont.style.display = 'block';
