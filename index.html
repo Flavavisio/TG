@@ -2069,7 +2069,7 @@
         </div>
         <div id="agendaObrasConteudo"></div>
         <div style="display:flex;flex-wrap:wrap;gap:16px;margin-top:16px;padding:10px 14px;background:#f8fafc;border-radius:8px;font-size:.8rem;color:#334155;">
-            <span><span style="color:#16a34a;font-weight:800;">🟢 Verde negrito</span> — a pessoa deu entrada e está em obra agora</span>
+            <span><span style="color:#0ea5e9;font-weight:800;">🔵 Azul negrito</span> — a pessoa deu entrada e está em obra/OS agora</span>
             <span><span style="color:#ca8a04;font-weight:700;">🟡 Amarelo</span> — a OS/obra está em "Pausa para almoço"</span>
             <span><span style="color:#f97316;font-weight:700;">🟠 Laranja</span> — já deu saída (terminou por hoje)</span>
             <span><span style="color:#1e293b;font-weight:700;">⚫ Preto</span> — nada registado ainda hoje</span>
@@ -12823,7 +12823,7 @@
             const registos = (dados.ponto || []).filter(p => p.servicoId === s.id && p.funcionarioId === pessoaId && p.data === hoje);
             if (!registos.length) return '#1e293b'; // preto — nada registado hoje (falta/não apareceu ainda)
             const aberto = registos.find(p => p.entrada && !p.saida);
-            if (aberto) return '#16a34a'; // verde negrito — em obra agora
+            if (aberto) return '#0ea5e9'; // azul — em obra/OS agora
             if (s.status === 'pausa para almoço') return '#ca8a04'; // amarelo — pausa para almoço
             return '#f97316'; // laranja — já deu saída
         }
@@ -12832,7 +12832,7 @@
             if (!ids.length) return 'Sem responsável';
             return ids.map(id => {
                 const cor = _corStatusPessoaOS(s, id);
-                const negrito = cor === '#16a34a' ? '800' : '600';
+                const negrito = cor === '#0ea5e9' ? '800' : '600';
                 return `<span style="color:${cor};font-weight:${negrito};">${obterNomeFuncionario(id)}</span>`;
             }).join(', ');
         }
@@ -14428,9 +14428,9 @@
             return ids.map(id => {
                 const registos = (dados.obraPontoLonga || []).filter(p => p.obraId === o.id && p.funcionarioId === id && p.data === hoje);
                 let cor = '#1e293b';
-                if (registos.some(p => p.entrada && !p.saida)) cor = '#16a34a';
+                if (registos.some(p => p.entrada && !p.saida)) cor = '#0ea5e9';
                 else if (registos.length) cor = '#f97316';
-                const negrito = cor === '#16a34a' ? '800' : '600';
+                const negrito = cor === '#0ea5e9' ? '800' : '600';
                 return `<span style="color:${cor};font-weight:${negrito};">${obterNomeFuncionario(id)}</span>`;
             }).join(', ');
         }
@@ -14690,6 +14690,7 @@
                     <div id="tgmTempoWidget"></div>
                     ${minhasOS.length ? `<div class="tgm-lista">${minhasOS.map(linhaOS).join('')}</div>` : `<p class="tgm-vazio">${_vejoTudo ? 'Sem OS marcadas para hoje.' : 'Sem OS atribuídas a ti hoje.'}</p>`}
                 </div>
+                ${['admin', 'subadmin'].includes(usuarioLogado.role) ? _htmlPainelAdminHoje(adminId, hoje) : ''}
                 ${['admin', 'subadmin'].includes(usuarioLogado.role) ? _htmlResumoEquipaHoje(adminId, hoje) : ''}
                 <div class="tgm-panel tgm-panel--obras">
                     <div class="tgm-eyebrow">Em curso</div>
@@ -14752,6 +14753,79 @@
         // Painel de resumo — só para admin/sub-admin: uma lista compacta de toda a equipa, hoje,
         // "OS X às Y horas — Fulano". Não substitui nada, é só uma visão rápida do dia inteiro
         // sem ter de abrir a Agenda completa.
+        // Painel do admin em "O Meu Dia" — alertas do dia, estado da equipa em tempo real,
+        // ações rápidas e resumo financeiro. Pensado para gerir, não para trabalho de campo.
+        function _htmlPainelAdminHoje(adminId, hoje) {
+            const admin = dados.administradores?.find(a => a.id === adminId);
+            const equipa = [
+                ...(dados.funcionarios || []).filter(f => f.adminId === adminId && f.role !== 'admin' && f.role !== 'superadmin' && f.suspenso !== true),
+                ...(dados.encarregados || []).filter(e => e.adminId === adminId && e.suspenso !== true)
+            ];
+
+            // --- Alertas ---
+            const horaHabitual = admin?.horaEntradaHabitual || '09:00';
+            const tolerancia = admin?.toleranciaAtrasoMin != null ? admin.toleranciaAtrasoMin : 15;
+            const [hh, mm] = horaHabitual.split(':').map(Number);
+            const limiteMin = hh * 60 + mm + tolerancia;
+            const agoraMin = new Date().getHours() * 60 + new Date().getMinutes();
+            const pontoGeralAberto = id => (dados.ponto || []).some(p => p.funcionarioId === id && !p.servicoId && !p.obraId && p.data === hoje && p.entrada);
+            const semPontoAinda = agoraMin > limiteMin ? equipa.filter(p => !pontoGeralAberto(p.id)) : [];
+
+            const osAtrasadas = (dados.servicos || []).filter(s => s.adminId === adminId && s.data === hoje && s.hora && s.status !== 'concluído' && s.status !== 'cancelado' && s.status !== 'em andamento' && s.hora < new Date().toTimeString().slice(0, 5));
+            const feriasPendentes = (dados.pedidos || []).filter(p => p.adminId === adminId && p.status === 'pendente');
+
+            const alertas = [];
+            if (semPontoAinda.length) alertas.push({ icone: 'fa-user-clock', cor: '#dc2626', texto: `${semPontoAinda.length} ${semPontoAinda.length === 1 ? 'pessoa ainda não picou' : 'pessoas ainda não picaram'} o ponto hoje`, aviso: semPontoAinda.map(p => p.nome).join(', '), acao: `abrirSecao('ponto')` });
+            if (osAtrasadas.length) alertas.push({ icone: 'fa-triangle-exclamation', cor: '#f59e0b', texto: `${osAtrasadas.length} ${osAtrasadas.length === 1 ? 'OS atrasada' : 'OS atrasadas'}`, aviso: osAtrasadas.slice(0, 3).map(s => obterNomeCliente(s.clienteId)).join(', '), acao: `abrirSecao('servicos')` });
+            if (feriasPendentes.length) alertas.push({ icone: 'fa-umbrella-beach', cor: '#0ea5e9', texto: `${feriasPendentes.length} ${feriasPendentes.length === 1 ? 'pedido' : 'pedidos'} por aprovar`, aviso: '', acao: `abrirSecao('pedidos')` });
+
+            // --- Estado da equipa em tempo real ---
+            const estadoPessoa = p => {
+                const emOS = (dados.ponto || []).find(x => x.funcionarioId === p.id && x.servicoId && x.data === hoje && x.entrada && !x.saida);
+                if (emOS) { const os = dados.servicos?.find(s => s.id === emOS.servicoId); return { label: 'Em OS — ' + (obterNomeCliente(os?.clienteId) || '—'), cor: '#0ea5e9' }; }
+                const emObra = (dados.obraPontoLonga || []).find(x => x.funcionarioId === p.id && x.data === hoje && x.entrada && !x.saida);
+                if (emObra) { const ob = dados.obras?.find(o => o.id === emObra.obraId); return { label: 'Em Obra — ' + (ob?.nome || '—'), cor: '#0ea5e9' }; }
+                const geral = (dados.ponto || []).find(x => x.funcionarioId === p.id && !x.servicoId && !x.obraId && x.data === hoje && x.entrada);
+                if (geral && !geral.saida) return { label: 'Em serviço', cor: '#16a34a' };
+                if (geral && geral.saida) return { label: 'Terminou o dia', cor: '#f97316' };
+                return { label: 'Ainda não começou', cor: '#1e293b' };
+            };
+            const linhasEquipa = equipa.slice(0, 12).map(p => {
+                const e = estadoPessoa(p);
+                return `<div class="tgm-equipa-linha"><span class="tgm-equipa-dot" style="background:${e.cor};"></span><span class="tgm-equipa-nome">${escapeHtmlSimples(p.nome)}</span><span class="tgm-equipa-estado" style="color:${e.cor};">${e.label}</span></div>`;
+            }).join('');
+
+            // --- Resumo financeiro do dia ---
+            const osHojeConcluidas = (dados.servicos || []).filter(s => s.adminId === adminId && s.data === hoje && s.status === 'concluído');
+            const totalDia = osHojeConcluidas.reduce((soma, s) => soma + (Number(s.valor) || 0), 0);
+
+            return `
+                <div class="tgm-panel tgm-panel--admin">
+                    ${alertas.length ? `<div class="tgm-alertas-admin">${alertas.map(a => `
+                        <div class="tgm-alerta-admin" onclick="${a.acao}">
+                            <i class="fas ${a.icone}" style="color:${a.cor};"></i>
+                            <div><div class="tgm-alerta-txt">${a.texto}</div>${a.aviso ? `<div class="tgm-alerta-sub">${escapeHtmlSimples(a.aviso)}</div>` : ''}</div>
+                            <i class="fas fa-chevron-right" style="margin-left:auto;color:#cbd5e1;font-size:.8rem;"></i>
+                        </div>
+                    `).join('')}</div>` : `<div class="tgm-alertas-ok"><i class="fas fa-circle-check"></i> Tudo em dia — sem alertas de momento.</div>`}
+
+                    <div class="tgm-eyebrow" style="margin-top:14px;">Equipa agora</div>
+                    <div class="tgm-equipa-lista">${linhasEquipa || '<p class="tgm-vazio" style="margin:6px 0;">Sem equipa registada.</p>'}</div>
+
+                    <div class="tgm-admin-rodape">
+                        <div class="tgm-admin-financeiro">
+                            <div class="tgm-eyebrow" style="margin:0;">Hoje</div>
+                            <div class="tgm-admin-valor">${totalDia.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' })}</div>
+                            <div class="tgm-admin-sub">${osHojeConcluidas.length} OS concluída${osHojeConcluidas.length === 1 ? '' : 's'}</div>
+                        </div>
+                        <div class="tgm-admin-acoes">
+                            ${feriasPendentes.length ? `<button type="button" class="btn btn-sm" style="background:#eff6ff;color:#1d4ed8;" onclick="abrirSecao('pedidos')"><i class="fas fa-umbrella-beach"></i> Aprovar férias (${feriasPendentes.length})</button>` : ''}
+                            <button type="button" class="btn btn-sm" style="background:#fff7ed;color:#c2410c;" onclick="_abrirModalNotif()"><i class="fas fa-paper-plane"></i> Enviar notificação</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
         function _htmlResumoEquipaHoje(adminId, hoje) {
             const todasOS = (dados.servicos || []).filter(s => s.adminId === adminId && s.data === hoje && s.status !== 'cancelado')
                 .sort((a, b) => (a.hora || '99:99').localeCompare(b.hora || '99:99'));
