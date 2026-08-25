@@ -1214,9 +1214,9 @@ body.dark-mode {
 .tgm-row-icon--os { background: rgba(251,146,60,.16); color:#ea7c1f; }
 body.dark-mode .tgm-row-icon--os { color:#fdba74; }
 .tgm-row-icon--obra { background: var(--tgm-cian-glow); color: var(--tgm-cian); }
-.tgm-row-txt { flex:1; min-width:140px; }
-.tgm-row-title { font-weight:700; color: var(--tgm-text); font-size:.92rem; }
-.tgm-row-sub { color: var(--tgm-text-sub); font-size:.78rem; margin-top:1px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.tgm-row-txt { flex:1; min-width:0; }
+.tgm-row-title { font-weight:700; color: var(--tgm-text); font-size:.92rem; overflow-wrap:break-word; }
+.tgm-row-sub { color: var(--tgm-text-sub); font-size:.78rem; margin-top:1px; overflow-wrap:break-word; white-space:normal; }
 .tgm-row-acoes { display:flex; flex-direction:column; gap:6px; align-items:stretch; flex:1 1 100%; }
 .tgm-row-acoes-top { display:flex; gap:6px; align-items:center; }
 .tgm-row-acoes-top .btn-sm { flex:1; white-space:nowrap; }
