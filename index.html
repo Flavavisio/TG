@@ -8018,7 +8018,29 @@
                 const ids = Object.keys(porArtigo);
                 const adminIdVerOs = usuarioLogado?.adminId || usuarioLogado?.id;
                 const artigosDisp = (dados.artigos || []).filter(a => a.adminId === adminIdVerOs && !ids.includes(a.id));
-                cont.innerHTML =
+                // Se esta OS veio de uma Obra, mostra também os materiais ESTIPULADOS no plano da
+                // obra (previsto vs. já consumido) — é o que fica realmente "associado" à OS,
+                // distinto do registo de consumo manual feito diretamente aqui em baixo.
+                const materiaisObra = os.obraId ? (dados.obraMateriais || []).filter(m => m.obraId === os.obraId) : [];
+                const blocoEstipulados = materiaisObra.length ? `
+                    <div style="margin-bottom:16px;">
+                        <div style="font-weight:700;font-size:.85rem;margin-bottom:6px;color:#334155;"><i class="fas fa-clipboard-list"></i> Materiais estipulados nesta Obra</div>
+                        <table style="width:100%;border-collapse:collapse;">
+                            <thead><tr style="text-align:left;font-size:.78rem;color:#64748b;"><th style="padding:4px 0;">Artigo</th><th style="padding:4px 0;">Previsto</th><th style="padding:4px 0;">Consumido</th></tr></thead>
+                            <tbody>${materiaisObra.map(m => {
+                                const art = dados.artigos?.find(a => a.id === m.artigoId);
+                                const prev = Number(m.qtdPrevista) || 0, cons = Number(m.qtdConsumida) || 0;
+                                const cor = cons >= prev ? '#16a34a' : (cons > 0 ? '#f59e0b' : '#94a3b8');
+                                return `<tr style="border-top:1px solid #f1f5f9;">
+                                    <td style="padding:6px 0;">${escapeHtmlSimples(art ? art.nome : '(artigo removido)')}</td>
+                                    <td style="padding:6px 0;">${prev} ${art ? (art.unidade || 'un') : ''}</td>
+                                    <td style="padding:6px 0;color:${cor};font-weight:600;">${cons} ${art ? (art.unidade || 'un') : ''} ${cons >= prev && prev > 0 ? '<i class="fas fa-check-circle"></i>' : ''}</td>
+                                </tr>`;
+                            }).join('')}</tbody>
+                        </table>
+                    </div>
+                ` : '';
+                cont.innerHTML = blocoEstipulados +
                     (ids.length
                         ? `<div style="display:flex;justify-content:flex-end;margin-bottom:8px;"><button type="button" class="btn btn-sm btn-outline" onclick="_fecharModalGenerico();abrirDevolverMaterialOS('${osId}')"><i class="fas fa-truck-ramp-box"></i> Devolver material ao armazém</button></div>
                           <table style="width:100%;border-collapse:collapse;margin-bottom:12px;"><thead><tr style="text-align:left;font-size:.78rem;color:#64748b;"><th style="padding:4px 0;">Artigo</th><th style="padding:4px 0;">Quantidade</th></tr></thead><tbody>` +
@@ -14620,6 +14642,8 @@
                 const btnLigar = cliente?.telefone ? `<button type="button" class="tgm-btn-mapa" title="Ligar a ${escapeHtmlSimples(obterNomeCliente(s.clienteId) || 'cliente')}" onclick="event.stopPropagation();_ligarClienteOS('${s.id}')"><i class="fas fa-phone"></i></button>` : '';
                 const btnWhatsapp = cliente?.telefone ? `<a href="${_whatsappUrlOS(cliente.telefone)}" target="_blank" rel="noopener" class="tgm-btn-mapa" title="Abrir WhatsApp" onclick="event.stopPropagation();" style="color:#25D366;"><i class="fab fa-whatsapp"></i></a>` : '';
                 const btnObs = (s.observacoes && s.observacoes.trim()) ? `<button type="button" class="tgm-btn-mapa" title="Ver observações" onclick="event.stopPropagation();_verObservacoesOS('${s.id}')"><i class="fas fa-comment-dots"></i></button>` : '';
+                const _materiaisDestaOS = s.obraId ? (dados.obraMateriais || []).filter(m => m.obraId === s.obraId) : [];
+                const btnMateriais = _materiaisDestaOS.length ? `<button type="button" class="tgm-btn-mapa" title="Ver materiais desta OS" onclick="event.stopPropagation();_verMateriaisOS('${s.id}')"><i class="fas fa-boxes-stacked"></i></button>` : '';
                 return `<div class="tgm-row tgm-row--os">
                     ${aberto ? '<span class="tgm-live-dot" title="Em curso"></span>' : ''}
                     <div class="tgm-row-icon tgm-row-icon--os"><i class="fas fa-wrench"></i></div>
@@ -14632,7 +14656,7 @@
                         ${btnVer}
                     </div>
                 </div>
-                ${(btnObs || btnLigar || btnWhatsapp || _botaoMapa(urlInfo, s.id)) ? `<div class="tgm-row-extra" style="display:flex;gap:8px;justify-content:flex-end;margin:-6px 0 8px;padding-right:2px;">${btnObs}${btnLigar}${btnWhatsapp}${_botaoMapa(urlInfo, s.id)}</div>` : ''}`;
+                ${(btnObs || btnMateriais || btnLigar || btnWhatsapp || _botaoMapa(urlInfo, s.id)) ? `<div class="tgm-row-extra" style="display:flex;gap:8px;justify-content:flex-end;margin:-6px 0 8px;padding-right:2px;">${btnObs}${btnMateriais}${btnLigar}${btnWhatsapp}${_botaoMapa(urlInfo, s.id)}</div>` : ''}`;
             };
             // Ligar ao cliente: pergunta explicitamente pelo nome antes de abrir o marcador
             // (tel:), para evitar toques acidentais no botão a ligarem sem querer.
@@ -14647,6 +14671,21 @@
             window._verObservacoesOS = function(servicoId) {
                 const s = (dados.servicos || []).find(x => x.id === servicoId); if (!s) return;
                 alert('Observações da OS — ' + (obterNomeCliente(s.clienteId) || '') + ':\n\n' + (s.observacoes || '(sem observações)'));
+            };
+            // Lista rápida (popup) dos materiais estipulados na Obra de origem desta OS —
+            // previsto vs. já consumido, sem precisar de abrir o "Ver OS" completo.
+            window._verMateriaisOS = function(servicoId) {
+                const s = (dados.servicos || []).find(x => x.id === servicoId); if (!s || !s.obraId) return;
+                const mats = (dados.obraMateriais || []).filter(m => m.obraId === s.obraId);
+                if (!mats.length) { alert('Sem materiais estipulados para esta OS.'); return; }
+                const linhas = mats.map(m => {
+                    const art = dados.artigos?.find(a => a.id === m.artigoId);
+                    const prev = Number(m.qtdPrevista) || 0, cons = Number(m.qtdConsumida) || 0;
+                    const unid = art ? (art.unidade || 'un') : '';
+                    const estado = cons >= prev && prev > 0 ? '✅' : (cons > 0 ? '🟡' : '⚪');
+                    return estado + ' ' + (art ? art.nome : '(artigo removido)') + ' — Previsto: ' + prev + ' ' + unid + ' · Consumido: ' + cons + ' ' + unid;
+                }).join('\n');
+                alert('Materiais desta OS — ' + (obterNomeCliente(s.clienteId) || '') + ':\n\n' + linhas);
             };
             // Formata o telefone para o link do WhatsApp (wa.me exige indicativo de país,
             // sem espaços nem símbolos). Assume Portugal (351) quando o número já não tem
@@ -15976,9 +16015,7 @@
         }
         function criarOSdaObra(obraId, obraRecemCriada) {
             const obra = dados.obras?.find(o => o.id === obraId); if (!obra) return;
-            const mats = (dados.obraMateriais || []).filter(m => m.obraId === obraId);
-            const listaMat = mats.map(m => { const a = dados.artigos?.find(x => x.id === m.artigoId); return '• ' + (a ? a.nome : '(artigo)') + ': ' + m.qtdPrevista + ' ' + (a ? _unidadeLabel(a.unidade) : ''); }).join('\n');
-            const desc = 'Obra: ' + obra.nome + (obra.morada ? ' (' + obra.morada + ')' : '') + (listaMat ? '\n\nMateriais necessários:\n' + listaMat : '');
+            const desc = 'Obra: ' + obra.nome + (obra.morada ? ' (' + obra.morada + ')' : '');
             _novaOSObraId = obraId;
             _novaOSObraFoiCriacaoNova = !!obraRecemCriada;
             abrirModal('servico', null);
@@ -22409,12 +22446,13 @@ async function salvarAdmin(e) {
             document.getElementById('modalRenovacaoTitulo').innerHTML =
                 `<i class="fas ${tipo === 'renovacao' ? 'fa-sync-alt' : 'fa-exchange-alt'}"></i> ${titulo}`;
             if (tipo !== 'alteracao') {
-                // Renovação simples (mesmo plano) — não precisa de wizard, é só confirmar.
+                // Passo 0: perguntar se quer renovar tudo como está, ou mudar plano/add-ons.
                 document.getElementById('renovacaoCampos').innerHTML = `
-                    <div class="form-group"><label>Tipo de Pedido</label><input type="text" value="Renovação de Licença" disabled style="background:#e9edf2;" /></div>
-                    <div class="form-group"><label>Plano Atual</label><input type="text" value="${PLANOS[adminAtual()?.licenca?.plano]?.label || 'Desconhecido'}" disabled style="background:#e9edf2;" /></div>
-                    <div class="help-text">A renovação será feita com o mesmo plano atual.</div>
-                    <div class="form-group"><label>Observação (opcional)</label><textarea id="renovacao_obs" placeholder="Detalhes adicionais..."></textarea></div>
+                    <p class="help-text" style="margin-bottom:16px;">O que pretende fazer?</p>
+                    <div style="display:flex;flex-direction:column;gap:10px;">
+                        <button type="button" class="btn btn-primary" style="justify-content:center;" onclick="_renMostrarConsolidado()"><i class="fas fa-sync-alt"></i> Renovar tudo como está</button>
+                        <button type="button" class="btn btn-warning" style="justify-content:center;" onclick="abrirModalRenovacao('alteracao')"><i class="fas fa-exchange-alt"></i> Alterar Plano ou Add-ons</button>
+                    </div>
                 `;
                 overlay.classList.add('open');
                 return;
@@ -22609,6 +22647,109 @@ async function salvarAdmin(e) {
             document.getElementById('modalRenovacaoOverlay').classList.remove('open');
         }
 
+        // ============================================================================
+        //  RENOVAÇÃO CONSOLIDADA — "Renovar tudo como está": lê sozinho tudo o que a
+        //  conta já tem ativo (plano + cada add-on pago), ignora add-ons grátis (preço
+        //  0 — ex: Rondas em fase de lançamento), e junta tudo num único pedido — um só
+        //  clique do admin, um só email ao Super Admin — mas continua a criar uma linha
+        //  por módulo em dados.pedidosRenovacao, para o ecrã do Super Admin (que já lê
+        //  por módulo) continuar a funcionar exatamente como já funciona hoje.
+        // ============================================================================
+        let _renConsolPeriodo = 'mensal';
+        function _renItensAtivosPagos(admin) {
+            const mapa = [
+                { tipoBase: 'contrato', label: 'Contratos de Manutenção', plano: admin.contratosPlano, mensal: PRECO_CONTRATOS_MENSAL, anual: PRECO_CONTRATOS_ANUAL },
+                { tipoBase: 'frota', label: 'Frota', plano: admin.frotaPlano, mensal: PRECO_FROTA_MENSAL, anual: PRECO_FROTA_ANUAL },
+                { tipoBase: 'armazem', label: 'Armazém / Stock / Gestão de Obras', plano: admin.armazemPlano, mensal: PRECO_ARMAZEM_MENSAL, anual: PRECO_ARMAZEM_ANUAL },
+                { tipoBase: 'crm', label: 'CRM Comercial + Assist', plano: admin.crmPlano, mensal: PRECO_CRM_MENSAL, anual: PRECO_CRM_ANUAL },
+                { tipoBase: 'erp', label: "Integração com ERP's", plano: admin.erpPlano, mensal: PRECO_ERP_MENSAL, anual: PRECO_ERP_ANUAL },
+                { tipoBase: 'rondas', label: 'Rondas / Vigilância', plano: admin.rondasPlano, mensal: PRECO_RONDAS_MENSAL, anual: PRECO_RONDAS_ANUAL },
+            ];
+            // Só entra quem está mesmo ativo (mensal/anual — não demo, não vazio) E tem preço
+            // real (>0). Os grátis (ex.: Rondas em lançamento) ficam de fora sozinhos, como pedido.
+            return mapa.filter(m => (m.plano === 'mensal' || m.plano === 'anual') && (m.mensal > 0 || m.anual > 0));
+        }
+        function _renMostrarConsolidado() {
+            const admin = adminAtual(); if (!admin) return;
+            _renConsolPeriodo = 'mensal';
+            _renRenderConsolidado();
+        }
+        function _renConsolidadoEscolherPeriodo(p) {
+            _renConsolPeriodo = p;
+            _renRenderConsolidado();
+        }
+        function _renRenderConsolidado() {
+            const admin = adminAtual(); if (!admin) return;
+            const itens = _renItensAtivosPagos(admin);
+            const tierAtual = (admin.licenca?.plano || '').replace(/^\d+_/, '');
+            const chavePlano = (_renConsolPeriodo === 'anual' ? '365_' : '30_') + tierAtual;
+            const planoInfo = PLANOS[chavePlano];
+            let total = planoInfo ? planoInfo.preco : 0;
+            const linhasHtml = [planoInfo ? `<div class="report-item"><span>${planoInfo.label}</span><span>${planoInfo.preco.toFixed(2)} €</span></div>` : ''];
+            itens.forEach(it => {
+                const preco = _renConsolPeriodo === 'anual' ? it.anual : it.mensal;
+                total += preco;
+                linhasHtml.push(`<div class="report-item"><span>${it.label}</span><span>${preco.toFixed(2)} €</span></div>`);
+            });
+            document.getElementById('modalGenericoTitulo') && null; // (sem efeito — mantém o título já definido pelo abrirModalRenovacao)
+            document.getElementById('renovacaoCampos').innerHTML = `
+                <p class="help-text" style="margin-bottom:10px;">Isto renova tudo o que já tens ativo, com o mesmo conjunto de módulos. Os add-ons grátis (fase de lançamento) não entram neste pedido — continuam como estão, sem custo.</p>
+                <div class="form-group">
+                    <label>Periodicidade</label>
+                    <div style="display:flex;gap:8px;">
+                        <button type="button" class="btn btn-sm ${_renConsolPeriodo === 'mensal' ? 'btn-primary' : 'btn-outline'}" onclick="_renConsolidadoEscolherPeriodo('mensal')" style="flex:1;">Mensal</button>
+                        <button type="button" class="btn btn-sm ${_renConsolPeriodo === 'anual' ? 'btn-primary' : 'btn-outline'}" onclick="_renConsolidadoEscolherPeriodo('anual')" style="flex:1;">Anual</button>
+                    </div>
+                </div>
+                <div style="margin:14px 0;padding:12px;background:#f8fafc;border-radius:8px;">
+                    ${linhasHtml.join('')}
+                    <div class="report-item" style="border-top:1px solid #e2e8f0;margin-top:8px;padding-top:8px;font-weight:700;"><span>Total</span><span>${total.toFixed(2)} €</span></div>
+                </div>
+                <div class="form-group"><label>Observação (opcional)</label><textarea id="renovacao_obs" placeholder="Detalhes adicionais..."></textarea></div>
+                <button type="button" class="btn btn-primary" style="width:100%;justify-content:center;" onclick="_renConsolidadoSubmeter()"><i class="fas fa-check"></i> Confirmar Pedido de Renovação</button>
+            `;
+        }
+        function _renConsolidadoSubmeter() {
+            if (!usuarioLogado || usuarioLogado.role !== 'admin' && usuarioLogado.role !== 'subadmin') { alert('Apenas administradores podem fazer pedidos.'); return; }
+            const admin = adminAtual(); if (!admin) return;
+            const obs = document.getElementById('renovacao_obs')?.value.trim() || '';
+            const itens = _renItensAtivosPagos(admin);
+            const tierAtual = (admin.licenca?.plano || '').replace(/^\d+_/, '');
+            const chavePlano = (_renConsolPeriodo === 'anual' ? '365_' : '30_') + tierAtual;
+            const planoInfo = PLANOS[chavePlano];
+            dados.pedidosRenovacao = dados.pedidosRenovacao || [];
+            const _adminIdPedido = admin.id;
+            const resumoPartes = [];
+            let total = 0;
+
+            if (planoInfo) {
+                dados.pedidosRenovacao.push({ id: gerarId(), adminId: _adminIdPedido, tipo: 'renovacao', planoAtual: admin.licenca?.plano, planoPedido: chavePlano, observacao: obs, status: 'pendente', dataCriacao: Date.now() });
+                total += planoInfo.preco;
+                resumoPartes.push(planoInfo.label + ' — ' + planoInfo.preco.toFixed(2) + ' €');
+            }
+            itens.forEach(it => {
+                const preco = _renConsolPeriodo === 'anual' ? it.anual : it.mensal;
+                dados.pedidosRenovacao.push({ id: gerarId(), adminId: _adminIdPedido, tipo: it.tipoBase + '_' + _renConsolPeriodo, planoAtual: null, planoPedido: null, observacao: 'Renovação de ' + it.label + ' (' + (_renConsolPeriodo === 'anual' ? 'Anual' : 'Mensal') + ') — pedida junto com a renovação consolidada', status: 'pendente', dataCriacao: Date.now() });
+                total += preco;
+                resumoPartes.push(it.label + ' — ' + preco.toFixed(2) + ' €');
+            });
+
+            if (!resumoPartes.length) { alert('Não há nada ativo (pago) para renovar de momento.'); return; }
+
+            guardarDados(dados);
+            // Um único email consolidado — não um por módulo — resumindo tudo o que foi pedido.
+            _enviarEmailServidor('pedido_renovacao_consolidado', {
+                adminId: admin.id,
+                adminNome: admin.nome || '',
+                empresa: admin.empresa || admin.nome || '',
+                periodo: _renConsolPeriodo,
+                itens: resumoPartes,
+                total: total.toFixed(2),
+                observacao: obs
+            }).catch(() => {});
+            fecharModalRenovacao();
+            alert('✅ Pedido de renovação enviado ao Super Admin — ' + resumoPartes.length + ' módulo(s), total ' + total.toFixed(2) + ' €.');
+        }
         function salvarRenovacao(e) {
             e.preventDefault();
             if (!usuarioLogado || usuarioLogado.role !== 'admin' && usuarioLogado.role !== 'subadmin') {
