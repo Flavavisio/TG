@@ -3964,6 +3964,19 @@
             const c = (e && e.code || '') + '';
             return /does not exist|schema cache|find the table|relation .* does not/i.test(m) || ['42P01','PGRST205','PGRST204','PGRST202'].includes(c);
         }
+        // Coluna em falta (ex.: "km_inicio") — diferente de tabela em falta. Sem isto, uma coluna
+        // nova que ainda não exista na base de dados fazia a app tentar gravar os MESMOS registos
+        // para sempre, a cada ciclo de sincronização (nunca ficavam marcados como sincronizados),
+        // dando a sensação de "sempre a sincronizar" sem nunca terminar. Detetamos o nome da
+        // coluna e voltamos a tentar sem ela — assim que a coluna existir de verdade na base de
+        // dados, volta a ser enviada automaticamente, sem precisar de mexer em mais nada aqui.
+        function _colunaEmFalta(e) {
+            const m = (e && (e.message || e.msg || '')) + '';
+            const c = (e && e.code || '') + '';
+            if (c !== '42703' && !/column .* does not exist/i.test(m)) return null;
+            const match = m.match(/column ["']?([a-z0-9_]+)["']?/i);
+            return match ? match[1] : null;
+        }
         async function _sincronizar() {
             if (!navigator.onLine) {
                 mostrarStatusOffline();
@@ -4013,6 +4026,18 @@
                         const { data: linhasGravadas, error } = await supa.from(meta.tabela).upsert(loteRows, { onConflict: 'id' }).select('id');
                         if (error) {
                             console.error('upsert ' + meta.tabela + ' (lote ' + (i / TAMANHO_LOTE + 1) + '):', error.message);
+                            const colunaFalta = _colunaEmFalta(error);
+                            if (colunaFalta) {
+                                // Repete o mesmo lote sem essa coluna — para não ficar preso a
+                                // tentar os mesmos registos para sempre enquanto ela não existir.
+                                console.warn('Coluna "' + colunaFalta + '" não existe em "' + meta.tabela + '" — a sincronizar sem ela por agora. Corre a query SQL correspondente para isto passar a gravar completo.');
+                                const loteRowsSemColuna = loteRows.map(r => { const r2 = { ...r }; delete r2[colunaFalta]; return r2; });
+                                const retry = await supa.from(meta.tabela).upsert(loteRowsSemColuna, { onConflict: 'id' }).select('id');
+                                if (!retry.error && retry.data && retry.data.length >= loteRowsSemColuna.length) {
+                                    loteJson.forEach(u => _snap[col].set(u.id, u.json));
+                                    continue; // este lote já ficou tratado — não conta como erro
+                                }
+                            }
                             erroNesteTabela = error;
                             // continua a tentar os restantes lotes — não desiste ao primeiro que falhar
                         } else if (!linhasGravadas || linhasGravadas.length < loteRows.length) {
