@@ -122,7 +122,7 @@
         .tg-side-brand i { color:#4f46e5; }
         #tgSidebarNav { padding:10px 10px 16px; flex:1; }
         .tg-nav-group { font-size:.7rem; text-transform:uppercase; letter-spacing:.07em; color:#f4520e; padding:16px 12px 6px; font-weight:800; }
-        body.dark-mode .tg-nav-group { color:#ff8a3d; }
+        body.dark-mode .tg-nav-group { color:#22d3ee; }
         .tg-nav-item { display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:9px; color:#334155; cursor:pointer; font-size:.92rem; font-weight:500; text-decoration:none; margin-bottom:2px; }
         .tg-nav-item:hover { background:#f1f5f9; }
         .tg-nav-item.ativo { background:rgba(244,82,14,.12); color:#f4520e; font-weight:700; }
@@ -185,6 +185,12 @@
         .tg-nav-grupo-btn:hover { background:rgba(255,255,255,.08); color:#fff; }
         .tg-nav-grupo-btn.ativo { background:rgba(244,82,14,.28); color:#fff; }
         .tg-nav-grupo-btn .chev { margin-left:auto; font-size:.75rem; opacity:.6; }
+        body.dark-mode .tg-nav-grupo-btn { color:#22d3ee; }
+        body.dark-mode .tg-nav-grupo-btn i { color:#22d3ee; }
+        body.dark-mode .tg-nav-grupo-btn:hover { color:#fff; }
+        body.dark-mode .tg-nav-grupo-btn:hover i { color:#fff; }
+        body.dark-mode .tg-nav-grupo-btn.ativo,
+        body.dark-mode .tg-nav-grupo-btn.ativo i { color:#fff; }
         #tgFocoBackdrop { display:none; position:fixed; inset:0; background:rgba(15,23,42,.35); z-index:899; }
         #tgFocoBackdrop.aberto { display:block; }
         .tg-foco-panel {
@@ -1007,6 +1013,25 @@
         body.dark-mode .section-container { background:#1a2436; box-shadow:0 4px 16px rgba(0,0,0,0.3); color:#e2e8f0; }
         body.dark-mode .section-header h2 { color:#e2e8f0; }
         body.dark-mode table { color:#e2e8f0; }
+        body.dark-mode th { background:#1e293b; color:#e2e8f0; border-bottom-color:#334155; }
+        body.dark-mode td { border-bottom-color:#263449; }
+        body.dark-mode tbody tr:hover { background:rgba(255,255,255,.03); }
+        body.dark-mode .report-card { background:#141c2e; border-left-color:#22d3ee; }
+        body.dark-mode .report-card h4 { color:#e2e8f0; }
+        body.dark-mode .report-item { border-bottom-color:#263449; }
+        /* Calendário de Equipa e Agenda de Obras usam cores inline fixas (não classes) — só dá
+           para sobrepor com !important, visando o contentor certo de cada um. */
+        body.dark-mode #tabelaCalendarioEquipa th[style*="background:#f8fafc"],
+        body.dark-mode #tabelaCalendarioEquipa th[style*="background:#f1f5f9"] { background:#1e293b !important; color:#e2e8f0 !important; }
+        body.dark-mode #tabelaCalendarioEquipa td[style*="background:#fff"] { background:#141c2e !important; color:#e2e8f0 !important; border-right-color:#334155 !important; }
+        body.dark-mode #tabelaCalendarioEquipa th { color:#e2e8f0; border-color:#334155; }
+        body.dark-mode #tabelaCalendarioEquipa { color:#e2e8f0; }
+        body.dark-mode #secao-agenda-obras .card-principal { background:#141c2e !important; color:#e2e8f0 !important; }
+        body.dark-mode .agenda-os { background:#141c2e; border-color:#334155; color:#e2e8f0; }
+        body.dark-mode .agenda-os-hora { background:#1e293b; color:#e2e8f0; }
+        body.dark-mode .agenda-os [style*="background:#f8fafc"] { background:#1e293b !important; color:#e2e8f0 !important; }
+        body.dark-mode .agenda-os input[type="date"],
+        body.dark-mode .agenda-os input[type="time"] { background:#1e293b; border:1px solid #334155; color:#e2e8f0; color-scheme:dark; }
         body.dark-mode th { background:#243044; color:#e2e8f0; border-bottom:2px solid #334155; }
         body.dark-mode td { border-bottom:1px solid #263447; }
         body.dark-mode tr:hover td { background:#20293c; }
@@ -1018,9 +1043,12 @@
         body.dark-mode .btn-outline { border-color:#93c5fd; color:#93c5fd; }
         body.dark-mode .close-modal { color:#e2e8f0; }
         body.dark-mode #tgSidebar { background:#141d2e; border-right-color:#263447; }
-        body.dark-mode .tg-nav-item { color:#cbd5e1; }
+        body.dark-mode .tg-nav-item { color:#22d3ee; }
+        body.dark-mode .tg-nav-item i { color:#22d3ee; }
         body.dark-mode .tg-nav-item:hover { background:#20293c; }
         body.dark-mode .tg-nav-item.ativo { background:rgba(244,82,14,.22); color:#ff8a3d; }
+        body.dark-mode .tg-nav-item.ativo i { color:#ff8a3d; }
+        body.dark-mode .tg-nav-group { color:#22d3ee; }
         body.dark-mode .tg-breadcrumb { color:#94a3b8; }
         body.dark-mode #tgHome, body.dark-mode .home-kpis > div { background:transparent; }
         body.dark-mode .table-wrapper { color:#e2e8f0; }
@@ -1142,6 +1170,42 @@ body.dark-mode {
     box-shadow: var(--tgm-shadow);
 }
 .tgm-panel--obras { margin-top: 14px; }
+/* No desktop, dentro da Home do admin/subadmin: "O Meu Dia" ocupa a largura toda em cima,
+   "Equipa Agora" (painel do admin) e "Resumo do Dia" ficam lado a lado por baixo, cada um a
+   50% — e como estão na mesma linha da grelha, o CSS Grid estica os dois à mesma altura
+   automaticamente (se um crescer, o outro acompanha sempre). "Obras Ativas" fica por fim,
+   também a toda a largura. No telemóvel mantém-se tudo empilhado numa coluna só, como já era. */
+#homeAgendaWrap #omeudia {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto auto;
+    grid-template-areas:
+        "dia alertas"
+        "equipa admin"
+        "obras obras";
+    align-items: stretch;
+    gap: 16px;
+    margin-bottom: 0 !important;
+}
+#homeAgendaWrap #omeudia > * { margin-top: 0 !important; margin-bottom: 0 !important; height: 100%; box-sizing: border-box; }
+/* Cada par (O Meu Dia/Alertas e Resumo do Dia/Equipa Agora) fica sempre com a MESMA altura —
+   a caixa estica-se ao maior dos dois, e o conteúdo lá dentro ocupa toda essa altura em vez de
+   deixar espaço vazio por preencher só num dos lados. */
+#homeAgendaWrap #omeudia > #homeAlertas,
+#homeAgendaWrap #omeudia .tgm-panel--dia,
+#homeAgendaWrap #omeudia .tgm-panel--admin,
+#homeAgendaWrap #omeudia .tgm-panel--equipa {
+    display: flex;
+    flex-direction: column;
+}
+#homeAgendaWrap #omeudia > #homeAlertas { grid-area: alertas; }
+#homeAgendaWrap #omeudia .tgm-panel--dia { grid-area: dia; }
+#homeAgendaWrap #omeudia .tgm-panel--admin { grid-area: admin; }
+#homeAgendaWrap #omeudia .tgm-panel--equipa { grid-area: equipa; }
+#homeAgendaWrap #omeudia .tgm-panel--obras { grid-area: obras; }
+@media (max-width: 900px) {
+    #homeAgendaWrap #omeudia { grid-template-columns: 1fr; grid-template-areas: "alertas" "dia" "admin" "equipa" "obras"; }
+}
 .tgm-panel::after {
     content: ''; position: absolute; top: -60px; right: -60px; width: 180px; height: 180px;
     background: radial-gradient(circle, var(--tgm-cian-glow), transparent 70%);
@@ -1155,6 +1219,24 @@ body.dark-mode {
 .tgm-tempo-ceu { font-weight:500; color:#5a6781; font-size:.82rem; margin-left:4px; }
 .tgm-tempo-extra { font-size:.78rem; color:#5a6781; margin-top:2px; }
 .tgm-panel--admin { background:#fff; border-radius:16px; padding:16px; margin-top:14px; box-shadow:0 1px 3px rgba(0,0,0,.06); }
+body.dark-mode .tgm-panel--admin { background: var(--tgm-bg1); border: 1px solid var(--tgm-border); box-shadow: none; }
+body.dark-mode .tgm-panel--admin .tgm-alerta-admin { background: rgba(255,255,255,.04); }
+body.dark-mode .tgm-panel--admin .tgm-alerta-txt { color: var(--tgm-text); }
+body.dark-mode .tgm-panel--admin .tgm-alerta-sub { color: var(--tgm-text-sub); }
+body.dark-mode .tgm-panel--admin .tgm-eyebrow,
+body.dark-mode .tgm-panel--admin .tgm-equipa-nome,
+body.dark-mode .tgm-panel--admin .tgm-admin-valor { color: var(--tgm-text); }
+body.dark-mode .tgm-panel--admin .tgm-equipa-linha { border-bottom-color: var(--tgm-border); }
+body.dark-mode .tgm-panel--admin .tgm-admin-rodape { border-top-color: var(--tgm-border); }
+/* Cartão "Alertas e Pendências" (fora do painel também, ex.: página Início do técnico) */
+body.dark-mode .alertas-card { background: var(--tgm-bg1); border-color: var(--tgm-border); }
+body.dark-mode .alertas-h { color: var(--tgm-text); }
+body.dark-mode .alerta-linha { background: rgba(255,255,255,.03); border-color: var(--tgm-border); }
+body.dark-mode .alerta-linha:hover { background: rgba(255,255,255,.06); }
+body.dark-mode .alerta-linha.danger { background: rgba(220,38,38,.12); border-color: rgba(220,38,38,.35); }
+body.dark-mode .alerta-linha.danger:hover { background: rgba(220,38,38,.18); }
+body.dark-mode .alerta-t { color: var(--tgm-text); }
+body.dark-mode .alerta-s { color: var(--tgm-text-sub); }
 .tgm-alertas-admin { display:flex; flex-direction:column; gap:8px; }
 .tgm-alerta-admin { display:flex; align-items:center; gap:10px; padding:10px 12px; background:#f8fafc; border-radius:10px; cursor:pointer; }
 .tgm-alerta-admin i:first-child { font-size:1.1rem; flex-shrink:0; }

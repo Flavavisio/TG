@@ -14867,14 +14867,19 @@
             document.getElementById('menuInfHome')?.classList.add('ativo');
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
-        function renderizarOMeuDia() {
+        function renderizarOMeuDia(forcarDesktop) {
             const cont = document.getElementById('omeudia');
             if (!cont) return;
-            if (!_ehPerfilMobile()) { cont.style.display = 'none'; return; }
+            // Se este painel já vive dentro da Home do admin/subadmin no desktop (movido para lá
+            // por renderizarHomeDashboard), trata sempre como "forçado" — sem isto, a atualização
+            // periódica em segundo plano (que chama esta função sem argumento nenhum) voltava a
+            // escondê-lo, desfazendo o layout lado a lado sempre que atualizava sozinha.
+            const dentroDaHomeDesktop = cont.parentElement && cont.parentElement.id === 'homeAgendaWrap';
+            if (!_ehPerfilMobile() && !forcarDesktop && !dentroDaHomeDesktop) { cont.style.display = 'none'; return; }
             // Se já navegaste para outra secção (ex.: Ordens Serviço), não deixar uma
             // atualização periódica em segundo plano repor "O Meu Dia" visível por baixo dela —
             // era isso que causava o painel a "ressurgir" sozinho ao trocar de menu.
-            if (document.querySelector('.section-container.active')) { cont.style.display = 'none'; return; }
+            if (!forcarDesktop && !dentroDaHomeDesktop && document.querySelector('.section-container.active')) { cont.style.display = 'none'; return; }
             const hoje = getDataHoje();
             // Vigilante tem um "O Meu Dia" próprio e mais simples — não faz OS/obras. A execução
             // da ronda em si vive inteiramente no TOTALGEST_RONDAS.html (ficheiro à parte, como o
@@ -31082,6 +31087,57 @@ window._relPrefill = function(msg){
             const gEl = document.getElementById('homeGraficos');
             const src = document.getElementById('alertasPendencias');
             if (alertasEl) alertasEl.innerHTML = (src && src.innerHTML.trim()) ? src.innerHTML : '<div class="home-card" style="color:#16a34a;"><i class="fas fa-circle-check"></i> Sem pendências. Tudo em dia!</div>';
+            // Admin e subadmin, no desktop, veem os mesmos cartões do telemóvel (Alertas, O Meu
+            // Dia, Equipa Agora, Toda a Equipa, Obras Ativas) em vez dos KPIs/gráficos genéricos
+            // e da Agenda de Obras — pediram para ficar tudo igual ao que já viam no telemóvel.
+            if (u.role === 'admin' || u.role === 'subadmin') {
+                kpisEl.innerHTML = '';
+                if (gEl) gEl.innerHTML = '';
+                const favEl = document.getElementById('homeFavoritos');
+                if (favEl) favEl.innerHTML = _favoritosHTML();
+                if (u.role === 'admin') _renderizarOnboarding(u.id);
+                const wrap = document.getElementById('homeAgendaWrap');
+                const omeudiaEl = document.getElementById('omeudia');
+                // IMPORTANTE: renderizarOMeuDia() reconstrói todo o conteúdo de "omeudia" com
+                // cont.innerHTML = ... — se "Alertas e Pendências" já estivesse lá dentro (de um
+                // ciclo de atualização anterior), essa reconstrução destruía-o por completo (o
+                // elemento deixava de existir em lado nenhum da página, daí desaparecer sozinho
+                // ao fim de alguns segundos). Por isso, tira-se sempre primeiro daqui para fora,
+                // antes de reconstruir, e só se volta a colocar lá dentro depois.
+                if (alertasEl && omeudiaEl && alertasEl.parentElement === omeudiaEl && wrap && wrap.parentElement) {
+                    wrap.parentElement.insertBefore(alertasEl, wrap);
+                }
+                renderizarOMeuDia(true);
+                if (wrap && omeudiaEl) {
+                    if (omeudiaEl.parentElement !== wrap) wrap.appendChild(omeudiaEl);
+                    omeudiaEl.style.display = 'block';
+                    omeudiaEl.style.margin = '0';
+                    // "Alertas e Pendências" passa a viver dentro da mesma grelha, ao lado de "O
+                    // Meu Dia" — assim ficam na mesma linha do CSS Grid e esticam sempre à mesma
+                    // altura um do outro, tal como já acontece com "Equipa Agora"/"Resumo do Dia".
+                    if (alertasEl && alertasEl.parentElement !== omeudiaEl) omeudiaEl.insertBefore(alertasEl, omeudiaEl.firstChild);
+                    // Layout aplicado diretamente aqui (não só via CSS externo) — garante que
+                    // resulta sempre, independentemente de qualquer outra folha de estilos.
+                    const largo = window.innerWidth >= 900;
+                    omeudiaEl.style.display = 'grid';
+                    omeudiaEl.style.gap = '16px';
+                    omeudiaEl.style.alignItems = 'stretch';
+                    omeudiaEl.style.gridTemplateColumns = largo ? '1fr 1fr' : '1fr';
+                    omeudiaEl.style.gridTemplateAreas = largo
+                        ? '"dia alertas" "equipa admin" "obras obras"'
+                        : '"alertas" "dia" "admin" "equipa" "obras"';
+                    const painelDia = omeudiaEl.querySelector('.tgm-panel--dia');
+                    const painelAdmin = omeudiaEl.querySelector('.tgm-panel--admin');
+                    const painelEquipa = omeudiaEl.querySelector('.tgm-panel--equipa');
+                    const painelObras = omeudiaEl.querySelector('.tgm-panel--obras');
+                    if (alertasEl) alertasEl.style.cssText += ';grid-area:alertas;margin:0;height:100%;display:flex;flex-direction:column;box-sizing:border-box;';
+                    if (painelDia) painelDia.style.cssText += ';grid-area:dia;margin:0;height:100%;display:flex;flex-direction:column;box-sizing:border-box;';
+                    if (painelAdmin) painelAdmin.style.cssText += ';grid-area:admin;margin:0;height:100%;display:flex;flex-direction:column;box-sizing:border-box;';
+                    if (painelEquipa) painelEquipa.style.cssText += ';grid-area:equipa;margin:0;height:100%;display:flex;flex-direction:column;box-sizing:border-box;';
+                    if (painelObras) painelObras.style.cssText += ';grid-area:obras;margin:0;height:100%;box-sizing:border-box;';
+                }
+                return;
+            }
             const serv = dados.servicos || [];
             const porEstado = (arr) => ([
                 { lbl: 'Pendentes', val: arr.filter(s => (s.status || 'pendente') === 'pendente').length, cor: '#f59e0b' },
