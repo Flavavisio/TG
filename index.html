@@ -32325,12 +32325,12 @@ window._relPrefill = function(msg){
               <div class="field-icon">
                 <label>Nº Colaboradores</label>
                 <i class="fas fa-users"></i>
-                <input type="text" id="su_colaboradores" placeholder="Ex: 5-10" />
+                <input type="text" id="su_colaboradores" placeholder="Ex: 5-10" required />
               </div>
               <div class="field-icon">
                 <label>NIF</label>
                 <i class="fas fa-id-card"></i>
-                <input type="text" id="su_nif" placeholder="9 dígitos" maxlength="9" />
+                <input type="text" id="su_nif" placeholder="9 dígitos" maxlength="9" required />
               </div>
             </div>
             <button type="submit" id="su_btn">Ativar Conta Agora</button>
@@ -32745,8 +32745,8 @@ async function submeterSignup(e) {
         senha: document.getElementById('su_senha').value
     };
     const senha2 = document.getElementById('su_senha2').value;
-    if (!dadosPedido.empresa || !dadosPedido.nome || !dadosPedido.email || !dadosPedido.telefone) {
-        alert('Por favor preencha os campos obrigatórios.');
+    if (!dadosPedido.empresa || !dadosPedido.nome || !dadosPedido.email || !dadosPedido.telefone || !dadosPedido.colaboradores || !dadosPedido.nif) {
+        alert('Por favor preencha todos os campos — são todos obrigatórios.');
         return false;
     }
     if (!_suSenhaValida(dadosPedido.senha)) {
