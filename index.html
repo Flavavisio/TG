@@ -11883,6 +11883,7 @@
         }
         function _salvarConfigKmFrota() {
             const admin = adminAtual(); if (!admin) return;
+            admin.kmPontoGeralAtivo = document.getElementById('frota_km_ponto_geral')?.checked || false;
             admin.kmPorOsAtivo = document.getElementById('frota_km_por_os')?.checked || false;
             guardarDados(dados);
         }
