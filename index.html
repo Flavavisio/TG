@@ -7113,6 +7113,18 @@
                                 <button class="btn btn-sm btn-primary" onclick="abrirModalRenovacao('alteracao')"><i class="fas fa-exchange-alt"></i> Adquirir Licença</button>
                             </div>
                         `)}
+                        ${(() => {
+                            const _pendentesTodos = [contratoPedidoPend, frotaPedidoPend, armazemPedidoPend, crmPedidoPend].filter(Boolean);
+                            if (_pendentesTodos.length < 2) return ''; // só faz sentido mostrar resumo quando há mais do que 1 pedido junto
+                            const _totalPend = _pendentesTodos.reduce((s, p) => s + valorDoPedido(p), 0);
+                            const _nomesTipo = { contrato: 'Contratos de Manutenção', frota: 'Frota', armazem: 'Armazém / Stock / Gestão de Obras', crm: 'CRM Comercial + Assist' };
+                            return `
+                            <div style="margin-top:16px;padding:14px 16px;background:#f0fdfa;border:1px solid #99f6e4;border-radius:10px;">
+                                <div style="font-weight:700;color:#0f766e;margin-bottom:8px;"><i class="fas fa-receipt"></i> Resumo do pedido conjunto</div>
+                                ${_pendentesTodos.map(p => `<div style="display:flex;justify-content:space-between;font-size:.88rem;color:#134e4a;padding:3px 0;"><span>${_nomesTipo[(p.tipo || '').split('_')[0]] || p.tipo}</span><span>${valorDoPedido(p).toFixed(2)} €</span></div>`).join('')}
+                                <div style="display:flex;justify-content:space-between;font-weight:700;color:#0f766e;border-top:1px solid #99f6e4;margin-top:6px;padding-top:6px;"><span>Total</span><span>${_totalPend.toFixed(2)} €</span></div>
+                            </div>`;
+                        })()}
                         ${(!isDemo && (!modAtivo || !frotaAtivo || !armazemAtivo || !crmAtivo)) ? `
                         <div style="margin-top:16px;">
                             <button class="btn btn-sm" style="background:#0f766e;color:#fff;" onclick="_ativAddonsAbrir()"><i class="fas fa-puzzle-piece"></i> Ativar Add-ons</button>
@@ -9990,6 +10002,12 @@
             if (t === 'armazem_mensal') return PRECO_ARMAZEM_MENSAL;
             if (t === 'portal_anual') return PRECO_PORTAL_ANUAL;
             if (t === 'portal_mensal') return PRECO_PORTAL_MENSAL;
+            if (t === 'crm_anual') return PRECO_CRM_ANUAL;
+            if (t === 'crm_mensal') return PRECO_CRM_MENSAL;
+            if (t === 'erp_anual') return PRECO_ERP_ANUAL;
+            if (t === 'erp_mensal') return PRECO_ERP_MENSAL;
+            if (t === 'rondas_anual') return PRECO_RONDAS_ANUAL;
+            if (t === 'rondas_mensal') return PRECO_RONDAS_MENSAL;
             const plano = p.planoPedido || p.planoAtual;
             return PLANOS[plano]?.preco || 0;
         }
