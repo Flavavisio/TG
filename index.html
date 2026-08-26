@@ -3335,8 +3335,8 @@
             },
             veiculos: {
                 tabela: 'veiculos',
-                from: r => ({ id: r.id, adminId: r.admin_id, matricula: r.matricula, marcaModelo: r.marca_modelo, ano: r.ano, combustivel: r.combustivel, km: Number(r.km) || 0, kmData: r.km_data, inspecaoValidade: r.inspecao_validade, seguroValidade: r.seguro_validade, seguroSeguradora: r.seguro_seguradora, observacoes: r.observacoes, dataCriacao: isoToMs(r.data_criacao) }),
-                to:   o => ({ id: o.id, admin_id: o.adminId, matricula: o.matricula, marca_modelo: o.marcaModelo || null, ano: (o.ano === '' || o.ano == null) ? null : Number(o.ano), combustivel: o.combustivel || null, km: (o.km === '' || o.km == null) ? 0 : Number(o.km), km_data: nn(o.kmData), inspecao_validade: nn(o.inspecaoValidade), seguro_validade: nn(o.seguroValidade), seguro_seguradora: o.seguroSeguradora || null, observacoes: o.observacoes || null, data_criacao: msToISO(o.dataCriacao) })
+                from: r => ({ id: r.id, adminId: r.admin_id, matricula: r.matricula, marcaModelo: r.marca_modelo, ano: r.ano, combustivel: r.combustivel, km: Number(r.km) || 0, kmData: r.km_data, kmAtivo: r.km_ativo === true, kmAtivoDesde: r.km_ativo_desde || null, inspecaoValidade: r.inspecao_validade, seguroValidade: r.seguro_validade, seguroSeguradora: r.seguro_seguradora, observacoes: r.observacoes, dataCriacao: isoToMs(r.data_criacao) }),
+                to:   o => ({ id: o.id, admin_id: o.adminId, matricula: o.matricula, marca_modelo: o.marcaModelo || null, ano: (o.ano === '' || o.ano == null) ? null : Number(o.ano), combustivel: o.combustivel || null, km: (o.km === '' || o.km == null) ? 0 : Number(o.km), km_data: nn(o.kmData), km_ativo: o.kmAtivo === true, km_ativo_desde: nn(o.kmAtivoDesde), inspecao_validade: nn(o.inspecaoValidade), seguro_validade: nn(o.seguroValidade), seguro_seguradora: o.seguroSeguradora || null, observacoes: o.observacoes || null, data_criacao: msToISO(o.dataCriacao) })
             },
             veiculoDocumentos: {
                 tabela: 'veiculo_documentos',
@@ -11740,10 +11740,17 @@
         //  Ao cancelar, o callback NUNCA é chamado — a picagem correspondente reverte sozinha,
         //  porque quem chamou isto só avança dentro do callback.
         // ============================================================================
+        function _avisarAtivacaoKmVeiculo(checkbox) {
+            if (checkbox.checked) alert('✅ A partir de agora, este veículo vai pedir o registo de km a cada picagem (se a opção geral também estiver ativa em Frota).');
+        }
         function _kmVeiculoDaPessoa(pessoaId) {
             const p = (dados.funcionarios || []).find(f => f.id === pessoaId) || (dados.encarregados || []).find(e => e.id === pessoaId);
             if (!p || !p.veiculoId) return null;
-            return (dados.veiculos || []).find(v => v.id === p.veiculoId) || null;
+            const veiculo = (dados.veiculos || []).find(v => v.id === p.veiculoId) || null;
+            // Vem sempre desativado por defeito — só conta se a pessoa tiver ligado explicitamente
+            // a checkbox deste veículo em concreto (independentemente da opção geral em Frota).
+            if (!veiculo || veiculo.kmAtivo !== true) return null;
+            return veiculo;
         }
         function _kmPedirRegisto(pessoaId, tituloContexto, callback) {
             const veiculo = _kmVeiculoDaPessoa(pessoaId);
@@ -11881,6 +11888,13 @@
                             <div class="form-group"><label>Ano</label><input type="number" id="v_ano" value="${v && v.ano ? v.ano : ''}" min="1950" max="2100" /></div>
                             <div class="form-group"><label>Combustível</label><select id="v_combustivel"><option value="">—</option>${combOpts}</select></div>
                             <div class="form-group ff-span2"><label>Quilómetros atuais</label><input type="number" id="v_km" value="${v && v.km != null ? v.km : ''}" min="0" /></div>
+                            <div class="form-group ff-span2">
+                                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                                    <input type="checkbox" id="v_km_ativo" ${v && v.kmAtivo === true ? 'checked' : ''} style="width:auto;margin:0;" onchange="_avisarAtivacaoKmVeiculo(this)" />
+                                    Pedir registo de km neste veículo
+                                </label>
+                                <div class="help-text" style="margin-top:4px;">Só se aplica se a opção geral de "Registo de Km" também estiver ativa em Frota. Vem sempre desativada por defeito — só passa a pedir km a este veículo a partir do dia em que ligares esta opção.</div>
+                            </div>
                         </div>
                     </div>
 
@@ -11914,6 +11928,8 @@
                 ano: document.getElementById('v_ano').value,
                 combustivel: document.getElementById('v_combustivel').value,
                 km: document.getElementById('v_km').value,
+                kmAtivo: document.getElementById('v_km_ativo').checked,
+                kmAtivoDesde: document.getElementById('v_km_ativo').checked ? (veiculoEditandoId ? (dados.veiculos?.find(x => x.id === veiculoEditandoId)?.kmAtivoDesde || getDataHoje()) : getDataHoje()) : null,
                 inspecaoValidade: document.getElementById('v_inspecao').value,
                 seguroValidade: document.getElementById('v_seguro').value,
                 seguroSeguradora: document.getElementById('v_seguradora').value.trim(),
