@@ -3973,9 +3973,16 @@
         function _colunaEmFalta(e) {
             const m = (e && (e.message || e.msg || '')) + '';
             const c = (e && e.code || '') + '';
-            if (c !== '42703' && !/column .* does not exist/i.test(m)) return null;
-            const match = m.match(/column ["']?([a-z0-9_]+)["']?/i);
-            return match ? match[1] : null;
+            // Dois formatos possíveis: o do Postgres puro ("column X does not exist") e o do
+            // PostgREST/Supabase ("Could not find the 'X' column of 'Y' in the schema cache",
+            // código PGRST204) — este segundo é o que apanhámos na prática.
+            let match = m.match(/Could not find the ['"]?([a-z0-9_]+)['"]? column/i);
+            if (match) return match[1];
+            if (c === '42703' || /column .* does not exist/i.test(m)) {
+                match = m.match(/column ["']?([a-z0-9_]+)["']?/i);
+                return match ? match[1] : null;
+            }
+            return null;
         }
         async function _sincronizar() {
             if (!navigator.onLine) {
