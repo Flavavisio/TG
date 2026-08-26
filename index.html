@@ -1784,6 +1784,17 @@
             <div style="flex:1; min-width:120px; background:#fef3c7; padding:10px 14px; border-radius:8px;"><div style="font-size:12px; color:#92400e;">A vencer</div><div style="font-size:22px; font-weight:bold; color:#f59e0b;" id="frotaAVencer">0</div></div>
             <div style="flex:1; min-width:120px; background:#fee2e2; padding:10px 14px; border-radius:8px;"><div style="font-size:12px; color:#991b1b;">Vencido</div><div style="font-size:22px; font-weight:bold; color:#dc2626;" id="frotaVencido">0</div></div>
         </div>
+        <div id="frotaKmSettingsBox" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px 16px; margin-bottom:14px;">
+            <div style="font-weight:700; font-size:.85rem; color:#334155; margin-bottom:8px;"><i class="fas fa-road"></i> Registo de Km (opcional)</div>
+            <label style="display:flex; align-items:flex-start; gap:8px; cursor:pointer; margin-bottom:8px;">
+                <input type="checkbox" id="frota_km_ponto_geral" style="width:auto; margin-top:3px;" onchange="_salvarConfigKmFrota()" />
+                <span style="font-size:.85rem; color:#475569;"><strong>Registo de Km de início e fim do dia</strong> — ao picar a primeira Entrada Geral e a última Saída Geral do dia, pede os km da viatura atribuída. Se não registar, a picagem não avança.</span>
+            </label>
+            <label style="display:flex; align-items:flex-start; gap:8px; cursor:pointer;">
+                <input type="checkbox" id="frota_km_por_os" style="width:auto; margin-top:3px;" onchange="_salvarConfigKmFrota()" />
+                <span style="font-size:.85rem; color:#475569;"><strong>Registo de Km por OS/Obra</strong> — só dá para dar entrada numa OS/Obra, ou terminá-la (por hoje ou de vez), depois de registar os km.</span>
+            </label>
+        </div>
         <div class="table-wrapper">
             <table>
                 <thead><tr><th>Atribuída a</th><th>Matrícula</th><th>Marca/Modelo</th><th>Km</th><th>Inspeção</th><th>Seguro</th><th>Próx. Manutenção</th><th>Ações</th></tr></thead>
@@ -1953,7 +1964,7 @@
         <div id="folhasAvisoCarregamento"></div>
         <div class="table-wrapper">
             <table>
-                <thead><tr><th>Obra</th><th>Descrição</th><th>Materiais</th><th>Horas</th><th>Data</th><th>Ações</th></tr></thead>
+                <thead><tr><th>Obra</th><th>Descrição</th><th>Materiais</th><th>Horas</th><th onclick="_folhasAlternarOrdem()" style="cursor:pointer;user-select:none;" title="Clicar para trocar a ordem">Data <i class="fas fa-sort" id="folhasOrdemIcone"></i></th><th>Ações</th></tr></thead>
                 <tbody id="tabelaFolhas"></tbody>
             </table>
         </div>
@@ -3194,8 +3205,8 @@
         const M = {
             administradores: {
                 tabela: 'administradores',
-                from: r => ({ id: r.id, nome: r.nome, email: r.email, empresa: r.empresa || '', nif: r.nif || null, logo: r.logo || null, licencaFeedback: r.licenca_feedback || null, contratosPlano: r.contratos_plano || null, contratosExpiracao: isoToMs(r.contratos_expiracao), frotaPlano: r.frota_plano || null, frotaExpiracao: isoToMs(r.frota_expiracao), armazemPlano: r.armazem_plano || null, armazemExpiracao: isoToMs(r.armazem_expiracao), portalPlano: r.portal_plano || null, portalExpiracao: isoToMs(r.portal_expiracao), crmPlano: r.crm_plano || null, crmExpiracao: isoToMs(r.crm_expiracao), assistPlano: r.assist_plano || null, assistExpiracao: isoToMs(r.assist_expiracao), erpPlano: r.erp_plano || null, erpExpiracao: isoToMs(r.erp_expiracao), notificacoesPlano: r.notificacoes_plano || null, notificacoesExpiracao: isoToMs(r.notificacoes_expiracao), dadosBancarios: r.dados_bancarios || null, integracaoFaturacao: r.integracao_faturacao || null, ativo: r.ativo, mudarSenha: r.mudar_senha === true, ultimoLogin: isoToMs(r.ultimo_login), ultimaAtividade: isoToMs(r.ultima_atividade), mostrarEstadoOnline: r.mostrar_estado_online === true, layout: r.layout || null, tiposEquipamento: r.tipos_equipamento || [], logo: r.logo, notificarAprovacao: r.notificar_aprovacao === true, numeroRegistoPrevio: r.numero_registo_previo || null, dataRegistoPrevio: r.data_registo_previo || null, numeroAnepc: r.numero_anepc || null, dataAnepc: r.data_anepc || null, anepcValidade: r.anepc_validade || null, registoPrevioValidade: r.registo_previo_validade || null, corCorporativa: r.cor_corporativa || null, favoritos: Array.isArray(r.favoritos) ? r.favoritos : [], ivaPeriodicidade: r.iva_periodicidade || 'mensal', irsPeriodicidade: r.irs_periodicidade || 'semestral', painelTvAtivo: r.painel_tv_ativo === true, descricoesRapidasOS: Array.isArray(r.descricoes_rapidas_os) ? r.descricoes_rapidas_os : ['Instalação', 'Manutenção', 'Visita', 'Formação'], horaEntradaHabitual: r.hora_entrada_habitual || '09:00', toleranciaAtrasoMin: r.tolerancia_atraso_min != null ? r.tolerancia_atraso_min : 15, certificadoraLogo: r.certificadora_logo || null, ehDistribuidor: r.eh_distribuidor === true, distribuidorDesconto: r.distribuidor_desconto != null ? Number(r.distribuidor_desconto) : null, distribuidorId: r.distribuidor_id || null, precoDistribuidorCobrado: r.preco_distribuidor_cobrado != null ? Number(r.preco_distribuidor_cobrado) : null, distribuidorPagamentoPrazo: isoToMs(r.distribuidor_pagamento_prazo), precoFundador: r.preco_fundador === true, obrasAvancadoAtivo: r.obras_avancado_ativo === true, obrasChecklistItens: Array.isArray(r.obras_checklist_itens) ? r.obras_checklist_itens : [], checklistEntradaItens: Array.isArray(r.checklist_entrada_itens) ? r.checklist_entrada_itens : [], osModoWizard: r.os_modo_wizard === true, contratoModoWizard: r.contrato_modo_wizard === true, concelho: r.concelho || null, contratosDemoDias: r.contratos_demo_dias || null, frotaDemoDias: r.frota_demo_dias || null, armazemDemoDias: r.armazem_demo_dias || null, crmDemoDias: r.crm_demo_dias || null, erpDemoDias: r.erp_demo_dias || null, rondasPlano: r.rondas_plano || null, rondasExpiracao: isoToMs(r.rondas_expiracao), rondasDemoDias: r.rondas_demo_dias || null, usoSecoes: r.uso_secoes ? (typeof r.uso_secoes === 'string' ? JSON.parse(r.uso_secoes) : r.uso_secoes) : {}, usoSecoesUltima: isoToMs(r.uso_secoes_ultima), dataCriacao: isoToMs(r.data_criacao) }),
-                to:   o => ({ id: o.id, nome: o.nome, email: o.email, senha: o.senha, empresa: o.empresa || null, nif: o.nif || null, logo: o.logo || null, licenca_feedback: o.licencaFeedback || null, contratos_plano: o.contratosPlano || null, contratos_expiracao: msToISO(o.contratosExpiracao), frota_plano: o.frotaPlano || null, frota_expiracao: msToISO(o.frotaExpiracao), armazem_plano: o.armazemPlano || null, armazem_expiracao: msToISO(o.armazemExpiracao), portal_plano: o.portalPlano || null, portal_expiracao: msToISO(o.portalExpiracao), crm_plano: o.crmPlano || null, crm_expiracao: msToISO(o.crmExpiracao), assist_plano: o.assistPlano || null, assist_expiracao: msToISO(o.assistExpiracao), erp_plano: o.erpPlano || null, erp_expiracao: msToISO(o.erpExpiracao), notificacoes_plano: o.notificacoesPlano || null, notificacoes_expiracao: msToISO(o.notificacoesExpiracao), dados_bancarios: o.dadosBancarios || null, integracao_faturacao: o.integracaoFaturacao || null, ativo: o.ativo !== false, mudar_senha: o.mudarSenha === true, ultimo_login: o.ultimoLogin ? msToISO(o.ultimoLogin) : null, ultima_atividade: o.ultimaAtividade ? msToISO(o.ultimaAtividade) : null, mostrar_estado_online: o.mostrarEstadoOnline === true, layout: o.layout || null, tipos_equipamento: o.tiposEquipamento || [], logo: o.logo || null, notificar_aprovacao: o.notificarAprovacao === true, numero_registo_previo: o.numeroRegistoPrevio || null, data_registo_previo: o.dataRegistoPrevio || null, numero_anepc: o.numeroAnepc || null, data_anepc: o.dataAnepc || null, anepc_validade: o.anepcValidade || null, registo_previo_validade: o.registoPrevioValidade || null, cor_corporativa: o.corCorporativa || null, favoritos: o.favoritos || [], iva_periodicidade: o.ivaPeriodicidade || 'mensal', irs_periodicidade: o.irsPeriodicidade || 'semestral', painel_tv_ativo: o.painelTvAtivo === true, descricoes_rapidas_os: o.descricoesRapidasOS || null, hora_entrada_habitual: o.horaEntradaHabitual || '09:00', tolerancia_atraso_min: o.toleranciaAtrasoMin != null ? o.toleranciaAtrasoMin : 15, certificadora_logo: o.certificadoraLogo || null, eh_distribuidor: o.ehDistribuidor === true, distribuidor_desconto: o.distribuidorDesconto ?? null, distribuidor_id: o.distribuidorId || null, preco_distribuidor_cobrado: o.precoDistribuidorCobrado ?? null, distribuidor_pagamento_prazo: o.distribuidorPagamentoPrazo ? msToISO(o.distribuidorPagamentoPrazo) : null, preco_fundador: o.precoFundador === true, obras_avancado_ativo: o.obrasAvancadoAtivo === true, obras_checklist_itens: o.obrasChecklistItens || [], checklist_entrada_itens: o.checklistEntradaItens || [], os_modo_wizard: o.osModoWizard === true, contrato_modo_wizard: o.contratoModoWizard === true, concelho: o.concelho || null, contratos_demo_dias: o.contratosDemoDias || null, frota_demo_dias: o.frotaDemoDias || null, armazem_demo_dias: o.armazemDemoDias || null, crm_demo_dias: o.crmDemoDias || null, erp_demo_dias: o.erpDemoDias || null, rondas_plano: o.rondasPlano || null, rondas_expiracao: msToISO(o.rondasExpiracao), rondas_demo_dias: o.rondasDemoDias || null, uso_secoes: JSON.stringify(o.usoSecoes || {}), uso_secoes_ultima: o.usoSecoesUltima ? msToISO(o.usoSecoesUltima) : null, data_criacao: msToISO(o.dataCriacao) })
+                from: r => ({ id: r.id, nome: r.nome, email: r.email, empresa: r.empresa || '', nif: r.nif || null, logo: r.logo || null, licencaFeedback: r.licenca_feedback || null, contratosPlano: r.contratos_plano || null, contratosExpiracao: isoToMs(r.contratos_expiracao), frotaPlano: r.frota_plano || null, frotaExpiracao: isoToMs(r.frota_expiracao), armazemPlano: r.armazem_plano || null, armazemExpiracao: isoToMs(r.armazem_expiracao), portalPlano: r.portal_plano || null, portalExpiracao: isoToMs(r.portal_expiracao), crmPlano: r.crm_plano || null, crmExpiracao: isoToMs(r.crm_expiracao), assistPlano: r.assist_plano || null, assistExpiracao: isoToMs(r.assist_expiracao), erpPlano: r.erp_plano || null, erpExpiracao: isoToMs(r.erp_expiracao), notificacoesPlano: r.notificacoes_plano || null, notificacoesExpiracao: isoToMs(r.notificacoes_expiracao), dadosBancarios: r.dados_bancarios || null, integracaoFaturacao: r.integracao_faturacao || null, ativo: r.ativo, mudarSenha: r.mudar_senha === true, ultimoLogin: isoToMs(r.ultimo_login), ultimaAtividade: isoToMs(r.ultima_atividade), mostrarEstadoOnline: r.mostrar_estado_online === true, layout: r.layout || null, tiposEquipamento: r.tipos_equipamento || [], logo: r.logo, notificarAprovacao: r.notificar_aprovacao === true, numeroRegistoPrevio: r.numero_registo_previo || null, dataRegistoPrevio: r.data_registo_previo || null, numeroAnepc: r.numero_anepc || null, dataAnepc: r.data_anepc || null, anepcValidade: r.anepc_validade || null, registoPrevioValidade: r.registo_previo_validade || null, corCorporativa: r.cor_corporativa || null, favoritos: Array.isArray(r.favoritos) ? r.favoritos : [], ivaPeriodicidade: r.iva_periodicidade || 'mensal', irsPeriodicidade: r.irs_periodicidade || 'semestral', painelTvAtivo: r.painel_tv_ativo === true, descricoesRapidasOS: Array.isArray(r.descricoes_rapidas_os) ? r.descricoes_rapidas_os : ['Instalação', 'Manutenção', 'Visita', 'Formação'], horaEntradaHabitual: r.hora_entrada_habitual || '09:00', toleranciaAtrasoMin: r.tolerancia_atraso_min != null ? r.tolerancia_atraso_min : 15, certificadoraLogo: r.certificadora_logo || null, ehDistribuidor: r.eh_distribuidor === true, distribuidorDesconto: r.distribuidor_desconto != null ? Number(r.distribuidor_desconto) : null, distribuidorId: r.distribuidor_id || null, precoDistribuidorCobrado: r.preco_distribuidor_cobrado != null ? Number(r.preco_distribuidor_cobrado) : null, distribuidorPagamentoPrazo: isoToMs(r.distribuidor_pagamento_prazo), precoFundador: r.preco_fundador === true, obrasAvancadoAtivo: r.obras_avancado_ativo === true, obrasChecklistItens: Array.isArray(r.obras_checklist_itens) ? r.obras_checklist_itens : [], checklistEntradaItens: Array.isArray(r.checklist_entrada_itens) ? r.checklist_entrada_itens : [], osModoWizard: r.os_modo_wizard === true, contratoModoWizard: r.contrato_modo_wizard === true, kmPontoGeralAtivo: r.km_ponto_geral_ativo === true, kmPorOsAtivo: r.km_por_os_ativo === true, concelho: r.concelho || null, contratosDemoDias: r.contratos_demo_dias || null, frotaDemoDias: r.frota_demo_dias || null, armazemDemoDias: r.armazem_demo_dias || null, crmDemoDias: r.crm_demo_dias || null, erpDemoDias: r.erp_demo_dias || null, rondasPlano: r.rondas_plano || null, rondasExpiracao: isoToMs(r.rondas_expiracao), rondasDemoDias: r.rondas_demo_dias || null, usoSecoes: r.uso_secoes ? (typeof r.uso_secoes === 'string' ? JSON.parse(r.uso_secoes) : r.uso_secoes) : {}, usoSecoesUltima: isoToMs(r.uso_secoes_ultima), dataCriacao: isoToMs(r.data_criacao) }),
+                to:   o => ({ id: o.id, nome: o.nome, email: o.email, senha: o.senha, empresa: o.empresa || null, nif: o.nif || null, logo: o.logo || null, licenca_feedback: o.licencaFeedback || null, contratos_plano: o.contratosPlano || null, contratos_expiracao: msToISO(o.contratosExpiracao), frota_plano: o.frotaPlano || null, frota_expiracao: msToISO(o.frotaExpiracao), armazem_plano: o.armazemPlano || null, armazem_expiracao: msToISO(o.armazemExpiracao), portal_plano: o.portalPlano || null, portal_expiracao: msToISO(o.portalExpiracao), crm_plano: o.crmPlano || null, crm_expiracao: msToISO(o.crmExpiracao), assist_plano: o.assistPlano || null, assist_expiracao: msToISO(o.assistExpiracao), erp_plano: o.erpPlano || null, erp_expiracao: msToISO(o.erpExpiracao), notificacoes_plano: o.notificacoesPlano || null, notificacoes_expiracao: msToISO(o.notificacoesExpiracao), dados_bancarios: o.dadosBancarios || null, integracao_faturacao: o.integracaoFaturacao || null, ativo: o.ativo !== false, mudar_senha: o.mudarSenha === true, ultimo_login: o.ultimoLogin ? msToISO(o.ultimoLogin) : null, ultima_atividade: o.ultimaAtividade ? msToISO(o.ultimaAtividade) : null, mostrar_estado_online: o.mostrarEstadoOnline === true, layout: o.layout || null, tipos_equipamento: o.tiposEquipamento || [], logo: o.logo || null, notificar_aprovacao: o.notificarAprovacao === true, numero_registo_previo: o.numeroRegistoPrevio || null, data_registo_previo: o.dataRegistoPrevio || null, numero_anepc: o.numeroAnepc || null, data_anepc: o.dataAnepc || null, anepc_validade: o.anepcValidade || null, registo_previo_validade: o.registoPrevioValidade || null, cor_corporativa: o.corCorporativa || null, favoritos: o.favoritos || [], iva_periodicidade: o.ivaPeriodicidade || 'mensal', irs_periodicidade: o.irsPeriodicidade || 'semestral', painel_tv_ativo: o.painelTvAtivo === true, descricoes_rapidas_os: o.descricoesRapidasOS || null, hora_entrada_habitual: o.horaEntradaHabitual || '09:00', tolerancia_atraso_min: o.toleranciaAtrasoMin != null ? o.toleranciaAtrasoMin : 15, certificadora_logo: o.certificadoraLogo || null, eh_distribuidor: o.ehDistribuidor === true, distribuidor_desconto: o.distribuidorDesconto ?? null, distribuidor_id: o.distribuidorId || null, preco_distribuidor_cobrado: o.precoDistribuidorCobrado ?? null, distribuidor_pagamento_prazo: o.distribuidorPagamentoPrazo ? msToISO(o.distribuidorPagamentoPrazo) : null, preco_fundador: o.precoFundador === true, obras_avancado_ativo: o.obrasAvancadoAtivo === true, obras_checklist_itens: o.obrasChecklistItens || [], checklist_entrada_itens: o.checklistEntradaItens || [], os_modo_wizard: o.osModoWizard === true, contrato_modo_wizard: o.contratoModoWizard === true, km_ponto_geral_ativo: o.kmPontoGeralAtivo === true, km_por_os_ativo: o.kmPorOsAtivo === true, concelho: o.concelho || null, contratos_demo_dias: o.contratosDemoDias || null, frota_demo_dias: o.frotaDemoDias || null, armazem_demo_dias: o.armazemDemoDias || null, crm_demo_dias: o.crmDemoDias || null, erp_demo_dias: o.erpDemoDias || null, rondas_plano: o.rondasPlano || null, rondas_expiracao: msToISO(o.rondasExpiracao), rondas_demo_dias: o.rondasDemoDias || null, uso_secoes: JSON.stringify(o.usoSecoes || {}), uso_secoes_ultima: o.usoSecoesUltima ? msToISO(o.usoSecoesUltima) : null, data_criacao: msToISO(o.dataCriacao) })
             },
             funcionarios: {
                 tabela: 'funcionarios',
@@ -3279,8 +3290,8 @@
             },
             ponto: {
                 tabela: 'ponto',
-                from: r => ({ id: r.id, funcionarioId: r.funcionario_id, adminId: r.admin_id, data: r.data || '', entrada: hhmm(r.entrada), saida: hhmm(r.saida), obraDescricao: r.obra_descricao, foto: r.foto, servicoId: r.servico_id, clienteId: r.cliente_id, lat: r.lat, lng: r.lng, latSaida: r.lat_saida, lngSaida: r.lng_saida, saidaAutomatica: r.saida_automatica === true, pausaAlmoco: r.pausa_almoco === true, usadoEmFolha: r.usado_em_folha === true, entradaOriginal: hhmm(r.entrada_original), saidaOriginal: hhmm(r.saida_original), editadoPor: r.editado_por || '', editadoEm: isoToMs(r.editado_em), motivoEdicao: r.motivo_edicao || '' }),
-                to:   o => ({ id: o.id, funcionario_id: o.funcionarioId, admin_id: o.adminId || null, data: nn(o.data), entrada: nn(o.entrada), saida: nn(o.saida), obra_descricao: o.obraDescricao || null, foto: o.foto || null, servico_id: o.servicoId || null, cliente_id: o.clienteId || null, lat: o.lat ?? null, lng: o.lng ?? null, lat_saida: o.latSaida ?? null, lng_saida: o.lngSaida ?? null, saida_automatica: o.saidaAutomatica === true, pausa_almoco: o.pausaAlmoco === true, usado_em_folha: o.usadoEmFolha === true, entrada_original: nn(o.entradaOriginal), saida_original: nn(o.saidaOriginal), editado_por: o.editadoPor || null, editado_em: o.editadoEm ? msToISO(o.editadoEm) : null, motivo_edicao: o.motivoEdicao || null })
+                from: r => ({ id: r.id, funcionarioId: r.funcionario_id, adminId: r.admin_id, data: r.data || '', entrada: hhmm(r.entrada), saida: hhmm(r.saida), obraDescricao: r.obra_descricao, foto: r.foto, servicoId: r.servico_id, clienteId: r.cliente_id, lat: r.lat, lng: r.lng, latSaida: r.lat_saida, lngSaida: r.lng_saida, kmInicio: r.km_inicio != null ? Number(r.km_inicio) : null, kmFim: r.km_fim != null ? Number(r.km_fim) : null, saidaAutomatica: r.saida_automatica === true, pausaAlmoco: r.pausa_almoco === true, usadoEmFolha: r.usado_em_folha === true, entradaOriginal: hhmm(r.entrada_original), saidaOriginal: hhmm(r.saida_original), editadoPor: r.editado_por || '', editadoEm: isoToMs(r.editado_em), motivoEdicao: r.motivo_edicao || '' }),
+                to:   o => ({ id: o.id, funcionario_id: o.funcionarioId, admin_id: o.adminId || null, data: nn(o.data), entrada: nn(o.entrada), saida: nn(o.saida), obra_descricao: o.obraDescricao || null, foto: o.foto || null, servico_id: o.servicoId || null, cliente_id: o.clienteId || null, lat: o.lat ?? null, lng: o.lng ?? null, lat_saida: o.latSaida ?? null, lng_saida: o.lngSaida ?? null, km_inicio: o.kmInicio ?? null, km_fim: o.kmFim ?? null, saida_automatica: o.saidaAutomatica === true, pausa_almoco: o.pausaAlmoco === true, usado_em_folha: o.usadoEmFolha === true, entrada_original: nn(o.entradaOriginal), saida_original: nn(o.saidaOriginal), editado_por: o.editadoPor || null, editado_em: o.editadoEm ? msToISO(o.editadoEm) : null, motivo_edicao: o.motivoEdicao || null })
             },
             pedidos: {
                 tabela: 'pedidos',
@@ -3394,8 +3405,8 @@
             },
             obraPontoLonga: {
                 tabela: 'obra_ponto_longa',
-                from: r => ({ id: r.id, funcionarioId: r.funcionario_id, adminId: r.admin_id, obraId: r.obra_id, data: r.data || '', entrada: hhmm(r.entrada), saida: hhmm(r.saida), lat: r.lat, lng: r.lng, latSaida: r.lat_saida, lngSaida: r.lng_saida, pausaAlmoco: r.pausa_almoco === true, entradaOriginal: hhmm(r.entrada_original), saidaOriginal: hhmm(r.saida_original), editadoPor: r.editado_por || '', editadoEm: isoToMs(r.editado_em), motivoEdicao: r.motivo_edicao || '' }),
-                to:   o => ({ id: o.id, funcionario_id: o.funcionarioId, admin_id: o.adminId || null, obra_id: o.obraId, data: nn(o.data), entrada: nn(o.entrada), saida: nn(o.saida), lat: o.lat ?? null, lng: o.lng ?? null, lat_saida: o.latSaida ?? null, lng_saida: o.lngSaida ?? null, pausa_almoco: o.pausaAlmoco === true, entrada_original: nn(o.entradaOriginal), saida_original: nn(o.saidaOriginal), editado_por: o.editadoPor || null, editado_em: o.editadoEm ? msToISO(o.editadoEm) : null, motivo_edicao: o.motivoEdicao || null })
+                from: r => ({ id: r.id, funcionarioId: r.funcionario_id, adminId: r.admin_id, obraId: r.obra_id, data: r.data || '', entrada: hhmm(r.entrada), saida: hhmm(r.saida), lat: r.lat, lng: r.lng, latSaida: r.lat_saida, lngSaida: r.lng_saida, kmInicio: r.km_inicio != null ? Number(r.km_inicio) : null, kmFim: r.km_fim != null ? Number(r.km_fim) : null, pausaAlmoco: r.pausa_almoco === true, entradaOriginal: hhmm(r.entrada_original), saidaOriginal: hhmm(r.saida_original), editadoPor: r.editado_por || '', editadoEm: isoToMs(r.editado_em), motivoEdicao: r.motivo_edicao || '' }),
+                to:   o => ({ id: o.id, funcionario_id: o.funcionarioId, admin_id: o.adminId || null, obra_id: o.obraId, data: nn(o.data), entrada: nn(o.entrada), saida: nn(o.saida), lat: o.lat ?? null, lng: o.lng ?? null, lat_saida: o.latSaida ?? null, lng_saida: o.lngSaida ?? null, km_inicio: o.kmInicio ?? null, km_fim: o.kmFim ?? null, pausa_almoco: o.pausaAlmoco === true, entrada_original: nn(o.entradaOriginal), saida_original: nn(o.saidaOriginal), editado_por: o.editadoPor || null, editado_em: o.editadoEm ? msToISO(o.editadoEm) : null, motivo_edicao: o.motivoEdicao || null })
             },
             autosMedicao: {
                 tabela: 'autos_medicao',
@@ -5206,18 +5217,18 @@
         // picar entrada numa OS/Obra pelo Modo Quiosque — para técnicos que nunca usam o telemóvel
         // próprio, o quiosque é o ÚNICO sítio onde a entrada/saída geral fica registada, por isso
         // tem de garantir isso sozinho, sem depender de a pessoa picar o ponto geral à parte.
-        function _quiosqueGarantirEntradaGeral(pessoaId, adminId, hora, lat, lng) {
+        function _quiosqueGarantirEntradaGeral(pessoaId, adminId, hora, lat, lng, kmInicio) {
             dados.ponto = dados.ponto || [];
             const hoje = getDataHoje();
             const jaAberto = dados.ponto.find(r => r.funcionarioId === pessoaId && r.data === hoje && r.entrada && !r.saida);
             if (!jaAberto) {
-                dados.ponto.push({ id: gerarId(), funcionarioId: pessoaId, adminId, data: hoje, entrada: hora, saida: null, lat: lat ?? null, lng: lng ?? null, origem: 'quiosque_auto' });
+                dados.ponto.push({ id: gerarId(), funcionarioId: pessoaId, adminId, data: hoje, entrada: hora, saida: null, lat: lat ?? null, lng: lng ?? null, kmInicio: kmInicio ?? null, origem: 'quiosque_auto' });
             }
         }
-        function _quiosqueFecharEntradaGeral(pessoaId, hora, lat, lng) {
+        function _quiosqueFecharEntradaGeral(pessoaId, hora, lat, lng, kmFim) {
             const hoje = getDataHoje();
             const aberto = (dados.ponto || []).find(r => r.funcionarioId === pessoaId && r.data === hoje && r.entrada && !r.saida);
-            if (aberto) { aberto.saida = hora; if (lat != null) aberto.latSaida = lat; if (lng != null) aberto.lngSaida = lng; }
+            if (aberto) { aberto.saida = hora; if (lat != null) aberto.latSaida = lat; if (lng != null) aberto.lngSaida = lng; if (kmFim != null) aberto.kmFim = kmFim; }
         }
         // Pede ao browser a localização atual, com um limite de tempo curto — nunca bloqueia a
         // picagem: se falhar ou demorar, devolve null e a picagem segue em frente sem coordenadas.
@@ -5399,11 +5410,22 @@
         async function _quiosqueAgendaGeralPicar(acao) {
             const p = _quiosqueAgendaGeralPessoaSel; if (!p) return;
             const adminId = _tenantQuiosque();
+            const admin = dados.administradores?.find(a => a.id === adminId);
             const hora = new Date().toTimeString().slice(0, 5);
             const loc = await _quiosqueObterLocalizacaoAgora();
-            if (acao === 'entrada') _quiosqueGarantirEntradaGeral(p.id, adminId, hora, loc?.lat, loc?.lng);
-            else _quiosqueFecharEntradaGeral(p.id, hora, loc?.lat, loc?.lng);
-            guardarDados(dados);
+            const _prosseguir = (km) => {
+                if (acao === 'entrada') _quiosqueGarantirEntradaGeral(p.id, adminId, hora, loc?.lat, loc?.lng, km);
+                else _quiosqueFecharEntradaGeral(p.id, hora, loc?.lat, loc?.lng, km);
+                guardarDados(dados);
+                _quiosqueAgendaGeralPicarContinuar(p, acao, hora);
+            };
+            if (admin?.kmPontoGeralAtivo) {
+                _kmPedirRegisto(p.id, acao === 'entrada' ? 'Entrada ao serviço' : 'Saída ao serviço', (km) => _prosseguir(km));
+            } else {
+                _prosseguir(null);
+            }
+        }
+        function _quiosqueAgendaGeralPicarContinuar(p, acao, hora) {
             // Se esta entrada geral era mesmo a que faltava para entrar numa OS/Obra específica,
             // retoma essa entrada automaticamente — sem precisar de voltar a escolher a OS nem
             // a introduzir o PIN outra vez.
@@ -5638,18 +5660,26 @@
                     return;
                 }
                 const loc = await _quiosqueObterLocalizacaoAgora();
-                _checklistEntradaVerificar(adminId, () => {
-                    if (s.tipo === 'obra') {
-                        dados.obraPontoLonga = dados.obraPontoLonga || [];
-                        dados.obraPontoLonga.push({ id: gerarId(), obraId: s.id, funcionarioId: p.id, adminId, data: hoje, entrada: hora, saida: null, lat: loc?.lat ?? null, lng: loc?.lng ?? null });
-                    } else {
-                        dados.ponto = dados.ponto || [];
-                        dados.ponto.push({ id: gerarId(), servicoId: s.id, funcionarioId: p.id, adminId, data: hoje, entrada: hora, saida: null, lat: loc?.lat ?? null, lng: loc?.lng ?? null, origem: 'quiosque_agenda' });
-                    }
-                    guardarDados(dados);
-                    alert('✅ Entrada registada às ' + hora + '.');
-                    _quiosqueAgendaGrid();
-                }, { tipo: s.tipo === 'obra' ? 'obra' : 'servico', id: s.id });
+                const admin = dados.administradores?.find(a => a.id === adminId);
+                const _criarEntrada = (km) => {
+                    _checklistEntradaVerificar(adminId, () => {
+                        if (s.tipo === 'obra') {
+                            dados.obraPontoLonga = dados.obraPontoLonga || [];
+                            dados.obraPontoLonga.push({ id: gerarId(), obraId: s.id, funcionarioId: p.id, adminId, data: hoje, entrada: hora, saida: null, lat: loc?.lat ?? null, lng: loc?.lng ?? null, kmInicio: km ?? null });
+                        } else {
+                            dados.ponto = dados.ponto || [];
+                            dados.ponto.push({ id: gerarId(), servicoId: s.id, funcionarioId: p.id, adminId, data: hoje, entrada: hora, saida: null, lat: loc?.lat ?? null, lng: loc?.lng ?? null, kmInicio: km ?? null, origem: 'quiosque_agenda' });
+                        }
+                        guardarDados(dados);
+                        alert('✅ Entrada registada às ' + hora + '.');
+                        _quiosqueAgendaGrid();
+                    }, { tipo: s.tipo === 'obra' ? 'obra' : 'servico', id: s.id });
+                };
+                if (admin?.kmPorOsAtivo) {
+                    _kmPedirRegisto(p.id, 'Entrada em ' + (s.tipo === 'obra' ? 'Obra' : 'OS'), (km) => _criarEntrada(km));
+                } else {
+                    _criarEntrada(null);
+                }
                 return;
             }
             if (acao === 'almoco') {
@@ -5687,8 +5717,20 @@
         }
         function _quiosqueAgendaFecharSaida(pessoa, hora, finalizarTambem, loc) {
             const s = _quiosqueAgendaSessaoAtual;
-            const aberto = _quiosqueAgendaAberto(pessoa.id);
-            if (aberto) { aberto.saida = hora; if (loc) { aberto.latSaida = loc.lat; aberto.lngSaida = loc.lng; } guardarDados(dados); }
+            const adminId = _tenantQuiosque();
+            const admin = dados.administradores?.find(a => a.id === adminId);
+            const _fechar = (km) => {
+                const aberto = _quiosqueAgendaAberto(pessoa.id);
+                if (aberto) { aberto.saida = hora; if (loc) { aberto.latSaida = loc.lat; aberto.lngSaida = loc.lng; } if (km != null) aberto.kmFim = km; guardarDados(dados); }
+                _quiosqueAgendaFecharSaidaContinuar(pessoa, hora, finalizarTambem, s);
+            };
+            if (admin?.kmPorOsAtivo) {
+                _kmPedirRegisto(pessoa.id, 'Saída de ' + (s.tipo === 'obra' ? 'Obra' : 'OS'), (km) => _fechar(km));
+            } else {
+                _fechar(null);
+            }
+        }
+        function _quiosqueAgendaFecharSaidaContinuar(pessoa, hora, finalizarTambem, s) {
             // Importante: terminar uma OS/Obra NÃO fecha o Ponto Geral — a pessoa pode acabar
             // esta obra mais cedo e ainda continuar noutra tarefa no mesmo dia. O Ponto Geral só
             // fecha quando a pessoa picar explicitamente "Saída ao Serviço" em Ponto Geral.
@@ -5985,14 +6027,22 @@
         async function _quiosqueFixaGeralPicar(acao) {
             const p = _quiosqueFixaGeralPessoaSel; if (!p) return;
             const adminId = _tenantQuiosque();
+            const admin = dados.administradores?.find(a => a.id === adminId);
             const hora = new Date().toTimeString().slice(0, 5);
             const loc = await _quiosqueObterLocalizacaoAgora();
-            if (acao === 'entrada') _quiosqueGarantirEntradaGeral(p.id, adminId, hora, loc?.lat, loc?.lng);
-            else _quiosqueFecharEntradaGeral(p.id, hora, loc?.lat, loc?.lng);
-            guardarDados(dados);
-            const painel = document.getElementById('tgqPainel');
-            painel.innerHTML = `<div style="text-align:center;color:#152a52;"><div style="font-size:2.4rem;color:#16a34a;"><i class="fas fa-circle-check"></i></div><div style="font-weight:700;margin-top:8px;">${acao === 'entrada' ? 'Entraste às ' + hora + '!' : 'Saíste às ' + hora + '!'}</div></div>`;
-            setTimeout(_quiosqueMostrarGrid, 1800);
+            const _prosseguir = (km) => {
+                if (acao === 'entrada') _quiosqueGarantirEntradaGeral(p.id, adminId, hora, loc?.lat, loc?.lng, km);
+                else _quiosqueFecharEntradaGeral(p.id, hora, loc?.lat, loc?.lng, km);
+                guardarDados(dados);
+                const painel = document.getElementById('tgqPainel');
+                painel.innerHTML = `<div style="text-align:center;color:#152a52;"><div style="font-size:2.4rem;color:#16a34a;"><i class="fas fa-circle-check"></i></div><div style="font-weight:700;margin-top:8px;">${acao === 'entrada' ? 'Entraste às ' + hora + '!' : 'Saíste às ' + hora + '!'}</div></div>`;
+                setTimeout(_quiosqueMostrarGrid, 1800);
+            };
+            if (admin?.kmPontoGeralAtivo) {
+                _kmPedirRegisto(p.id, acao === 'entrada' ? 'Entrada ao serviço' : 'Saída ao serviço', (km) => _prosseguir(km));
+            } else {
+                _prosseguir(null);
+            }
         }
         function quiosquePessoaClick(id, tipo) {
             const pessoas = _quiosquePessoas();
@@ -8976,6 +9026,13 @@
             }
         }
 
+        // 'desc' = mais recente primeiro (por defeito); 'asc' = mais antiga primeiro. Ao clicar
+        // no cabeçalho "Data" da tabela, troca entre as duas.
+        let _folhasOrdem = 'desc';
+        function _folhasAlternarOrdem() {
+            _folhasOrdem = _folhasOrdem === 'desc' ? 'asc' : 'desc';
+            renderizarFolhas();
+        }
         function renderizarFolhas() {
             const tbody = document.getElementById('tabelaFolhas');
             const empty = document.getElementById('emptyFolhas');
@@ -8990,6 +9047,9 @@
             if (usuarioLogado?.role === 'superadmin') {
                 folhas = [];
             }
+            folhas = [...folhas].sort((a, b) => _folhasOrdem === 'desc' ? (b.data || '').localeCompare(a.data || '') : (a.data || '').localeCompare(b.data || ''));
+            const iconeOrdem = document.getElementById('folhasOrdemIcone');
+            if (iconeOrdem) iconeOrdem.className = 'fas ' + (_folhasOrdem === 'desc' ? 'fa-sort-down' : 'fa-sort-up');
             const avisoDiv = document.getElementById('folhasAvisoCarregamento');
             if (avisoDiv) {
                 avisoDiv.innerHTML = `<div style="margin-bottom:10px;">
@@ -9266,7 +9326,9 @@
                 campo('Obra', obraNome);
                 linha2('Funcionário', func, 'Data', f.data || '-');
                 if (tipo === 'empresa') {
-                    linha2('Horas trabalhadas', (f.horasTrabalhadas || 0) + 'h', 'Custo/hora do funcionário', custoHora != null ? _finEur(custoHora) + '/h' : '— não definido —');
+                    linha2('Horas trabalhadas', (f.horasTrabalhadas || 0) + 'h', 'Mão de obra / h', custoHora != null ? _finEur(custoHora) + '/h' : '— não definido —');
+                    const kmFolha = f.servicoId ? _kmPercorridosOS(f.servicoId) : (f.obraId ? _kmPercorridosObra(f.obraId) : 0);
+                    if (kmFolha > 0) linha2('Km percorridos', kmFolha.toLocaleString('pt-PT') + ' km', '', '');
                 } else {
                     campo('Horas trabalhadas', (f.horasTrabalhadas || 0) + 'h');
                 }
@@ -9320,7 +9382,8 @@
             extintores: 'Extintores'
         };
         const PERIODICIDADE_MESES = { anual: 12, semestral: 6, trimestral: 3 };
-        const PERIODICIDADE_LABEL = { anual: 'Anual', semestral: 'Semestral', trimestral: 'Trimestral' };
+        const PERIODICIDADE_DIAS = { mensal: 30, quinzenal: 15, semanal: 7 };
+        const PERIODICIDADE_LABEL = { anual: 'Anual', semestral: 'Semestral', trimestral: 'Trimestral', mensal: 'Mensal', quinzenal: 'Quinzenal', semanal: 'Semanal' };
         function tipoExigePresencialAnual(tipo) { return ['intrusao', 'incendio', 'extintores'].includes(tipo); }
         function addMeses(dataStr, meses) {
             if (!dataStr) return null;
@@ -9330,6 +9393,23 @@
             if (isNaN(d.getTime())) return null;
             return d.toISOString().slice(0, 10);
         }
+        // Períodos curtos (mensal/quinzenal/semanal) usam dias certos, em vez de meses — mais
+        // preciso para intervalos pequenos (um "mês" de calendário varia entre 28-31 dias).
+        function addDias(dataStr, dias) {
+            if (!dataStr) return null;
+            const d = new Date(dataStr + 'T00:00:00');
+            if (isNaN(d.getTime())) return null;
+            d.setDate(d.getDate() + dias);
+            if (isNaN(d.getTime())) return null;
+            return d.toISOString().slice(0, 10);
+        }
+        // Avança uma data consoante a periodicidade do contrato — junta os dois mapas acima
+        // (meses para os períodos longos, dias certos para os curtos) num único sítio, para
+        // nunca ser preciso decidir isto em mais do que uma função.
+        function avancarPeriodicidade(dataStr, periodicidade) {
+            if (PERIODICIDADE_DIAS[periodicidade] != null) return addDias(dataStr, PERIODICIDADE_DIAS[periodicidade]);
+            return addMeses(dataStr, PERIODICIDADE_MESES[periodicidade] || 12);
+        }
         function ultimoRegistoContrato(contratoId) {
             const regs = (dados.registosManutencao || []).filter(r => r.contratoId === contratoId && r.dataRealizacao);
             if (!regs.length) return null;
@@ -9337,10 +9417,9 @@
         }
         function calcularProximaManutencao(contrato) {
             try {
-                const meses = PERIODICIDADE_MESES[contrato.periodicidade] || 12;
                 const ult = ultimoRegistoContrato(contrato.id);
                 const base = ult ? ult.dataRealizacao : contrato.dataInicio;
-                return addMeses(base, meses);
+                return avancarPeriodicidade(base, contrato.periodicidade);
             } catch (e) {
                 console.error('calcularProximaManutencao:', e);
                 return null;
@@ -11271,8 +11350,7 @@
             const adminId = usuarioLogado?.adminId || usuarioLogado?.id;
             const dataRealizacao = document.getElementById('rg_data').value;
             if (!dataRealizacao) { alert('Indique a data de realização.'); return; }
-            const meses = PERIODICIDADE_MESES[c.periodicidade] || 12;
-            const proximaData = addMeses(dataRealizacao, meses);
+            const proximaData = avancarPeriodicidade(dataRealizacao, c.periodicidade);
             const tecnicoId = document.getElementById('rg_tecnico').value || null;
             const observacoes = document.getElementById('rg_obs').value.trim();
             dados.registosManutencao = dados.registosManutencao || [];
@@ -11655,11 +11733,86 @@
             return null;
         }
 
+        // ============================================================================
+        //  REGISTO DE KM — popup reaproveitável para pedir os km da viatura atribuída à
+        //  pessoa, seja no Ponto Geral (início/fim do dia) ou numa OS/Obra específica.
+        //  Se a pessoa não tiver viatura atribuída, avança sem pedir nada (não há o que medir).
+        //  Ao cancelar, o callback NUNCA é chamado — a picagem correspondente reverte sozinha,
+        //  porque quem chamou isto só avança dentro do callback.
+        // ============================================================================
+        function _kmVeiculoDaPessoa(pessoaId) {
+            const p = (dados.funcionarios || []).find(f => f.id === pessoaId) || (dados.encarregados || []).find(e => e.id === pessoaId);
+            if (!p || !p.veiculoId) return null;
+            return (dados.veiculos || []).find(v => v.id === p.veiculoId) || null;
+        }
+        function _kmPedirRegisto(pessoaId, tituloContexto, callback) {
+            const veiculo = _kmVeiculoDaPessoa(pessoaId);
+            if (!veiculo) { callback(null); return; } // sem viatura atribuída — nada a registar, avança normalmente
+            const wrap = document.createElement('div');
+            wrap.id = 'kmRegistoOverlay';
+            wrap.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.75);z-index:300000;display:flex;align-items:center;justify-content:center;padding:16px;';
+            wrap.innerHTML = `
+                <div style="background:#fff;border-radius:18px;padding:26px 22px;max-width:380px;width:100%;text-align:center;">
+                    <div style="font-size:1.6rem;color:#0ea5e9;margin-bottom:8px;"><i class="fas fa-road"></i></div>
+                    <div style="font-weight:800;color:#152a52;font-size:1.05rem;margin-bottom:4px;">Regista os km da viatura</div>
+                    <div style="color:#64748b;font-size:.85rem;margin-bottom:6px;">${escapeHtmlSimples(tituloContexto || '')}</div>
+                    <div style="color:#334155;font-weight:700;margin-bottom:14px;">${escapeHtmlSimples(veiculo.matricula || '')} ${veiculo.marcaModelo ? '— ' + escapeHtmlSimples(veiculo.marcaModelo) : ''}</div>
+                    <input type="number" id="km_registo_valor" inputmode="numeric" placeholder="Km atuais no conta-quilómetros" value="${veiculo.km != null ? veiculo.km : ''}" style="width:100%;padding:12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:1.1rem;text-align:center;margin-bottom:6px;" />
+                    <div style="color:#94a3b8;font-size:.75rem;margin-bottom:16px;">Última leitura registada: ${veiculo.km != null ? veiculo.km + ' km' : 'sem registo ainda'}</div>
+                    <div style="display:flex;gap:10px;">
+                        <button type="button" class="tgq-acao-btn" style="background:#64748b;flex:1;" onclick="document.getElementById('kmRegistoOverlay').remove();">Cancelar</button>
+                        <button type="button" class="tgq-acao-btn" style="background:#0ea5e9;flex:1;" onclick="_kmConfirmarRegisto('${veiculo.id}')">Confirmar</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(wrap);
+            window._kmRegistoCallback = callback;
+            setTimeout(() => document.getElementById('km_registo_valor')?.focus(), 50);
+        }
+        function _kmConfirmarRegisto(veiculoId) {
+            const input = document.getElementById('km_registo_valor');
+            const valor = parseFloat(input?.value);
+            if (isNaN(valor) || valor < 0) { alert('Indica um valor de km válido.'); return; }
+            const veiculo = (dados.veiculos || []).find(v => v.id === veiculoId);
+            if (veiculo && (veiculo.km == null || valor >= veiculo.km)) { veiculo.km = valor; veiculo.kmData = getDataHoje(); }
+            document.getElementById('kmRegistoOverlay')?.remove();
+            const cb = window._kmRegistoCallback; window._kmRegistoCallback = null;
+            if (typeof cb === 'function') cb(valor);
+        }
+        // Km percorridos numa OS/Obra específica — soma de todos os registos de ponto (de
+        // qualquer funcionário) que tenham início e fim de km preenchidos.
+        function _kmPercorridosOS(servicoId) {
+            return (dados.ponto || []).filter(p => p.servicoId === servicoId && p.kmInicio != null && p.kmFim != null)
+                .reduce((soma, p) => soma + Math.max(0, p.kmFim - p.kmInicio), 0);
+        }
+        function _kmPercorridosObra(obraId) {
+            return (dados.obraPontoLonga || []).filter(p => p.obraId === obraId && p.kmInicio != null && p.kmFim != null)
+                .reduce((soma, p) => soma + Math.max(0, p.kmFim - p.kmInicio), 0);
+        }
+        // Km totais de HOJE, para a empresa toda — soma o Ponto Geral (início/fim do dia) de
+        // todas as pessoas, para o painel do admin em "O Meu Dia".
+        function _kmTotaisHoje(adminId, hoje) {
+            return (dados.ponto || []).filter(p => p.adminId === adminId && p.data === hoje && !p.servicoId && !p.obraId && p.kmInicio != null && p.kmFim != null)
+                .reduce((soma, p) => soma + Math.max(0, p.kmFim - p.kmInicio), 0);
+        }
+        function _salvarConfigKmFrota() {
+            const admin = adminAtual(); if (!admin) return;
+            admin.kmPorOsAtivo = document.getElementById('frota_km_por_os')?.checked || false;
+            guardarDados(dados);
+        }
         function renderizarFrota() {
             const tbody = document.getElementById('tabelaFrota');
             const empty = document.getElementById('emptyFrota');
             if (!tbody) return;
             const isAdmin = usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin';
+            const admin = adminAtual();
+            const boxKm = document.getElementById('frotaKmSettingsBox');
+            if (boxKm) {
+                boxKm.style.display = isAdmin ? '' : 'none';
+                const c1 = document.getElementById('frota_km_ponto_geral'), c2 = document.getElementById('frota_km_por_os');
+                if (c1) c1.checked = !!admin?.kmPontoGeralAtivo;
+                if (c2) c2.checked = !!admin?.kmPorOsAtivo;
+            }
             const vs = veiculosVisiveis();
             const c = contarFrota(vs);
             const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
@@ -13799,7 +13952,7 @@
 
             if (!isAdminView) {
                 tb.innerHTML = lista.length ? lista.map(o => {
-                    let acoes = `<button class="btn btn-sm" style="background:#334155;color:#fff;" onclick="abrirObraLongaDetalhe('${o.id}')" title="Ver Obra"><i class="fas fa-eye"></i> Ver Obra</button> <button class="btn btn-sm" style="background:#0f766e;color:#fff;" onclick="gerarReportFinalObra('${o.id}')" title="Relatório da obra"><i class="fas fa-file-lines"></i></button>`;
+                    let acoes = `<button class="btn btn-sm" style="background:#334155;color:#fff;" onclick="abrirObraLongaDetalhe('${o.id}')" title="Ver Obra"><i class="fas fa-eye"></i> Ver Obra</button> <button class="btn btn-sm" style="background:#0f766e;color:#fff;" onclick="_obraEscolherRelatorio('${o.id}')" title="Relatório da obra"><i class="fas fa-file-lines"></i></button>`;
                     if (isEncarregadoView && o.estado !== 'concluida') acoes += ` <button class="btn btn-sm" style="background:#0f766e;color:#fff;" onclick="finalizarObraLonga('${o.id}')" title="Finalizar obra"><i class="fas fa-flag-checkered"></i> Finalizar</button>`;
                     return `<tr>
                         <td><strong>${escapeHtmlSimples(o.nome)}</strong></td><td>${o.clienteId ? obterNomeCliente(o.clienteId) : '—'}</td>
@@ -13816,7 +13969,7 @@
 <td>${escapeHtmlSimples(o.nome)}</td><td>${o.clienteId ? obterNomeCliente(o.clienteId) : '—'}</td><td>${_moradaCompletaObra(o)}</td><td>${_estadoSelectObra(o)}</td>
                 <td><button class="btn btn-sm" style="background:#334155;color:#fff;" onclick="abrirObraLongaDetalhe('${o.id}')" title="Ver Obra"><i class="fas fa-eye"></i> Ver Obra</button>
                     <button class="btn btn-sm btn-primary" onclick="abrirPlanoMateriais('${o.id}')" title="Plano de materiais"><i class="fas fa-tasks"></i> Materiais${nMat ? ' (' + nMat + ')' : ''}</button>
-                    <button class="btn btn-sm" style="background:#0f766e;color:#fff;" onclick="gerarReportFinalObra('${o.id}')" title="Relatório da obra"><i class="fas fa-file-lines"></i></button>
+                    <button class="btn btn-sm" style="background:#0f766e;color:#fff;" onclick="_obraEscolherRelatorio('${o.id}')" title="Relatório da obra"><i class="fas fa-file-lines"></i></button>
                     <button class="btn btn-sm btn-outline" onclick="abrirModal('obra','${o.id}')"><i class="fas fa-pen"></i></button>
                     <button class="btn btn-sm btn-danger" onclick="eliminarRegisto('obras','${o.id}')"><i class="fas fa-trash"></i></button></td>
             </tr>`;
@@ -14016,11 +14169,28 @@
             gerarReportFinalObra(obraId);
             alert('Obra finalizada ✓ Relatório final gerado.');
         }
-        function gerarReportFinalObra(obraId) {
+        // Pequeno popup para escolher qual dos dois relatórios gerar — o interno (com
+        // financeiro e custos) ou o do cliente (só o trabalho realizado, sem valores).
+        function _obraEscolherRelatorio(obraId) {
+            const wrap = document.createElement('div');
+            wrap.id = 'obraRelatorioEscolhaOverlay';
+            wrap.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:100000;display:flex;align-items:center;justify-content:center;padding:16px;';
+            wrap.innerHTML = `
+                <div style="background:#fff;border-radius:16px;padding:22px;max-width:340px;width:100%;">
+                    <div style="font-weight:800;font-size:1.05rem;margin-bottom:4px;"><i class="fas fa-file-lines" style="color:#0f766e;"></i> Relatório da Obra</div>
+                    <div class="help-text" style="margin-bottom:16px;">Qual versão precisas?</div>
+                    <button type="button" class="btn" style="width:100%;margin-bottom:8px;background:#f1f5f9;" onclick="document.getElementById('obraRelatorioEscolhaOverlay').remove(); gerarReportFinalObra('${obraId}', false);"><i class="fas fa-lock"></i> Interno (com custos e margens)</button>
+                    <button type="button" class="btn btn-primary" style="width:100%;margin-bottom:8px;" onclick="document.getElementById('obraRelatorioEscolhaOverlay').remove(); gerarReportFinalObra('${obraId}', true);"><i class="fas fa-user-tie"></i> Para o Cliente (sem valores)</button>
+                    <button type="button" class="btn" style="width:100%;background:#f1f5f9;" onclick="document.getElementById('obraRelatorioEscolhaOverlay').remove();">Cancelar</button>
+                </div>
+            `;
+            document.body.appendChild(wrap);
+        }
+        function gerarReportFinalObra(obraId, paraCliente) {
             const obra = (dados.obras || []).find(o => o.id === obraId); if (!obra) return;
             const doc = _novoPdf(false); if (!doc) return;
             const _concluidaTitulo = obra.estado === 'concluida';
-            let y = _pdfArmHeader(doc, _concluidaTitulo ? 'Relatório Final de Obra' : 'Relatório de Obra (em curso)', obra.nome);
+            let y = _pdfArmHeader(doc, (paraCliente ? 'Relatório de Obra — ' : (_concluidaTitulo ? 'Relatório Final de Obra (interno) — ' : 'Relatório de Obra em curso (interno) — ')) + (_concluidaTitulo ? 'Concluída' : 'Em curso'), obra.nome);
             const _corRel = _hexParaRgb(dados.administradores?.find(a => a.id === _tenantArmazem())?.corCorporativa);
 
             // Folhas sem descrição são tratadas como dados corrompidos/de teste — ficam de fora
@@ -14065,7 +14235,7 @@
             const matRows = _obraMatRows(obraId).filter(r => r.cons > 0 || r.prev > 0);
             const totalMateriais = matRows.reduce((s, r) => s + (r.valorConsumido || 0), 0);
 
-            if (usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin') {
+            if ((usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin') && !paraCliente) {
                 const valorFaturado = obra.valor != null ? Number(obra.valor) : (dados.servicos || []).filter(s => s.obraId === obraId).reduce((s, x) => s + (Number(x.valor) || 0), 0);
                 const custoMaoDeObra = obra.custoHora != null ? horas * Number(obra.custoHora) : null;
                 const custoTotal = custoMaoDeObra != null ? custoMaoDeObra + totalMateriais : null;
@@ -14073,9 +14243,10 @@
                 doc.setFontSize(12); doc.setTextColor(_corRel[0], _corRel[1], _corRel[2]); doc.text('Financeiro (uso interno — não incluir em relatórios ao cliente)', 14, y); y += 4;
                 const linhasFin = [
                     ['Valor faturado', _finEur(valorFaturado)],
-                    ['Custo/hora do funcionário', obra.custoHora != null ? _finEur(obra.custoHora) + '/h' : '— não definido —'],
+                    ['Mão de obra / h', obra.custoHora != null ? _finEur(obra.custoHora) + '/h' : '— não definido —'],
                     ['Custo de mão de obra (horas × custo/hora)', custoMaoDeObra != null ? _finEur(custoMaoDeObra) : '— sem custo/hora definido —'],
                     ['Custo de materiais consumidos', _finEur(totalMateriais)],
+                    ['Km percorridos (equipa)', _kmPercorridosObra(obraId).toLocaleString('pt-PT') + ' km'],
                     ['Custo total da obra (mão de obra + materiais)', custoTotal != null ? _finEur(custoTotal) : '— sem custo/hora definido —']
                 ];
                 if (custoTotal != null) {
@@ -14091,7 +14262,7 @@
                 y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y) + 10;
             }
 
-            if (usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin') {
+            if ((usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin') && !paraCliente) {
                 // Horas automáticas: junta picagem direta na obra + picagem via OS associada à obra
                 // (não depende de a folha de obra ter sido preenchida) — soma-se ao que vier das folhas,
                 // sem duplicar (evita contar duas vezes a mesma sessão).
@@ -14139,7 +14310,7 @@
             });
             y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y) + 10;
 
-            if ((usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin') && matRows.length) {
+            if ((usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin') && !paraCliente && matRows.length) {
                 if (y > 240) { doc.addPage(); y = 20; }
                 doc.setFontSize(12); doc.setTextColor(_corRel[0], _corRel[1], _corRel[2]); doc.text('Custo de materiais (uso interno)', 14, y); y += 4;
                 const linhasMat = matRows.map(r => [
@@ -14189,7 +14360,7 @@
                 y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y) + 10;
             }
 
-            doc.save(`relatorio_final_obra_${(obra.nome || 'obra').replace(/[^a-z0-9]+/gi, '_')}_${_hoje10()}.pdf`);
+            doc.save(`relatorio_${paraCliente ? 'cliente' : 'interno'}_obra_${(obra.nome || 'obra').replace(/[^a-z0-9]+/gi, '_')}_${_hoje10()}.pdf`);
         }
         let _picandoEntradaObraLonga = false;
         async function obraLongaPicarEntrada(obraId) {
@@ -14403,7 +14574,7 @@
             tb.innerHTML = lista.map(o => {
                 const nFolhas = (dados.folhasObra || []).filter(f => f.obraId === o.id).length;
                 const horas = totalHorasObra(o.id);
-                let acoes = `<button class="btn btn-sm" style="background:#334155;color:#fff;" onclick="abrirObraLongaDetalhe('${o.id}')" title="Ver Obra"><i class="fas fa-eye"></i> Ver Obra</button> <button class="btn btn-sm" style="background:#0f766e;color:#fff;" onclick="gerarReportFinalObra('${o.id}')" title="Relatório da obra"><i class="fas fa-file-lines"></i></button>`;
+                let acoes = `<button class="btn btn-sm" style="background:#334155;color:#fff;" onclick="abrirObraLongaDetalhe('${o.id}')" title="Ver Obra"><i class="fas fa-eye"></i> Ver Obra</button> <button class="btn btn-sm" style="background:#0f766e;color:#fff;" onclick="_obraEscolherRelatorio('${o.id}')" title="Relatório da obra"><i class="fas fa-file-lines"></i></button>`;
                 if (isAdminView) {
                     acoes += ` <button class="btn btn-sm btn-outline" onclick="abrirModalObraLonga('${o.id}')"><i class="fas fa-pen"></i></button>`;
                     if (o.estado !== 'concluida') acoes += ` <button class="btn btn-sm" style="background:#0f766e;color:#fff;" onclick="finalizarObraLonga('${o.id}')" title="Finalizar obra"><i class="fas fa-flag-checkered"></i> Finalizar</button>`;
@@ -14873,7 +15044,10 @@
                         </div>
                     `).join('')}</div>` : `<div class="tgm-alertas-ok"><i class="fas fa-circle-check"></i> Tudo em dia — sem alertas de momento.</div>`}
 
-                    <div class="tgm-eyebrow" style="margin-top:14px;">Equipa agora</div>
+                    <div class="tgm-eyebrow" style="margin-top:14px;display:flex;justify-content:space-between;align-items:center;">
+                        <span>Equipa agora</span>
+                        ${admin?.kmPontoGeralAtivo ? `<span style="color:#0ea5e9;font-weight:700;"><i class="fas fa-road"></i> ${_kmTotaisHoje(adminId, hoje).toLocaleString('pt-PT')} km hoje</span>` : ''}
+                    </div>
                     <div class="tgm-equipa-lista">${linhasEquipa || '<p class="tgm-vazio" style="margin:6px 0;">Sem equipa registada.</p>'}</div>
 
                     <div class="tgm-admin-rodape">
@@ -14898,10 +15072,14 @@
                 const nomes = idsAtrib.length ? idsAtrib.map(id => obterNomeFuncionario(id)).join(', ') : 'Sem ninguém atribuído';
                 const corEstado = s.status === 'concluído' ? '#16a34a' : s.status === 'em andamento' ? '#f59e0b' : s.status === 'stand by' ? '#94a3b8' : '#64748b';
                 const labelEstado = s.status === 'concluído' ? 'Concluído' : s.status === 'em andamento' ? 'Em andamento' : s.status === 'stand by' ? 'Stand By' : 'Pendente';
+                const kmOS = _kmPercorridosOS(s.id);
                 return `<div class="tgm-resumo-linha" onclick="abrirVerOS('${s.id}')">
                     <span class="tgm-mono tgm-resumo-hora">${s.hora || '--:--'}</span>
                     <span class="tgm-resumo-txt"><strong>${escapeHtmlSimples(obterNomeCliente(s.clienteId) || 'OS')}</strong> — ${escapeHtmlSimples(nomes)}</span>
-                    <span class="tgm-resumo-badge" style="background:${corEstado};">${labelEstado}</span>
+                    <span style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
+                        <span class="tgm-resumo-badge" style="background:${corEstado};">${labelEstado}</span>
+                        ${kmOS > 0 ? `<span style="font-size:.68rem;color:#0ea5e9;font-weight:600;"><i class="fas fa-road"></i> ${kmOS.toLocaleString('pt-PT')} km</span>` : ''}
+                    </span>
                 </div>`;
             };
             return `
@@ -15581,7 +15759,8 @@
                 <table style="width:100%;font-size:.86rem;margin-top:8px;">
                     <tbody>
                         <tr><td style="padding:4px 0;color:#64748b;">Total de horas trabalhadas</td><td style="padding:4px 0;text-align:right;font-weight:600;">${horas.toFixed(1)}h</td></tr>
-                        <tr><td style="padding:4px 0;color:#64748b;">Custo/hora do funcionário</td><td style="padding:4px 0;text-align:right;font-weight:600;">${obra.custoHora != null ? _finEur(obra.custoHora) + '/h' : '—'}</td></tr>
+                        <tr><td style="padding:4px 0;color:#64748b;">Mão de obra / h</td><td style="padding:4px 0;text-align:right;font-weight:600;">${obra.custoHora != null ? _finEur(obra.custoHora) + '/h' : '—'}</td></tr>
+                        <tr><td style="padding:4px 0;color:#64748b;">Km percorridos (equipa)</td><td style="padding:4px 0;text-align:right;font-weight:600;color:#0ea5e9;">${_kmPercorridosObra(obraId).toLocaleString('pt-PT')} km</td></tr>
                         <tr><td style="padding:4px 0;color:#64748b;">Custo total da obra</td><td style="padding:4px 0;text-align:right;font-weight:600;">${custoTotal != null ? _finEur(custoTotal) : '—'}</td></tr>
                     </tbody>
                 </table>
@@ -24000,7 +24179,7 @@ async function salvarAdmin(e) {
                                 <input type="number" id="ob_valor" step="0.01" min="0" value="${item && item.valor != null ? item.valor : ''}" placeholder="opcional" />
                                 <div class="help-text">O que vai ser cobrado ao cliente por esta obra.</div>
                             </div>
-                            <div class="form-group"><label>Custo/hora do funcionário (€)</label>
+                            <div class="form-group"><label>Mão de obra / h (€)</label>
                                 <input type="number" id="ob_custo_hora" step="0.01" min="0" value="${item && item.custoHora != null ? item.custoHora : ''}" placeholder="ex: 12.50" />
                                 <div class="help-text">Usado para calcular o custo real da obra (horas das folhas de obra × este valor). Só visível para a empresa, nunca para o cliente.</div>
                             </div>
@@ -24984,8 +25163,7 @@ async function salvarAdmin(e) {
                         const cont = dados.contratos?.find(c => c.id === osv.contratoId);
                         if (cont) {
                             obj.contratoId = cont.id;
-                            const meses = PERIODICIDADE_MESES[cont.periodicidade] || 12;
-                            const proximaData = addMeses(obj.data || getDataHoje(), meses);
+                            const proximaData = avancarPeriodicidade(obj.data || getDataHoje(), cont.periodicidade);
                             dados.registosManutencao = dados.registosManutencao || [];
                             dados.registosManutencao.push({
                                 id: gerarId(), adminId: cont.adminId, contratoId: cont.id, equipamentoId: cont.equipamentoId,
@@ -28911,15 +29089,37 @@ window._relPrefill = function(msg){
             setTimeout(_initSlideEntrada, 30);
         }
 
+        // Localização partilhada por toda a app — evita que cada funcionalidade (tempo, ponto,
+        // quiosque, etc.) peça o GPS por sua conta, cada uma na sua vez. Guarda o último ponto
+        // durante 5 minutos: pedidos dentro desse tempo reaproveitam o mesmo resultado; passado
+        // esse tempo, volta a pedir sozinha, para a localização se manter atualizada sem incomodar
+        // com pedidos repetidos em sequência. Chamadas em simultâneo partilham o mesmo pedido.
+        let _obterLocalizacaoCache = null; // { quando, valor }
+        let _obterLocalizacaoEmCurso = null;
         function obterLocalizacao(timeoutMs) {
-            return new Promise(resolve => {
-                if (!navigator.geolocation) { resolve(null); return; }
+            const agora = Date.now();
+            if (_obterLocalizacaoCache && (agora - _obterLocalizacaoCache.quando) < 5 * 60 * 1000) {
+                return Promise.resolve(_obterLocalizacaoCache.valor);
+            }
+            if (_obterLocalizacaoEmCurso) return _obterLocalizacaoEmCurso; // já há um pedido a decorrer — aproveita-o
+            _obterLocalizacaoEmCurso = new Promise(resolve => {
+                if (!navigator.geolocation) { _obterLocalizacaoEmCurso = null; resolve(null); return; }
                 navigator.geolocation.getCurrentPosition(
-                    pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-                    err => { console.warn('GPS indisponível:', err && err.message); resolve(null); },
+                    pos => {
+                        const valor = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                        _obterLocalizacaoCache = { quando: Date.now(), valor };
+                        _obterLocalizacaoEmCurso = null;
+                        resolve(valor);
+                    },
+                    err => {
+                        console.warn('GPS indisponível:', err && err.message);
+                        _obterLocalizacaoEmCurso = null;
+                        resolve(null);
+                    },
                     { enableHighAccuracy: true, timeout: timeoutMs || 8000, maximumAge: 60000 }
                 );
             });
+            return _obterLocalizacaoEmCurso;
         }
 
         async function confirmarEntradaPonto() {
