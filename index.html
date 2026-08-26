@@ -9366,6 +9366,35 @@
                 }
                 campo('Trabalho realizado', f.descricao);
                 campo('Materiais', f.materiais);
+                if (tipo === 'empresa') {
+                    // Materiais efetivamente consumidos nesta folha, com valores — só na versão
+                    // interna. A folha do cliente mostra só o texto livre acima, sem preços.
+                    const movsFolha = (dados.movimentosStock || []).filter(m => m.origemTipo === 'folha' && m.origemId === f.id && m.tipo === 'saida');
+                    if (movsFolha.length) {
+                        const porArtigoFolha = {};
+                        movsFolha.forEach(m => { porArtigoFolha[m.artigoId] = (porArtigoFolha[m.artigoId] || 0) + (Number(m.quantidade) || 0); });
+                        let totalMatFolha = 0;
+                        const linhasMatFolha = Object.entries(porArtigoFolha).map(([artigoId, qtd]) => {
+                            const art = dados.artigos?.find(a => a.id === artigoId);
+                            const preco = art?.precoCompra != null ? Number(art.precoCompra) : null;
+                            const valor = preco != null ? preco * qtd : null;
+                            if (valor != null) totalMatFolha += valor;
+                            return [art ? art.nome : '(artigo removido)', qtd + ' ' + (art?.unidade || 'un'), preco != null ? _finEur(preco) : 'sem preço', valor != null ? _finEur(valor) : '—'];
+                        });
+                        if (y > 240) { doc.addPage(); y = 20; }
+                        doc.setFontSize(9); doc.setTextColor(153, 27, 27); doc.setFont(undefined, 'bold');
+                        doc.text('MATERIAIS CONSUMIDOS — CUSTO (USO INTERNO)', 15, y); y += 4;
+                        doc.autoTable({
+                            startY: y, head: [['Artigo', 'Quantidade', 'Preço de custo', 'Valor']], body: linhasMatFolha,
+                            styles: { fontSize: 9, cellPadding: 2 }, headStyles: { fillColor: [153, 27, 27] },
+                            didParseCell: function (d) { if (d.section === 'body' && d.column.index === 2 && linhasMatFolha[d.row.index][2] === 'sem preço') { d.cell.styles.textColor = [217, 119, 6]; d.cell.styles.fontStyle = 'italic'; } }
+                        });
+                        y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y) + 4;
+                        doc.setFontSize(10); doc.setTextColor(153, 27, 27); doc.setFont(undefined, 'bold');
+                        doc.text('Total materiais: ' + _finEur(totalMatFolha), 195, y, { align: 'right' }); y += 10;
+                        doc.setFont(undefined, 'normal');
+                    }
+                }
                 if (tipo === 'empresa' && custoTotal != null) {
                     doc.setFillColor(254, 242, 242);
                     doc.roundedRect(15, y, 180, 14, 2, 2, 'F');
@@ -25872,29 +25901,39 @@ async function salvarAdmin(e) {
                     return;
                 }
                 if ((dados.ponto || []).find(p => p.servicoId === os.id && p.funcionarioId === usuarioLogado.id && p.entrada && !p.saida)) { alert('Já tens uma entrada em aberto para esta OS.'); return; }
-                _checklistEntradaVerificar(adminId, () => {
-                abrirSliderConfirmacao('Confirmar entrada', 'Vais dar entrada na OS' + (os.numeroRegisto ? ' #' + os.numeroRegisto : '') + ' — ' + (os.descricao || _nomeClienteOS(os.clienteId)) + '.', () => {
-                    dados.ponto = dados.ponto || [];
-                    dados.ponto.push({
-                        id: gerarId(), funcionarioId: usuarioLogado.id, adminId, data: hoje, entrada: hora, saida: null,
-                        obraDescricao: os.descricao || _nomeClienteOS(os.clienteId), servicoId: os.id, clienteId: os.clienteId,
-                        lat: loc?.lat ?? null, lng: loc?.lng ?? null
+                const adminObjEnt = dados.administradores?.find(a => a.id === adminId);
+                const _prosseguirEntradaOS = (kmEnt) => {
+                    _checklistEntradaVerificar(adminId, () => {
+                    abrirSliderConfirmacao('Confirmar entrada', 'Vais dar entrada na OS' + (os.numeroRegisto ? ' #' + os.numeroRegisto : '') + ' — ' + (os.descricao || _nomeClienteOS(os.clienteId)) + '.', () => {
+                        dados.ponto = dados.ponto || [];
+                        dados.ponto.push({
+                            id: gerarId(), funcionarioId: usuarioLogado.id, adminId, data: hoje, entrada: hora, saida: null,
+                            obraDescricao: os.descricao || _nomeClienteOS(os.clienteId), servicoId: os.id, clienteId: os.clienteId,
+                            lat: loc?.lat ?? null, lng: loc?.lng ?? null, kmInicio: kmEnt ?? null
+                        });
+                        // Regresso do almoço para esta mesma OS — reabre logo também o relógio de
+                        // ponto geral, sem precisar de ir picar entrada à parte no Registo de Ponto.
+                        if (voltaDeAlmocoOS) {
+                            dados.ponto.push({ id: gerarId(), funcionarioId: usuarioLogado.id, adminId, data: hoje, entrada: hora, saida: null, lat: loc?.lat ?? null, lng: loc?.lng ?? null });
+                        }
+                        if (os.status !== 'concluído') os.status = 'em andamento';
+                        guardarDados(dados);
+                        renderizarTudo();
+                        alert('✅ Entrada picada nesta obra às ' + hora + '. Estado da OS passou para "Em andamento".' + (voltaDeAlmocoOS ? '\n\n🍽️ Regresso do almoço — o relógio de ponto geral também voltou a contar automaticamente.' : ''));
                     });
-                    // Regresso do almoço para esta mesma OS — reabre logo também o relógio de
-                    // ponto geral, sem precisar de ir picar entrada à parte no Registo de Ponto.
-                    if (voltaDeAlmocoOS) {
-                        dados.ponto.push({ id: gerarId(), funcionarioId: usuarioLogado.id, adminId, data: hoje, entrada: hora, saida: null, lat: loc?.lat ?? null, lng: loc?.lng ?? null });
-                    }
-                    if (os.status !== 'concluído') os.status = 'em andamento';
-                    guardarDados(dados);
-                    renderizarTudo();
-                    alert('✅ Entrada picada nesta obra às ' + hora + '. Estado da OS passou para "Em andamento".' + (voltaDeAlmocoOS ? '\n\n🍽️ Regresso do almoço — o relógio de ponto geral também voltou a contar automaticamente.' : ''));
-                });
-                }, { tipo: 'servico', id: os.id });
+                    }, { tipo: 'servico', id: os.id });
+                };
+                if (adminObjEnt?.kmPorOsAtivo) {
+                    _kmPedirRegisto(usuarioLogado.id, 'Entrada em OS', (km) => _prosseguirEntradaOS(km));
+                } else {
+                    _prosseguirEntradaOS(null);
+                }
                 return;
             } else {
                 const aberto = (dados.ponto || []).find(p => p.servicoId === os.id && p.funcionarioId === usuarioLogado.id && p.entrada && !p.saida);
                 if (!aberto) { alert('Não há entrada em aberto para esta OS.'); return; }
+                const adminObjSai = dados.administradores?.find(a => a.id === adminId);
+                const _prosseguirSaidaOS = async (kmSai) => {
                 aberto.saida = hora;
                 if (loc) { aberto.latSaida = loc.lat; aberto.lngSaida = loc.lng; }
                 const resposta = await perguntarSaidaObra('Saída picada às ' + hora + '.\n\nTerminaste a obra?');
@@ -25907,6 +25946,7 @@ async function salvarAdmin(e) {
                     return;
                 }
                 if (resposta === 'almoco') {
+                    // A pausa de almoço não conta para os km da OS — não guarda kmFim aqui.
                     aberto.pausaAlmoco = true;
                     os.status = 'pausa para almoço';
                     // A pausa de almoço é da pessoa, não só desta OS — se houver um registo geral
@@ -25926,6 +25966,7 @@ async function salvarAdmin(e) {
                 }
                 guardarDados(dados);
                 if (resposta === false) {
+                    if (kmSai != null) aberto.kmFim = kmSai;
                     _checklistSaidaVerificar(adminId, () => {
                         alert('✅ Saída picada às ' + hora + '.');
                         renderizarAgendaObras();
@@ -25933,6 +25974,7 @@ async function salvarAdmin(e) {
                     }, { tipo: 'servico', id: os.id });
                     return;
                 }
+                if (kmSai != null) aberto.kmFim = kmSai;
                 const idsAtribOS = (os.funcionariosIds && os.funcionariosIds.length) ? os.funcionariosIds : [os.funcionarioId].filter(Boolean);
                 const souResponsavelFolha = idsAtribOS.length <= 1 || !os.relatorioResponsavelId || os.relatorioResponsavelId === usuarioLogado.id;
                 if (!souResponsavelFolha) {
@@ -25950,6 +25992,13 @@ async function salvarAdmin(e) {
                     await tgAlert('💶 Não te esqueças de receber o pagamento de ' + _valorTxtLembrete + ' correspondente à OS ' + (os.numeroRegisto ? 'nº ' + os.numeroRegisto : '') + '.', { titulo: 'Pagamento no local', tipo: 'aviso', icone: 'fa-euro-sign' });
                 }
                 criarFolhaDaOS(osId);
+                return;
+                }; // fim de _prosseguirSaidaOS
+                if (adminObjSai?.kmPorOsAtivo) {
+                    _kmPedirRegisto(usuarioLogado.id, 'Saída de OS', (km) => _prosseguirSaidaOS(km));
+                } else {
+                    _prosseguirSaidaOS(null);
+                }
                 return;
             }
             renderizarAgendaObras();
