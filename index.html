@@ -2189,7 +2189,7 @@
         </div>
         <div class="table-wrapper">
             <table>
-                <thead><tr><th>Data</th><th>Fornecedor</th><th>Obra</th><th>Itens</th><th>Total</th><th>Estado</th><th>Ações</th></tr></thead>
+                <thead><tr><th>Nº</th><th>Data</th><th>Fornecedor</th><th>Obra</th><th>Itens</th><th>Total</th><th>Estado</th><th>Ações</th></tr></thead>
                 <tbody id="tabelaEncomendas"></tbody>
             </table>
         </div>
@@ -3370,8 +3370,8 @@
             },
             encomendas: {
                 tabela: 'encomendas',
-                from: r => ({ id: r.id, adminId: r.admin_id, fornecedorId: r.fornecedor_id, obraId: r.obra_id, data: r.data, estado: r.estado, observacoes: r.observacoes, fatura: r.fatura, faturaNome: r.fatura_nome, compraMoloniId: r.compra_moloni_id || null, dataCriacao: isoToMs(r.data_criacao) }),
-                to:   o => ({ id: o.id, admin_id: o.adminId, fornecedor_id: o.fornecedorId || null, obra_id: o.obraId || null, data: nn(o.data), estado: o.estado || 'pendente', observacoes: o.observacoes || null, fatura: o.fatura || null, fatura_nome: o.faturaNome || null, compra_moloni_id: o.compraMoloniId || null, data_criacao: msToISO(o.dataCriacao) })
+                from: r => ({ id: r.id, adminId: r.admin_id, numero: r.numero || null, fornecedorId: r.fornecedor_id, obraId: r.obra_id, data: r.data, estado: r.estado, observacoes: r.observacoes, fatura: r.fatura, faturaNome: r.fatura_nome, compraMoloniId: r.compra_moloni_id || null, dataCriacao: isoToMs(r.data_criacao) }),
+                to:   o => ({ id: o.id, admin_id: o.adminId, numero: o.numero || null, fornecedor_id: o.fornecedorId || null, obra_id: o.obraId || null, data: nn(o.data), estado: o.estado || 'pendente', observacoes: o.observacoes || null, fatura: o.fatura || null, fatura_nome: o.faturaNome || null, compra_moloni_id: o.compraMoloniId || null, data_criacao: msToISO(o.dataCriacao) })
             },
             encomendaItens: {
                 tabela: 'encomenda_itens',
@@ -7002,7 +7002,7 @@
                                 <button class="btn btn-sm btn-renovar" onclick="solicitarContratos('anual')"><i class="fas fa-sync-alt"></i> Renovar Anual — ${PRECO_CONTRATOS_ANUAL.toFixed(2)} €</button>
                             </div>`) : ''}
                         </div>`
-                : `<div style="margin-top:14px; padding:12px; background:#f1f5f9; border-radius:8px;">
+                : `<div style="margin-top:14px; padding:12px; background:#f1f5f9; border-radius:8px; text-align:left;">
                             <strong>Contratos de Manutenção</strong> <span class="badge" style="background:#94a3b8;color:#fff;">Inativo</span>
                             <div style="margin-top:8px; font-size:13px; color:#475569;">Ative o módulo para gerir contratos de manutenção. A ativação é feita pelo Super Admin após confirmação do pagamento.</div>
                             ${contratoPedidoPend ? blocoInstrucoesPagamento(contratoPedidoPend) : ''}
@@ -7020,7 +7020,7 @@
                                 <button class="btn btn-sm btn-renovar" onclick="solicitarFrota('anual')"><i class="fas fa-sync-alt"></i> Renovar Anual — ${PRECO_FROTA_ANUAL.toFixed(2)} €</button>
                             </div>`) : ''}
                         </div>`
-                : `<div style="margin-top:14px; padding:12px; background:#f1f5f9; border-radius:8px;">
+                : `<div style="margin-top:14px; padding:12px; background:#f1f5f9; border-radius:8px; text-align:left;">
                             <strong>Frota</strong> <span class="badge" style="background:#94a3b8;color:#fff;">Inativo</span>
                             <div style="margin-top:8px; font-size:13px; color:#475569;">Ative o módulo para gerir a frota de veículos. A ativação é feita pelo Super Admin após confirmação do pagamento.</div>
                             ${frotaPedidoPend ? blocoInstrucoesPagamento(frotaPedidoPend) : ''}
@@ -7038,7 +7038,7 @@
                                 <button class="btn btn-sm btn-renovar" onclick="solicitarArmazem('anual')"><i class="fas fa-sync-alt"></i> Renovar Anual — ${PRECO_ARMAZEM_ANUAL.toFixed(2)} €</button>
                             </div>`) : ''}
                         </div>`
-                : `<div style="margin-top:14px; padding:12px; background:#f1f5f9; border-radius:8px;">
+                : `<div style="margin-top:14px; padding:12px; background:#f1f5f9; border-radius:8px; text-align:left;">
                             <strong>Armazém / Stock / Gestão de Obras</strong> <span class="badge" style="background:#94a3b8;color:#fff;">Inativo</span>
                             <div style="margin-top:8px; font-size:13px; color:#475569;">Add-on de gestão de stock: artigos, fornecedores, obras, encomendas e planos de materiais. A ativação é feita pelo Super Admin após confirmação do pagamento.</div>
                             ${armazemPedidoPend ? blocoInstrucoesPagamento(armazemPedidoPend) : ''}
@@ -7058,12 +7058,12 @@
                                 <button class="btn btn-sm btn-renovar" onclick="solicitarCrm('anual')"><i class="fas fa-sync-alt"></i> Renovar Anual — ${PRECO_CRM_ANUAL.toFixed(2)} €</button>
                             </div>`) : ''}
                         </div>`
-                : `<div style="margin-top:14px; padding:12px; background:#f1f5f9; border-radius:8px;">
+                : `<div style="margin-top:14px; padding:12px; background:#f1f5f9; border-radius:8px; text-align:left;">
                             <strong>CRM Comercial + Assist</strong> <span class="badge" style="background:#7c3aed;color:#fff;">Inativo</span>
                             <div style="margin-top:8px; font-size:13px; color:#475569;">Gestão do ciclo comercial completo — leads, pipeline, propostas, mapa de visitas e conversão automática em cliente/contrato assim que um negócio é ganho — mais o Total Gest Assist (pedidos de suporte e assistência técnica com criação direta de OS), incluído sem custo extra. A ativação é feita pelo Super Admin após confirmação do pagamento.</div>
                             ${crmPedidoPend ? blocoInstrucoesPagamento(crmPedidoPend) : ''}
                         </div>`;
-            const erpBloco = `<div style="margin-top:14px; padding:12px; background:#f1f5f9; border-radius:8px; opacity:.85;">
+            const erpBloco = `<div style="margin-top:14px; padding:12px; background:#f1f5f9; border-radius:8px; text-align:left; opacity:.85;">
                         <strong>Integração com ERP's</strong> <span class="badge" style="background:#0891b2;color:#fff;">Em breve</span>
                         <div style="margin-top:8px; font-size:13px; color:#475569;">Emite faturas diretamente na Moloni (e futuramente noutros ERPs) a partir das Ordens de Serviço concluídas — cliente, valor e descrição enviados automaticamente. Fala com a Total Gest se quiseres ser dos primeiros a testar.</div>
                     </div>`;
@@ -7074,7 +7074,7 @@
                 ? `<div style="margin-top:10px;">
                             <div class="report-item"><span>Rondas / Vigilância</span><span class="licenca-ativa">Ativo — ${admin.rondasPlano === 'demo' ? 'Demo' : admin.rondasPlano === 'anual' ? 'Anual' : 'Mensal'} (até ${rondasExp}) — grátis</span></div>
                         </div>`
-                : `<div style="margin-top:14px; padding:12px; background:#f1f5f9; border-radius:8px;">
+                : `<div style="margin-top:14px; padding:12px; background:#f1f5f9; border-radius:8px; text-align:left;">
                             <strong>Rondas / Vigilância</strong> <span class="badge" style="background:#0f766e;color:#fff;">Novo — Grátis temporário</span>
                             <div style="margin-top:8px; font-size:13px; color:#475569;">Gestão de rondas de segurança: postos com QR/NFC, rotas com horário e SLA, execução com scanner no telemóvel e alertas automáticos de postos saltados ou fora de horário. Grátis por agora, fase de lançamento.</div>
                             ${rondasPedidoPend
@@ -7126,7 +7126,7 @@
                             </div>`;
                         })()}
                         ${(!isDemo && (!modAtivo || !frotaAtivo || !armazemAtivo || !crmAtivo)) ? `
-                        <div style="margin-top:16px;">
+                        <div style="margin-top:16px;text-align:left;">
                             <button class="btn btn-sm" style="background:#0f766e;color:#fff;" onclick="_ativAddonsAbrir()"><i class="fas fa-puzzle-piece"></i> Ativar Add-ons</button>
                         </div>
                         ` : ''}
@@ -14166,18 +14166,77 @@
                         ? '<span style="color:#ea580c;font-weight:700;">Parcial</span>'
                         : '<span style="color:#d97706;font-weight:700;">Pendente</span>';
                 const acoes = `<button class="btn btn-sm btn-outline" onclick="abrirModal('encomenda','${e.id}')" title="${recebida ? 'Ver' : 'Editar'}"><i class="fas fa-${recebida ? 'eye' : 'pen'}"></i></button>`
+                    + ` <button class="btn btn-sm btn-outline" onclick="gerarNotaEncomenda('${e.id}')" title="Gerar Nota de Encomenda (PDF)"><i class="fas fa-file-invoice"></i></button>`
+                    + (_nomeFornecedorTemEmail(e.fornecedorId) ? ` <button class="btn btn-sm btn-outline" style="color:#2563eb;" onclick="enviarNotaEncomendaEmail('${e.id}')" title="Enviar por email ao fornecedor"><i class="fas fa-envelope"></i></button>` : '')
                     + (recebida ? '' : ` <button class="btn btn-sm btn-success" onclick="abrirReceberEncomenda('${e.id}')" title="${parcial ? 'Continuar receção (falta material)' : 'Receber (entra em stock)'}"><i class="fas fa-box-open"></i></button>`)
                     + (e.fatura ? ` <button class="btn btn-sm btn-outline" onclick="verFaturaEncomenda('${e.id}')" title="Ver fatura"><i class="fas fa-file-alt"></i></button>` : '')
                     + ` <button class="btn btn-sm btn-danger" onclick="eliminarEncomenda('${e.id}')"><i class="fas fa-trash"></i></button>`;
                 return `<tr>
-                    <td>${e.data || '—'}</td><td>${escapeHtmlSimples(_nomeFornecedor(e.fornecedorId))}</td><td>${e.obraId ? escapeHtmlSimples(_nomeObraStock(e.obraId)) : '—'}</td><td>${itens.length}</td>
+                    <td>${e.numero ? `<strong>${escapeHtmlSimples(e.numero)}</strong>` : '—'}</td><td>${e.data || '—'}</td><td>${escapeHtmlSimples(_nomeFornecedor(e.fornecedorId))}</td><td>${e.obraId ? escapeHtmlSimples(_nomeObraStock(e.obraId)) : '—'}</td><td>${itens.length}</td>
                     <td>${total ? total.toFixed(2) + ' €' : '—'}</td><td>${estBadge}</td><td>${acoes}</td>
                 </tr>`;
-            }).join('') : '<tr><td colspan="6" style="text-align:center;color:#94a3b8;">Sem encomendas.</td></tr>';
+            }).join('') : '<tr><td colspan="7" style="text-align:center;color:#94a3b8;">Sem encomendas.</td></tr>';
             const c = document.getElementById('countEncomendas'); if (c) c.textContent = lista.length;
             const cp = document.getElementById('countEncPend'); if (cp) cp.textContent = pend;
         }
 
+        function _nomeFornecedorTemEmail(fornecedorId) {
+            const f = dados.fornecedores?.find(x => x.id === fornecedorId);
+            return !!(f && f.email && f.email.trim());
+        }
+        // Monta o PDF da Nota de Encomenda — reaproveitado tanto para descarregar como para
+        // anexar ao email enviado ao fornecedor, para nunca haver diferenças entre os dois.
+        function _montarPdfNotaEncomenda(encId) {
+            const e = dados.encomendas?.find(x => x.id === encId); if (!e) return null;
+            const doc = _novoPdf(false); if (!doc) return null;
+            const fornecedor = dados.fornecedores?.find(f => f.id === e.fornecedorId);
+            const itens = (dados.encomendaItens || []).filter(i => i.encomendaId === encId);
+            let y = _pdfArmHeader(doc, 'Nota de Encomenda', e.numero || '');
+            doc.setFontSize(10); doc.setTextColor(30, 30, 30);
+            if (fornecedor) {
+                doc.text('Fornecedor: ' + (fornecedor.nome || '-'), 14, y); y += 5;
+                if (fornecedor.nif) { doc.text('NIF: ' + fornecedor.nif, 14, y); y += 5; }
+                if (fornecedor.contacto) { doc.text('Contacto: ' + fornecedor.contacto, 14, y); y += 5; }
+            }
+            if (e.obraId) { doc.text('Obra: ' + (_nomeObraStock(e.obraId) || '-'), 14, y); y += 5; }
+            y += 3;
+            const linhas = itens.map(i => {
+                const art = dados.artigos?.find(a => a.id === i.artigoId);
+                const preco = i.precoUnit != null ? Number(i.precoUnit) : null;
+                const subtotal = preco != null ? preco * (Number(i.quantidade) || 0) : null;
+                return [art ? art.nome : '(artigo removido)', (i.quantidade || 0) + ' ' + (art?.unidade || 'un'), preco != null ? preco.toFixed(2) + ' €' : '—', subtotal != null ? subtotal.toFixed(2) + ' €' : '—'];
+            });
+            doc.autoTable({ startY: y, head: [['Artigo', 'Quantidade', 'Preço unit.', 'Subtotal']], body: linhas, styles: { fontSize: 9, cellPadding: 2 }, headStyles: { fillColor: [26, 95, 122] } });
+            y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y) + 6;
+            const total = itens.reduce((s, i) => s + (Number(i.quantidade) || 0) * (Number(i.precoUnit) || 0), 0);
+            doc.setFontSize(11); doc.setFont(undefined, 'bold');
+            doc.text('Total estimado: ' + total.toFixed(2) + ' €', 195, y, { align: 'right' });
+            doc.setFont(undefined, 'normal');
+            if (e.observacoes) { y += 10; doc.setFontSize(9); doc.setTextColor(90, 90, 90); const linhasObs = doc.splitTextToSize('Observações: ' + e.observacoes, 180); doc.text(linhasObs, 14, y); }
+            return doc;
+        }
+        function gerarNotaEncomenda(encId) {
+            const e = dados.encomendas?.find(x => x.id === encId); if (!e) return;
+            const doc = _montarPdfNotaEncomenda(encId); if (!doc) return;
+            doc.save((e.numero || 'nota_encomenda') + '.pdf');
+        }
+        // Não envia nada pelo nosso servidor — descarrega o PDF e abre o programa de email do
+        // próprio computador (Outlook, Mail, Gmail no browser, etc.) já com o destinatário e
+        // assunto preenchidos. Um "mailto:" não consegue anexar ficheiros sozinho (limitação do
+        // próprio email, não da app) — por isso o PDF descarrega-se primeiro, e a pessoa só
+        // precisa de o arrastar para o email que já vai abrir a seguir.
+        function enviarNotaEncomendaEmail(encId) {
+            const e = dados.encomendas?.find(x => x.id === encId); if (!e) return;
+            const fornecedor = dados.fornecedores?.find(f => f.id === e.fornecedorId);
+            if (!fornecedor?.email) { alert('Este fornecedor não tem email registado.'); return; }
+            const doc = _montarPdfNotaEncomenda(encId); if (!doc) return;
+            const nomeFicheiro = (e.numero || 'nota_encomenda') + '.pdf';
+            doc.save(nomeFicheiro);
+            const assunto = encodeURIComponent('Nota de Encomenda ' + (e.numero || ''));
+            const corpo = encodeURIComponent('Boa tarde,\n\nSegue em anexo a Nota de Encomenda ' + (e.numero || '') + '.\n\n(O ficheiro "' + nomeFicheiro + '" foi descarregado agora — anexe-o antes de enviar.)\n\nCom os melhores cumprimentos,');
+            alert('📄 PDF descarregado ("' + nomeFicheiro + '"). Vais agora abrir o teu programa de email — não te esqueças de anexar esse ficheiro antes de enviar.');
+            window.location.href = 'mailto:' + fornecedor.email + '?subject=' + assunto + '&body=' + corpo;
+        }
         function _horasObraPorFuncionario(obraId) {
             // Junta as duas fontes possíveis de picagem real de uma obra:
             // 1) picagem direta na obra (botão "Picar entrada" do cartão de obra de longa duração)
@@ -16598,7 +16657,12 @@
                 dados.encomendaItens = (dados.encomendaItens || []).filter(i => i.encomendaId !== encId);
             } else {
                 encId = gerarId();
-                (dados.encomendas = dados.encomendas || []).push({ id: encId, adminId, fornecedorId, obraId, data, estado: 'pendente', observacoes: obs, dataCriacao: Date.now() });
+                // Numeração por fornecedor: ENC-{Fornecedor}-001, 002, ... — conta quantas
+                // encomendas este fornecedor já teve nesta empresa, e usa a seguinte.
+                const nomeFornecedorSlug = (_nomeFornecedor(fornecedorId) || 'FORN').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9]+/g, '').toUpperCase().slice(0, 12) || 'FORN';
+                const seqFornecedor = (dados.encomendas || []).filter(e => e.adminId === adminId && e.fornecedorId === fornecedorId).length + 1;
+                const numeroEnc = 'ENC-' + nomeFornecedorSlug + '-' + String(seqFornecedor).padStart(3, '0');
+                (dados.encomendas = dados.encomendas || []).push({ id: encId, adminId, numero: numeroEnc, fornecedorId, obraId, data, estado: 'pendente', observacoes: obs, dataCriacao: Date.now() });
             }
             itens.forEach(it => {
                 (dados.encomendaItens = dados.encomendaItens || []).push({ id: it.id || gerarId(), adminId, encomendaId: encId, artigoId: it.artigoId, obraId: obraId || null, quantidade: parseInt(it.quantidade, 10) || 0, precoUnit: (it.precoUnit === '' || it.precoUnit == null) ? null : Number(it.precoUnit) });
