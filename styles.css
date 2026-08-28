@@ -853,6 +853,9 @@
         .agenda-mes-os.pendente { border-left-color:#dc2626; }
         .agenda-mes-os.andamento { border-left-color:#facc15; animation: agPiscar 1s ease-in-out infinite; }
         .agenda-col { background:#f8fafc; border:1px solid #e6eaf2; border-radius:10px; padding:8px; min-height:120px; }
+        body.dark-mode .agenda-col { background:#0f172a; border-color:#334155; }
+        body.dark-mode .agenda-col-h { color:#e2e8f0; }
+        body.dark-mode .agenda-vazio { color:#64748b; }
         .agenda-col.agenda-hoje { border-color:#f4520e; border-width:3px; box-shadow:0 0 0 2px rgba(244,82,14,.18); }
         .agenda-col-h { font-weight:700; font-size:.82rem; color:#152a52; margin-bottom:6px; text-align:center; display:flex; align-items:center; justify-content:center; gap:6px; }
         .agenda-col-h span.dnum { color:#94a3b8; font-weight:500; }
@@ -1027,7 +1030,18 @@
         body.dark-mode #tabelaCalendarioEquipa th { color:#e2e8f0; border-color:#334155; }
         body.dark-mode #tabelaCalendarioEquipa { color:#e2e8f0; }
         body.dark-mode #secao-agenda-obras .card-principal { background:#141c2e !important; color:#e2e8f0 !important; }
-        body.dark-mode .agenda-os { background:#141c2e; border-color:#334155; color:#e2e8f0; }
+        body.dark-mode .agenda-os { background:#141c2e; border-color:#e2e8f0; color:#e2e8f0; }
+        body.dark-mode .agenda-os.bloqueada { background:#141c2e; }
+        body.dark-mode .agenda-os.bloqueada select, body.dark-mode .agenda-os.bloqueada input { background:#1e293b; color:#64748b; }
+        /* Borda do cartão reflete o estado da OS — branca por defeito (pendente), só muda de
+           cor consoante o estado real. O conflito (sobreposição de horário) continua a usar o
+           contorno vermelho por cima disto, através do box-shadow já existente. */
+        body.dark-mode .agenda-os.ag-est-concluido { border-color:#16a34a; }
+        body.dark-mode .agenda-os.ag-est-andamento { border-color:#f59e0b; }
+        body.dark-mode .agenda-os.ag-est-standby { border-color:#94a3b8; }
+        body.dark-mode .agenda-os.ag-est-pausa-almoco { border-color:#eab308; }
+        body.dark-mode .agenda-os.ag-est-pendente { border-color:#fff; }
+        body.dark-mode .ag-atribuidos { background:#1e293b; color:#e2e8f0 !important; }
         body.dark-mode .agenda-os-hora { background:#1e293b; color:#e2e8f0; }
         body.dark-mode .agenda-os [style*="background:#f8fafc"] { background:#1e293b !important; color:#e2e8f0 !important; }
         body.dark-mode .agenda-os input[type="date"],

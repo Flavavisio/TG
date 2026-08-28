@@ -79,6 +79,25 @@
     #tgSidebarNav .tg-nav-grupo-btn.ativo i:not(.chev) {
         color: #f4520e !important;
     }
+    /* Modo escuro — o bloco acima usa !important com cor fixa, por isso precisa de ser
+       sobreposto aqui mesmo (mais abaixo no documento, com a mesma força !important),
+       senão nunca tem efeito nenhum no menu lateral em modo noite. */
+    body.dark-mode #tgSidebarNav .tg-nav-item,
+    body.dark-mode #tgSidebarNav .tg-nav-grupo-btn {
+        color: #22d3ee !important;
+    }
+    body.dark-mode #tgSidebarNav .tg-nav-item i,
+    body.dark-mode #tgSidebarNav .tg-nav-grupo-btn i:not(.chev) {
+        color: #22d3ee !important;
+    }
+    body.dark-mode #tgSidebarNav .tg-nav-item.ativo,
+    body.dark-mode #tgSidebarNav .tg-nav-grupo-btn.ativo {
+        color: #f4520e !important;
+    }
+    body.dark-mode #tgSidebarNav .tg-nav-item.ativo i,
+    body.dark-mode #tgSidebarNav .tg-nav-grupo-btn.ativo i:not(.chev) {
+        color: #f4520e !important;
+    }
     #tgSidebarNav .tg-nav-grupo-btn { width: 100%; text-align: left; background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 10px; }
     #tgSidebarNav .tg-nav-grupo-btn .chev { margin-left: auto; font-size: .75rem; color: #94a3b8 !important; transition: transform .15s; }
     #tgSidebarNav .tg-nav-grupo-btn.aberto .chev { transform: rotate(90deg); }
@@ -1368,15 +1387,15 @@
                         <div class="icon"><i class="fas fa-diagram-project"></i></div>
                         <div class="info"><h3>Distribuição</h3><p>Cria e gere os teus próprios clientes</p></div>
                     </div>
-                    <div class="card-principal" id="cardERP" data-card="erp" onclick="abrirSecao('financeiro'); setTimeout(abrirConfigFaturacao, 150);">
-                        <div class="icon"><i class="fas fa-plug"></i></div>
-                        <div class="info"><h3>Integração com ERP's <span id="erpBadgeEmBreve" class="badge" style="background:#0891b2;color:#fff;font-size:.65rem;vertical-align:middle;">Em breve ADD-ON licença</span></h3><p>Faturação automática (Moloni e outros)</p></div>
-                    </div>
                 </div>
             </div>
             <div class="grupo-cards" data-grupo="gestao">
                 <div class="grupo-header"><h3><i class="fas fa-landmark"></i> Gestão e Financeiro</h3><div class="linha"></div></div>
                 <div class="grupo-grid">
+                    <div class="card-principal" id="cardERP" data-card="erp" onclick="abrirSecao('financeiro'); setTimeout(abrirConfigFaturacao, 150);">
+                        <div class="icon"><i class="fas fa-plug"></i></div>
+                        <div class="info"><h3>Integração do Software de Faturação <span id="erpBadgeEmBreve" class="badge" style="background:#0891b2;color:#fff;font-size:.65rem;vertical-align:middle;">Em breve ADD-ON licença</span></h3><p>Moloni, TOConline, entre outros</p></div>
+                    </div>
                     <div class="card-principal" data-card="agenda" onclick="abrirSecao('agenda')">
                         <div class="icon"><i class="fas fa-calendar-alt"></i></div>
                         <div class="info"><h3>Agenda</h3><p>Datas a aproximar</p></div>
@@ -2098,7 +2117,7 @@
                     <option value="tudo" selected>Tudo</option>
                 </select>
                 <button class="btn btn-outline" onclick="relFinanceiroPDF()"><i class="fas fa-file-pdf"></i> PDF</button>
-                <button class="btn btn-outline" id="btnFaturacaoMoloniFin" style="display:none;" onclick="abrirConfigFaturacao()"><i class="fas fa-file-invoice"></i> Faturação</button>
+                <button class="btn btn-outline" id="btnFaturacaoMoloniFin" style="display:none;" onclick="abrirConfigFaturacao()"><i class="fas fa-plug"></i> Integração do Software de Faturação</button>
             </div>
         </div>
         <div id="financeiroConteudo"></div>
@@ -2919,6 +2938,14 @@
             scripts.forEach(function (src) {
                 var s = document.createElement('script');
                 s.src = src;
+                // IMPORTANTE: scripts criados assim executam por defeito em modo "async" — cada
+                // um corre assim que acaba de descarregar, não pela ordem da lista. Isso é um
+                // problema aqui porque o jspdf-autotable PRECISA que o jsPDF já esteja pronto
+                // antes de se anexar a ele; se calhasse de descarregar primeiro, ficava sem
+                // efeito nenhum (e daí o erro "Componente de tabelas do PDF não carregado",
+                // de forma imprevisível). "async = false" mantém o download em paralelo, mas
+                // força a EXECUÇÃO a respeitar a ordem em que os scripts foram pedidos.
+                s.async = false;
                 document.body.appendChild(s);
             });
         });
@@ -3205,18 +3232,18 @@
         const M = {
             administradores: {
                 tabela: 'administradores',
-                from: r => ({ id: r.id, nome: r.nome, email: r.email, empresa: r.empresa || '', nif: r.nif || null, logo: r.logo || null, licencaFeedback: r.licenca_feedback || null, contratosPlano: r.contratos_plano || null, contratosExpiracao: isoToMs(r.contratos_expiracao), frotaPlano: r.frota_plano || null, frotaExpiracao: isoToMs(r.frota_expiracao), armazemPlano: r.armazem_plano || null, armazemExpiracao: isoToMs(r.armazem_expiracao), portalPlano: r.portal_plano || null, portalExpiracao: isoToMs(r.portal_expiracao), crmPlano: r.crm_plano || null, crmExpiracao: isoToMs(r.crm_expiracao), assistPlano: r.assist_plano || null, assistExpiracao: isoToMs(r.assist_expiracao), erpPlano: r.erp_plano || null, erpExpiracao: isoToMs(r.erp_expiracao), notificacoesPlano: r.notificacoes_plano || null, notificacoesExpiracao: isoToMs(r.notificacoes_expiracao), dadosBancarios: r.dados_bancarios || null, integracaoFaturacao: r.integracao_faturacao || null, ativo: r.ativo, mudarSenha: r.mudar_senha === true, ultimoLogin: isoToMs(r.ultimo_login), ultimaAtividade: isoToMs(r.ultima_atividade), mostrarEstadoOnline: r.mostrar_estado_online === true, layout: r.layout || null, tiposEquipamento: r.tipos_equipamento || [], logo: r.logo, notificarAprovacao: r.notificar_aprovacao === true, numeroRegistoPrevio: r.numero_registo_previo || null, dataRegistoPrevio: r.data_registo_previo || null, numeroAnepc: r.numero_anepc || null, dataAnepc: r.data_anepc || null, anepcValidade: r.anepc_validade || null, registoPrevioValidade: r.registo_previo_validade || null, corCorporativa: r.cor_corporativa || null, favoritos: Array.isArray(r.favoritos) ? r.favoritos : [], ivaPeriodicidade: r.iva_periodicidade || 'mensal', irsPeriodicidade: r.irs_periodicidade || 'semestral', painelTvAtivo: r.painel_tv_ativo === true, descricoesRapidasOS: Array.isArray(r.descricoes_rapidas_os) ? r.descricoes_rapidas_os : ['Instalação', 'Manutenção', 'Visita', 'Formação'], horaEntradaHabitual: r.hora_entrada_habitual || '09:00', toleranciaAtrasoMin: r.tolerancia_atraso_min != null ? r.tolerancia_atraso_min : 15, certificadoraLogo: r.certificadora_logo || null, ehDistribuidor: r.eh_distribuidor === true, distribuidorDesconto: r.distribuidor_desconto != null ? Number(r.distribuidor_desconto) : null, distribuidorId: r.distribuidor_id || null, precoDistribuidorCobrado: r.preco_distribuidor_cobrado != null ? Number(r.preco_distribuidor_cobrado) : null, distribuidorPagamentoPrazo: isoToMs(r.distribuidor_pagamento_prazo), precoFundador: r.preco_fundador === true, obrasAvancadoAtivo: r.obras_avancado_ativo === true, obrasChecklistItens: Array.isArray(r.obras_checklist_itens) ? r.obras_checklist_itens : [], checklistEntradaItens: Array.isArray(r.checklist_entrada_itens) ? r.checklist_entrada_itens : [], osModoWizard: r.os_modo_wizard === true, contratoModoWizard: r.contrato_modo_wizard === true, kmPontoGeralAtivo: r.km_ponto_geral_ativo === true, kmPorOsAtivo: r.km_por_os_ativo === true, concelho: r.concelho || null, contratosDemoDias: r.contratos_demo_dias || null, frotaDemoDias: r.frota_demo_dias || null, armazemDemoDias: r.armazem_demo_dias || null, crmDemoDias: r.crm_demo_dias || null, erpDemoDias: r.erp_demo_dias || null, rondasPlano: r.rondas_plano || null, rondasExpiracao: isoToMs(r.rondas_expiracao), rondasDemoDias: r.rondas_demo_dias || null, usoSecoes: r.uso_secoes ? (typeof r.uso_secoes === 'string' ? JSON.parse(r.uso_secoes) : r.uso_secoes) : {}, usoSecoesUltima: isoToMs(r.uso_secoes_ultima), dataCriacao: isoToMs(r.data_criacao) }),
-                to:   o => ({ id: o.id, nome: o.nome, email: o.email, senha: o.senha, empresa: o.empresa || null, nif: o.nif || null, logo: o.logo || null, licenca_feedback: o.licencaFeedback || null, contratos_plano: o.contratosPlano || null, contratos_expiracao: msToISO(o.contratosExpiracao), frota_plano: o.frotaPlano || null, frota_expiracao: msToISO(o.frotaExpiracao), armazem_plano: o.armazemPlano || null, armazem_expiracao: msToISO(o.armazemExpiracao), portal_plano: o.portalPlano || null, portal_expiracao: msToISO(o.portalExpiracao), crm_plano: o.crmPlano || null, crm_expiracao: msToISO(o.crmExpiracao), assist_plano: o.assistPlano || null, assist_expiracao: msToISO(o.assistExpiracao), erp_plano: o.erpPlano || null, erp_expiracao: msToISO(o.erpExpiracao), notificacoes_plano: o.notificacoesPlano || null, notificacoes_expiracao: msToISO(o.notificacoesExpiracao), dados_bancarios: o.dadosBancarios || null, integracao_faturacao: o.integracaoFaturacao || null, ativo: o.ativo !== false, mudar_senha: o.mudarSenha === true, ultimo_login: o.ultimoLogin ? msToISO(o.ultimoLogin) : null, ultima_atividade: o.ultimaAtividade ? msToISO(o.ultimaAtividade) : null, mostrar_estado_online: o.mostrarEstadoOnline === true, layout: o.layout || null, tipos_equipamento: o.tiposEquipamento || [], logo: o.logo || null, notificar_aprovacao: o.notificarAprovacao === true, numero_registo_previo: o.numeroRegistoPrevio || null, data_registo_previo: o.dataRegistoPrevio || null, numero_anepc: o.numeroAnepc || null, data_anepc: o.dataAnepc || null, anepc_validade: o.anepcValidade || null, registo_previo_validade: o.registoPrevioValidade || null, cor_corporativa: o.corCorporativa || null, favoritos: o.favoritos || [], iva_periodicidade: o.ivaPeriodicidade || 'mensal', irs_periodicidade: o.irsPeriodicidade || 'semestral', painel_tv_ativo: o.painelTvAtivo === true, descricoes_rapidas_os: o.descricoesRapidasOS || null, hora_entrada_habitual: o.horaEntradaHabitual || '09:00', tolerancia_atraso_min: o.toleranciaAtrasoMin != null ? o.toleranciaAtrasoMin : 15, certificadora_logo: o.certificadoraLogo || null, eh_distribuidor: o.ehDistribuidor === true, distribuidor_desconto: o.distribuidorDesconto ?? null, distribuidor_id: o.distribuidorId || null, preco_distribuidor_cobrado: o.precoDistribuidorCobrado ?? null, distribuidor_pagamento_prazo: o.distribuidorPagamentoPrazo ? msToISO(o.distribuidorPagamentoPrazo) : null, preco_fundador: o.precoFundador === true, obras_avancado_ativo: o.obrasAvancadoAtivo === true, obras_checklist_itens: o.obrasChecklistItens || [], checklist_entrada_itens: o.checklistEntradaItens || [], os_modo_wizard: o.osModoWizard === true, contrato_modo_wizard: o.contratoModoWizard === true, km_ponto_geral_ativo: o.kmPontoGeralAtivo === true, km_por_os_ativo: o.kmPorOsAtivo === true, concelho: o.concelho || null, contratos_demo_dias: o.contratosDemoDias || null, frota_demo_dias: o.frotaDemoDias || null, armazem_demo_dias: o.armazemDemoDias || null, crm_demo_dias: o.crmDemoDias || null, erp_demo_dias: o.erpDemoDias || null, rondas_plano: o.rondasPlano || null, rondas_expiracao: msToISO(o.rondasExpiracao), rondas_demo_dias: o.rondasDemoDias || null, uso_secoes: JSON.stringify(o.usoSecoes || {}), uso_secoes_ultima: o.usoSecoesUltima ? msToISO(o.usoSecoesUltima) : null, data_criacao: msToISO(o.dataCriacao) })
+                from: r => ({ id: r.id, nome: r.nome, email: r.email, empresa: r.empresa || '', nif: r.nif || null, logo: r.logo || null, licencaFeedback: r.licenca_feedback || null, contratosPlano: r.contratos_plano || null, contratosExpiracao: isoToMs(r.contratos_expiracao), frotaPlano: r.frota_plano || null, frotaExpiracao: isoToMs(r.frota_expiracao), armazemPlano: r.armazem_plano || null, armazemExpiracao: isoToMs(r.armazem_expiracao), portalPlano: r.portal_plano || null, portalExpiracao: isoToMs(r.portal_expiracao), crmPlano: r.crm_plano || null, crmExpiracao: isoToMs(r.crm_expiracao), assistPlano: r.assist_plano || null, assistExpiracao: isoToMs(r.assist_expiracao), erpPlano: r.erp_plano || null, erpExpiracao: isoToMs(r.erp_expiracao), notificacoesPlano: r.notificacoes_plano || null, notificacoesExpiracao: isoToMs(r.notificacoes_expiracao), dadosBancarios: r.dados_bancarios || null, integracaoFaturacao: r.integracao_faturacao || null, ativo: r.ativo, mudarSenha: r.mudar_senha === true, ultimoLogin: isoToMs(r.ultimo_login), ultimaAtividade: isoToMs(r.ultima_atividade), mostrarEstadoOnline: r.mostrar_estado_online === true, layout: r.layout || null, tiposEquipamento: r.tipos_equipamento || [], logo: r.logo, notificarAprovacao: r.notificar_aprovacao === true, numeroRegistoPrevio: r.numero_registo_previo || null, dataRegistoPrevio: r.data_registo_previo || null, numeroAnepc: r.numero_anepc || null, dataAnepc: r.data_anepc || null, anepcValidade: r.anepc_validade || null, registoPrevioValidade: r.registo_previo_validade || null, corCorporativa: r.cor_corporativa || null, favoritos: Array.isArray(r.favoritos) ? r.favoritos : [], ivaPeriodicidade: r.iva_periodicidade || 'mensal', irsPeriodicidade: r.irs_periodicidade || 'semestral', painelTvAtivo: r.painel_tv_ativo === true, descricoesRapidasOS: Array.isArray(r.descricoes_rapidas_os) ? r.descricoes_rapidas_os : ['Instalação', 'Manutenção', 'Visita', 'Formação'], horaEntradaHabitual: r.hora_entrada_habitual || '09:00', toleranciaAtrasoMin: r.tolerancia_atraso_min != null ? r.tolerancia_atraso_min : 15, certificadoraLogo: r.certificadora_logo || null, ehDistribuidor: r.eh_distribuidor === true, distribuidorDesconto: r.distribuidor_desconto != null ? Number(r.distribuidor_desconto) : null, distribuidorId: r.distribuidor_id || null, precoDistribuidorCobrado: r.preco_distribuidor_cobrado != null ? Number(r.preco_distribuidor_cobrado) : null, distribuidorPagamentoPrazo: isoToMs(r.distribuidor_pagamento_prazo), precoFundador: r.preco_fundador === true, obrasAvancadoAtivo: r.obras_avancado_ativo === true, obrasChecklistItens: Array.isArray(r.obras_checklist_itens) ? r.obras_checklist_itens : [], checklistEntradaItens: Array.isArray(r.checklist_entrada_itens) ? r.checklist_entrada_itens : [], osModoWizard: r.os_modo_wizard === true, contratoModoWizard: r.contrato_modo_wizard === true, kmPontoGeralAtivo: r.km_ponto_geral_ativo === true, kmPorOsAtivo: r.km_por_os_ativo === true, segurancaAtivo: r.seguranca_ativo === true, segurosAtivo: r.seguros_ativo === true, shstAtivo: r.shst_ativo === true, concelho: r.concelho || null, contratosDemoDias: r.contratos_demo_dias || null, frotaDemoDias: r.frota_demo_dias || null, armazemDemoDias: r.armazem_demo_dias || null, crmDemoDias: r.crm_demo_dias || null, erpDemoDias: r.erp_demo_dias || null, rondasPlano: r.rondas_plano || null, rondasExpiracao: isoToMs(r.rondas_expiracao), rondasDemoDias: r.rondas_demo_dias || null, usoSecoes: r.uso_secoes ? (typeof r.uso_secoes === 'string' ? JSON.parse(r.uso_secoes) : r.uso_secoes) : {}, usoSecoesUltima: isoToMs(r.uso_secoes_ultima), dataCriacao: isoToMs(r.data_criacao) }),
+                to:   o => ({ id: o.id, nome: o.nome, email: o.email, senha: o.senha, empresa: o.empresa || null, nif: o.nif || null, logo: o.logo || null, licenca_feedback: o.licencaFeedback || null, contratos_plano: o.contratosPlano || null, contratos_expiracao: msToISO(o.contratosExpiracao), frota_plano: o.frotaPlano || null, frota_expiracao: msToISO(o.frotaExpiracao), armazem_plano: o.armazemPlano || null, armazem_expiracao: msToISO(o.armazemExpiracao), portal_plano: o.portalPlano || null, portal_expiracao: msToISO(o.portalExpiracao), crm_plano: o.crmPlano || null, crm_expiracao: msToISO(o.crmExpiracao), assist_plano: o.assistPlano || null, assist_expiracao: msToISO(o.assistExpiracao), erp_plano: o.erpPlano || null, erp_expiracao: msToISO(o.erpExpiracao), notificacoes_plano: o.notificacoesPlano || null, notificacoes_expiracao: msToISO(o.notificacoesExpiracao), dados_bancarios: o.dadosBancarios || null, integracao_faturacao: o.integracaoFaturacao || null, ativo: o.ativo !== false, mudar_senha: o.mudarSenha === true, ultimo_login: o.ultimoLogin ? msToISO(o.ultimoLogin) : null, ultima_atividade: o.ultimaAtividade ? msToISO(o.ultimaAtividade) : null, mostrar_estado_online: o.mostrarEstadoOnline === true, layout: o.layout || null, tipos_equipamento: o.tiposEquipamento || [], logo: o.logo || null, notificar_aprovacao: o.notificarAprovacao === true, numero_registo_previo: o.numeroRegistoPrevio || null, data_registo_previo: o.dataRegistoPrevio || null, numero_anepc: o.numeroAnepc || null, data_anepc: o.dataAnepc || null, anepc_validade: o.anepcValidade || null, registo_previo_validade: o.registoPrevioValidade || null, cor_corporativa: o.corCorporativa || null, favoritos: o.favoritos || [], iva_periodicidade: o.ivaPeriodicidade || 'mensal', irs_periodicidade: o.irsPeriodicidade || 'semestral', painel_tv_ativo: o.painelTvAtivo === true, descricoes_rapidas_os: o.descricoesRapidasOS || null, hora_entrada_habitual: o.horaEntradaHabitual || '09:00', tolerancia_atraso_min: o.toleranciaAtrasoMin != null ? o.toleranciaAtrasoMin : 15, certificadora_logo: o.certificadoraLogo || null, eh_distribuidor: o.ehDistribuidor === true, distribuidor_desconto: o.distribuidorDesconto ?? null, distribuidor_id: o.distribuidorId || null, preco_distribuidor_cobrado: o.precoDistribuidorCobrado ?? null, distribuidor_pagamento_prazo: o.distribuidorPagamentoPrazo ? msToISO(o.distribuidorPagamentoPrazo) : null, preco_fundador: o.precoFundador === true, obras_avancado_ativo: o.obrasAvancadoAtivo === true, obras_checklist_itens: o.obrasChecklistItens || [], checklist_entrada_itens: o.checklistEntradaItens || [], os_modo_wizard: o.osModoWizard === true, contrato_modo_wizard: o.contratoModoWizard === true, km_ponto_geral_ativo: o.kmPontoGeralAtivo === true, km_por_os_ativo: o.kmPorOsAtivo === true, seguranca_ativo: o.segurancaAtivo === true, seguros_ativo: o.segurosAtivo === true, shst_ativo: o.shstAtivo === true, concelho: o.concelho || null, contratos_demo_dias: o.contratosDemoDias || null, frota_demo_dias: o.frotaDemoDias || null, armazem_demo_dias: o.armazemDemoDias || null, crm_demo_dias: o.crmDemoDias || null, erp_demo_dias: o.erpDemoDias || null, rondas_plano: o.rondasPlano || null, rondas_expiracao: msToISO(o.rondasExpiracao), rondas_demo_dias: o.rondasDemoDias || null, uso_secoes: JSON.stringify(o.usoSecoes || {}), uso_secoes_ultima: o.usoSecoesUltima ? msToISO(o.usoSecoesUltima) : null, data_criacao: msToISO(o.dataCriacao) })
             },
             funcionarios: {
                 tabela: 'funcionarios',
-                from: r => ({ id: r.id, nome: r.nome, foto: r.foto || null, cargo: r.cargo, telefone: r.telefone, email: r.email, horasSemanais: r.horas_semanais, role: r.role, adminId: r.admin_id, morada: r.morada, codigoPostal: r.codigo_postal, dataNascimento: r.data_nascimento, ordenadoBruto: r.ordenado_bruto, veiculoId: r.veiculo_id, mudarSenha: r.mudar_senha === true, gpsPonto: r.gps_ponto !== false, ultimaAtividade: isoToMs(r.ultima_atividade), ultimoLogin: isoToMs(r.ultimo_login), diasFerias: r.dias_ferias != null ? r.dias_ferias : 22, pin: r.pin || null, permissoesNegadas: Array.isArray(r.permissoes_negadas) ? r.permissoes_negadas : [], apoliceNumero: r.apolice_numero || null, apoliceSeguradora: r.apolice_seguradora || null, apoliceValidade: r.apolice_validade || null, saudeApoliceNumero: r.saude_apolice_numero || null, saudeApoliceSeguradora: r.saude_apolice_seguradora || null, saudeApoliceValidade: r.saude_apolice_validade || null, favoritos: Array.isArray(r.favoritos) ? r.favoritos : [], suspenso: r.suspenso === true, podeAssinarRelatorios: r.pode_assinar_relatorios !== false, contaConfirmada: r.conta_confirmada !== false, tokenConfirmacaoConta: r.token_confirmacao_conta || null, contaCriadaEm: isoToMs(r.conta_criada_em), vigilanteSupervisorId: r.vigilante_supervisor_id || null }),
-                to:   o => ({ id: o.id, nome: o.nome, foto: o.foto || null, cargo: o.cargo || null, telefone: o.telefone || null, email: o.email, senha: o.senha, horas_semanais: o.horasSemanais || 40, role: o.role || 'funcionario', admin_id: o.adminId || null, morada: o.morada || null, codigo_postal: o.codigoPostal || null, data_nascimento: nn(o.dataNascimento), ordenado_bruto: (o.ordenadoBruto === '' || o.ordenadoBruto == null) ? null : Number(o.ordenadoBruto), veiculo_id: o.veiculoId || null, mudar_senha: o.mudarSenha === true, gps_ponto: o.gpsPonto !== false, ultima_atividade: o.ultimaAtividade ? msToISO(o.ultimaAtividade) : null, ultimo_login: o.ultimoLogin ? msToISO(o.ultimoLogin) : null, dias_ferias: o.diasFerias != null ? o.diasFerias : 22, pin: o.pin || null, permissoes_negadas: o.permissoesNegadas || [], apolice_numero: o.apoliceNumero || null, apolice_seguradora: o.apoliceSeguradora || null, apolice_validade: o.apoliceValidade || null, saude_apolice_numero: o.saudeApoliceNumero || null, saude_apolice_seguradora: o.saudeApoliceSeguradora || null, saude_apolice_validade: o.saudeApoliceValidade || null, favoritos: o.favoritos || [], suspenso: o.suspenso === true, pode_assinar_relatorios: o.podeAssinarRelatorios !== false, conta_confirmada: o.contaConfirmada !== false, token_confirmacao_conta: o.tokenConfirmacaoConta || null, conta_criada_em: o.contaCriadaEm ? msToISO(o.contaCriadaEm) : null, vigilante_supervisor_id: o.vigilanteSupervisorId || null })
+                from: r => ({ id: r.id, nome: r.nome, foto: r.foto || null, cargo: r.cargo, telefone: r.telefone, email: r.email, horasSemanais: r.horas_semanais, role: r.role, adminId: r.admin_id, morada: r.morada, codigoPostal: r.codigo_postal, dataNascimento: r.data_nascimento, ordenadoBruto: r.ordenado_bruto, veiculoId: r.veiculo_id, mudarSenha: r.mudar_senha === true, gpsPonto: r.gps_ponto !== false, ultimaAtividade: isoToMs(r.ultima_atividade), ultimoLogin: isoToMs(r.ultimo_login), diasFerias: r.dias_ferias != null ? r.dias_ferias : 22, pin: r.pin || null, permissoesNegadas: Array.isArray(r.permissoes_negadas) ? r.permissoes_negadas : [], apoliceNumero: r.apolice_numero || null, apoliceSeguradora: r.apolice_seguradora || null, apoliceValidade: r.apolice_validade || null, saudeApoliceNumero: r.saude_apolice_numero || null, saudeApoliceSeguradora: r.saude_apolice_seguradora || null, saudeApoliceValidade: r.saude_apolice_validade || null, shstUltimaConsulta: r.shst_ultima_consulta || null, favoritos: Array.isArray(r.favoritos) ? r.favoritos : [], suspenso: r.suspenso === true, podeAssinarRelatorios: r.pode_assinar_relatorios !== false, contaConfirmada: r.conta_confirmada !== false, tokenConfirmacaoConta: r.token_confirmacao_conta || null, contaCriadaEm: isoToMs(r.conta_criada_em), vigilanteSupervisorId: r.vigilante_supervisor_id || null }),
+                to:   o => ({ id: o.id, nome: o.nome, foto: o.foto || null, cargo: o.cargo || null, telefone: o.telefone || null, email: o.email, senha: o.senha, horas_semanais: o.horasSemanais || 40, role: o.role || 'funcionario', admin_id: o.adminId || null, morada: o.morada || null, codigo_postal: o.codigoPostal || null, data_nascimento: nn(o.dataNascimento), ordenado_bruto: (o.ordenadoBruto === '' || o.ordenadoBruto == null) ? null : Number(o.ordenadoBruto), veiculo_id: o.veiculoId || null, mudar_senha: o.mudarSenha === true, gps_ponto: o.gpsPonto !== false, ultima_atividade: o.ultimaAtividade ? msToISO(o.ultimaAtividade) : null, ultimo_login: o.ultimoLogin ? msToISO(o.ultimoLogin) : null, dias_ferias: o.diasFerias != null ? o.diasFerias : 22, pin: o.pin || null, permissoes_negadas: o.permissoesNegadas || [], apolice_numero: o.apoliceNumero || null, apolice_seguradora: o.apoliceSeguradora || null, apolice_validade: o.apoliceValidade || null, saude_apolice_numero: o.saudeApoliceNumero || null, saude_apolice_seguradora: o.saudeApoliceSeguradora || null, saude_apolice_validade: o.saudeApoliceValidade || null, shst_ultima_consulta: o.shstUltimaConsulta || null, favoritos: o.favoritos || [], suspenso: o.suspenso === true, pode_assinar_relatorios: o.podeAssinarRelatorios !== false, conta_confirmada: o.contaConfirmada !== false, token_confirmacao_conta: o.tokenConfirmacaoConta || null, conta_criada_em: o.contaCriadaEm ? msToISO(o.contaCriadaEm) : null, vigilante_supervisor_id: o.vigilanteSupervisorId || null })
             },
             encarregados: {
                 tabela: 'encarregados',
-                from: r => ({ id: r.id, nome: r.nome, email: r.email, adminId: r.admin_id, funcionariosIds: [], dataCriacao: isoToMs(r.data_criacao), cargo: r.cargo, telefone: r.telefone, morada: r.morada, codigoPostal: r.codigo_postal, dataNascimento: r.data_nascimento, horasSemanais: r.horas_semanais, ordenadoBruto: r.ordenado_bruto, veiculoId: r.veiculo_id, mudarSenha: r.mudar_senha === true, gpsPonto: r.gps_ponto !== false, ultimaAtividade: isoToMs(r.ultima_atividade), ultimoLogin: isoToMs(r.ultimo_login), diasFerias: r.dias_ferias != null ? r.dias_ferias : 22, pin: r.pin || null, favoritos: Array.isArray(r.favoritos) ? r.favoritos : [], suspenso: r.suspenso === true, contaConfirmada: r.conta_confirmada !== false, tokenConfirmacaoConta: r.token_confirmacao_conta || null, contaCriadaEm: isoToMs(r.conta_criada_em) }),
-                to:   o => ({ id: o.id, nome: o.nome, email: o.email, senha: o.senha, admin_id: o.adminId, data_criacao: msToISO(o.dataCriacao), cargo: o.cargo || null, telefone: o.telefone || null, morada: o.morada || null, codigo_postal: o.codigoPostal || null, data_nascimento: nn(o.dataNascimento), horas_semanais: o.horasSemanais || 40, ordenado_bruto: (o.ordenadoBruto === '' || o.ordenadoBruto == null) ? null : Number(o.ordenadoBruto), veiculo_id: o.veiculoId || null, mudar_senha: o.mudarSenha === true, ultima_atividade: o.ultimaAtividade ? msToISO(o.ultimaAtividade) : null, ultimo_login: o.ultimoLogin ? msToISO(o.ultimoLogin) : null, dias_ferias: o.diasFerias != null ? o.diasFerias : 22, pin: o.pin || null, favoritos: o.favoritos || [], suspenso: o.suspenso === true, conta_confirmada: o.contaConfirmada !== false, token_confirmacao_conta: o.tokenConfirmacaoConta || null, conta_criada_em: o.contaCriadaEm ? msToISO(o.contaCriadaEm) : null })
+                from: r => ({ id: r.id, nome: r.nome, email: r.email, adminId: r.admin_id, funcionariosIds: [], dataCriacao: isoToMs(r.data_criacao), cargo: r.cargo, telefone: r.telefone, morada: r.morada, codigoPostal: r.codigo_postal, dataNascimento: r.data_nascimento, horasSemanais: r.horas_semanais, ordenadoBruto: r.ordenado_bruto, veiculoId: r.veiculo_id, mudarSenha: r.mudar_senha === true, gpsPonto: r.gps_ponto !== false, ultimaAtividade: isoToMs(r.ultima_atividade), ultimoLogin: isoToMs(r.ultimo_login), diasFerias: r.dias_ferias != null ? r.dias_ferias : 22, pin: r.pin || null, favoritos: Array.isArray(r.favoritos) ? r.favoritos : [], suspenso: r.suspenso === true, contaConfirmada: r.conta_confirmada !== false, tokenConfirmacaoConta: r.token_confirmacao_conta || null, contaCriadaEm: isoToMs(r.conta_criada_em), apoliceNumero: r.apolice_numero || null, apoliceSeguradora: r.apolice_seguradora || null, apoliceValidade: r.apolice_validade || null, saudeApoliceNumero: r.saude_apolice_numero || null, saudeApoliceSeguradora: r.saude_apolice_seguradora || null, saudeApoliceValidade: r.saude_apolice_validade || null, shstUltimaConsulta: r.shst_ultima_consulta || null }),
+                to:   o => ({ id: o.id, nome: o.nome, email: o.email, senha: o.senha, admin_id: o.adminId, data_criacao: msToISO(o.dataCriacao), cargo: o.cargo || null, telefone: o.telefone || null, morada: o.morada || null, codigo_postal: o.codigoPostal || null, data_nascimento: nn(o.dataNascimento), horas_semanais: o.horasSemanais || 40, ordenado_bruto: (o.ordenadoBruto === '' || o.ordenadoBruto == null) ? null : Number(o.ordenadoBruto), veiculo_id: o.veiculoId || null, mudar_senha: o.mudarSenha === true, ultima_atividade: o.ultimaAtividade ? msToISO(o.ultimaAtividade) : null, ultimo_login: o.ultimoLogin ? msToISO(o.ultimoLogin) : null, dias_ferias: o.diasFerias != null ? o.diasFerias : 22, pin: o.pin || null, favoritos: o.favoritos || [], suspenso: o.suspenso === true, conta_confirmada: o.contaConfirmada !== false, token_confirmacao_conta: o.tokenConfirmacaoConta || null, conta_criada_em: o.contaCriadaEm ? msToISO(o.contaCriadaEm) : null, apolice_numero: o.apoliceNumero || null, apolice_seguradora: o.apoliceSeguradora || null, apolice_validade: o.apoliceValidade || null, saude_apolice_numero: o.saudeApoliceNumero || null, saude_apolice_seguradora: o.saudeApoliceSeguradora || null, saude_apolice_validade: o.saudeApoliceValidade || null, shst_ultima_consulta: o.shstUltimaConsulta || null })
             },
             clientes: {
                 tabela: 'clientes',
@@ -10198,17 +10225,59 @@
             const admin = adminAtual();
             if (!admin) return;
             if (!moduloErpAtivo(admin)) { alert('O add-on "Integração com ERP\'s" ainda não está ativo para a tua empresa. Este módulo está "Em breve" — fala com a Total Gest para o ativar.'); return; }
-            const cfg = admin.integracaoFaturacao || {};
-            const provider = cfg.provider || 'moloni';
             const overlay = document.getElementById('modalGenericoOverlay');
             const titulo = document.getElementById('modalGenericoTitulo');
             const campos = document.getElementById('modalGenericoCampos');
             const form = document.getElementById('modalGenericoForm');
             if (!overlay || !campos) { alert('Modal indisponível.'); return; }
-            titulo.innerHTML = '<i class="fas fa-file-invoice"></i> Faturação';
+            titulo.innerHTML = '<i class="fas fa-plug"></i> Integração do Software de Faturação';
+            if (form) form.onsubmit = function(e) { e.preventDefault(); salvarConfigFaturacao(); };
+            overlay.classList.add('open');
+            const cfg = admin.integracaoFaturacao || {};
+            if (cfg.provider) {
+                _fatMostrarResumo(cfg);
+            } else {
+                _fatMostrarWizardEscolha();
+            }
+        }
+        // Já há um software configurado — mostra só um resumo, sem abrir logo o formulário. Só
+        // um software de cada vez pode estar ativo (é sempre o mesmo campo "provider").
+        function _fatMostrarResumo(cfg) {
+            const campos = document.getElementById('modalGenericoCampos'); if (!campos) return;
+            const nomes = { moloni: 'Moloni', toconline: 'TOConline' };
+            const nomeProvider = nomes[cfg.provider] || cfg.provider;
+            const ligadoToc = cfg.provider === 'toconline' && !!cfg.toconline?.accessToken;
+            campos.innerHTML = `
+                <div style="text-align:center;padding:10px 0 4px;">
+                    <div style="font-size:2rem;color:#16a34a;margin-bottom:8px;"><i class="fas fa-circle-check"></i></div>
+                    <div style="font-weight:700;font-size:1.05rem;color:#152a52;">Software configurado: ${nomeProvider}</div>
+                    ${cfg.provider === 'toconline' ? `<div style="margin-top:6px;font-size:.85rem;color:${ligadoToc ? '#16a34a' : '#92400e'};">${ligadoToc ? '✅ Ligado à TOConline' : '⚠️ Ainda falta ligar (OAuth)'}</div>` : ''}
+                    ${cfg.simulacao !== false ? `<div style="margin-top:4px;font-size:.8rem;color:#92400e;">⚠️ Modo simulação ainda ativo — não emite faturas reais.</div>` : ''}
+                </div>
+                <div style="display:flex;gap:8px;margin-top:16px;">
+                    <button type="button" class="btn btn-outline" style="flex:1;" onclick="_fatMostrarWizardEscolha()"><i class="fas fa-pen"></i> Editar</button>
+                    <button type="button" class="btn btn-danger" style="flex:1;" onclick="_fatApagarConfig()"><i class="fas fa-trash"></i> Apagar</button>
+                </div>
+            `;
+        }
+        function _fatApagarConfig() {
+            const admin = adminAtual(); if (!admin) return;
+            if (!confirm('Apagar a configuração de faturação? Todos os dados guardados (Client ID/Secret, ligação à TOConline, etc.) são removidos, e é preciso configurar tudo de novo depois.')) return;
+            admin.integracaoFaturacao = null;
+            guardarDados(dados);
+            document.getElementById('modalGenericoOverlay').classList.remove('open');
+            alert('✅ Configuração de faturação apagada.');
+        }
+        // Ecrã de escolha/edição do fornecedor — usado tanto para configurar pela primeira vez
+        // como para "Editar" um já existente (abre com os dados atuais preenchidos).
+        function _fatMostrarWizardEscolha() {
+            const admin = adminAtual(); if (!admin) return;
+            const cfg = admin.integracaoFaturacao || {};
+            const provider = cfg.provider || 'moloni';
+            const campos = document.getElementById('modalGenericoCampos'); if (!campos) return;
             campos.innerHTML = `
                 <div class="form-group">
-                    <label>Fornecedor de faturação</label>
+                    <label>Qual o software de faturação que tens?</label>
                     <div style="display:flex;gap:8px;">
                         <button type="button" class="btn btn-sm ${provider === 'moloni' ? 'btn-primary' : 'btn-outline'}" onclick="_fatEscolherProvider('moloni')" style="flex:1;">Moloni</button>
                         <button type="button" class="btn btn-sm ${provider === 'toconline' ? 'btn-primary' : 'btn-outline'}" onclick="_fatEscolherProvider('toconline')" style="flex:1;">TOConline</button>
@@ -10216,8 +10285,6 @@
                 </div>
                 <div id="fatCamposProvider"></div>
             `;
-            if (form) form.onsubmit = function(e) { e.preventDefault(); salvarConfigFaturacao(); };
-            overlay.classList.add('open');
             _fatRenderCamposProvider(provider, cfg);
         }
         function _fatEscolherProvider(provider) {
@@ -13253,7 +13320,7 @@
             ) : '';
             if (readOnly) {
                 const _estadoEditavel = `<span class="ag-estado ${cls}">${estado}</span>`;
-                return `<div class="agenda-os${emConf ? ' conflito' : ''}${bloqueada ? ' bloqueada' : ''}">
+                return `<div class="agenda-os ag-est-${cls}${emConf ? ' conflito' : ''}${bloqueada ? ' bloqueada' : ''}">
                     <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap;">
                         <span class="agenda-os-hora">${s.hora || '--:--'}</span>
                         ${_duracaoBadge}
@@ -13270,7 +13337,7 @@
                     ${(readOnly && usuarioLogado?.role === 'funcionario' && !_estouAtribuido) ? `<div style="font-size:.72rem;color:#b3492f;margin-top:4px;"><i class="fas fa-triangle-exclamation"></i> Não estás na lista de atribuídos desta OS — por isso não tens o botão de Entrada. Pede ao Encarregado/Admin para te adicionar em "Atribuição".</div>` : ''}
                 </div>`;
             }
-            return `<div class="agenda-os${emConf ? ' conflito' : ''}${bloqueada ? ' bloqueada' : ''}" ${draggableAttr}>
+            return `<div class="agenda-os ag-est-${cls}${emConf ? ' conflito' : ''}${bloqueada ? ' bloqueada' : ''}" ${draggableAttr}>
                 <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap;">
                     <span class="agenda-os-hora">${s.hora || '--:--'}</span>
                     ${_duracaoBadge}
@@ -13283,12 +13350,12 @@
                 ${_tiposTrabalhoBadgesHTML(s)}
                 <div style="font-size:.8rem;color:#475569;margin:2px 0;" title="${escapeHtmlSimples(s.descricao || '')}">${escapeHtmlSimples((s.descricao || '').slice(0, 110))}</div>
                 ${_origemInfoHTML(s)}
-                <div style="font-size:.8rem;color:#334155;margin-top:4px;padding:6px 8px;background:#f8fafc;border-radius:6px;${bloqueada ? '' : 'cursor:pointer;'}" ${bloqueada ? '' : `onclick="event.stopPropagation();abrirEditarAtribuidosOS('${s.id}')"`} title="${bloqueada ? '' : 'Clica para mudar quem está atribuído'}">
+                <div class="ag-atribuidos" style="font-size:.8rem;color:#334155;margin-top:4px;padding:6px 8px;background:#f8fafc;border-radius:6px;${bloqueada ? '' : 'cursor:pointer;'}" ${bloqueada ? '' : `onclick="event.stopPropagation();abrirEditarAtribuidosOS('${s.id}')"`} title="${bloqueada ? '' : 'Clica para mudar quem está atribuído'}">
                     <i class="fas fa-users"></i> ${_nomesAtribuidosOSColorido(s)} ${bloqueada ? '' : '<i class="fas fa-pen" style="opacity:.5;font-size:.75em;margin-left:4px;"></i>'}
                 </div>
                 <div style="display:flex;gap:6px;margin-top:4px;">
-                    <input type="date" value="${s.data || ''}" onchange="mudarDataOS('${s.id}', this.value)" title="Mudar o dia" style="flex:1;" ${bloqueada ? 'disabled' : ''}>
-                    <input type="time" value="${s.hora || ''}" onchange="mudarHoraOS('${s.id}', this.value)" title="Mudar a hora" style="flex:0 0 95px;" ${bloqueada ? 'disabled' : ''}>
+                    <input type="date" value="${s.data || ''}" onchange="mudarDataOS('${s.id}', this.value)" title="Mudar o dia" style="flex:1;min-width:0;font-size:.78rem;padding:3px 2px;" ${bloqueada ? 'disabled' : ''}>
+                    <input type="time" value="${s.hora || ''}" onchange="mudarHoraOS('${s.id}', this.value)" title="Mudar a hora" style="flex:0 0 78px;font-size:.78rem;padding:3px 2px;" ${bloqueada ? 'disabled' : ''}>
                 </div>
                 ${bloqueada ? '<div style="font-size:.7rem;color:#16a34a;margin-top:4px;font-weight:600;"><i class="fas fa-lock"></i> Concluída — bloqueada</div>' : ''}
             </div>`;
@@ -13388,8 +13455,12 @@
         function _nomesAtribuidosOSColorido(s) {
             const ids = (s.funcionariosIds && s.funcionariosIds.length) ? s.funcionariosIds : [s.funcionarioId].filter(Boolean);
             if (!ids.length) return 'Sem responsável';
+            const modoEscuro = document.body.classList.contains('dark-mode');
             return ids.map(id => {
-                const cor = _corStatusPessoaOS(s, id);
+                let cor = _corStatusPessoaOS(s, id);
+                // "Nada registado ainda" vem a preto (#1e293b) — em modo escuro isso fica
+                // praticamente invisível sobre o fundo escuro do cartão, por isso passa a branco.
+                if (modoEscuro && cor === '#1e293b') cor = '#f1f5f9';
                 const negrito = cor === '#0ea5e9' ? '800' : '600';
                 return `<span style="color:${cor};font-weight:${negrito};">${obterNomeFuncionario(id)}</span>`;
             }).join(', ');
@@ -14122,6 +14193,35 @@
                         _notificarAdminESubadmin(adminId, '⚠️ Registo ANEPC a renovar', 'O registo ANEPC da tua empresa vence em ' + diasAN + ' dia(s). Trata da renovação junto da ANEPC.', "abrirEditarPerfil()");
                     });
                 }
+            }
+            // SHST — consulta de medicina do trabalho: avisa 30 dias antes de vencer, por
+            // funcionário/encarregado. Só corre se o admin tiver o SHST ativo no Perfil.
+            if (adminRecAlerta?.shstAtivo) {
+                const _shstPessoas = [
+                    ...(dados.funcionarios || []).filter(f => f.adminId === adminId && f.suspenso !== true),
+                    ...(dados.encarregados || []).filter(e => e.adminId === adminId && e.suspenso !== true)
+                ];
+                _shstPessoas.forEach(p => {
+                    if (!p.shstUltimaConsulta) return;
+                    let periodicidadeAnos = 1;
+                    if (p.dataNascimento) {
+                        const nasc = new Date(p.dataNascimento + 'T00:00:00');
+                        const hojeP = new Date();
+                        let idade = hojeP.getFullYear() - nasc.getFullYear();
+                        const aindaNaoFezAnos = (hojeP.getMonth() < nasc.getMonth()) || (hojeP.getMonth() === nasc.getMonth() && hojeP.getDate() < nasc.getDate());
+                        if (aindaNaoFezAnos) idade--;
+                        periodicidadeAnos = idade >= 50 ? 1 : 2;
+                    }
+                    const vencSHST = new Date(p.shstUltimaConsulta + 'T00:00:00');
+                    vencSHST.setFullYear(vencSHST.getFullYear() + periodicidadeAnos);
+                    const diasSHST = calcularDiasRestantes(vencSHST.getTime());
+                    if (diasSHST <= 30) {
+                        alertas.push({ tipo: 'danger', titulo: `⚠️ SHST a renovar — ${p.nome}`, sub: `Consulta de medicina do trabalho vence em ${diasSHST} dia(s) (${vencSHST.toLocaleDateString('pt-PT')}).`, acao: `abrirModal('funcionario','${p.id}')` });
+                        _notificarPorFaseVencimento('shst_' + p.id, 'atual', diasSHST, () => {
+                            _notificarAdminESubadmin(adminId, '⚠️ SHST a renovar', 'A consulta de medicina do trabalho de ' + p.nome + ' vence em ' + diasSHST + ' dia(s).', `abrirModal('funcionario','${p.id}')`);
+                        });
+                    }
+                });
             }
 
             if (moduloArmazemAtivo(adminAtual())) {
@@ -21052,6 +21152,35 @@
                             </div>
                         </div>
                     </div>
+                    ${adminAtual()?.segurosAtivo ? `
+                    <div class="ff-secao ff-tint-doc">
+                        <div class="ff-secao-body">
+                            <div class="form-group ff-span2">
+                                <label style="font-weight:700;color:#0e7490;"><i class="fas fa-shield-halved"></i> Apólice de Seguro de Acidentes de Trabalho</label>
+                            </div>
+                            <div class="form-group"><label>Número da apólice</label><input type="text" id="enc_apolice_numero" placeholder="Ex.: 123456789" /></div>
+                            <div class="form-group"><label>Seguradora</label><input type="text" id="enc_apolice_seguradora" placeholder="Ex.: Fidelidade" /></div>
+                            <div class="form-group"><label>Validade</label><input type="date" id="enc_apolice_validade" /></div>
+                            <div class="form-group ff-span2" style="border-top:1px dashed #e2e8f0;padding-top:12px;margin-top:4px;">
+                                <label style="font-weight:700;color:#0e7490;"><i class="fas fa-heart-pulse"></i> Seguro de Saúde</label>
+                            </div>
+                            <div class="form-group"><label>Número da apólice</label><input type="text" id="enc_saude_numero" placeholder="Ex.: 987654321" /></div>
+                            <div class="form-group"><label>Seguradora</label><input type="text" id="enc_saude_seguradora" placeholder="Ex.: Médis" /></div>
+                            <div class="form-group"><label>Validade</label><input type="date" id="enc_saude_validade" /></div>
+                        </div>
+                    </div>
+                    ` : ''}
+                    ${adminAtual()?.shstAtivo ? `
+                    <div class="ff-secao ff-tint-doc">
+                        <div class="ff-secao-body">
+                            <div class="form-group ff-span2">
+                                <label style="font-weight:700;color:#0e7490;"><i class="fas fa-user-doctor"></i> Saúde, Higiene e Segurança no Trabalho (SHST)</label>
+                                <div class="help-text" style="margin-top:2px;">A periodicidade calcula-se sozinha a partir da data de nascimento acima — anual a partir dos 50 anos, de 2 em 2 anos antes disso.</div>
+                            </div>
+                            <div class="form-group ff-span2"><label>Última consulta efetuada</label><input type="date" id="enc_shst_ultima_consulta" /></div>
+                        </div>
+                    </div>
+                    ` : ''}
 
                     <div class="ff-secao ff-tint-acesso">
                         <div class="ff-secao-head"><i class="fas fa-lock"></i> Acesso ao Sistema</div>
@@ -21127,6 +21256,13 @@ async function salvarEncarregado(e) {
                 veiculoId: encVeiculoId,
                 mudarSenha: true,
                 gpsPonto: document.getElementById('enc_gps_ponto') ? document.getElementById('enc_gps_ponto').checked : true,
+                apoliceNumero: document.getElementById('enc_apolice_numero')?.value.trim() || null,
+                apoliceSeguradora: document.getElementById('enc_apolice_seguradora')?.value.trim() || null,
+                apoliceValidade: document.getElementById('enc_apolice_validade')?.value || null,
+                saudeApoliceNumero: document.getElementById('enc_saude_numero')?.value.trim() || null,
+                saudeApoliceSeguradora: document.getElementById('enc_saude_seguradora')?.value.trim() || null,
+                saudeApoliceValidade: document.getElementById('enc_saude_validade')?.value || null,
+                shstUltimaConsulta: document.getElementById('enc_shst_ultima_consulta')?.value || null,
                 dataCriacao: Date.now()
             };
             if (!dados.encarregados) dados.encarregados = [];
@@ -21224,6 +21360,35 @@ async function salvarEncarregado(e) {
                             </div>
                         </div>
                     </div>
+                    ${adminAtual()?.segurosAtivo ? `
+                    <div class="ff-secao ff-tint-doc">
+                        <div class="ff-secao-body">
+                            <div class="form-group ff-span2">
+                                <label style="font-weight:700;color:#0e7490;"><i class="fas fa-shield-halved"></i> Apólice de Seguro de Acidentes de Trabalho</label>
+                            </div>
+                            <div class="form-group"><label>Número da apólice</label><input type="text" id="edit_enc_apolice_numero" value="${encarregado.apoliceNumero||''}" placeholder="Ex.: 123456789" /></div>
+                            <div class="form-group"><label>Seguradora</label><input type="text" id="edit_enc_apolice_seguradora" value="${encarregado.apoliceSeguradora||''}" placeholder="Ex.: Fidelidade" /></div>
+                            <div class="form-group"><label>Validade</label><input type="date" id="edit_enc_apolice_validade" value="${encarregado.apoliceValidade||''}" /></div>
+                            <div class="form-group ff-span2" style="border-top:1px dashed #e2e8f0;padding-top:12px;margin-top:4px;">
+                                <label style="font-weight:700;color:#0e7490;"><i class="fas fa-heart-pulse"></i> Seguro de Saúde</label>
+                            </div>
+                            <div class="form-group"><label>Número da apólice</label><input type="text" id="edit_enc_saude_numero" value="${encarregado.saudeApoliceNumero||''}" placeholder="Ex.: 987654321" /></div>
+                            <div class="form-group"><label>Seguradora</label><input type="text" id="edit_enc_saude_seguradora" value="${encarregado.saudeApoliceSeguradora||''}" placeholder="Ex.: Médis" /></div>
+                            <div class="form-group"><label>Validade</label><input type="date" id="edit_enc_saude_validade" value="${encarregado.saudeApoliceValidade||''}" /></div>
+                        </div>
+                    </div>
+                    ` : ''}
+                    ${adminAtual()?.shstAtivo ? `
+                    <div class="ff-secao ff-tint-doc">
+                        <div class="ff-secao-body">
+                            <div class="form-group ff-span2">
+                                <label style="font-weight:700;color:#0e7490;"><i class="fas fa-user-doctor"></i> Saúde, Higiene e Segurança no Trabalho (SHST)</label>
+                                <div class="help-text" style="margin-top:2px;">A periodicidade calcula-se sozinha a partir da data de nascimento acima — anual a partir dos 50 anos, de 2 em 2 anos antes disso.</div>
+                            </div>
+                            <div class="form-group ff-span2"><label>Última consulta efetuada</label><input type="date" id="edit_enc_shst_ultima_consulta" value="${encarregado.shstUltimaConsulta||''}" /></div>
+                        </div>
+                    </div>
+                    ` : ''}
 
                     <div class="ff-secao ff-tint-acesso">
                         <div class="ff-secao-head"><i class="fas fa-lock"></i> Acesso ao Sistema</div>
@@ -21297,6 +21462,13 @@ async function salvarEncarregado(e) {
             encarregado.ordenadoBruto = ordenadoBruto;
             encarregado.funcionariosIds = funcionariosIds;
             const _eg = document.getElementById('edit_enc_gps_ponto'); if (_eg) encarregado.gpsPonto = _eg.checked;
+            const _egApNum = document.getElementById('edit_enc_apolice_numero'); if (_egApNum) encarregado.apoliceNumero = _egApNum.value.trim() || null;
+            const _egApSeg = document.getElementById('edit_enc_apolice_seguradora'); if (_egApSeg) encarregado.apoliceSeguradora = _egApSeg.value.trim() || null;
+            const _egApVal = document.getElementById('edit_enc_apolice_validade'); if (_egApVal) encarregado.apoliceValidade = _egApVal.value || null;
+            const _egSaNum = document.getElementById('edit_enc_saude_numero'); if (_egSaNum) encarregado.saudeApoliceNumero = _egSaNum.value.trim() || null;
+            const _egSaSeg = document.getElementById('edit_enc_saude_seguradora'); if (_egSaSeg) encarregado.saudeApoliceSeguradora = _egSaSeg.value.trim() || null;
+            const _egSaVal = document.getElementById('edit_enc_saude_validade'); if (_egSaVal) encarregado.saudeApoliceValidade = _egSaVal.value || null;
+            const _egShst = document.getElementById('edit_enc_shst_ultima_consulta'); if (_egShst) encarregado.shstUltimaConsulta = _egShst.value || null;
             const editEncVeic = document.getElementById('edit_enc_veiculo')?.value || null;
             if (editEncVeic) {
                 const oc = veiculoJaAtribuido(editEncVeic, 'enc', encarregado.id);
@@ -24049,7 +24221,7 @@ async function salvarAdmin(e) {
                                 <div class="form-group"><label>Horas Semanais de trabalho *</label><input type="number" id="f_horas" value="${item ? (item.horasSemanais ?? 40) : 40}" step="1" min="1" required /></div>
                                 ${usuarioLogado?.role === 'admin' ? `<div class="form-group"><label>Dias de férias por ano</label><input type="number" id="f_dias_ferias" value="${item ? (item.diasFerias ?? 22) : 22}" step="1" min="0" /></div>` : ''}
                                 ${usuarioLogado?.role === 'admin' ? `<div class="form-group"><label>Ordenado bruto (€)</label><input type="number" id="f_ordenado" value="${item && item.ordenadoBruto != null ? item.ordenadoBruto : ''}" step="0.01" min="0" placeholder="0.00" /></div>` : ''}
-                                ${(usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin') ? `
+                                ${(usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin') && adminAtual()?.segurosAtivo ? `
                                 <div class="form-group ff-span2" style="border-top:1px dashed #e2e8f0;padding-top:12px;margin-top:4px;">
                                     <label style="font-weight:700;color:#0e7490;"><i class="fas fa-shield-halved"></i> Apólice de Seguro de Acidentes de Trabalho</label>
                                 </div>
@@ -24063,6 +24235,37 @@ async function salvarAdmin(e) {
                                 <div class="form-group"><label>Seguradora</label><input type="text" id="f_saude_seguradora" value="${item && item.saudeApoliceSeguradora ? item.saudeApoliceSeguradora : ''}" placeholder="Ex.: Médis" /></div>
                                 <div class="form-group"><label>Validade</label><input type="date" id="f_saude_validade" value="${item && item.saudeApoliceValidade ? item.saudeApoliceValidade : ''}" /></div>
                                 ` : ''}
+                                ${(usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin') && adminAtual()?.shstAtivo ? (() => {
+                                    // SHST — calcula sozinho a periodicidade a partir da idade (data de nascimento
+                                    // do próprio funcionário, já existente na ficha) e a data de vencimento a
+                                    // partir da última consulta. Sem data de nascimento, assume periodicidade
+                                    // anual por defeito (mais seguro do que assumir 2 em 2 anos).
+                                    let idadeTxt = 'não definida — a assumir periodicidade anual', periodicidadeAnos = 1;
+                                    if (item?.dataNascimento) {
+                                        const nasc = new Date(item.dataNascimento + 'T00:00:00');
+                                        const hoje = new Date();
+                                        let idade = hoje.getFullYear() - nasc.getFullYear();
+                                        const aindaNaoFezAnos = (hoje.getMonth() < nasc.getMonth()) || (hoje.getMonth() === nasc.getMonth() && hoje.getDate() < nasc.getDate());
+                                        if (aindaNaoFezAnos) idade--;
+                                        periodicidadeAnos = idade >= 50 ? 1 : 2;
+                                        idadeTxt = idade + ' anos';
+                                    }
+                                    const ultimaConsulta = item?.shstUltimaConsulta || '';
+                                    let vencimentoTxt = '—';
+                                    if (ultimaConsulta) {
+                                        const venc = new Date(ultimaConsulta + 'T00:00:00');
+                                        venc.setFullYear(venc.getFullYear() + periodicidadeAnos);
+                                        vencimentoTxt = venc.toLocaleDateString('pt-PT');
+                                    }
+                                    return `
+                                <div class="form-group ff-span2" style="border-top:1px dashed #e2e8f0;padding-top:12px;margin-top:4px;">
+                                    <label style="font-weight:700;color:#0e7490;"><i class="fas fa-user-doctor"></i> Saúde, Higiene e Segurança no Trabalho (SHST)</label>
+                                    <div class="help-text" style="margin-top:2px;">Idade: ${idadeTxt} · Periodicidade: consulta a cada ${periodicidadeAnos} ano${periodicidadeAnos > 1 ? 's' : ''}.</div>
+                                </div>
+                                <div class="form-group"><label>Última consulta efetuada</label><input type="date" id="f_shst_ultima_consulta" value="${ultimaConsulta}" /></div>
+                                <div class="form-group"><label>Quando vence</label><input type="text" value="${vencimentoTxt}" disabled style="background:#e9edf2;" /><span class="help-text">Calculado sozinho — avisa 30 dias antes de vencer.</span></div>
+                                    `;
+                                })() : ''}
                                 ${usuarioLogado?.role === 'admin' ? `<div class="form-group ff-span2"><div class="help-text" style="margin:-2px 0 6px;">Dias de férias: por defeito 22/ano. Fins de semana e feriados nacionais não contam.</div></div>` : ''}
                                 ${usuarioLogado?.role === 'admin' ? `<div class="form-group ff-span2"><label>Carro de empresa</label>
                                     <div style="display:flex;gap:8px;align-items:center;">
@@ -25359,6 +25562,8 @@ async function salvarAdmin(e) {
                 if (saudeSegEl) obj.saudeApoliceSeguradora = saudeSegEl.value || null;
                 const saudeValEl = document.getElementById('f_saude_validade');
                 if (saudeValEl) obj.saudeApoliceValidade = saudeValEl.value || null;
+                const shstEl = document.getElementById('f_shst_ultima_consulta');
+                if (shstEl) obj.shstUltimaConsulta = shstEl.value || null;
                 const veicEl = document.getElementById('f_veiculo');
                 if (veicEl) obj.veiculoId = veicEl.value || null;
                 const gpsEl = document.getElementById('f_gps_ponto');
@@ -31954,6 +32159,10 @@ window._relPrefill = function(msg){
         // =============================================================
         //  PERFIL - Editar
         // =============================================================
+        function _perfAlternarBlocoCondicional(qual, mostrar) {
+            const bloco = document.getElementById('perf_bloco_' + qual);
+            if (bloco) bloco.style.display = mostrar ? '' : 'none';
+        }
         function abrirEditarPerfil() {
             if (!usuarioLogado) return;
             const overlay = document.getElementById('modalPerfilOverlay');
@@ -32147,16 +32356,49 @@ window._relPrefill = function(msg){
                         </div>
 
                         <div class="ff-secao ff-tint-doc">
-                            <div class="ff-secao-head"><i class="fas fa-certificate"></i> Certificações e cor da empresa</div>
+                            <div class="ff-secao-head"><i class="fas fa-id-badge"></i> Identificação Fiscal e Visual</div>
                             <div class="ff-secao-body">
-                                <div class="form-group ff-span2"><label>NIF da empresa</label><input type="text" id="perf_nif" value="${admin?.nif || ''}" placeholder="000000000" /></div>
+                                <div class="form-group"><label>NIF da empresa</label><input type="text" id="perf_nif" value="${admin?.nif || ''}" placeholder="000000000" /></div>
+                                <div class="form-group"><label>Cor corporativa (usada nos relatórios)</label><input type="text" id="perf_cor" value="${admin?.corCorporativa || '#152A52'}" placeholder="#152A52" /></div>
+                            </div>
+                        </div>
+
+                        <div class="ff-secao ff-tint-doc">
+                            <div class="ff-secao-head"><i class="fas fa-sliders"></i> Áreas de Atuação</div>
+                            <div class="ff-secao-body">
+                                <div class="form-group ff-span2">
+                                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                                        <input type="checkbox" id="perf_seguranca_ativo" ${admin?.segurancaAtivo ? 'checked' : ''} style="width:auto;margin:0;" onchange="_perfAlternarBlocoCondicional('seguranca', this.checked)" />
+                                        Trabalha na área de segurança (CCTV, Intrusão, Incêndio)?
+                                    </label>
+                                    <div class="help-text">Se sim, ativa os registos ANEPC, registo prévio e o logótipo da entidade certificadora, usados nos relatórios de especialidade.</div>
+                                </div>
+                                <div class="form-group ff-span2">
+                                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                                        <input type="checkbox" id="perf_seguros_ativo" ${admin?.segurosAtivo ? 'checked' : ''} style="width:auto;margin:0;" />
+                                        Quer adicionar os seguros da empresa (Responsabilidade Civil e Saúde)?
+                                    </label>
+                                    <div class="help-text">Se sim, a ficha de cada funcionário passa a ter os campos de apólice (nº, seguradora, validade) para os dois seguros.</div>
+                                </div>
+                                <div class="form-group ff-span2">
+                                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                                        <input type="checkbox" id="perf_shst_ativo" ${admin?.shstAtivo ? 'checked' : ''} style="width:auto;margin:0;" />
+                                        Quer ativar Saúde, Higiene e Segurança no Trabalho (SHST)?
+                                    </label>
+                                    <div class="help-text">Se sim, a ficha de cada funcionário passa a controlar a validade da consulta de medicina do trabalho — anual a partir dos 50 anos, de 2 em 2 anos antes disso — com aviso automático quando faltarem 30 dias.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="ff-secao ff-tint-doc" id="perf_bloco_seguranca" style="${admin?.segurancaAtivo ? '' : 'display:none;'}">
+                            <div class="ff-secao-head"><i class="fas fa-certificate"></i> Certificações (Segurança)</div>
+                            <div class="ff-secao-body">
                                 <div class="form-group ff-span2"><label>Nº de registo ANEPC</label><input type="text" id="perf_anepc" value="${admin?.numeroAnepc || ''}" placeholder="Deixe em branco se não tiver" /></div>
                                 <div class="form-group"><label>Data de emissão ANEPC</label><input type="date" id="perf_anepc_data" value="${admin?.dataAnepc || ''}" /></div>
                                 <div class="form-group"><label>Validade / renovação do registo ANEPC</label><input type="date" id="perf_anepc_validade" value="${admin?.anepcValidade || ''}" /><span class="help-text">Fica em alerta vermelho nas pendências quando faltarem 6 meses.</span></div>
                                 <div class="form-group ff-span2"><label>Nº de registo prévio</label><input type="text" id="perf_registo_previo" value="${admin?.numeroRegistoPrevio || ''}" placeholder="Deixe em branco se não tiver" /></div>
                                 <div class="form-group"><label>Data de emissão do registo prévio</label><input type="date" id="perf_registo_previo_data" value="${admin?.dataRegistoPrevio || ''}" /><span class="help-text">Usada na Declaração de Instalação, junto ao nº de registo.</span></div>
                                 <div class="form-group"><label>Validade / renovação do registo prévio</label><input type="date" id="perf_registo_previo_validade" value="${admin?.registoPrevioValidade || ''}" /><span class="help-text">Fica em alerta vermelho nas pendências quando faltarem 6 meses.</span></div>
-                                <div class="form-group ff-span2"><label>Cor corporativa (usada nos relatórios)</label><input type="text" id="perf_cor" value="${admin?.corCorporativa || '#152A52'}" placeholder="#152A52" /></div>
                                 <div class="form-group ff-span2">
                                     <label>Logótipo da entidade certificadora (extintores — REX)</label>
                                     <span class="help-text" style="display:block;margin-bottom:6px;">Aparece no canto superior direito do relatório REX, no lugar do logótipo padrão da APCER — usa o logótipo da entidade que certifica a tua empresa (APCER, Bureau Veritas, SGS, TÜV Rheinland, etc.), o que for.</span>
@@ -32486,6 +32728,9 @@ window._relPrefill = function(msg){
                     admin.osModoWizard = document.getElementById('perf_os_modo_wizard')?.checked || false;
                     admin.contratoModoWizard = document.getElementById('perf_contrato_modo_wizard')?.checked || false;
                     admin.concelho = document.getElementById('perf_concelho')?.value || null;
+                    admin.segurancaAtivo = document.getElementById('perf_seguranca_ativo')?.checked || false;
+                    admin.segurosAtivo = document.getElementById('perf_seguros_ativo')?.checked || false;
+                    admin.shstAtivo = document.getElementById('perf_shst_ativo')?.checked || false;
                     if (senha) admin.senha = senha;
                     if (logoData !== undefined) admin.logo = logoData;
                     if (window._perfCertificadoraLogoRemover) { admin.certificadoraLogo = null; window._perfCertificadoraLogoRemover = false; }
