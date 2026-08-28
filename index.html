@@ -261,7 +261,7 @@
         Pague pela dimensão da operação, não por cada funcionário.
       </div>
       <div class="hero-cta">
-        <a class="btn btn-ghost" href="https://wa.me/351900000000?text=Ol%C3%A1%2C%20quero%20saber%20mais%20sobre%20o%20Total%20Gest" target="_blank" rel="noopener" onclick="_tgRegistarEvento('clique_cta','whatsapp')"><i class="fab fa-whatsapp" style="color:#25D366;margin-right:6px;"></i> Ligue Agora</a>
+        <a class="btn btn-ghost" href="https://wa.me/351939373322?text=Ol%C3%A1%2C%20quero%20saber%20mais%20sobre%20o%20Total%20Gest" target="_blank" rel="noopener" onclick="_tgRegistarEvento('clique_cta','whatsapp')"><i class="fab fa-whatsapp" style="color:#25D366;margin-right:6px;"></i> Ligue Agora</a>
         <a class="btn btn-orange" href="#" onclick="_tgRegistarEvento('clique_cta','hero');abrirModalSignup();return false;">Começar 30 dias grátis <span style="margin-left:4px;">→</span></a>
       </div>
       <div class="hero-trust">
@@ -692,11 +692,11 @@
     <div id="tcw-passo-1" class="tcw-passo">
       <p class="tcw-sub">Isto define o plano base da Total Gest para a sua equipa.</p>
       <div class="tcw-func-grid" id="tcw-func-chips">
-        <button type="button" data-v="5"><span class="n">Até 5</span><span class="p">29,99 €/mês</span></button>
-        <button type="button" data-v="10"><span class="n">Até 10</span><span class="p">34,99 €/mês</span></button>
-        <button type="button" data-v="25"><span class="n">Até 25</span><span class="p">39,99 €/mês</span></button>
-        <button type="button" data-v="50"><span class="n">Até 50</span><span class="p">59,99 €/mês</span></button>
-        <button type="button" data-v="100"><span class="n">Até 100</span><span class="p">89,99 €/mês</span></button>
+        <button type="button" data-v="5"><span class="n">Até 5</span><span class="p" data-preco-de="30_5">—</span></button>
+        <button type="button" data-v="10"><span class="n">Até 10</span><span class="p" data-preco-de="30_10">—</span></button>
+        <button type="button" data-v="25"><span class="n">Até 25</span><span class="p" data-preco-de="30_25">—</span></button>
+        <button type="button" data-v="50"><span class="n">Até 50</span><span class="p" data-preco-de="30_50">—</span></button>
+        <button type="button" data-v="100"><span class="n">Até 100</span><span class="p" data-preco-de="30_100">—</span></button>
       </div>
       <div class="tcw-field" style="margin-top:8px;">
         <label>Tenho um número diferente de funcionários</label>
@@ -11838,7 +11838,7 @@
             wrap.id = 'kmRegistoOverlay';
             wrap.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.75);z-index:300000;display:flex;align-items:center;justify-content:center;padding:16px;';
             wrap.innerHTML = `
-                <div style="background:#fff;border-radius:18px;padding:26px 22px;max-width:380px;width:100%;text-align:center;">
+                <div id="kmRegistoCartao" style="background:#fff;border-radius:18px;padding:26px 22px;max-width:380px;width:100%;text-align:center;">
                     <div style="font-size:1.6rem;color:#0ea5e9;margin-bottom:8px;"><i class="fas fa-road"></i></div>
                     <div style="font-weight:800;color:#152a52;font-size:1.05rem;margin-bottom:4px;">Regista os km da viatura</div>
                     <div style="color:#64748b;font-size:.85rem;margin-bottom:6px;">${escapeHtmlSimples(tituloContexto || '')}</div>
@@ -11860,10 +11860,81 @@
             const valor = parseFloat(input?.value);
             if (isNaN(valor) || valor < 0) { alert('Indica um valor de km válido.'); return; }
             const veiculo = (dados.veiculos || []).find(v => v.id === veiculoId);
+            // Nunca pode ser inferior ao último valor registado — bloqueia mesmo, não é só
+            // ignorado em silêncio, para não deixar passar um km errado por engano (ex.: dedo
+            // a mais/a menos, ou esquecimento de um zero).
+            if (veiculo && veiculo.km != null && valor < veiculo.km) {
+                alert('⚠️ Este valor (' + valor + ' km) é inferior ao último registado nesta viatura (' + veiculo.km + ' km).\n\nConfirma o conta-quilómetros e tenta outra vez.');
+                return;
+            }
+            // Salto muito grande (500 km ou mais desde a última leitura) — provavelmente um dedo
+            // a mais sem querer. Não bloqueia, mas obriga a confirmar bem a sério (arrastar),
+            // em vez de só um clique, para evitar um valor errado a entrar sem se dar conta.
+            if (veiculo && veiculo.km != null && (valor - veiculo.km) >= 500) {
+                _kmPedirConfirmacaoSaltoGrande(veiculoId, valor, veiculo.km);
+                return;
+            }
+            _kmGravarRegisto(veiculoId, valor);
+        }
+        function _kmGravarRegisto(veiculoId, valor) {
+            const veiculo = (dados.veiculos || []).find(v => v.id === veiculoId);
             if (veiculo && (veiculo.km == null || valor >= veiculo.km)) { veiculo.km = valor; veiculo.kmData = getDataHoje(); }
             document.getElementById('kmRegistoOverlay')?.remove();
             const cb = window._kmRegistoCallback; window._kmRegistoCallback = null;
             if (typeof cb === 'function') cb(valor);
+        }
+        // Troca o conteúdo do mesmo popup por um aviso + "arrastar para confirmar" (construído
+        // aqui mesmo, sem depender do modal genérico da app — este popup também é usado dentro
+        // do Modo Quiosque, onde esse modal pode não existir).
+        function _kmPedirConfirmacaoSaltoGrande(veiculoId, valorNovo, valorAnterior) {
+            const cartao = document.getElementById('kmRegistoCartao'); if (!cartao) return;
+            const diferenca = Math.round(valorNovo - valorAnterior);
+            cartao.innerHTML = `
+                <div style="font-size:1.8rem;color:#f59e0b;margin-bottom:8px;"><i class="fas fa-triangle-exclamation"></i></div>
+                <div style="font-weight:800;color:#152a52;font-size:1.05rem;margin-bottom:6px;">Tens a certeza?</div>
+                <div style="color:#475569;font-size:.9rem;margin-bottom:16px;line-height:1.5;">São <strong>${diferenca.toLocaleString('pt-PT')} km</strong> a mais do que a última leitura (${Math.round(valorAnterior).toLocaleString('pt-PT')} km → ${Math.round(valorNovo).toLocaleString('pt-PT')} km). Confirma se não foi um dedo a mais.</div>
+                <div id="km_slide_track" style="position:relative;height:52px;background:#e2e8f0;border-radius:26px;overflow:hidden;user-select:none;touch-action:none;margin-bottom:10px;">
+                    <div id="km_slide_fill" style="position:absolute;top:0;left:0;height:100%;width:0;background:linear-gradient(90deg,#f59e0b,#f97316);border-radius:26px;"></div>
+                    <div id="km_slide_label" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:700;color:#475569;pointer-events:none;">Arrasta para confirmar →</div>
+                    <div id="km_slide_handle" style="position:absolute;top:3px;left:3px;width:46px;height:46px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;cursor:grab;touch-action:none;"><i class="fas fa-chevron-right" style="color:#f59e0b;"></i></div>
+                </div>
+                <button type="button" class="tgq-acao-btn" style="background:#64748b;width:100%;" onclick="document.getElementById('kmRegistoOverlay').remove();">Cancelar, deixa-me corrigir</button>
+            `;
+            setTimeout(() => _kmSlideIniciar(veiculoId, valorNovo), 30);
+        }
+        function _kmSlideIniciar(veiculoId, valorNovo) {
+            const track = document.getElementById('km_slide_track');
+            const handle = document.getElementById('km_slide_handle');
+            const fill = document.getElementById('km_slide_fill');
+            const label = document.getElementById('km_slide_label');
+            if (!track || !handle) return;
+            let max = track.clientWidth - handle.clientWidth - 6;
+            let dragging = false, confirmado = false;
+            const setPos = x => {
+                x = Math.max(0, Math.min(max, x));
+                handle.style.left = (3 + x) + 'px';
+                fill.style.width = (x + handle.clientWidth) + 'px';
+                if (x >= max - 2 && !confirmado) {
+                    confirmado = true;
+                    label.textContent = 'Confirmado ✓';
+                    setTimeout(() => _kmGravarRegisto(veiculoId, valorNovo), 200);
+                }
+            };
+            const pegar = e => { dragging = true; handle.style.cursor = 'grabbing'; e.preventDefault(); };
+            const mover = e => {
+                if (!dragging || confirmado) return;
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const rect = track.getBoundingClientRect();
+                setPos(clientX - rect.left - handle.clientWidth / 2);
+                e.preventDefault();
+            };
+            const largar = () => { dragging = false; handle.style.cursor = 'grab'; if (!confirmado) setPos(0); };
+            handle.addEventListener('mousedown', pegar);
+            handle.addEventListener('touchstart', pegar, { passive: false });
+            document.addEventListener('mousemove', mover);
+            document.addEventListener('touchmove', mover, { passive: false });
+            document.addEventListener('mouseup', largar);
+            document.addEventListener('touchend', largar);
         }
         // Km percorridos numa OS/Obra específica — soma de todos os registos de ponto (de
         // qualquer funcionário) que tenham início e fim de km preenchidos.
@@ -11878,8 +11949,11 @@
         // Km totais de HOJE, para a empresa toda — soma o Ponto Geral (início/fim do dia) de
         // todas as pessoas, para o painel do admin em "O Meu Dia".
         function _kmTotaisHoje(adminId, hoje) {
-            return (dados.ponto || []).filter(p => p.adminId === adminId && p.data === hoje && !p.servicoId && !p.obraId && p.kmInicio != null && p.kmFim != null)
+            const kmPonto = (dados.ponto || []).filter(p => p.adminId === adminId && p.data === hoje && p.kmInicio != null && p.kmFim != null)
                 .reduce((soma, p) => soma + Math.max(0, p.kmFim - p.kmInicio), 0);
+            const kmObra = (dados.obraPontoLonga || []).filter(p => p.adminId === adminId && p.data === hoje && p.kmInicio != null && p.kmFim != null)
+                .reduce((soma, p) => soma + Math.max(0, p.kmFim - p.kmInicio), 0);
+            return kmPonto + kmObra;
         }
         function _salvarConfigKmFrota() {
             const admin = adminAtual(); if (!admin) return;
@@ -15182,7 +15256,16 @@
                 if (emObra) { const ob = dados.obras?.find(o => o.id === emObra.obraId); return { label: 'Em Obra — ' + (ob?.nome || '—'), cor: '#0ea5e9' }; }
                 const geral = (dados.ponto || []).find(x => x.funcionarioId === p.id && !x.servicoId && !x.obraId && x.data === hoje && x.entrada);
                 if (geral && !geral.saida) return { label: 'Em serviço', cor: '#16a34a' };
-                if (geral && geral.saida) return { label: 'Terminou o dia', cor: '#f97316' };
+                if (geral && geral.saida) {
+                    // O Ponto Geral pode ter sido fechado automaticamente por causa de uma pausa
+                    // para almoço a meio de uma OS (não é um "Terminar o Dia" a sério). Se, depois
+                    // dessa saída, a pessoa ainda entrou/saiu de alguma OS ou Obra, está claramente
+                    // a trabalhar — não faz sentido dizer que "terminou o dia".
+                    const aindaTrabalhouDepois = (dados.ponto || []).some(x => x.funcionarioId === p.id && x.servicoId && x.data === hoje && x.entrada > geral.saida)
+                        || (dados.obraPontoLonga || []).some(x => x.funcionarioId === p.id && x.data === hoje && x.entrada > geral.saida);
+                    if (aindaTrabalhouDepois) return { label: 'Em serviço', cor: '#16a34a' };
+                    return { label: 'Terminou o dia', cor: '#f97316' };
+                }
                 return { label: 'Ainda não começou', cor: '#1e293b' };
             };
             const linhasEquipa = equipa.slice(0, 12).map(p => {
@@ -32662,11 +32745,21 @@ const TCW_ADDONS = {
     crm:       { nome: 'CRM Comercial + Assist',              m: 19.99, a: 215.89 },
     erp:       { nome: 'Integração com ERP (Moloni)',         m: 29.99, a: 323.89 },
 };
-const TCW_ESCALOES = [[5,29.99],[10,34.99],[25,39.99],[50,59.99],[100,89.99]];
+// Os escalões da calculadora pública usam sempre o mesmo PLANOS que gera as licenças a sério
+// (definido mais acima, na parte da app) — nunca valores escritos aqui à parte, para nunca
+// ficarem dessincronizados se o preço de um plano mudar.
+const TCW_ESCALOES = [5, 10, 25, 50, 100].map(n => [n, PLANOS['30_' + n].preco]);
 let _tcwPasso = 1;
 function abrirWizardCalc() {
     _tgRegistarEvento('wizard_calc_abrir', null);
     _tcwPasso = 1;
+    // Os preços mostrados nos cartões vêm sempre do PLANOS (a mesma fonte que gera as
+    // licenças a sério) — nunca escritos à parte no HTML, para nunca desalinhar.
+    document.querySelectorAll('#tcw-func-chips [data-preco-de]').forEach(el => {
+        const chave = el.getAttribute('data-preco-de');
+        const preco = PLANOS[chave]?.preco;
+        el.textContent = preco != null ? preco.toFixed(2).replace('.', ',') + ' €/mês' : '—';
+    });
     document.querySelectorAll('.tcw-passo').forEach((el, i) => el.style.display = i === 0 ? '' : 'none');
     _tcwRenderCabecalho();
     document.getElementById('tg-calc-wizard-overlay').classList.add('open');
