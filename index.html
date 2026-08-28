@@ -2098,7 +2098,7 @@
                     <option value="tudo" selected>Tudo</option>
                 </select>
                 <button class="btn btn-outline" onclick="relFinanceiroPDF()"><i class="fas fa-file-pdf"></i> PDF</button>
-                <button class="btn btn-outline" id="btnFaturacaoMoloniFin" style="display:none;" onclick="abrirConfigFaturacao()"><i class="fas fa-file-invoice"></i> Faturação (Moloni)</button>
+                <button class="btn btn-outline" id="btnFaturacaoMoloniFin" style="display:none;" onclick="abrirConfigFaturacao()"><i class="fas fa-file-invoice"></i> Faturação</button>
             </div>
         </div>
         <div id="financeiroConteudo"></div>
@@ -3220,8 +3220,8 @@
             },
             clientes: {
                 tabela: 'clientes',
-                from: r => ({ id: r.id, nome: r.nome, numeroCliente: r.numero_cliente || null, telefone: r.telefone, endereco: r.endereco, morada: r.morada, numeroPorta: r.numero_porta || null, codigoPostal: r.codigo_postal, cidade: r.cidade, freguesia: r.freguesia, nif: r.nif, pessoaContacto: r.pessoa_contacto, email: r.email, portalAtivo: r.portal_ativo === true, adminId: r.admin_id, pinMapa: r.pin_mapa || null, moloniCustomerId: r.moloni_customer_id || null }),
-                to:   o => ({ id: o.id, nome: o.nome, numero_cliente: o.numeroCliente || null, telefone: o.telefone || null, endereco: o.endereco || null, morada: o.morada || null, numero_porta: o.numeroPorta || null, codigo_postal: o.codigoPostal || null, cidade: o.cidade || null, freguesia: o.freguesia || null, nif: o.nif || null, pessoa_contacto: o.pessoaContacto || null, email: o.email || null, senha: o.senha || null, portal_ativo: o.portalAtivo === true, admin_id: o.adminId, pin_mapa: o.pinMapa || null, moloni_customer_id: o.moloniCustomerId || null })
+                from: r => ({ id: r.id, nome: r.nome, numeroCliente: r.numero_cliente || null, telefone: r.telefone, endereco: r.endereco, morada: r.morada, numeroPorta: r.numero_porta || null, codigoPostal: r.codigo_postal, cidade: r.cidade, freguesia: r.freguesia, nif: r.nif, pessoaContacto: r.pessoa_contacto, email: r.email, portalAtivo: r.portal_ativo === true, adminId: r.admin_id, pinMapa: r.pin_mapa || null, moloniCustomerId: r.moloni_customer_id || null, toconlineCustomerId: r.toconline_customer_id || null }),
+                to:   o => ({ id: o.id, nome: o.nome, numero_cliente: o.numeroCliente || null, telefone: o.telefone || null, endereco: o.endereco || null, morada: o.morada || null, numero_porta: o.numeroPorta || null, codigo_postal: o.codigoPostal || null, cidade: o.cidade || null, freguesia: o.freguesia || null, nif: o.nif || null, pessoa_contacto: o.pessoaContacto || null, email: o.email || null, senha: o.senha || null, portal_ativo: o.portalAtivo === true, admin_id: o.adminId, pin_mapa: o.pinMapa || null, moloni_customer_id: o.moloniCustomerId || null, toconline_customer_id: o.toconlineCustomerId || null })
             },
             leads: {
                 tabela: 'leads',
@@ -3245,8 +3245,8 @@
             },
             servicos: {
                 tabela: 'servicos',
-                from: r => ({ id: r.id, numeroRegisto: r.numero_registo, clienteId: r.cliente_id, funcionarioId: r.funcionario_id, funcionariosIds: Array.isArray(r.funcionarios_ids) ? r.funcionarios_ids : [], relatorioResponsavelId: r.relatorio_responsavel_id || null, contratoId: r.contrato_id, obraId: r.obra_id, localId: r.local_id || null, assistenciaId: r.assistencia_id || null, valor: r.valor != null ? Number(r.valor) : null, duracao: r.duracao != null ? Number(r.duracao) : null, duracaoDias: r.duracao_dias != null ? Number(r.duracao_dias) : null, morada: r.morada || null, numeroPorta: r.numero_porta || null, codigoPostal: r.codigo_postal || null, cidade: r.cidade || null, freguesia: r.freguesia || null, data: r.data || '', hora: hhmm(r.hora) || '', descricao: r.descricao, observacoes: r.observacoes || null, checklist: r.checklist || {}, checklistEntrada: r.checklist_entrada || {}, status: r.status, origem: r.origem || null, tiposTrabalho: Array.isArray(r.tipos_trabalho) ? r.tipos_trabalho : [], adminId: r.admin_id, pagamentoLocal: r.pagamento_local === true, pago: r.pago == null ? null : (r.pago === true), faturaMoloniId: r.fatura_moloni_id || null, faturaMoloniUrl: r.fatura_moloni_url || null, reciboMoloniId: r.recibo_moloni_id || null, reciboMoloniUrl: r.recibo_moloni_url || null, guiaMoloniId: r.guia_moloni_id || null, guiaMoloniUrl: r.guia_moloni_url || null, notaCreditoMoloniId: r.nota_credito_moloni_id || null, notaCreditoMoloniUrl: r.nota_credito_moloni_url || null }),
-                to:   o => ({ id: o.id, numero_registo: o.numeroRegisto || null, cliente_id: o.clienteId || null, funcionario_id: o.funcionarioId || null, funcionarios_ids: o.funcionariosIds || [], relatorio_responsavel_id: o.relatorioResponsavelId || null, contrato_id: o.contratoId || null, obra_id: o.obraId || null, local_id: o.localId || null, assistencia_id: o.assistenciaId || null, valor: (o.valor === '' || o.valor == null) ? null : Number(o.valor), duracao: (o.duracao === '' || o.duracao == null) ? null : parseInt(o.duracao,10), duracao_dias: (o.duracaoDias === '' || o.duracaoDias == null) ? null : parseInt(o.duracaoDias,10), morada: o.morada || null, numero_porta: o.numeroPorta || null, codigo_postal: o.codigoPostal || null, cidade: o.cidade || null, freguesia: o.freguesia || null, data: nn(o.data), hora: nn(o.hora), descricao: o.descricao || null, observacoes: o.observacoes || null, checklist: o.checklist || {}, checklist_entrada: o.checklistEntrada || {}, status: o.status || 'pendente', origem: o.origem || null, tipos_trabalho: o.tiposTrabalho || [], admin_id: o.adminId, pagamento_local: o.pagamentoLocal === true, pago: o.pago === undefined ? null : o.pago, fatura_moloni_id: o.faturaMoloniId || null, fatura_moloni_url: o.faturaMoloniUrl || null, recibo_moloni_id: o.reciboMoloniId || null, recibo_moloni_url: o.reciboMoloniUrl || null, guia_moloni_id: o.guiaMoloniId || null, guia_moloni_url: o.guiaMoloniUrl || null, nota_credito_moloni_id: o.notaCreditoMoloniId || null, nota_credito_moloni_url: o.notaCreditoMoloniUrl || null })
+                from: r => ({ id: r.id, numeroRegisto: r.numero_registo, clienteId: r.cliente_id, funcionarioId: r.funcionario_id, funcionariosIds: Array.isArray(r.funcionarios_ids) ? r.funcionarios_ids : [], relatorioResponsavelId: r.relatorio_responsavel_id || null, contratoId: r.contrato_id, obraId: r.obra_id, localId: r.local_id || null, assistenciaId: r.assistencia_id || null, valor: r.valor != null ? Number(r.valor) : null, duracao: r.duracao != null ? Number(r.duracao) : null, duracaoDias: r.duracao_dias != null ? Number(r.duracao_dias) : null, morada: r.morada || null, numeroPorta: r.numero_porta || null, codigoPostal: r.codigo_postal || null, cidade: r.cidade || null, freguesia: r.freguesia || null, data: r.data || '', hora: hhmm(r.hora) || '', descricao: r.descricao, observacoes: r.observacoes || null, checklist: r.checklist || {}, checklistEntrada: r.checklist_entrada || {}, status: r.status, origem: r.origem || null, tiposTrabalho: Array.isArray(r.tipos_trabalho) ? r.tipos_trabalho : [], adminId: r.admin_id, pagamentoLocal: r.pagamento_local === true, pago: r.pago == null ? null : (r.pago === true), faturaMoloniId: r.fatura_moloni_id || null, faturaMoloniUrl: r.fatura_moloni_url || null, reciboMoloniId: r.recibo_moloni_id || null, reciboMoloniUrl: r.recibo_moloni_url || null, guiaMoloniId: r.guia_moloni_id || null, guiaMoloniUrl: r.guia_moloni_url || null, notaCreditoMoloniId: r.nota_credito_moloni_id || null, notaCreditoMoloniUrl: r.nota_credito_moloni_url || null, faturaTOConlineId: r.fatura_toconline_id || null, faturaTOConlineUrl: r.fatura_toconline_url || null }),
+                to:   o => ({ id: o.id, numero_registo: o.numeroRegisto || null, cliente_id: o.clienteId || null, funcionario_id: o.funcionarioId || null, funcionarios_ids: o.funcionariosIds || [], relatorio_responsavel_id: o.relatorioResponsavelId || null, contrato_id: o.contratoId || null, obra_id: o.obraId || null, local_id: o.localId || null, assistencia_id: o.assistenciaId || null, valor: (o.valor === '' || o.valor == null) ? null : Number(o.valor), duracao: (o.duracao === '' || o.duracao == null) ? null : parseInt(o.duracao,10), duracao_dias: (o.duracaoDias === '' || o.duracaoDias == null) ? null : parseInt(o.duracaoDias,10), morada: o.morada || null, numero_porta: o.numeroPorta || null, codigo_postal: o.codigoPostal || null, cidade: o.cidade || null, freguesia: o.freguesia || null, data: nn(o.data), hora: nn(o.hora), descricao: o.descricao || null, observacoes: o.observacoes || null, checklist: o.checklist || {}, checklist_entrada: o.checklistEntrada || {}, status: o.status || 'pendente', origem: o.origem || null, tipos_trabalho: o.tiposTrabalho || [], admin_id: o.adminId, pagamento_local: o.pagamentoLocal === true, pago: o.pago === undefined ? null : o.pago, fatura_moloni_id: o.faturaMoloniId || null, fatura_moloni_url: o.faturaMoloniUrl || null, recibo_moloni_id: o.reciboMoloniId || null, recibo_moloni_url: o.reciboMoloniUrl || null, guia_moloni_id: o.guiaMoloniId || null, guia_moloni_url: o.guiaMoloniUrl || null, nota_credito_moloni_id: o.notaCreditoMoloniId || null, nota_credito_moloni_url: o.notaCreditoMoloniUrl || null, fatura_toconline_id: o.faturaTOConlineId || null, fatura_toconline_url: o.faturaTOConlineUrl || null })
             },
             assistencias: {
                 tabela: 'assistencias',
@@ -5516,19 +5516,37 @@
                         const bgIcon = it.tipo === 'servico' ? 'rgba(251,146,60,.14)' : 'rgba(14,165,233,.14)';
                         const icone = it.tipo === 'servico' ? 'fa-wrench' : 'fa-hard-hat';
                         const osOriginal = it.tipo === 'servico' ? dados.servicos?.find(x => x.id === it.id) : null;
+                        const obraOriginal = it.tipo === 'obra' ? dados.obras?.find(x => x.id === it.id) : null;
                         const atrasada = osOriginal && osOriginal.hora && osOriginal.status !== 'em andamento' && osOriginal.hora < new Date().toTimeString().slice(0, 5);
+                        // Mesmos ícones de contacto/mapa/observações que o técnico já vê na app
+                        // normal ("O Meu Dia") — para não faltar nada de útil aqui no quiosque.
+                        const clienteId = it.tipo === 'servico' ? osOriginal?.clienteId : obraOriginal?.clienteId;
+                        const cliente = dados.clientes?.find(c => c.id === clienteId);
+                        const morada = it.tipo === 'servico' ? [osOriginal?.morada, osOriginal?.numeroPorta, osOriginal?.codigoPostal, osOriginal?.cidade].filter(Boolean).join(', ') : _moradaCompletaObra(obraOriginal);
+                        const urlInfoQ = _osMapaInfo(clienteId, morada || '', it.tipo === 'servico' ? osOriginal?.localId : obraOriginal?.localId);
+                        const observacoesQ = it.tipo === 'servico' ? osOriginal?.observacoes : obraOriginal?.observacoes;
+                        const btnMapaQ = urlInfoQ ? `<a href="${urlInfoQ.url}" target="_blank" rel="noopener" onclick="event.stopPropagation();" class="tgq-btn-mini" title="Navegar (Google Maps)"><i class="fas fa-diamond-turn-right"></i></a>${urlInfoQ?.wazeUrl ? `<a href="${urlInfoQ.wazeUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation();" class="tgq-btn-mini" title="Navegar no Waze"><i class="fas fa-w" style="font-family:sans-serif;font-style:normal;font-weight:800;">W</i></a>` : ''}` : '';
+                        const btnTelQ = cliente?.telefone ? `<a href="tel:${cliente.telefone.replace(/\s+/g,'')}" onclick="event.stopPropagation();" class="tgq-btn-mini" title="Ligar"><i class="fas fa-phone"></i></a>` : '';
+                        const _telWaQ = (cliente?.telefone || '').replace(/\D/g, '');
+                        const _telWaQFinal = _telWaQ.length === 9 ? '351' + _telWaQ : _telWaQ;
+                        const btnWaQ = cliente?.telefone ? `<a href="https://wa.me/${_telWaQFinal}" target="_blank" rel="noopener" onclick="event.stopPropagation();" class="tgq-btn-mini" style="color:#25D366;" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>` : '';
+                        const btnObsQ = (observacoesQ && observacoesQ.trim()) ? `<button type="button" onclick="event.stopPropagation();alert('Observações:\\n\\n' + ${JSON.stringify(observacoesQ)});" class="tgq-btn-mini" title="Observações"><i class="fas fa-comment-dots"></i></button>` : '';
+                        const iconesQ = btnObsQ + btnTelQ + btnWaQ + btnMapaQ;
                         return `
-                        <div onclick="_quiosqueAgendaSelecionarItem('${it.tipo}','${it.id}')" style="background:#fff;border-left:5px solid ${corTipo};border-radius:14px;padding:16px 18px;cursor:pointer;display:flex;align-items:center;gap:14px;box-shadow:0 4px 14px rgba(0,0,0,.12);transition:transform .1s;">
-                            <div style="width:46px;height:46px;border-radius:12px;background:${bgIcon};color:${corTipo};display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;"><i class="fas ${icone}"></i></div>
-                            <div style="flex:1;min-width:0;">
-                                <div style="font-weight:800;color:#152a52;font-size:1.02rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtmlSimples(it.titulo)}</div>
-                                <div style="color:#64748b;font-size:.85rem;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtmlSimples(it.sub)}${atrasada ? ' <span style="color:#dc2626;font-weight:700;">· Atrasada</span>' : ''}</div>
-                                <div style="color:#94a3b8;font-size:.74rem;margin-top:3px;"><i class="fas fa-calendar-day"></i> ${dataFmtCurta(it.data)}</div>
+                        <div onclick="_quiosqueAgendaSelecionarItem('${it.tipo}','${it.id}')" style="background:#fff;border-left:5px solid ${corTipo};border-radius:14px;padding:16px 18px;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.12);">
+                            <div style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;">
+                                <div style="width:46px;height:46px;border-radius:12px;background:${bgIcon};color:${corTipo};display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;"><i class="fas ${icone}"></i></div>
+                                <div style="flex:1;min-width:180px;">
+                                    <div style="font-weight:800;color:#152a52;font-size:1.02rem;overflow-wrap:break-word;">${escapeHtmlSimples(it.titulo)}</div>
+                                    <div style="color:#64748b;font-size:.85rem;margin-top:2px;overflow-wrap:break-word;">${escapeHtmlSimples(it.sub)}${atrasada ? ' <span style="color:#dc2626;font-weight:700;">· Atrasada</span>' : ''}</div>
+                                    <div style="color:#94a3b8;font-size:.74rem;margin-top:3px;"><i class="fas fa-calendar-day"></i> ${dataFmtCurta(it.data)}</div>
+                                </div>
+                                <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;">
+                                    <span style="background:${it.cor};color:#fff;font-size:.72rem;font-weight:600;padding:4px 12px;border-radius:100px;white-space:nowrap;">${it.badge}</span>
+                                    <i class="fas fa-chevron-right" style="color:#cbd5e1;font-size:.85rem;"></i>
+                                </div>
                             </div>
-                            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;">
-                                <span style="background:${it.cor};color:#fff;font-size:.72rem;font-weight:600;padding:4px 12px;border-radius:100px;white-space:nowrap;">${it.badge}</span>
-                                <i class="fas fa-chevron-right" style="color:#cbd5e1;font-size:.85rem;"></i>
-                            </div>
+                            ${iconesQ ? `<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px;padding-top:10px;border-top:1px solid #f1f5f9;">${iconesQ}</div>` : ''}
                         </div>
                     `; }).join('') : '<p style="color:#fff;text-align:center;">Sem OS nem Obras para este dia.</p>'}
                 </div>
@@ -5592,6 +5610,20 @@
             const pessoas = todas.filter(p => s.pessoasIds.includes(p.id));
             const item = s.tipo === 'servico' ? dados.servicos?.find(x => x.id === s.id) : dados.obras?.find(x => x.id === s.id);
             const titulo = s.tipo === 'servico' ? (obterNomeCliente(item?.clienteId) || 'OS') : item?.nome;
+            // Mesmos ícones de contacto/mapa/observações que já aparecem na Agenda do dia — para
+            // ficarem disponíveis também aqui, depois de já se ter escolhido a OS/Obra.
+            const clienteIdG = s.tipo === 'servico' ? item?.clienteId : item?.clienteId;
+            const clienteG = dados.clientes?.find(c => c.id === clienteIdG);
+            const moradaG = s.tipo === 'servico' ? [item?.morada, item?.numeroPorta, item?.codigoPostal, item?.cidade].filter(Boolean).join(', ') : _moradaCompletaObra(item);
+            const urlInfoG = _osMapaInfo(clienteIdG, moradaG || '', item?.localId);
+            const observacoesG = item?.observacoes;
+            const btnMapaG = urlInfoG ? `<a href="${urlInfoG.url}" target="_blank" rel="noopener" class="tgq-btn-mini" title="Navegar (Google Maps)"><i class="fas fa-diamond-turn-right"></i></a>${urlInfoG?.wazeUrl ? `<a href="${urlInfoG.wazeUrl}" target="_blank" rel="noopener" class="tgq-btn-mini" title="Navegar no Waze"><i class="fas fa-w" style="font-family:sans-serif;font-style:normal;font-weight:800;">W</i></a>` : ''}` : '';
+            const btnTelG = clienteG?.telefone ? `<a href="tel:${clienteG.telefone.replace(/\s+/g,'')}" class="tgq-btn-mini" title="Ligar"><i class="fas fa-phone"></i></a>` : '';
+            const _telWaG = (clienteG?.telefone || '').replace(/\D/g, '');
+            const _telWaGFinal = _telWaG.length === 9 ? '351' + _telWaG : _telWaG;
+            const btnWaG = clienteG?.telefone ? `<a href="https://wa.me/${_telWaGFinal}" target="_blank" rel="noopener" class="tgq-btn-mini" style="color:#25D366;" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>` : '';
+            const btnObsG = (observacoesG && observacoesG.trim()) ? `<button type="button" onclick="alert('Observações:\\n\\n' + ${JSON.stringify(observacoesG || '')});" class="tgq-btn-mini" title="Observações"><i class="fas fa-comment-dots"></i></button>` : '';
+            const iconesG = btnObsG + btnTelG + btnWaG + btnMapaG;
             painel.innerHTML = `
                 <div style="text-align:center;color:#152a52;margin-bottom:14px;">
                     <div style="font-weight:700;"><i class="fas fa-${s.tipo === 'servico' ? 'wrench' : 'hard-hat'}"></i> ${escapeHtmlSimples(titulo || '')}</div>
@@ -5605,6 +5637,7 @@
                         </div>
                     `).join('')}
                 </div>
+                ${iconesG ? `<div style="display:flex;gap:8px;justify-content:center;margin-top:18px;">${iconesG}</div>` : ''}
             `;
         }
         function _quiosqueAgendaSairSessao() {
@@ -5693,6 +5726,20 @@
                 }
                 const loc = await _quiosqueObterLocalizacaoAgora();
                 const admin = dados.administradores?.find(a => a.id === adminId);
+                // Nunca pode estar em duas OS/Obras ao mesmo tempo — as mesmas regras do resto
+                // do sistema aplicam-se aqui também. Verifica se já tem uma entrada aberta noutra
+                // OS ou Obra (diferente desta) antes de deixar entrar aqui.
+                const jaEmOutraOS = (dados.ponto || []).find(r => r.funcionarioId === p.id && r.servicoId && r.servicoId !== s.id && r.data === hoje && r.entrada && !r.saida);
+                const jaEmOutraObra = (dados.obraPontoLonga || []).find(r => r.funcionarioId === p.id && r.obraId && r.obraId !== s.id && r.data === hoje && r.entrada && !r.saida);
+                const jaAberto = jaEmOutraOS || jaEmOutraObra;
+                if (jaAberto) {
+                    const nomeOutro = jaEmOutraOS
+                        ? (dados.servicos?.find(x => x.id === jaEmOutraOS.servicoId)?.numeroRegisto ? 'OS #' + dados.servicos.find(x => x.id === jaEmOutraOS.servicoId).numeroRegisto : 'outra OS')
+                        : (dados.obras?.find(x => x.id === jaEmOutraObra.obraId)?.nome || 'outra Obra');
+                    alert('⚠️ ' + p.nome + ' já tem uma entrada em aberto em ' + nomeOutro + '. Tem de dar saída de lá primeiro, antes de entrar aqui.');
+                    _quiosqueAgendaGrid();
+                    return;
+                }
                 const _criarEntrada = (km) => {
                     _checklistEntradaVerificar(adminId, () => {
                         if (s.tipo === 'obra') {
@@ -7774,7 +7821,16 @@
                                         <button class="btn btn-sm btn-warning" onclick="abrirModal('servico','${s.id}')" title="Editar"><i class="fas fa-edit"></i></button>
                                         ${s.status !== 'concluído' ? `<button class="btn btn-sm" style="background:#0f766e;color:#fff;" onclick="finalizarEGerarReportOS('${s.id}')" title="Finalizar e gerar relatório completo"><i class="fas fa-flag-checkered"></i></button>` : `<button class="btn btn-sm" style="background:#0f766e;color:#fff;" onclick="gerarRelatorioOSIndividual('${s.id}')" title="Gerar relatório desta OS"><i class="fas fa-file-lines"></i></button>`}
                                         ${s.pagamentoLocal ? `<button class="btn btn-sm" style="background:${s.pago === true ? '#16a34a' : '#dc2626'};color:#fff;font-weight:700;" onclick="_pagoTogglarOS('${s.id}')" title="${s.pago === true ? ('Pago — clica para alterar' + (s.reciboMoloniId ? ' (recibo emitido na Moloni)' : '')) : 'Não pago — clica para confirmar'}">${s.pago === true ? '€ Pago' : '<span style="text-decoration:line-through;">€</span> Não pago'}</button>` : ''}
-                                        ${(s.status === 'concluído' && s.valor != null && (usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin') && moduloErpAtivo(dados.administradores?.find(a => a.id === s.adminId))) ? `<button class="btn btn-sm" style="background:${s.faturaMoloniId ? '#64748b' : '#7c3aed'};color:#fff;" onclick="faturarOSViaMoloni('${s.id}')" title="${s.faturaMoloniId ? 'Já faturado — clica para faturar de novo' : 'Faturar via Moloni'}"><i class="fas fa-file-invoice"></i> ${s.faturaMoloniId ? 'Faturado' : 'Faturar'}</button>` : ''}
+                                        ${(() => {
+                                            if (s.status !== 'concluído' || s.valor == null || (usuarioLogado?.role !== 'admin' && usuarioLogado?.role !== 'subadmin')) return '';
+                                            const _adminVerOs = dados.administradores?.find(a => a.id === s.adminId);
+                                            if (!moduloErpAtivo(_adminVerOs)) return '';
+                                            const _provVerOs = _adminVerOs?.integracaoFaturacao?.provider;
+                                            if (_provVerOs === 'toconline') {
+                                                return `<button class="btn btn-sm" style="background:${s.faturaTOConlineId ? '#64748b' : '#0f766e'};color:#fff;" onclick="faturarOSViaTOConline('${s.id}')" title="${s.faturaTOConlineId ? 'Já faturado — clica para faturar de novo' : 'Faturar via TOConline'}"><i class="fas fa-file-invoice"></i> ${s.faturaTOConlineId ? 'Faturado' : 'Faturar'}</button>`;
+                                            }
+                                            return `<button class="btn btn-sm" style="background:${s.faturaMoloniId ? '#64748b' : '#7c3aed'};color:#fff;" onclick="faturarOSViaMoloni('${s.id}')" title="${s.faturaMoloniId ? 'Já faturado — clica para faturar de novo' : 'Faturar via Moloni'}"><i class="fas fa-file-invoice"></i> ${s.faturaMoloniId ? 'Faturado' : 'Faturar'}</button>`;
+                                        })()}
                                         ${s.faturaMoloniUrl ? `<a href="${s.faturaMoloniUrl}" target="_blank" class="btn btn-sm btn-outline" title="Abrir o PDF da fatura na Moloni"><i class="fas fa-file-pdf"></i> Fatura</a>` : ''}
                                         ${(s.faturaMoloniId && !s.reciboMoloniId && !s.pagamentoLocal && (usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin')) ? `<button class="btn btn-sm btn-outline" onclick="_verificarPagamentoMoloni('${s.id}')" title="Ir verificar à Moloni se esta fatura já foi paga"><i class="fas fa-rotate"></i> Verificar pagamento</button>` : ''}
                                         ${s.reciboMoloniUrl ? `<a href="${s.reciboMoloniUrl}" target="_blank" class="btn btn-sm btn-outline" title="Abrir o PDF do recibo na Moloni"><i class="fas fa-receipt"></i> Recibo</a>` : ''}
@@ -10143,33 +10199,98 @@
             if (!admin) return;
             if (!moduloErpAtivo(admin)) { alert('O add-on "Integração com ERP\'s" ainda não está ativo para a tua empresa. Este módulo está "Em breve" — fala com a Total Gest para o ativar.'); return; }
             const cfg = admin.integracaoFaturacao || {};
-            const mol = cfg.moloni || {};
+            const provider = cfg.provider || 'moloni';
             const overlay = document.getElementById('modalGenericoOverlay');
             const titulo = document.getElementById('modalGenericoTitulo');
             const campos = document.getElementById('modalGenericoCampos');
             const form = document.getElementById('modalGenericoForm');
             if (!overlay || !campos) { alert('Modal indisponível.'); return; }
-            titulo.innerHTML = '<i class="fas fa-file-invoice"></i> Faturação — Moloni';
+            titulo.innerHTML = '<i class="fas fa-file-invoice"></i> Faturação';
             campos.innerHTML = `
-                <div class="help-text" style="margin-bottom:10px;">Estes dados ficam guardados de forma segura e só são usados no servidor para autenticar com a Moloni — nunca ficam visíveis no browser depois de gravados.</div>
-                <div class="form-group"><label>Client ID *</label><input type="text" id="fat_client_id" value="${(mol.clientId || '').replace(/"/g,'&quot;')}" /></div>
-                <div class="form-group"><label>Client Secret *</label><input type="password" id="fat_client_secret" value="${(mol.clientSecret || '').replace(/"/g,'&quot;')}" /></div>
-                <div class="form-group"><label>Utilizador (email da Moloni) *</label><input type="text" id="fat_username" value="${(mol.username || '').replace(/"/g,'&quot;')}" /></div>
-                <div class="form-group"><label>Password *</label><input type="password" id="fat_password" value="${(mol.password || '').replace(/"/g,'&quot;')}" /></div>
-                <div class="form-group"><label>ID da Empresa na Moloni *</label><input type="text" id="fat_company_id" value="${(mol.companyId || '').replace(/"/g,'&quot;')}" placeholder="ex: 123456" /></div>
-                <div class="form-group"><label>ID da Série de Documentos (opcional)</label><input type="text" id="fat_document_set_id" value="${(mol.documentSetId || '').replace(/"/g,'&quot;')}" placeholder="Deixa em branco para usar a série pré-definida" /></div>
-                <label style="display:flex;align-items:center;gap:8px;font-weight:400;margin-top:6px;">
-                    <input type="checkbox" id="fat_simulacao" ${cfg.simulacao !== false ? 'checked' : ''} style="width:auto;" />
-                    Modo simulação (não emite faturas reais — só para testar a ligação)
-                </label>
-                <div class="help-text" style="margin-top:8px;">Desmarca "Modo simulação" só depois de confirmares que a ligação está a funcionar corretamente.</div>
+                <div class="form-group">
+                    <label>Fornecedor de faturação</label>
+                    <div style="display:flex;gap:8px;">
+                        <button type="button" class="btn btn-sm ${provider === 'moloni' ? 'btn-primary' : 'btn-outline'}" onclick="_fatEscolherProvider('moloni')" style="flex:1;">Moloni</button>
+                        <button type="button" class="btn btn-sm ${provider === 'toconline' ? 'btn-primary' : 'btn-outline'}" onclick="_fatEscolherProvider('toconline')" style="flex:1;">TOConline</button>
+                    </div>
+                </div>
+                <div id="fatCamposProvider"></div>
             `;
             if (form) form.onsubmit = function(e) { e.preventDefault(); salvarConfigFaturacao(); };
             overlay.classList.add('open');
+            _fatRenderCamposProvider(provider, cfg);
         }
-        function salvarConfigFaturacao() {
+        function _fatEscolherProvider(provider) {
+            const admin = adminAtual(); if (!admin) return;
+            const cfg = admin.integracaoFaturacao || {};
+            document.querySelectorAll('#modalGenericoCampos .form-group:first-child .btn').forEach(b => b.classList.remove('btn-primary'));
+            _fatRenderCamposProvider(provider, cfg);
+            document.querySelectorAll('#modalGenericoCampos .form-group:first-child .btn').forEach(b => {
+                const ativoMoloni = b.textContent.trim() === 'Moloni' && provider === 'moloni';
+                const ativoToc = b.textContent.trim() === 'TOConline' && provider === 'toconline';
+                b.classList.toggle('btn-primary', ativoMoloni || ativoToc);
+                b.classList.toggle('btn-outline', !(ativoMoloni || ativoToc));
+            });
+        }
+        function _fatRenderCamposProvider(provider, cfg) {
+            const alvo = document.getElementById('fatCamposProvider'); if (!alvo) return;
+            if (provider === 'toconline') {
+                const toc = cfg.toconline || {};
+                const ligado = !!toc.accessToken;
+                alvo.innerHTML = `
+                    <div class="help-text" style="margin-bottom:10px;">O Client ID/Secret pedem-se em Empresa → Dados API, dentro da tua conta TOConline. Depois de guardares estes dois campos, usa o botão "Ligar ao TOConline" para autorizares o acesso — é só uma vez.</div>
+                    <div class="form-group"><label>Client ID *</label><input type="text" id="fat_toc_client_id" value="${(toc.clientId || '').replace(/"/g, '&quot;')}" /></div>
+                    <div class="form-group"><label>Client Secret *</label><input type="password" id="fat_toc_client_secret" value="${(toc.clientSecret || '').replace(/"/g, '&quot;')}" /></div>
+                    <div class="form-group">
+                        <label>Estado da ligação</label>
+                        <div style="padding:10px 14px;background:${ligado ? '#dcfce7' : '#fef3c7'};border-radius:8px;font-size:.88rem;color:${ligado ? '#166534' : '#92400e'};">
+                            ${ligado ? '✅ Ligado à TOConline' : '⚠️ Ainda não ligado — guarda o Client ID/Secret e depois clica em "Ligar ao TOConline"'}
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-outline" style="width:100%;margin-top:6px;" onclick="salvarConfigFaturacao(true)"><i class="fas fa-link"></i> Guardar e Ligar ao TOConline</button>
+                    <label style="display:flex;align-items:center;gap:8px;font-weight:400;margin-top:14px;">
+                        <input type="checkbox" id="fat_simulacao" ${cfg.simulacao !== false ? 'checked' : ''} style="width:auto;" />
+                        Modo simulação (não emite faturas reais — só para testar a ligação)
+                    </label>
+                `;
+            } else {
+                const mol = cfg.moloni || {};
+                alvo.innerHTML = `
+                    <div class="help-text" style="margin-bottom:10px;">Estes dados ficam guardados de forma segura e só são usados no servidor para autenticar com a Moloni — nunca ficam visíveis no browser depois de gravados.</div>
+                    <div class="form-group"><label>Client ID *</label><input type="text" id="fat_client_id" value="${(mol.clientId || '').replace(/"/g,'&quot;')}" /></div>
+                    <div class="form-group"><label>Client Secret *</label><input type="password" id="fat_client_secret" value="${(mol.clientSecret || '').replace(/"/g,'&quot;')}" /></div>
+                    <div class="form-group"><label>Utilizador (email da Moloni) *</label><input type="text" id="fat_username" value="${(mol.username || '').replace(/"/g,'&quot;')}" /></div>
+                    <div class="form-group"><label>Password *</label><input type="password" id="fat_password" value="${(mol.password || '').replace(/"/g,'&quot;')}" /></div>
+                    <div class="form-group"><label>ID da Empresa na Moloni *</label><input type="text" id="fat_company_id" value="${(mol.companyId || '').replace(/"/g,'&quot;')}" placeholder="ex: 123456" /></div>
+                    <div class="form-group"><label>ID da Série de Documentos (opcional)</label><input type="text" id="fat_document_set_id" value="${(mol.documentSetId || '').replace(/"/g,'&quot;')}" placeholder="Deixa em branco para usar a série pré-definida" /></div>
+                    <label style="display:flex;align-items:center;gap:8px;font-weight:400;margin-top:6px;">
+                        <input type="checkbox" id="fat_simulacao" ${cfg.simulacao !== false ? 'checked' : ''} style="width:auto;" />
+                        Modo simulação (não emite faturas reais — só para testar a ligação)
+                    </label>
+                    <div class="help-text" style="margin-top:8px;">Desmarca "Modo simulação" só depois de confirmares que a ligação está a funcionar corretamente.</div>
+                `;
+            }
+        }
+        function salvarConfigFaturacao(ligarDepois) {
             const admin = adminAtual();
             if (!admin) return;
+            const provider = document.getElementById('fat_toc_client_id') ? 'toconline' : 'moloni';
+            if (provider === 'toconline') {
+                const clientId = document.getElementById('fat_toc_client_id').value.trim();
+                const clientSecret = document.getElementById('fat_toc_client_secret').value.trim();
+                if (!clientId || !clientSecret) { alert('Preenche o Client ID e o Client Secret da TOConline.'); return; }
+                const anterior = admin.integracaoFaturacao?.toconline || {};
+                admin.integracaoFaturacao = {
+                    provider: 'toconline',
+                    simulacao: document.getElementById('fat_simulacao')?.checked !== false,
+                    toconline: { ...anterior, clientId, clientSecret }
+                };
+                guardarDados(dados);
+                if (ligarDepois === true) { _ligarTOConline(); return; }
+                document.getElementById('modalGenericoOverlay').classList.remove('open');
+                alert('✅ Configuração de faturação guardada.');
+                return;
+            }
             const companyId = document.getElementById('fat_company_id').value.trim();
             if (!companyId) { alert('O ID da Empresa na Moloni é obrigatório.'); return; }
             admin.integracaoFaturacao = {
@@ -10187,6 +10308,37 @@
             guardarDados(dados);
             document.getElementById('modalGenericoOverlay').classList.remove('open');
             alert('✅ Configuração de faturação guardada.');
+        }
+        // Inicia o OAuth2 da TOConline — só é preciso fazer isto uma vez. Guarda o id do admin
+        // e o URL de origem antes de sair da app, para conseguirmos retomar exatamente onde
+        // ficámos assim que a TOConline devolver o código de autorização.
+        const TOCONLINE_OAUTH_URL = 'https://app.toconline.pt/oauth'; // confirma este URL na tua conta TOConline (Empresa → Dados API)
+        function _ligarTOConline() {
+            const admin = adminAtual(); if (!admin) return;
+            const cfg = admin.integracaoFaturacao?.toconline;
+            if (!cfg?.clientId) { alert('Guarda primeiro o Client ID e o Client Secret.'); return; }
+            try { localStorage.setItem('tg_toconline_admin_id', admin.id); } catch (e) {}
+            const redirectUri = window.location.origin + window.location.pathname;
+            const url = `${TOCONLINE_OAUTH_URL}/auth?client_id=${encodeURIComponent(cfg.clientId)}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=commercial`;
+            window.location.href = url;
+        }
+        // Ao voltar da TOConline, o URL traz "?code=...". Isto corre automaticamente ao carregar
+        // a app — troca o código pelo token através da Edge Function (o Client Secret nunca sai
+        // do servidor) e volta a limpar o URL, para não ficar ali pendurado.
+        async function _tratarRegressoOAuthTOConline() {
+            const params = new URLSearchParams(window.location.search);
+            const code = params.get('code');
+            if (!code) return;
+            let adminId = null;
+            try { adminId = localStorage.getItem('tg_toconline_admin_id'); } catch (e) {}
+            window.history.replaceState({}, '', window.location.pathname);
+            if (!adminId) return;
+            try {
+                const redirectUri = window.location.origin + window.location.pathname;
+                const { data, error } = await supa.functions.invoke('faturar-toconline', { body: { admin_id: adminId, acao: 'oauth_callback', code, redirect_uri: redirectUri } });
+                if (error || data?.erro) { alert('⚠️ Não foi possível ligar à TOConline: ' + (data?.erro || error?.message || 'erro desconhecido')); return; }
+                alert('✅ Ligado à TOConline com sucesso!');
+            } catch (e) { console.error('OAuth TOConline:', e); }
         }
         // A mensagem "Edge Function returned a non-2xx status code" é só o aviso genérico da
         // biblioteca do Supabase — o motivo real vem dentro da resposta em si (err.context), que
@@ -10277,6 +10429,82 @@
                 const motivo = await _erroMoloniDetalhado(err);
                 console.error('faturar-moloni — motivo detalhado:', motivo);
                 alert('⚠️ Não foi possível faturar na Moloni: ' + motivo);
+            } finally {
+                _tgOperacaoEmCurso = false; _esconderCarregando();
+            }
+        }
+        // Espelha faturarOSViaMoloni, mas para a TOConline — mesma lógica de materiais/mão de
+        // obra, tipo de documento configurável (FT por defeito), ligando ao mesmo mecanismo de
+        // OAuth2 já tratado do lado da Edge Function (renovação automática do token, se precisar).
+        async function faturarOSViaTOConline(osId) {
+            const s = dados.servicos?.find(x => x.id === osId); if (!s) return;
+            if (usuarioLogado?.role !== 'admin' && usuarioLogado?.role !== 'subadmin') { alert('Só o admin/sub-admin pode faturar.'); return; }
+            const admin = adminAtual();
+            const cfg = admin?.integracaoFaturacao;
+            if (!moduloErpAtivo(admin)) { alert('O add-on "Integração com ERP\'s" ainda não está ativo para a tua empresa.'); return; }
+            if (!cfg || cfg.provider !== 'toconline' || !cfg.toconline?.clientId) { alert('Ainda não configuraste a TOConline. Vai a Financeiro → "Faturação".'); return; }
+            if (!cfg.toconline?.accessToken) { alert('Ainda não ligaste a conta à TOConline. Vai a Financeiro → "Faturação" → "Ligar ao TOConline".'); return; }
+            const cliente = dados.clientes?.find(c => c.id === s.clienteId);
+            if (!cliente) { alert('Esta OS não tem cliente associado.'); return; }
+            if (s.valor == null) { alert('Esta OS não tem "Valor a faturar" definido.'); return; }
+
+            const folhasDestaOs = (dados.folhasObra || []).filter(f => f.servicoId === osId).map(f => f.id);
+            const movsMateriais = (dados.movimentosStock || []).filter(m =>
+                m.artigoId && m.tipo === 'saida' &&
+                ((m.origemTipo === 'os' && m.origemId === osId) || (m.origemTipo === 'folha' && folhasDestaOs.includes(m.origemId)))
+            );
+            const porArtigo = new Map();
+            movsMateriais.forEach(m => {
+                const atual = porArtigo.get(m.artigoId) || 0;
+                porArtigo.set(m.artigoId, atual + (Number(m.quantidade) || 0));
+            });
+            const materiais = [];
+            let somaValorMateriais = 0;
+            porArtigo.forEach((qty, artigoId) => {
+                const art = dados.artigos?.find(a => a.id === artigoId);
+                if (!art || !art.referencia || qty <= 0) return;
+                const preco = Number(art.precoVenda) || 0;
+                materiais.push({ referencia: art.referencia, nome: art.nome, qty, precoVenda: preco });
+                somaValorMateriais += preco * qty;
+            });
+            somaValorMateriais = Math.round(somaValorMateriais * 100) / 100;
+            const valorMaoDeObra = Math.max(0, Math.round((Number(s.valor) - somaValorMateriais) * 100) / 100);
+
+            let confirmTexto = `Emitir fatura na TOConline para ${cliente.nome}, no valor de ${_finEur(s.valor)}${cfg.simulacao ? ' (modo SIMULAÇÃO)' : ''}?`;
+            if (materiais.length) {
+                confirmTexto += `\n\nLinhas que vão na fatura:\n` + materiais.map(m => `• ${m.nome} — ${m.qty} × ${_finEur(m.precoVenda)}`).join('\n') + `\n• Mão de obra / Serviço — ${_finEur(valorMaoDeObra)}` +
+                    (somaValorMateriais > Number(s.valor) ? `\n\n⚠️ O valor dos materiais (${_finEur(somaValorMateriais)}) já ultrapassa o valor definido na OS — confirma se o "Valor a faturar" está correto.` : '');
+            }
+            if (!confirm(confirmTexto)) return;
+            if (_tgOperacaoEmCurso) return;
+            _tgOperacaoEmCurso = true; _mostrarCarregando('A faturar na TOConline…');
+            const horasOS = (dados.ponto || []).filter(p => p.servicoId === osId && p.entrada && p.saida).reduce((sum, p) => sum + calcularHoras(p.entrada, p.saida), 0);
+            try {
+                const { data, error } = await supa.functions.invoke('faturar-toconline', { body: {
+                    admin_id: admin.id,
+                    acao: 'emitir_fatura',
+                    cliente: { nome: cliente.nome, nif: cliente.nif || null, morada: cliente.morada || null, codigoPostal: cliente.codigoPostal || null, cidade: cliente.cidade || null, email: cliente.email || null, toconlineCustomerId: cliente.toconlineCustomerId || null },
+                    descricao: (s.descricao || 'Serviço prestado') + (s.numeroRegisto ? ' (OS ' + s.numeroRegisto + ')' : ''),
+                    valor: Number(s.valor),
+                    valorMaoDeObra,
+                    materiais,
+                    horas: +horasOS.toFixed(2),
+                    data: s.data || getDataHoje()
+                } });
+                if (error) throw error;
+                if (data?.erro) throw new Error(data.erro);
+                s.faturaTOConlineId = data?.documentId || null;
+                s.faturaTOConlineUrl = data?.pdfUrl || null;
+                if (data?.customerId && cliente.toconlineCustomerId !== data.customerId) cliente.toconlineCustomerId = data.customerId;
+                guardarDados(dados);
+                renderizarTudo();
+                if (s.clienteId) _notificarFuncionario(s.clienteId, '🧾 Fatura disponível', 'Foi emitida a fatura da OS ' + (s.numeroRegisto ? 'nº ' + s.numeroRegisto : '') + ', no valor de ' + _finEur(s.valor) + '.', admin.id);
+                alert(data?.mensagem || (cfg.simulacao ? '✅ Simulação concluída.' : '✅ Fatura emitida na TOConline com sucesso.') + (data?.pdfUrl ? '\n\nPDF: ' + data.pdfUrl : ''));
+            } catch (err) {
+                console.error('faturar-toconline:', err);
+                const motivo = await _erroMoloniDetalhado(err);
+                console.error('faturar-toconline — motivo detalhado:', motivo);
+                alert('⚠️ Não foi possível faturar na TOConline: ' + motivo);
             } finally {
                 _tgOperacaoEmCurso = false; _esconderCarregando();
             }
@@ -14954,6 +15182,18 @@
             // atualização periódica em segundo plano repor "O Meu Dia" visível por baixo dela —
             // era isso que causava o painel a "ressurgir" sozinho ao trocar de menu.
             if (!forcarDesktop && !dentroDaHomeDesktop && document.querySelector('.section-container.active')) { cont.style.display = 'none'; return; }
+            // "Alertas e Pendências" pode ter sido movido para dentro deste painel (na Home do
+            // desktop) — e esta função reconstrói tudo com cont.innerHTML mais abaixo. Sem isto,
+            // qualquer chamada a esta função (incluindo a atualização periódica em segundo plano,
+            // que não sabe nada disto) destruía esse elemento de vez, fazendo-o desaparecer
+            // sozinho ao fim de alguns segundos. Por isso protege-se aqui mesmo, na origem —
+            // não só no sítio que o move para lá — para cobrir TODAS as chamadas a esta função.
+            if (dentroDaHomeDesktop) {
+                const alertasElProteger = document.getElementById('homeAlertas');
+                if (alertasElProteger && alertasElProteger.parentElement === cont) {
+                    cont.parentElement.insertBefore(alertasElProteger, cont);
+                }
+            }
             const hoje = getDataHoje();
             // Vigilante tem um "O Meu Dia" próprio e mais simples — não faz OS/obras. A execução
             // da ronda em si vive inteiramente no TOTALGEST_RONDAS.html (ficheiro à parte, como o
@@ -15168,6 +15408,32 @@
                 </div>
             `;
             _tgmMostrarTempo();
+            // Reaplica sempre a moldagem da grelha do desktop (Alertas ao lado de "O Meu Dia",
+            // etc.) mesmo quando quem chamou esta função foi a atualização periódica em segundo
+            // plano (que não sabe nada disto) — assim fica protegido em qualquer chamada, não só
+            // na que vem de renderizarHomeDashboard.
+            if (dentroDaHomeDesktop) _tgmAplicarGrelhaDesktop(cont);
+        }
+        function _tgmAplicarGrelhaDesktop(cont) {
+            const alertasEl = document.getElementById('homeAlertas');
+            if (alertasEl && alertasEl.parentElement !== cont) cont.insertBefore(alertasEl, cont.firstChild);
+            const largo = window.innerWidth >= 900;
+            cont.style.display = 'grid';
+            cont.style.gap = '16px';
+            cont.style.alignItems = 'stretch';
+            cont.style.gridTemplateColumns = largo ? '1fr 1fr' : '1fr';
+            cont.style.gridTemplateAreas = largo
+                ? '"dia alertas" "equipa admin" "obras obras"'
+                : '"alertas" "dia" "admin" "equipa" "obras"';
+            const painelDia = cont.querySelector('.tgm-panel--dia');
+            const painelAdmin = cont.querySelector('.tgm-panel--admin');
+            const painelEquipa = cont.querySelector('.tgm-panel--equipa');
+            const painelObras = cont.querySelector('.tgm-panel--obras');
+            if (alertasEl) alertasEl.style.cssText += ';grid-area:alertas;margin:0;height:100%;display:flex;flex-direction:column;box-sizing:border-box;';
+            if (painelDia) painelDia.style.cssText += ';grid-area:dia;margin:0;height:100%;display:flex;flex-direction:column;box-sizing:border-box;';
+            if (painelAdmin) painelAdmin.style.cssText += ';grid-area:admin;margin:0;height:100%;display:flex;flex-direction:column;box-sizing:border-box;';
+            if (painelEquipa) painelEquipa.style.cssText += ';grid-area:equipa;margin:0;height:100%;display:flex;flex-direction:column;box-sizing:border-box;';
+            if (painelObras) painelObras.style.cssText += ';grid-area:obras;margin:0;height:100%;box-sizing:border-box;';
         }
         // Widget de tempo (temperatura, humidade, vento, céu) junto a "O Meu Dia" — só aparece
         // se o dispositivo tiver o GPS ativo e a pessoa tiver dado permissão; se não tiver,
@@ -31190,35 +31456,13 @@ window._relPrefill = function(msg){
                 if (alertasEl && omeudiaEl && alertasEl.parentElement === omeudiaEl && wrap && wrap.parentElement) {
                     wrap.parentElement.insertBefore(alertasEl, wrap);
                 }
+                // Garante que "omeudia" já está dentro de "homeAgendaWrap" ANTES de chamar
+                // renderizarOMeuDia() — só assim é que essa função reconhece corretamente que
+                // deve aplicar a grelha do desktop logo na mesma passagem (senão só aplicava a
+                // partir da segunda vez que corresse, deixando tudo empilhado até lá).
+                if (wrap && omeudiaEl && omeudiaEl.parentElement !== wrap) wrap.appendChild(omeudiaEl);
                 renderizarOMeuDia(true);
-                if (wrap && omeudiaEl) {
-                    if (omeudiaEl.parentElement !== wrap) wrap.appendChild(omeudiaEl);
-                    omeudiaEl.style.display = 'block';
-                    omeudiaEl.style.margin = '0';
-                    // "Alertas e Pendências" passa a viver dentro da mesma grelha, ao lado de "O
-                    // Meu Dia" — assim ficam na mesma linha do CSS Grid e esticam sempre à mesma
-                    // altura um do outro, tal como já acontece com "Equipa Agora"/"Resumo do Dia".
-                    if (alertasEl && alertasEl.parentElement !== omeudiaEl) omeudiaEl.insertBefore(alertasEl, omeudiaEl.firstChild);
-                    // Layout aplicado diretamente aqui (não só via CSS externo) — garante que
-                    // resulta sempre, independentemente de qualquer outra folha de estilos.
-                    const largo = window.innerWidth >= 900;
-                    omeudiaEl.style.display = 'grid';
-                    omeudiaEl.style.gap = '16px';
-                    omeudiaEl.style.alignItems = 'stretch';
-                    omeudiaEl.style.gridTemplateColumns = largo ? '1fr 1fr' : '1fr';
-                    omeudiaEl.style.gridTemplateAreas = largo
-                        ? '"dia alertas" "equipa admin" "obras obras"'
-                        : '"alertas" "dia" "admin" "equipa" "obras"';
-                    const painelDia = omeudiaEl.querySelector('.tgm-panel--dia');
-                    const painelAdmin = omeudiaEl.querySelector('.tgm-panel--admin');
-                    const painelEquipa = omeudiaEl.querySelector('.tgm-panel--equipa');
-                    const painelObras = omeudiaEl.querySelector('.tgm-panel--obras');
-                    if (alertasEl) alertasEl.style.cssText += ';grid-area:alertas;margin:0;height:100%;display:flex;flex-direction:column;box-sizing:border-box;';
-                    if (painelDia) painelDia.style.cssText += ';grid-area:dia;margin:0;height:100%;display:flex;flex-direction:column;box-sizing:border-box;';
-                    if (painelAdmin) painelAdmin.style.cssText += ';grid-area:admin;margin:0;height:100%;display:flex;flex-direction:column;box-sizing:border-box;';
-                    if (painelEquipa) painelEquipa.style.cssText += ';grid-area:equipa;margin:0;height:100%;display:flex;flex-direction:column;box-sizing:border-box;';
-                    if (painelObras) painelObras.style.cssText += ';grid-area:obras;margin:0;height:100%;box-sizing:border-box;';
-                }
+                if (omeudiaEl) omeudiaEl.style.margin = '0';
                 return;
             }
             const serv = dados.servicos || [];
@@ -32399,6 +32643,7 @@ window._relPrefill = function(msg){
             inicializar();
             if (_verificarLinkRenovacao()) { if (relogioInterval) clearInterval(relogioInterval); relogioInterval = setInterval(atualizarRelogio, 1000); return; }
             await restaurarSessaoAuth();
+            _tratarRegressoOAuthTOConline();
             if (relogioInterval) clearInterval(relogioInterval);
             relogioInterval = setInterval(atualizarRelogio, 1000);
         });

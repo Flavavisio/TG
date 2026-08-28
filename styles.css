@@ -1310,6 +1310,14 @@ body.dark-mode .tgm-row-icon--os { color:#fdba74; }
     background: var(--tgm-btn-outline-bg); border:1px solid var(--tgm-btn-outline-border);
     border-radius:9px; color: var(--tgm-text-sub); font-size:.82rem; text-decoration:none;
 }
+/* Ícones de contacto/mapa/observações nos cartões de OS/Obra do Modo Quiosque — usa cores
+   fixas (não as variáveis --tgm-*), porque o quiosque tem sempre fundo claro, independente
+   do modo escuro escolhido pelo utilizador na app normal. */
+.tgq-btn-mini {
+    width:36px; height:36px; flex-shrink:0; display:grid; place-items:center;
+    background:#f1f5f9; border:1px solid #e2e8f0; border-radius:9px;
+    color:#475569; font-size:.9rem; text-decoration:none; cursor:pointer;
+}
 .tgm-hora { font-size: .92rem; color: var(--tgm-cian); }
 .tgm-row .btn-outline { background: var(--tgm-btn-outline-bg); border-color: var(--tgm-btn-outline-border); color: var(--tgm-text-sub); }
 .tgm-row a.btn-outline { padding:7px 9px !important; flex-shrink:0; }
