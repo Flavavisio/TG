@@ -2088,10 +2088,35 @@
                     <td>
                         ${botaoOS}
                         <button class="btn btn-sm" style="background:#f1f5f9;" onclick="abrirEditorProposta('${p.id}')" title="Editar"><i class="fas fa-pen"></i></button>
+                        <button class="btn btn-sm" style="background:#e0e7ff;color:#3730a3;" onclick="duplicarProposta('${p.id}')" title="Duplicar orçamento"><i class="fas fa-copy"></i></button>
                         <button class="btn btn-sm" style="background:#fee2e2;color:#991b1b;" onclick="excluirProposta('${p.id}')" title="Eliminar"><i class="fas fa-trash"></i></button>
                     </td>
                 </tr>`;
             }).join('');
+        }
+        // Duplica um orçamento inteiro (produtos, medições, etc.) — o número novo segue sempre
+        // a sequência normal (ex.: PROP-VS0826-3 vira PROP-VS0826-4), a mesma lógica que já usa
+        // gerarNumeroProposta() para qualquer orçamento novo. Fica sempre em "Rascunho" e sem
+        // ligação à Obra/OS que o original possa já ter gerado — é um ponto de partida novo.
+        function duplicarProposta(id) {
+            const original = (dados.propostas || []).find(p => p.id === id);
+            if (!original) return;
+            if (!_ehGestorComercial() && original.responsavelComercial !== usuarioLogado.id) {
+                alert('Este orçamento está atribuído a outro colega — não tens acesso a ele.');
+                return;
+            }
+            const copia = JSON.parse(JSON.stringify(original));
+            copia.id = gerarId();
+            copia.numero = gerarNumeroProposta();
+            copia.estado = 'rascunho';
+            copia.obraGeradaId = null;
+            copia.dataCriacao = Date.now();
+            copia.dataModificacao = Date.now();
+            dados.propostas = dados.propostas || [];
+            dados.propostas.push(copia);
+            guardarDados(dados);
+            renderizarPropostas();
+            alert('✅ Orçamento duplicado — novo número: ' + copia.numero);
         }
         // Mudar o estado de uma proposta diretamente na lista, sem abrir o editor completo.
         // Se passar a "Aceite", dispara a celebração (confetti + mensagem de parabéns).
@@ -2334,6 +2359,17 @@
             _orcRenderLinhasProdutos();
             recalcularOrcamento();
         }
+        // Atualiza só o total desta linha específica (sem reconstruir a lista toda, senão o
+        // campo perde o foco a meio da escrita — mesmo padrão já usado em "Outros produtos").
+        function _orcAtualizarQtdProduto(i, valor) {
+            const it = _orcAtual.itens[i]; if (!it) return;
+            it.quantidade = parseFloat(valor) || 0;
+            const custo = Number(it.precoCusto) || 0;
+            const precoVenda = it.precoVenda != null ? Number(it.precoVenda) : custo * (1 + (Number(it.margemPct) || 0) / 100);
+            const totalEl = document.getElementById('orc_prod_total_' + i);
+            if (totalEl) totalEl.textContent = _fmtEuroOrc(precoVenda * it.quantidade);
+            recalcularOrcamento();
+        }
         function _orcRenderLinhasProdutos() {
             const cont = document.getElementById('orc_linhas_produtos');
             const vazio = document.getElementById('orc_produtos_vazio');
@@ -2354,8 +2390,8 @@
                     <div>
                         <input type="number" step="0.1" value="${margem.toFixed(1)}" class="orc-badge-margem" style="background:${_corMargem(margem)};border:none;color:#fff;width:100%;text-align:center;" title="Margem — editar aqui recalcula o preço de venda" onchange="_orcAtualizarVendaPorMargem(${i}, this.value)" />
                     </div>
-                    <input type="number" min="1" step="1" value="${it.quantidade}" oninput="_orcAtual.itens[${i}].quantidade=parseFloat(this.value)||0; recalcularOrcamento();" />
-                    <div class="total-linha">${_fmtEuroOrc(total)}</div>
+                    <input type="number" min="1" step="1" value="${it.quantidade}" oninput="_orcAtualizarQtdProduto(${i}, this.value)" />
+                    <div class="total-linha" id="orc_prod_total_${i}">${_fmtEuroOrc(total)}</div>
                     <button type="button" class="remover-linha" title="Remover" onclick="_orcAtual.itens.splice(${i},1); _orcRenderLinhasProdutos(); recalcularOrcamento();"><i class="fas fa-xmark"></i></button>
                 </div>`;
             }).join('');
