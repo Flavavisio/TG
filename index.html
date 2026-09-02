@@ -273,15 +273,15 @@
     <div>
       <span class="eyebrow" style="display:inline-block;margin-bottom:10px;">Plataforma SaaS de Gestão Operacional</span>
       <h1 style="font-size:clamp(1.8rem,3.6vw,2.7rem);">Toda a sua operação. <span class="accent">Uma só plataforma.</span></h1>
-      <p class="lead">Gerencie equipas, serviços, manutenção, clientes e stock num único lugar — no escritório ou no telemóvel.<br>30 dias grátis. Experimente com toda a sua equipa.</p>
-      <p class="lead">Ordens de serviço, equipas, manutenção, obras, stock e clientes num único sistema.<br>Experimente gratuitamente durante 30 dias com toda a sua equipa.</p>
+      <p class="lead">Gerencie equipas, serviços, manutenção, clientes e stock num único lugar — no escritório ou no telemóvel.<br>14 dias grátis. Experimente com toda a sua equipa.</p>
+      <p class="lead">Ordens de serviço, equipas, manutenção, obras, stock e clientes num único sistema.<br>Experimente gratuitamente durante 14 dias com toda a sua equipa.</p>
       <div class="tagline">
         <svg viewBox="0 0 24 24" fill="none"><path d="M3 17l5-5 4 4 8-9" stroke="#f4520e" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 7h4v4" stroke="#f4520e" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Pague pela dimensão da operação, não por cada funcionário.
       </div>
       <div class="hero-cta">
         <a class="btn btn-ghost" href="https://wa.me/351939373322?text=Ol%C3%A1%2C%20quero%20saber%20mais%20sobre%20o%20Total%20Gest" target="_blank" rel="noopener" onclick="_tgRegistarEvento('clique_cta','whatsapp')"><i class="fab fa-whatsapp" style="color:#25D366;margin-right:6px;"></i> Ligue Agora</a>
-        <a class="btn btn-orange" href="#" onclick="_tgRegistarEvento('clique_cta','hero');abrirModalSignup();return false;">Começar 30 dias grátis <span style="margin-left:4px;">→</span></a>
+        <a class="btn btn-orange" href="#" onclick="_tgRegistarEvento('clique_cta','hero');abrirModalSignup();return false;">Começar 14 dias grátis <span style="margin-left:4px;">→</span></a>
       </div>
       <div class="hero-trust">
         <span><b>Multiempresa</b> · cada equipa isolada</span>
@@ -651,7 +651,7 @@
       </details>
       <details style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px 20px;">
         <summary style="cursor:pointer;font-weight:700;color:#152a52;">Consigo experimentar antes de pagar?</summary>
-        <p style="margin:10px 0 0;color:#475569;">Sim — 30 dias de teste gratuito, sem cartão de crédito, ativado em poucos minutos. Dá para explorar as ordens de serviço, o ponto, os clientes e equipamentos, e os restantes módulos com dados reais da sua empresa antes de decidir.</p>
+        <p style="margin:10px 0 0;color:#475569;">Sim — 14 dias de teste gratuito, sem cartão de crédito, ativado em poucos minutos. Dá para explorar as ordens de serviço, o ponto, os clientes e equipamentos, e os restantes módulos com dados reais da sua empresa antes de decidir.</p>
       </details>
       <details style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px 20px;">
         <summary style="cursor:pointer;font-weight:700;color:#152a52;">Funciona no telemóvel dos técnicos no terreno?</summary>
@@ -675,7 +675,7 @@
   "mainEntity": [
     { "@type": "Question", "name": "A Total Gest serve para que tipo de empresas?", "acceptedAnswer": { "@type": "Answer", "text": "Foi feita para PME portuguesas de instalação, manutenção e assistência técnica — segurança e alarmes, AVAC, elevadores, elétricas, SCIE (extintores, bocas de incêndio, deteção de incêndio), equipas de field service em geral." } },
     { "@type": "Question", "name": "Como funciona o preço? É por funcionário?", "acceptedAnswer": { "@type": "Answer", "text": "Não. A Total Gest cobra pela dimensão da operação (nº de funcionários incluídos no plano escolhido), não por cada utilizador adicional que ligue à conta." } },
-    { "@type": "Question", "name": "Consigo experimentar antes de pagar?", "acceptedAnswer": { "@type": "Answer", "text": "Sim, 30 dias de teste gratuito, sem cartão de crédito, ativado em poucos minutos." } },
+    { "@type": "Question", "name": "Consigo experimentar antes de pagar?", "acceptedAnswer": { "@type": "Answer", "text": "Sim, 14 dias de teste gratuito, sem cartão de crédito, ativado em poucos minutos." } },
     { "@type": "Question", "name": "Funciona no telemóvel dos técnicos no terreno?", "acceptedAnswer": { "@type": "Answer", "text": "Sim. A aplicação instala-se como app no telemóvel (Android e iOS), com picagem de ponto, agenda e ordens de serviço com GPS." } },
     { "@type": "Question", "name": "Os meus dados ficam isolados de outras empresas?", "acceptedAnswer": { "@type": "Answer", "text": "Sim, a Total Gest é multiempresa com isolamento total de dados entre empresas, com acessos por nível (administrador, encarregado, funcionário)." } },
     { "@type": "Question", "name": "O suporte é em português?", "acceptedAnswer": { "@type": "Answer", "text": "Sim, suporte e faturação inteiramente em português, feito por uma equipa em Portugal." } }
@@ -2412,7 +2412,7 @@
             </div>
             <form id="modalGenericoForm">
                 <div id="modalGenericoCampos"></div>
-                <div class="modal-actions">
+                <div class="modal-actions" id="modalGenericoAcoes">
                     <button type="button" class="btn" style="background:#e9edf2;" onclick="_fecharModalGenerico()">Cancelar</button>
                     <button type="submit" class="btn btn-success"><i class="fas fa-save"></i> Guardar</button>
                 </div>
@@ -4189,7 +4189,7 @@
         const PLANOS = {
             'demo': { dias: 1, funcionarios: 3, preco: 0, label: 'Demo - 1 dia (Grátis)' },
             'demo_10': { dias: 10, funcionarios: 3, preco: 0, label: 'Demo - 10 dias (Grátis)' },
-            'demo_30': { dias: 30, funcionarios: 5, preco: 0, label: 'Licença Trial 30 dias' },
+            'demo_30': { dias: 14, funcionarios: 5, preco: 0, label: 'Licença Trial 14 dias' },
             '30_5': { dias: 30, funcionarios: 5, preco: 29.99, label: '30 dias - 5 func.' },
             '30_10': { dias: 30, funcionarios: 10, preco: 34.99, label: '30 dias - 10 func.' },
             '30_25': { dias: 30, funcionarios: 25, preco: 39.99, label: '30 dias - 25 func.' },
@@ -7846,7 +7846,7 @@
                                     ` : ''}
                                     ${(usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin' || usuarioLogado?.role === 'encarregado') ? `
                                         <button class="btn btn-sm btn-warning" onclick="abrirModal('servico','${s.id}')" title="Editar"><i class="fas fa-edit"></i></button>
-                                        ${s.status !== 'concluído' ? `<button class="btn btn-sm" style="background:#0f766e;color:#fff;" onclick="finalizarEGerarReportOS('${s.id}')" title="Finalizar e gerar relatório completo"><i class="fas fa-flag-checkered"></i></button>` : `<button class="btn btn-sm" style="background:#0f766e;color:#fff;" onclick="gerarRelatorioOSIndividual('${s.id}')" title="Gerar relatório desta OS"><i class="fas fa-file-lines"></i></button>`}
+                                        ${s.status !== 'concluído' ? `<button class="btn btn-sm" style="background:#0f766e;color:#fff;" onclick="finalizarEGerarReportOS('${s.id}')" title="Finalizar e gerar relatório completo"><i class="fas fa-flag-checkered"></i></button>` : `<button class="btn btn-sm" style="background:#0f766e;color:#fff;" onclick="_osEscolherRelatorio('${s.id}')" title="Gerar relatório desta OS"><i class="fas fa-file-lines"></i></button>`}
                                         ${s.pagamentoLocal ? `<button class="btn btn-sm" style="background:${s.pago === true ? '#16a34a' : '#dc2626'};color:#fff;font-weight:700;" onclick="_pagoTogglarOS('${s.id}')" title="${s.pago === true ? ('Pago — clica para alterar' + (s.reciboMoloniId ? ' (recibo emitido na Moloni)' : '')) : 'Não pago — clica para confirmar'}">${s.pago === true ? '€ Pago' : '<span style="text-decoration:line-through;">€</span> Não pago'}</button>` : ''}
                                         ${(() => {
                                             if (s.status !== 'concluído' || s.valor == null || (usuarioLogado?.role !== 'admin' && usuarioLogado?.role !== 'subadmin')) return '';
@@ -8320,19 +8320,19 @@
             guardarDados(dados);
             _verOsMostrar(osId, 'materiais');
         }
-        function gerarRelatorioOSIndividual(osId) {
+        function gerarRelatorioOSIndividual(osId, paraCliente) {
             const os = dados.servicos?.find(s => s.id === osId); if (!os) return;
             const rascunhosPorAssinar = (dados.relatoriosEspecialidade || []).filter(r => r.servicoId === osId && r.rascunho);
             if (rascunhosPorAssinar.length) {
                 alert('⚠️ Esta OS tem ' + rascunhosPorAssinar.length + ' relatório(s) por assinar/concluir (' + rascunhosPorAssinar.map(r => r.tipo).join(', ') + '). Não é possível gerar o relatório geral enquanto houver relatórios por assinar.');
                 return;
             }
-            _gerarPDFRelatorioOS(osId);
+            _gerarPDFRelatorioOS(osId, paraCliente);
         }
-        function _gerarPDFRelatorioOS(osId) {
+        function _gerarPDFRelatorioOS(osId, paraCliente) {
             const os = dados.servicos?.find(s => s.id === osId); if (!os) return;
             const doc = _novoPdf(false); if (!doc) return;
-            let y = _pdfArmHeader(doc, 'Relatório de Ordem de Serviço', 'OS #' + (os.numeroRegisto || os.id));
+            let y = _pdfArmHeader(doc, paraCliente ? 'Relatório de Ordem de Serviço' : 'Relatório de Ordem de Serviço (interno)', 'OS #' + (os.numeroRegisto || os.id));
             const _corRel = _hexParaRgb(dados.administradores?.find(a => a.id === _tenantArmazem())?.corCorporativa);
 
             const obra = os.obraId ? (dados.obras || []).find(o => o.id === os.obraId) : null;
@@ -8429,7 +8429,43 @@
                 y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y) + 10;
             }
 
-            doc.save(`relatorio_OS_${(os.numeroRegisto || os.id)}_${_hoje10()}.pdf`);
+            if (!paraCliente && (usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin')) {
+                if (y > 240) { doc.addPage(); y = 20; }
+                doc.setFontSize(12); doc.setTextColor(153, 27, 27); doc.text('Financeiro (uso interno)', 14, y); y += 4;
+                const _custoMatEurOS = _artigoIdsOS.reduce((soma, aid) => {
+                    const art = dados.artigos?.find(a => a.id === aid);
+                    const preco = art?.precoCompra != null ? Number(art.precoCompra) : 0;
+                    return soma + preco * _consumoPorArtigo[aid];
+                }, 0);
+                const _kmOS = _kmPercorridosOS(osId);
+                const linhasFinOS = [
+                    ['Valor a faturar', os.valor != null ? _finEur(os.valor) : '— não definido —'],
+                    ['Custo de materiais consumidos', _finEur(_custoMatEurOS)]
+                ];
+                if (_kmOS > 0) linhasFinOS.push(['Km percorridos', _kmOS.toLocaleString('pt-PT') + ' km']);
+                if (os.valor != null) linhasFinOS.push(['Margem estimada (valor − custo materiais)', _finEur(Number(os.valor) - _custoMatEurOS)]);
+                doc.autoTable({ startY: y, body: linhasFinOS, styles: { fontSize: 9, cellPadding: 3 }, columnStyles: { 0: { fontStyle: 'bold', cellWidth: 90 } } });
+                y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y) + 10;
+            }
+
+            doc.save(`relatorio_${paraCliente ? 'cliente' : 'interno'}_OS_${(os.numeroRegisto || os.id)}_${_hoje10()}.pdf`);
+        }
+        // Pequeno popup para escolher qual dos dois relatórios gerar da OS — o interno (com
+        // valores/margens) ou o do cliente (sem nenhum valor) — mesmo padrão já usado nas Obras.
+        function _osEscolherRelatorio(osId) {
+            const wrap = document.createElement('div');
+            wrap.id = 'osRelatorioEscolhaOverlay';
+            wrap.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:100000;display:flex;align-items:center;justify-content:center;padding:16px;';
+            wrap.innerHTML = `
+                <div style="background:#fff;border-radius:16px;padding:22px;max-width:340px;width:100%;">
+                    <div style="font-weight:800;font-size:1.05rem;margin-bottom:4px;"><i class="fas fa-file-lines" style="color:#0f766e;"></i> Relatório da OS</div>
+                    <div class="help-text" style="margin-bottom:16px;">Qual versão precisas?</div>
+                    <button type="button" class="btn" style="width:100%;margin-bottom:8px;background:#f1f5f9;" onclick="document.getElementById('osRelatorioEscolhaOverlay').remove(); gerarRelatorioOSIndividual('${osId}', false);"><i class="fas fa-lock"></i> Interno (com custos e margens)</button>
+                    <button type="button" class="btn btn-primary" style="width:100%;margin-bottom:8px;" onclick="document.getElementById('osRelatorioEscolhaOverlay').remove(); gerarRelatorioOSIndividual('${osId}', true);"><i class="fas fa-user-tie"></i> Para o Cliente (sem valores)</button>
+                    <button type="button" class="btn" style="width:100%;background:#f1f5f9;" onclick="document.getElementById('osRelatorioEscolhaOverlay').remove();">Cancelar</button>
+                </div>
+            `;
+            document.body.appendChild(wrap);
         }
         function aprovarAssistencia(id) {
             const s = (dados.servicos || []).find(x => x.id === id); if (!s) return;
@@ -9750,7 +9786,7 @@
             const btnForn = document.getElementById('btnImportarFornecedoresMoloni');
             if (btnForn) btnForn.style.display = _erpProntoImportar ? 'inline-flex' : 'none';
             const btnFinFat = document.getElementById('btnFaturacaoMoloniFin');
-            if (btnFinFat) btnFinFat.style.display = moduloErpAtivo(admin2) ? 'inline-flex' : 'none';
+            if (btnFinFat) btnFinFat.style.display = 'inline-flex';
         }
         async function importarFornecedoresMoloni() {
             const admin = adminAtual();
@@ -10224,7 +10260,6 @@
             if (usuarioLogado?.role !== 'admin' && usuarioLogado?.role !== 'subadmin') { alert('Só o admin/sub-admin pode configurar a faturação.'); return; }
             const admin = adminAtual();
             if (!admin) return;
-            if (!moduloErpAtivo(admin)) { alert('O add-on "Integração com ERP\'s" ainda não está ativo para a tua empresa. Este módulo está "Em breve" — fala com a Total Gest para o ativar.'); return; }
             const overlay = document.getElementById('modalGenericoOverlay');
             const titulo = document.getElementById('modalGenericoTitulo');
             const campos = document.getElementById('modalGenericoCampos');
@@ -10244,6 +10279,8 @@
         // um software de cada vez pode estar ativo (é sempre o mesmo campo "provider").
         function _fatMostrarResumo(cfg) {
             const campos = document.getElementById('modalGenericoCampos'); if (!campos) return;
+            const acoes = document.getElementById('modalGenericoAcoes');
+            if (acoes) acoes.style.display = 'none'; // este ecrã não tem nada para "Guardar" — só Editar/Apagar
             const nomes = { moloni: 'Moloni', toconline: 'TOConline' };
             const nomeProvider = nomes[cfg.provider] || cfg.provider;
             const ligadoToc = cfg.provider === 'toconline' && !!cfg.toconline?.accessToken;
@@ -10275,6 +10312,8 @@
             const cfg = admin.integracaoFaturacao || {};
             const provider = cfg.provider || 'moloni';
             const campos = document.getElementById('modalGenericoCampos'); if (!campos) return;
+            const acoes = document.getElementById('modalGenericoAcoes');
+            if (acoes) acoes.style.display = ''; // repõe o rodapé Cancelar/Guardar, escondido no ecrã de resumo
             campos.innerHTML = `
                 <div class="form-group">
                     <label>Qual o software de faturação que tens?</label>
@@ -26181,7 +26220,7 @@ async function salvarAdmin(e) {
                     return;
                 }
                 const _papelConta = obj.role === 'subadmin' ? 'subadmin' : (obj.role === 'vigilante' || obj.role === 'supervisor_vigilantes') ? obj.role : 'funcionario';
-                criarUtilizadorAuth(obj.email, obj.senha, _papelConta, obj.adminId, obj.id, obj.nome).then(r => {
+                criarUtilizadorAuth(obj.email, obj.senha, _papelConta, obj.adminId, (isEdit ? idEditando : obj.id), obj.nome).then(r => {
                     if (!r.ok) alert('✅ Funcionário guardado.\n⚠️ A conta de login não foi criada/atualizada automaticamente: ' + r.erro + '\n\nSe o email já tiver sido usado antes (ex.: um funcionário apagado há mais tempo), a conta pode ter ficado "presa" de uma eliminação antiga que falhou. Contacta o suporte técnico para a removerem de vez, ou tenta apagar este registo e voltar a criar (a partir de agora, a app avisa logo se uma eliminação de conta falhar).');
                 });
             }
@@ -26193,7 +26232,7 @@ async function salvarAdmin(e) {
                     return;
                 }
                 const _emailContaCliente = _emailFantasmaCliente(obj.nif, obj.adminId);
-                criarUtilizadorAuth(_emailContaCliente, obj.senha, 'cliente', obj.adminId, obj.id, obj.nome).then(r => {
+                criarUtilizadorAuth(_emailContaCliente, obj.senha, 'cliente', obj.adminId, (isEdit ? idEditando : obj.id), obj.nome).then(r => {
                     if (!r.ok) alert('✅ Cliente criado.\n⚠️ A conta do portal não foi criada automaticamente: ' + r.erro + '\n\nSe o NIF já tiver sido usado antes (ex.: um cliente apagado há mais tempo), a conta pode ter ficado "presa" de uma eliminação antiga que falhou. Contacta o suporte técnico para a removerem de vez, ou tenta apagar este registo e voltar a criar (a partir de agora, a app avisa logo se uma eliminação de conta falhar).');
                 });
             }
@@ -29349,6 +29388,8 @@ window._relPrefill = function(msg){
 
         function _fecharModalGenerico() {
             document.getElementById('modalGenericoOverlay').classList.remove('open', 'modal-veros');
+            const _acoes = document.getElementById('modalGenericoAcoes');
+            if (_acoes) _acoes.style.display = ''; // repõe o rodapé Cancelar/Guardar, para não ficar escondido nos outros usos deste modal
             const _bg = document.querySelector('#modalGenericoOverlay .modal-actions .btn-success');
             if (_bg) { _bg.style.display = ''; _bg.innerHTML = '<i class="fas fa-save"></i> Guardar'; }
             const _modalEl = document.querySelector('#modalGenericoOverlay .modal');
@@ -33333,7 +33374,7 @@ function _tcwCalcularResultado() {
                 ? `Mesmo a pagar a Total Gest, fica com <b>${poupancaLiquida.toLocaleString('pt-PT', { maximumFractionDigits: 0 })} € a mais no bolso, por mês</b> — cerca de <b>${(poupancaLiquida * 12).toLocaleString('pt-PT', { maximumFractionDigits: 0 })} € por ano</b>.`
                 : `Com os números indicados, o custo da plataforma fica perto da poupança administrativa — a poupança real tende a ser maior, porque isto não conta menos deslocações a mais nem menos erros de faturação.`}
         </div>
-        <a class="btn btn-orange" href="#" style="width:100%;justify-content:center;margin-top:16px;" onclick="_tgRegistarEvento('clique_cta','wizard_calc');fecharWizardCalc();abrirModalSignup();return false;">Começar 30 dias grátis <span style="margin-left:4px;">→</span></a>
+        <a class="btn btn-orange" href="#" style="width:100%;justify-content:center;margin-top:16px;" onclick="_tgRegistarEvento('clique_cta','wizard_calc');fecharWizardCalc();abrirModalSignup();return false;">Começar 14 dias grátis <span style="margin-left:4px;">→</span></a>
     `;
 }
 function abrirModalSignup() {
@@ -33421,7 +33462,7 @@ async function submeterSignup(e) {
             <div class="signup-msg">
                 <i class="fas fa-envelope-circle-check"></i>
                 <h2>Confirme o seu email</h2>
-                <p class="signup-sub">Enviámos um link de confirmação para <b>${dadosPedido.email}</b>.<br>A sua conta de teste (30 dias) fica ativa assim que confirmar.</p>
+                <p class="signup-sub">Enviámos um link de confirmação para <b>${dadosPedido.email}</b>.<br>A sua conta de teste (14 dias) fica ativa assim que confirmar.</p>
             </div>`;
     } catch (err) {
         console.error('signup trial:', err);
