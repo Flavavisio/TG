@@ -25682,7 +25682,7 @@ async function salvarAdmin(e) {
                     // o que estava a disparar a recriação da conta do portal sem se querer, ao
                     // editar qualquer outro campo do cliente (ex.: o número de cliente).
                     const _chkAlterar = document.getElementById('c_alterar_senha');
-                    const _aEditar = item ? (_chkAlterar ? _chkAlterar.checked : false) : true;
+                    const _aEditar = isEdit ? (_chkAlterar ? _chkAlterar.checked : false) : true;
                     const _cs = document.getElementById('c_senha')?.value || '';
                     if (_aEditar && _cs) obj.senha = _cs;
                 }
