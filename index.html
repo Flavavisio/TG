@@ -3460,6 +3460,11 @@
                 from: r => ({ id: r.id, adminId: r.admin_id, nome: r.nome, dataCriacao: isoToMs(r.data_criacao) }),
                 to:   o => ({ id: o.id, admin_id: o.adminId, nome: o.nome, data_criacao: msToISO(o.dataCriacao) })
             },
+            unidadesArtigo: {
+                tabela: 'unidades_artigo',
+                from: r => ({ id: r.id, adminId: r.admin_id, valor: r.valor, label: r.label, dataCriacao: isoToMs(r.data_criacao) }),
+                to:   o => ({ id: o.id, admin_id: o.adminId, valor: o.valor, label: o.label, data_criacao: msToISO(o.dataCriacao) })
+            },
             auditoria: {
                 tabela: 'auditoria',
                 from: r => ({ id: r.id, adminId: r.admin_id, utilizadorId: r.utilizador_id, utilizadorNome: r.utilizador_nome, papel: r.papel, acao: r.acao, entidade: r.entidade, entidadeId: r.entidade_id, descricao: r.descricao, data: isoToMs(r.data) }),
@@ -3508,7 +3513,7 @@
         };
 
         // ordem segura de FKs para upsert; deletes fazem-se na ordem inversa
-        const ORDEM = ['administradores','veiculos','funcionarios','encarregados','clientes','locais','equipamentos','servicos','folhasObra','requisicoes','ponto','pedidos','pedidosRenovacao','ajudas','notificacoes','contratos','registosManutencao','veiculoDocumentos','veiculoIntervencoes','veiculoSinistros','fornecedores','obras','artigos','armazens','encomendas','encomendaItens','movimentosStock','obraMateriais','obraDocumentos','obraPastasDocumentos','obraPontoLonga','autosMedicao','categorias','auditoria','historicoLicencas','alertasGeofence','tiposTrabalhoCustom','configSeriesRelatorio','relatoriosEspecialidade','despesasMensais','creditosBancarios','leads','oportunidades','propostas','atividadesComerciais','assistencias','garantias','referencias','ferramentas','levantamentosFerramentas','artigoNumerosSerie','devolucoesObra','devolucaoObraItens'];
+        const ORDEM = ['administradores','veiculos','funcionarios','encarregados','clientes','locais','equipamentos','servicos','folhasObra','requisicoes','ponto','pedidos','pedidosRenovacao','ajudas','notificacoes','contratos','registosManutencao','veiculoDocumentos','veiculoIntervencoes','veiculoSinistros','fornecedores','obras','artigos','armazens','encomendas','encomendaItens','movimentosStock','obraMateriais','obraDocumentos','obraPastasDocumentos','obraPontoLonga','autosMedicao','categorias','unidadesArtigo','auditoria','historicoLicencas','alertasGeofence','tiposTrabalhoCustom','configSeriesRelatorio','relatoriosEspecialidade','despesasMensais','creditosBancarios','leads','oportunidades','propostas','atividadesComerciais','assistencias','garantias','referencias','ferramentas','levantamentosFerramentas','artigoNumerosSerie','devolucoesObra','devolucaoObraItens'];
 
         const licToRow = (adminId, l) => ({ admin_id: adminId, codigo: l.codigo, plano: l.plano, data_inicio: msToISO(l.dataInicio), data_expiracao: msToISO(l.dataExpiracao), dias: l.dias, max_funcionarios: l.maxFuncionarios, ativa: l.ativa !== false, aguarda_pagamento: l.aguardaPagamento === true });
         const licFromRow = (r) => ({ codigo: r.codigo, plano: r.plano, dataInicio: isoToMs(r.data_inicio), dataExpiracao: isoToMs(r.data_expiracao), dias: r.dias, maxFuncionarios: r.max_funcionarios, ativa: r.ativa, aguardaPagamento: r.aguarda_pagamento === true });
@@ -14308,9 +14313,34 @@
 
         // ==================== ARMAZÉM / STOCK (Fase 1) ====================
         function _tenantArmazem() { if (!usuarioLogado) return null; return usuarioLogado.role === 'admin' ? usuarioLogado.id : (usuarioLogado.adminId || usuarioLogado.id); }
-        const UNIDADES_ARTIGO = [{ v: 'un', l: 'Unidade' }, { v: 'm', l: 'Metros' }, { v: 'cx', l: 'Caixa' }];
+        const UNIDADES_ARTIGO_BASE = [{ v: 'un', l: 'Unidade' }, { v: 'm', l: 'Metros' }, { v: 'cx', l: 'Caixa' }, { v: 'kg', l: 'Quilograma' }, { v: 'l', l: 'Litro' }, { v: 'm2', l: 'Metro²' }];
         const CATEGORIAS_BASE = ['CCTV', 'Intrusão', 'Incêndio'];
-        function _unidadeLabel(v) { const u = UNIDADES_ARTIGO.find(x => x.v === v); return u ? u.l : (v || 'Unidade'); }
+        function _unidadesArtigoTenant() {
+            const adminId = _tenantArmazem();
+            const stored = (dados.unidadesArtigo || []).filter(u => u.adminId === adminId).map(u => ({ v: u.valor, l: u.label }));
+            const vistas = new Set();
+            return [...UNIDADES_ARTIGO_BASE, ...stored].filter(u => { if (vistas.has(u.v)) return false; vistas.add(u.v); return true; });
+        }
+        function _unidadeLabel(v) { const u = _unidadesArtigoTenant().find(x => x.v === v); return u ? u.l : (v || 'Unidade'); }
+        function _optsUnidadeArtigo(sel) {
+            return _unidadesArtigoTenant().map(u => `<option value="${u.v}" ${sel === u.v ? 'selected' : ''}>${u.l}</option>`).join('') + '<option value="__nova">➕ Nova unidade…</option>';
+        }
+        function criarUnidadeArtigo() {
+            const nome = (prompt('Nome da nova unidade (ex.: Quilograma, Rolo, Pacote):') || '').trim();
+            if (!nome) return '';
+            const adminId = _tenantArmazem();
+            const existente = _unidadesArtigoTenant().find(u => u.l.toLowerCase() === nome.toLowerCase());
+            if (existente) return existente.v;
+            // O valor gravado no artigo é um código curto derivado do nome (ex.: "quilograma" →
+            // "quilogr"), só para caber bem nos relatórios — o que aparece nos ecrãs é sempre o
+            // nome completo (label), guardado também.
+            let valor = nome.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '').slice(0, 8) || ('un' + Date.now());
+            let sufixo = 1;
+            while (_unidadesArtigoTenant().some(u => u.v === valor)) { valor = valor.slice(0, 6) + sufixo; sufixo++; }
+            (dados.unidadesArtigo = dados.unidadesArtigo || []).push({ id: gerarId(), adminId, valor, label: nome, dataCriacao: Date.now() });
+            guardarDados(dados);
+            return valor;
+        }
         function _categoriasTenant() {
             const adminId = _tenantArmazem();
             const stored = (dados.categorias || []).filter(c => c.adminId === adminId).map(c => c.nome);
@@ -16943,7 +16973,7 @@
         // ---- Importar / Exportar artigos (CSV) ----
         function _csvCell(v) { v = (v == null ? '' : String(v)); return /[;"\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
         function _parseCsvLine(line, sep) { const out = []; let cur = '', q = false; for (let i = 0; i < line.length; i++) { const ch = line[i]; if (q) { if (ch === '"') { if (line[i + 1] === '"') { cur += '"'; i++; } else q = false; } else cur += ch; } else { if (ch === '"') q = true; else if (ch === sep) { out.push(cur); cur = ''; } else cur += ch; } } out.push(cur); return out; }
-        function _unidadeValor(label) { const l = String(label || '').toLowerCase().trim(); const u = UNIDADES_ARTIGO.find(x => x.l.toLowerCase() === l || x.v === l); return u ? u.v : 'un'; }
+        function _unidadeValor(label) { const l = String(label || '').toLowerCase().trim(); const u = _unidadesArtigoTenant().find(x => x.l.toLowerCase() === l || x.v === l); return u ? u.v : 'un'; }
         function exportarArtigosCSV() {
             const adminId = _tenantArmazem();
             const arts = (dados.artigos || []).filter(a => a.adminId === adminId);
@@ -24383,7 +24413,11 @@ async function salvarAdmin(e) {
                                         Ativar o Portal do Cliente para este cliente (entra com o email acima)
                                     </label>
                                 </div>
-                                <div class="form-group ff-span2"><label>Senha do portal ${item ? '(deixar em branco mantém a atual)' : ''}</label><input type="password" id="c_senha" value="" placeholder="${item && item.senha ? '••••••••' : 'Definir senha'}" autocomplete="new-password" /></div>
+                                <div class="form-group ff-span2">
+                                    <label>Senha do portal ${item ? '(deixar em branco mantém a atual)' : ''}</label>
+                                    <input type="password" id="c_senha" value="" placeholder="${item && item.senha ? '••••••••' : 'Definir senha'}" autocomplete="off" readonly onfocus="this.removeAttribute('readonly')" />
+                                    ${item ? `<label style="display:flex;align-items:center;gap:8px;font-weight:400;margin-top:6px;font-size:.85rem;"><input type="checkbox" id="c_alterar_senha" style="width:auto;margin:0;" onchange="document.getElementById('c_senha').disabled=!this.checked; if(!this.checked) document.getElementById('c_senha').value='';" /> Quero alterar a senha do portal agora</label>` : ''}
+                                </div>
                                 <div class="form-group ff-span2"><div class="help-text" style="margin-top:-4px;">O Portal do Cliente está incluído na licença base. Ative aqui o acesso para cada cliente que precise dele.</div></div>
                             </div>
                         </div>
@@ -24803,7 +24837,7 @@ async function salvarAdmin(e) {
                             <div class="form-group"><label>Categoria</label>
                                 <select id="ar_categoria" onchange="if(this.value==='__nova'){const n=criarCategoria(); this.innerHTML=_optsCategoria(n);}">${_optsCategoria(item ? item.categoria : '')}</select>
                             </div>
-                            <div class="form-group ff-span2"><label>Unidade *</label><select id="ar_unidade">${UNIDADES_ARTIGO.map(u => `<option value="${u.v}" ${item && item.unidade === u.v ? 'selected' : ''}>${u.l}</option>`).join('')}</select></div>
+                            <div class="form-group ff-span2"><label>Unidade *</label><select id="ar_unidade" onchange="if(this.value==='__nova'){const n=criarUnidadeArtigo(); this.innerHTML=_optsUnidadeArtigo(n||this.querySelector('option[selected]')?.value||'un');}">${_optsUnidadeArtigo(item ? item.unidade : 'un')}</select></div>
                             <div class="form-group ff-span2"><label>Código de barras</label>
                                 <div style="display:flex;gap:8px;">
                                     <input type="text" id="ar_codbarras" value="${item ? (item.codigoBarras || '') : ''}" placeholder="Lê com a pistola/telemóvel ou escreve à mão" style="flex:1;" ${item && item.temNumeroSerie ? 'disabled' : ''} />
@@ -25641,7 +25675,17 @@ async function salvarAdmin(e) {
                     adminId: (usuarioLogado.role === 'admin' ? usuarioLogado.id : usuarioLogado.adminId)
                 };
                 obj.portalAtivo = document.getElementById('c_portal_ativo')?.checked || false;
-                { const _cs = document.getElementById('c_senha')?.value || ''; if (_cs) obj.senha = _cs; }
+                {
+                    // Ao editar, só considera a senha se a checkbox "Quero alterar a senha do
+                    // portal agora" estiver marcada — não basta o campo "parecer" preenchido,
+                    // porque alguns browsers pré-enchem campos de password sozinhos (autofill),
+                    // o que estava a disparar a recriação da conta do portal sem se querer, ao
+                    // editar qualquer outro campo do cliente (ex.: o número de cliente).
+                    const _chkAlterar = document.getElementById('c_alterar_senha');
+                    const _aEditar = item ? (_chkAlterar ? _chkAlterar.checked : false) : true;
+                    const _cs = document.getElementById('c_senha')?.value || '';
+                    if (_aEditar && _cs) obj.senha = _cs;
+                }
                 if (!obj.nif) {
                     alert('Preenche pelo menos o NIF do cliente.');
                     return;
