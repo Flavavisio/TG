@@ -3918,9 +3918,12 @@
             ORDEM.forEach(col => {
                 (dados[col] || []).forEach(o => {
                     const json = JSON.stringify(M[col].to(o));
-                    if (_snap[col].get(o.id) !== json) n++;
+                    if (_snap[col]?.get(o.id) !== json) n++;
                 });
-                for (const id of _snap[col].keys()) {
+                // _snap pode estar momentaneamente vazio a meio de um recarregamento (fica {}
+                // por instantes antes de ser repovoado por completo) — sem isto, esta contagem
+                // periódica rebentava sempre que calhasse correr exatamente nesse instante.
+                for (const id of (_snap[col] || new Map()).keys()) {
                     if (!(dados[col] || []).some(o => o.id === id)) n++;
                 }
             });
