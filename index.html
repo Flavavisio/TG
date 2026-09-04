@@ -31537,15 +31537,11 @@ window._relPrefill = function(msg){
         let _onb = { passo: 1, atividades: [], servicos: [], comoTrabalha: [], modulos: ['tecnicos', 'ponto'] };
 
         function abrirOnboardingAtividade() {
-            const admin = adminAtual();
-            // Ao reabrir para reconfigurar, começa com o que já estava escolhido, em vez de vazio.
-            _onb = {
-                passo: 1,
-                atividades: admin?.areasNegocio ? [...admin.areasNegocio] : [],
-                servicos: [],
-                comoTrabalha: admin?.onboardingComoTrabalha ? [...admin.onboardingComoTrabalha] : [],
-                modulos: admin?.modulosAtivos ? [...admin.modulosAtivos] : ['tecnicos', 'ponto'],
-            };
+            // Reconfigurar começa sempre do zero — não vem pré-preenchido com a escolha
+            // anterior, para não ficarem coisas "coladas" de uma configuração antiga que já não
+            // fazem sentido (ex.: escolher só Limpeza depois de teres tido Segurança, e a
+            // Segurança continuar lá só porque não a tinhas desmarcado a sério).
+            _onb = { passo: 1, atividades: [], servicos: [], comoTrabalha: [], modulos: ['tecnicos', 'ponto'] };
             document.getElementById('onbOverlay').classList.add('open');
             _onbRenderPasso();
         }
