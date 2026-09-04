@@ -2192,6 +2192,7 @@
                 <select id="artFiltroCategoria" onchange="renderizarArtigos()" style="padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:.9rem;min-width:140px;"><option value="">Todas as categorias</option></select>
                 <select id="artFiltroReferencia" onchange="renderizarArtigos()" style="padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:.9rem;min-width:140px;"><option value="">Todas as referências</option></select>
                 <button type="button" class="btn btn-sm btn-outline" onclick="_artigosLimparFiltros()"><i class="fas fa-times"></i> Limpar</button>
+                <button type="button" class="btn btn-sm" style="background:#eef2ff;color:#3730a3;" onclick="arrumarMarcasDuplicadas()" title="Junta marcas escritas de forma diferente (ex.: Dahua e DAHUA) numa só"><i class="fas fa-broom"></i> Arrumar marcas</button>
             </div>
             <table>
                 <thead><tr><th>Artigo</th><th>Marca</th><th>Categoria</th><th>Ref.</th><th>Unid.</th><th>Stock atual</th><th>Mínimo</th><th>Estado</th><th>Ações</th></tr></thead>
@@ -2404,6 +2405,11 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="onbOverlay" style="z-index:400000;">
+        <div class="modal" style="max-width:560px;">
+            <div id="onbConteudo"></div>
+        </div>
+    </div>
     <div class="modal-overlay" id="modalGenericoOverlay">
         <div class="modal" style="max-width:520px;">
             <div style="display:flex; align-items:center; justify-content:space-between;">
@@ -3232,8 +3238,8 @@
         const M = {
             administradores: {
                 tabela: 'administradores',
-                from: r => ({ id: r.id, nome: r.nome, email: r.email, empresa: r.empresa || '', nif: r.nif || null, logo: r.logo || null, licencaFeedback: r.licenca_feedback || null, contratosPlano: r.contratos_plano || null, contratosExpiracao: isoToMs(r.contratos_expiracao), frotaPlano: r.frota_plano || null, frotaExpiracao: isoToMs(r.frota_expiracao), armazemPlano: r.armazem_plano || null, armazemExpiracao: isoToMs(r.armazem_expiracao), portalPlano: r.portal_plano || null, portalExpiracao: isoToMs(r.portal_expiracao), crmPlano: r.crm_plano || null, crmExpiracao: isoToMs(r.crm_expiracao), assistPlano: r.assist_plano || null, assistExpiracao: isoToMs(r.assist_expiracao), erpPlano: r.erp_plano || null, erpExpiracao: isoToMs(r.erp_expiracao), notificacoesPlano: r.notificacoes_plano || null, notificacoesExpiracao: isoToMs(r.notificacoes_expiracao), dadosBancarios: r.dados_bancarios || null, integracaoFaturacao: r.integracao_faturacao || null, ativo: r.ativo, mudarSenha: r.mudar_senha === true, ultimoLogin: isoToMs(r.ultimo_login), ultimaAtividade: isoToMs(r.ultima_atividade), mostrarEstadoOnline: r.mostrar_estado_online === true, layout: r.layout || null, tiposEquipamento: r.tipos_equipamento || [], logo: r.logo, notificarAprovacao: r.notificar_aprovacao === true, numeroRegistoPrevio: r.numero_registo_previo || null, dataRegistoPrevio: r.data_registo_previo || null, numeroAnepc: r.numero_anepc || null, dataAnepc: r.data_anepc || null, anepcValidade: r.anepc_validade || null, registoPrevioValidade: r.registo_previo_validade || null, corCorporativa: r.cor_corporativa || null, favoritos: Array.isArray(r.favoritos) ? r.favoritos : [], ivaPeriodicidade: r.iva_periodicidade || 'mensal', irsPeriodicidade: r.irs_periodicidade || 'semestral', painelTvAtivo: r.painel_tv_ativo === true, descricoesRapidasOS: Array.isArray(r.descricoes_rapidas_os) ? r.descricoes_rapidas_os : ['Instalação', 'Manutenção', 'Visita', 'Formação'], horaEntradaHabitual: r.hora_entrada_habitual || '09:00', toleranciaAtrasoMin: r.tolerancia_atraso_min != null ? r.tolerancia_atraso_min : 15, certificadoraLogo: r.certificadora_logo || null, ehDistribuidor: r.eh_distribuidor === true, distribuidorDesconto: r.distribuidor_desconto != null ? Number(r.distribuidor_desconto) : null, distribuidorId: r.distribuidor_id || null, precoDistribuidorCobrado: r.preco_distribuidor_cobrado != null ? Number(r.preco_distribuidor_cobrado) : null, distribuidorPagamentoPrazo: isoToMs(r.distribuidor_pagamento_prazo), precoFundador: r.preco_fundador === true, obrasAvancadoAtivo: r.obras_avancado_ativo === true, obrasChecklistItens: Array.isArray(r.obras_checklist_itens) ? r.obras_checklist_itens : [], checklistEntradaItens: Array.isArray(r.checklist_entrada_itens) ? r.checklist_entrada_itens : [], osModoWizard: r.os_modo_wizard === true, contratoModoWizard: r.contrato_modo_wizard === true, kmPontoGeralAtivo: r.km_ponto_geral_ativo === true, kmPorOsAtivo: r.km_por_os_ativo === true, segurancaAtivo: r.seguranca_ativo === true, segurosAtivo: r.seguros_ativo === true, shstAtivo: r.shst_ativo === true, lembretePagamentoEm: isoToMs(r.lembrete_pagamento_em), concelho: r.concelho || null, contratosDemoDias: r.contratos_demo_dias || null, frotaDemoDias: r.frota_demo_dias || null, armazemDemoDias: r.armazem_demo_dias || null, crmDemoDias: r.crm_demo_dias || null, erpDemoDias: r.erp_demo_dias || null, rondasPlano: r.rondas_plano || null, rondasExpiracao: isoToMs(r.rondas_expiracao), rondasDemoDias: r.rondas_demo_dias || null, usoSecoes: r.uso_secoes ? (typeof r.uso_secoes === 'string' ? JSON.parse(r.uso_secoes) : r.uso_secoes) : {}, usoSecoesUltima: isoToMs(r.uso_secoes_ultima), dataCriacao: isoToMs(r.data_criacao) }),
-                to:   o => ({ id: o.id, nome: o.nome, email: o.email, senha: o.senha, empresa: o.empresa || null, nif: o.nif || null, logo: o.logo || null, licenca_feedback: o.licencaFeedback || null, contratos_plano: o.contratosPlano || null, contratos_expiracao: msToISO(o.contratosExpiracao), frota_plano: o.frotaPlano || null, frota_expiracao: msToISO(o.frotaExpiracao), armazem_plano: o.armazemPlano || null, armazem_expiracao: msToISO(o.armazemExpiracao), portal_plano: o.portalPlano || null, portal_expiracao: msToISO(o.portalExpiracao), crm_plano: o.crmPlano || null, crm_expiracao: msToISO(o.crmExpiracao), assist_plano: o.assistPlano || null, assist_expiracao: msToISO(o.assistExpiracao), erp_plano: o.erpPlano || null, erp_expiracao: msToISO(o.erpExpiracao), notificacoes_plano: o.notificacoesPlano || null, notificacoes_expiracao: msToISO(o.notificacoesExpiracao), dados_bancarios: o.dadosBancarios || null, integracao_faturacao: o.integracaoFaturacao || null, ativo: o.ativo !== false, mudar_senha: o.mudarSenha === true, ultimo_login: o.ultimoLogin ? msToISO(o.ultimoLogin) : null, ultima_atividade: o.ultimaAtividade ? msToISO(o.ultimaAtividade) : null, mostrar_estado_online: o.mostrarEstadoOnline === true, layout: o.layout || null, tipos_equipamento: o.tiposEquipamento || [], logo: o.logo || null, notificar_aprovacao: o.notificarAprovacao === true, numero_registo_previo: o.numeroRegistoPrevio || null, data_registo_previo: o.dataRegistoPrevio || null, numero_anepc: o.numeroAnepc || null, data_anepc: o.dataAnepc || null, anepc_validade: o.anepcValidade || null, registo_previo_validade: o.registoPrevioValidade || null, cor_corporativa: o.corCorporativa || null, favoritos: o.favoritos || [], iva_periodicidade: o.ivaPeriodicidade || 'mensal', irs_periodicidade: o.irsPeriodicidade || 'semestral', painel_tv_ativo: o.painelTvAtivo === true, descricoes_rapidas_os: o.descricoesRapidasOS || null, hora_entrada_habitual: o.horaEntradaHabitual || '09:00', tolerancia_atraso_min: o.toleranciaAtrasoMin != null ? o.toleranciaAtrasoMin : 15, certificadora_logo: o.certificadoraLogo || null, eh_distribuidor: o.ehDistribuidor === true, distribuidor_desconto: o.distribuidorDesconto ?? null, distribuidor_id: o.distribuidorId || null, preco_distribuidor_cobrado: o.precoDistribuidorCobrado ?? null, distribuidor_pagamento_prazo: o.distribuidorPagamentoPrazo ? msToISO(o.distribuidorPagamentoPrazo) : null, preco_fundador: o.precoFundador === true, obras_avancado_ativo: o.obrasAvancadoAtivo === true, obras_checklist_itens: o.obrasChecklistItens || [], checklist_entrada_itens: o.checklistEntradaItens || [], os_modo_wizard: o.osModoWizard === true, contrato_modo_wizard: o.contratoModoWizard === true, km_ponto_geral_ativo: o.kmPontoGeralAtivo === true, km_por_os_ativo: o.kmPorOsAtivo === true, seguranca_ativo: o.segurancaAtivo === true, seguros_ativo: o.segurosAtivo === true, shst_ativo: o.shstAtivo === true, lembrete_pagamento_em: o.lembretePagamentoEm ? msToISO(o.lembretePagamentoEm) : null, concelho: o.concelho || null, contratos_demo_dias: o.contratosDemoDias || null, frota_demo_dias: o.frotaDemoDias || null, armazem_demo_dias: o.armazemDemoDias || null, crm_demo_dias: o.crmDemoDias || null, erp_demo_dias: o.erpDemoDias || null, rondas_plano: o.rondasPlano || null, rondas_expiracao: msToISO(o.rondasExpiracao), rondas_demo_dias: o.rondasDemoDias || null, uso_secoes: JSON.stringify(o.usoSecoes || {}), uso_secoes_ultima: o.usoSecoesUltima ? msToISO(o.usoSecoesUltima) : null, data_criacao: msToISO(o.dataCriacao) })
+                from: r => ({ id: r.id, nome: r.nome, email: r.email, empresa: r.empresa || '', nif: r.nif || null, logo: r.logo || null, licencaFeedback: r.licenca_feedback || null, contratosPlano: r.contratos_plano || null, contratosExpiracao: isoToMs(r.contratos_expiracao), frotaPlano: r.frota_plano || null, frotaExpiracao: isoToMs(r.frota_expiracao), armazemPlano: r.armazem_plano || null, armazemExpiracao: isoToMs(r.armazem_expiracao), portalPlano: r.portal_plano || null, portalExpiracao: isoToMs(r.portal_expiracao), crmPlano: r.crm_plano || null, crmExpiracao: isoToMs(r.crm_expiracao), assistPlano: r.assist_plano || null, assistExpiracao: isoToMs(r.assist_expiracao), erpPlano: r.erp_plano || null, erpExpiracao: isoToMs(r.erp_expiracao), notificacoesPlano: r.notificacoes_plano || null, notificacoesExpiracao: isoToMs(r.notificacoes_expiracao), dadosBancarios: r.dados_bancarios || null, integracaoFaturacao: r.integracao_faturacao || null, ativo: r.ativo, mudarSenha: r.mudar_senha === true, ultimoLogin: isoToMs(r.ultimo_login), ultimaAtividade: isoToMs(r.ultima_atividade), mostrarEstadoOnline: r.mostrar_estado_online === true, layout: r.layout || null, tiposEquipamento: r.tipos_equipamento || [], logo: r.logo, notificarAprovacao: r.notificar_aprovacao === true, numeroRegistoPrevio: r.numero_registo_previo || null, dataRegistoPrevio: r.data_registo_previo || null, numeroAnepc: r.numero_anepc || null, dataAnepc: r.data_anepc || null, anepcValidade: r.anepc_validade || null, registoPrevioValidade: r.registo_previo_validade || null, corCorporativa: r.cor_corporativa || null, favoritos: Array.isArray(r.favoritos) ? r.favoritos : [], ivaPeriodicidade: r.iva_periodicidade || 'mensal', irsPeriodicidade: r.irs_periodicidade || 'semestral', painelTvAtivo: r.painel_tv_ativo === true, descricoesRapidasOS: Array.isArray(r.descricoes_rapidas_os) ? r.descricoes_rapidas_os : ['Instalação', 'Manutenção', 'Visita', 'Formação'], horaEntradaHabitual: r.hora_entrada_habitual || '09:00', toleranciaAtrasoMin: r.tolerancia_atraso_min != null ? r.tolerancia_atraso_min : 15, certificadoraLogo: r.certificadora_logo || null, ehDistribuidor: r.eh_distribuidor === true, distribuidorDesconto: r.distribuidor_desconto != null ? Number(r.distribuidor_desconto) : null, distribuidorId: r.distribuidor_id || null, precoDistribuidorCobrado: r.preco_distribuidor_cobrado != null ? Number(r.preco_distribuidor_cobrado) : null, distribuidorPagamentoPrazo: isoToMs(r.distribuidor_pagamento_prazo), precoFundador: r.preco_fundador === true, obrasAvancadoAtivo: r.obras_avancado_ativo === true, obrasChecklistItens: Array.isArray(r.obras_checklist_itens) ? r.obras_checklist_itens : [], checklistEntradaItens: Array.isArray(r.checklist_entrada_itens) ? r.checklist_entrada_itens : [], osModoWizard: r.os_modo_wizard === true, contratoModoWizard: r.contrato_modo_wizard === true, kmPontoGeralAtivo: r.km_ponto_geral_ativo === true, kmPorOsAtivo: r.km_por_os_ativo === true, segurancaAtivo: r.seguranca_ativo === true, segurosAtivo: r.seguros_ativo === true, shstAtivo: r.shst_ativo === true, areasNegocio: Array.isArray(r.areas_negocio) ? r.areas_negocio : null, onboardingComoTrabalha: Array.isArray(r.onboarding_como_trabalha) ? r.onboarding_como_trabalha : [], modulosAtivos: Array.isArray(r.modulos_ativos) ? r.modulos_ativos : null, onboardingAtividadeConcluido: r.onboarding_atividade_concluido === true, lembretePagamentoEm: isoToMs(r.lembrete_pagamento_em), concelho: r.concelho || null, contratosDemoDias: r.contratos_demo_dias || null, frotaDemoDias: r.frota_demo_dias || null, armazemDemoDias: r.armazem_demo_dias || null, crmDemoDias: r.crm_demo_dias || null, erpDemoDias: r.erp_demo_dias || null, rondasPlano: r.rondas_plano || null, rondasExpiracao: isoToMs(r.rondas_expiracao), rondasDemoDias: r.rondas_demo_dias || null, usoSecoes: r.uso_secoes ? (typeof r.uso_secoes === 'string' ? JSON.parse(r.uso_secoes) : r.uso_secoes) : {}, usoSecoesUltima: isoToMs(r.uso_secoes_ultima), dataCriacao: isoToMs(r.data_criacao) }),
+                to:   o => ({ id: o.id, nome: o.nome, email: o.email, senha: o.senha, empresa: o.empresa || null, nif: o.nif || null, logo: o.logo || null, licenca_feedback: o.licencaFeedback || null, contratos_plano: o.contratosPlano || null, contratos_expiracao: msToISO(o.contratosExpiracao), frota_plano: o.frotaPlano || null, frota_expiracao: msToISO(o.frotaExpiracao), armazem_plano: o.armazemPlano || null, armazem_expiracao: msToISO(o.armazemExpiracao), portal_plano: o.portalPlano || null, portal_expiracao: msToISO(o.portalExpiracao), crm_plano: o.crmPlano || null, crm_expiracao: msToISO(o.crmExpiracao), assist_plano: o.assistPlano || null, assist_expiracao: msToISO(o.assistExpiracao), erp_plano: o.erpPlano || null, erp_expiracao: msToISO(o.erpExpiracao), notificacoes_plano: o.notificacoesPlano || null, notificacoes_expiracao: msToISO(o.notificacoesExpiracao), dados_bancarios: o.dadosBancarios || null, integracao_faturacao: o.integracaoFaturacao || null, ativo: o.ativo !== false, mudar_senha: o.mudarSenha === true, ultimo_login: o.ultimoLogin ? msToISO(o.ultimoLogin) : null, ultima_atividade: o.ultimaAtividade ? msToISO(o.ultimaAtividade) : null, mostrar_estado_online: o.mostrarEstadoOnline === true, layout: o.layout || null, tipos_equipamento: o.tiposEquipamento || [], logo: o.logo || null, notificar_aprovacao: o.notificarAprovacao === true, numero_registo_previo: o.numeroRegistoPrevio || null, data_registo_previo: o.dataRegistoPrevio || null, numero_anepc: o.numeroAnepc || null, data_anepc: o.dataAnepc || null, anepc_validade: o.anepcValidade || null, registo_previo_validade: o.registoPrevioValidade || null, cor_corporativa: o.corCorporativa || null, favoritos: o.favoritos || [], iva_periodicidade: o.ivaPeriodicidade || 'mensal', irs_periodicidade: o.irsPeriodicidade || 'semestral', painel_tv_ativo: o.painelTvAtivo === true, descricoes_rapidas_os: o.descricoesRapidasOS || null, hora_entrada_habitual: o.horaEntradaHabitual || '09:00', tolerancia_atraso_min: o.toleranciaAtrasoMin != null ? o.toleranciaAtrasoMin : 15, certificadora_logo: o.certificadoraLogo || null, eh_distribuidor: o.ehDistribuidor === true, distribuidor_desconto: o.distribuidorDesconto ?? null, distribuidor_id: o.distribuidorId || null, preco_distribuidor_cobrado: o.precoDistribuidorCobrado ?? null, distribuidor_pagamento_prazo: o.distribuidorPagamentoPrazo ? msToISO(o.distribuidorPagamentoPrazo) : null, preco_fundador: o.precoFundador === true, obras_avancado_ativo: o.obrasAvancadoAtivo === true, obras_checklist_itens: o.obrasChecklistItens || [], checklist_entrada_itens: o.checklistEntradaItens || [], os_modo_wizard: o.osModoWizard === true, contrato_modo_wizard: o.contratoModoWizard === true, km_ponto_geral_ativo: o.kmPontoGeralAtivo === true, km_por_os_ativo: o.kmPorOsAtivo === true, seguranca_ativo: o.segurancaAtivo === true, seguros_ativo: o.segurosAtivo === true, shst_ativo: o.shstAtivo === true, areas_negocio: o.areasNegocio || null, onboarding_como_trabalha: o.onboardingComoTrabalha || [], modulos_ativos: o.modulosAtivos || null, onboarding_atividade_concluido: o.onboardingAtividadeConcluido === true, lembrete_pagamento_em: o.lembretePagamentoEm ? msToISO(o.lembretePagamentoEm) : null, concelho: o.concelho || null, contratos_demo_dias: o.contratosDemoDias || null, frota_demo_dias: o.frotaDemoDias || null, armazem_demo_dias: o.armazemDemoDias || null, crm_demo_dias: o.crmDemoDias || null, erp_demo_dias: o.erpDemoDias || null, rondas_plano: o.rondasPlano || null, rondas_expiracao: msToISO(o.rondasExpiracao), rondas_demo_dias: o.rondasDemoDias || null, uso_secoes: JSON.stringify(o.usoSecoes || {}), uso_secoes_ultima: o.usoSecoesUltima ? msToISO(o.usoSecoesUltima) : null, data_criacao: msToISO(o.dataCriacao) })
             },
             funcionarios: {
                 tabela: 'funcionarios',
@@ -3342,8 +3348,8 @@
             },
             contratos: {
                 tabela: 'contratos',
-                from: r => ({ id: r.id, numero: r.numero, adminId: r.admin_id, clienteId: r.cliente_id, localId: r.local_id, equipamentoId: r.equipamento_id, equipamentosIds: Array.isArray(r.equipamentos_ids) ? r.equipamentos_ids : [], tipo: r.tipo, tiposTrabalho: Array.isArray(r.tipos_trabalho) ? r.tipos_trabalho : [], periodicidade: r.periodicidade, tipoIntervencao: r.tipo_intervencao, tecnicoId: r.tecnico_id, dataInicio: r.data_inicio, valor: r.valor, marca: r.marca, numeroSerie: r.numero_serie, proximaManutencao: r.proxima_manutencao, ultimaOSGeradaData: r.ultima_os_gerada_data || null, ultimaOSGeradaId: r.ultima_os_gerada_id || null, vigilanciaAtiva: r.vigilancia_ativa === true, valorMensalVigilancia: r.valor_mensal_vigilancia != null ? Number(r.valor_mensal_vigilancia) : null, ultimoMesFaturadoVigilancia: r.ultimo_mes_faturado_vigilancia || null, faturasVigilancia: Array.isArray(r.faturas_vigilancia) ? r.faturas_vigilancia : [], dataCriacao: isoToMs(r.data_criacao) }),
-                to:   o => ({ id: o.id, numero: o.numero, admin_id: o.adminId, cliente_id: o.clienteId, local_id: o.localId || null, equipamento_id: o.equipamentoId || null, equipamentos_ids: o.equipamentosIds || [], tipo: o.tipo, tipos_trabalho: o.tiposTrabalho || [], periodicidade: o.periodicidade || null, tipo_intervencao: o.tipoIntervencao || null, tecnico_id: o.tecnicoId || null, data_inicio: nn(o.dataInicio), valor: (o.valor === '' || o.valor == null) ? null : Number(o.valor), marca: o.marca || null, numero_serie: o.numeroSerie || null, proxima_manutencao: nn(o.proximaManutencao), ultima_os_gerada_data: o.ultimaOSGeradaData || null, ultima_os_gerada_id: o.ultimaOSGeradaId || null, vigilancia_ativa: o.vigilanciaAtiva === true, valor_mensal_vigilancia: o.valorMensalVigilancia ?? null, ultimo_mes_faturado_vigilancia: o.ultimoMesFaturadoVigilancia || null, faturas_vigilancia: o.faturasVigilancia || [], data_criacao: msToISO(o.dataCriacao) })
+                from: r => ({ id: r.id, numero: r.numero, adminId: r.admin_id, clienteId: r.cliente_id, localId: r.local_id, equipamentoId: r.equipamento_id, equipamentosIds: Array.isArray(r.equipamentos_ids) ? r.equipamentos_ids : [], tipo: r.tipo, tiposTrabalho: Array.isArray(r.tipos_trabalho) ? r.tipos_trabalho : [], periodicidade: r.periodicidade, tipoIntervencao: r.tipo_intervencao, tecnicoId: r.tecnico_id, dataInicio: r.data_inicio, valor: r.valor, marca: r.marca, numeroSerie: r.numero_serie, proximaManutencao: r.proxima_manutencao, ultimaOSGeradaData: r.ultima_os_gerada_data || null, ultimaOSGeradaId: r.ultima_os_gerada_id || null, vigilanciaAtiva: r.vigilancia_ativa === true, valorMensalVigilancia: r.valor_mensal_vigilancia != null ? Number(r.valor_mensal_vigilancia) : null, ultimoMesFaturadoVigilancia: r.ultimo_mes_faturado_vigilancia || null, faturasVigilancia: Array.isArray(r.faturas_vigilancia) ? r.faturas_vigilancia : [], validadeContrato: r.validade_contrato || null, dataCriacao: isoToMs(r.data_criacao) }),
+                to:   o => ({ id: o.id, numero: o.numero, admin_id: o.adminId, cliente_id: o.clienteId, local_id: o.localId || null, equipamento_id: o.equipamentoId || null, equipamentos_ids: o.equipamentosIds || [], tipo: o.tipo, tipos_trabalho: o.tiposTrabalho || [], periodicidade: o.periodicidade || null, tipo_intervencao: o.tipoIntervencao || null, tecnico_id: o.tecnicoId || null, data_inicio: nn(o.dataInicio), valor: (o.valor === '' || o.valor == null) ? null : Number(o.valor), marca: o.marca || null, numero_serie: o.numeroSerie || null, proxima_manutencao: nn(o.proximaManutencao), ultima_os_gerada_data: o.ultimaOSGeradaData || null, ultima_os_gerada_id: o.ultimaOSGeradaId || null, vigilancia_ativa: o.vigilanciaAtiva === true, valor_mensal_vigilancia: o.valorMensalVigilancia ?? null, ultimo_mes_faturado_vigilancia: o.ultimoMesFaturadoVigilancia || null, faturas_vigilancia: o.faturasVigilancia || [], validade_contrato: o.validadeContrato || null, data_criacao: msToISO(o.dataCriacao) })
             },
             locais: {
                 tabela: 'locais',
@@ -3352,8 +3358,8 @@
             },
             equipamentos: {
                 tabela: 'equipamentos',
-                from: r => ({ id: r.id, adminId: r.admin_id, localId: r.local_id, tipo: r.tipo, marca: r.marca, numeroSerie: r.numero_serie, observacoes: r.observacoes, dataCriacao: isoToMs(r.data_criacao) }),
-                to:   o => ({ id: o.id, admin_id: o.adminId, local_id: o.localId || null, tipo: o.tipo, marca: o.marca || null, numero_serie: o.numeroSerie || null, observacoes: o.observacoes || null, data_criacao: msToISO(o.dataCriacao) })
+                from: r => ({ id: r.id, adminId: r.admin_id, localId: r.local_id, tipo: r.tipo, marca: r.marca, numeroSerie: r.numero_serie, observacoes: r.observacoes, dataInstalacao: r.data_instalacao || null, garantiaAte: r.garantia_ate || null, dataCriacao: isoToMs(r.data_criacao) }),
+                to:   o => ({ id: o.id, admin_id: o.adminId, local_id: o.localId || null, tipo: o.tipo, marca: o.marca || null, numero_serie: o.numeroSerie || null, observacoes: o.observacoes || null, data_instalacao: o.dataInstalacao || null, garantia_ate: o.garantiaAte || null, data_criacao: msToISO(o.dataCriacao) })
             },
             registosManutencao: {
                 tabela: 'registos_manutencao',
@@ -3482,8 +3488,8 @@
             },
             tiposTrabalhoCustom: {
                 tabela: 'tipos_trabalho_custom',
-                from: r => ({ id: r.id, adminId: r.admin_id, codigo: r.codigo, nome: r.nome, criadoEm: isoToMs(r.criado_em), campos: r.campos ? (typeof r.campos === 'string' ? JSON.parse(r.campos) : r.campos) : [] }),
-                to:   o => ({ id: o.id, admin_id: o.adminId, codigo: o.codigo, nome: o.nome, criado_em: msToISO(o.criadoEm), campos: JSON.stringify(o.campos || []) })
+                from: r => ({ id: r.id, adminId: r.admin_id, codigo: r.codigo, nome: r.nome, criadoEm: isoToMs(r.criado_em), campos: r.campos ? (typeof r.campos === 'string' ? JSON.parse(r.campos) : r.campos) : [], criadoPorOnboarding: r.criado_por_onboarding === true }),
+                to:   o => ({ id: o.id, admin_id: o.adminId, codigo: o.codigo, nome: o.nome, criado_em: msToISO(o.criadoEm), campos: JSON.stringify(o.campos || []), criado_por_onboarding: o.criadoPorOnboarding === true })
             },
             configSeriesRelatorio: {
                 tabela: 'config_series_relatorio',
@@ -4194,6 +4200,104 @@
         // =============================================================
         //  PLANOS DE LICENÇA
         // =============================================================
+        // =============================================================
+        //  ONBOARDING POR ÁREA DE ATIVIDADE
+        // =============================================================
+        // Cada atividade tem os seus próprios "serviços" (viram Tipos de Trabalho) — os que já
+        // têm relatório de especialidade automático (REX/RBI/RSI/RCM/RIE/RCP) ficam marcados com
+        // "relatorio", os outros ficam disponíveis para o admin criar o relatório dele em
+        // "Relatórios personalizados por tipo".
+        const ATIVIDADES_ONBOARDING = {
+            seguranca: {
+                label: 'Segurança eletrónica',
+                servicos: [
+                    { v: 'RCCTV', l: 'CCTV', relatorio: true },
+                    { v: 'RIN', l: 'Intrusão', relatorio: true },
+                    { v: 'REX', l: 'Incêndio — Extintores (REX)', relatorio: true },
+                    { v: 'RBI', l: 'Incêndio — Bocas de Incêndio (RBI)', relatorio: true },
+                    { v: 'RSI', l: 'Incêndio — Central de Deteção (RSI)', relatorio: true },
+                    { v: 'RCM', l: 'Incêndio — Central de Monóxido (RCM)', relatorio: true },
+                    { v: 'RIE', l: 'Incêndio — Iluminação de Emergência (RIE)', relatorio: true },
+                    { v: 'RCP', l: 'Incêndio — Portas Corta-Fogo (RCP)', relatorio: true },
+                    { v: 'Controlo de acessos', l: 'Controlo de acessos', relatorio: false },
+                    { v: 'Intercomunicação', l: 'Intercomunicação', relatorio: false },
+                ],
+            },
+            avac: {
+                label: 'AVAC / Climatização',
+                servicos: [
+                    { v: 'Manutenção AC', l: 'Manutenção de ar condicionado', relatorio: false },
+                    { v: 'Instalação AVAC', l: 'Instalação', relatorio: false },
+                    { v: 'Recarga de gás', l: 'Recarga de gás refrigerante', relatorio: false },
+                    { v: 'Limpeza de filtros', l: 'Limpeza de filtros/condutas', relatorio: false },
+                    { v: 'Diagnóstico AVAC', l: 'Diagnóstico de avaria', relatorio: false },
+                ],
+            },
+            eletricidade: {
+                label: 'Eletricidade',
+                servicos: [
+                    { v: 'Instalação elétrica', l: 'Instalação elétrica', relatorio: false },
+                    { v: 'Certificação elétrica', l: 'Certificação / vistoria', relatorio: false },
+                    { v: 'Quadro elétrico', l: 'Quadro elétrico', relatorio: false },
+                    { v: 'Iluminação', l: 'Iluminação', relatorio: false },
+                    { v: 'Avaria elétrica', l: 'Avaria elétrica', relatorio: false },
+                ],
+            },
+            limpeza: {
+                label: 'Limpeza',
+                servicos: [
+                    { v: 'Limpeza regular', l: 'Limpeza regular', relatorio: false },
+                    { v: 'Limpeza profunda', l: 'Limpeza profunda', relatorio: false },
+                    { v: 'Limpeza pós-obra', l: 'Limpeza pós-obra', relatorio: false },
+                    { v: 'Desinfeção', l: 'Desinfeção', relatorio: false },
+                ],
+            },
+            elevadores: {
+                label: 'Elevadores',
+                servicos: [
+                    { v: 'Manutenção elevador', l: 'Manutenção preventiva', relatorio: false },
+                    { v: 'Avaria elevador', l: 'Avaria / assistência', relatorio: false },
+                    { v: 'Inspeção elevador', l: 'Inspeção periódica', relatorio: false },
+                    { v: 'Modernização elevador', l: 'Modernização', relatorio: false },
+                ],
+            },
+            manutencao_industrial: {
+                label: 'Manutenção industrial',
+                servicos: [
+                    { v: 'Manutenção preventiva industrial', l: 'Manutenção preventiva', relatorio: false },
+                    { v: 'Manutenção corretiva industrial', l: 'Manutenção corretiva', relatorio: false },
+                    { v: 'Instalação de equipamento', l: 'Instalação de equipamento', relatorio: false },
+                    { v: 'Calibração', l: 'Calibração', relatorio: false },
+                ],
+            },
+            construcao: {
+                label: 'Construção',
+                servicos: [
+                    { v: 'Obra nova', l: 'Obra nova', relatorio: false },
+                    { v: 'Remodelação', l: 'Remodelação', relatorio: false },
+                    { v: 'Reparação estrutural', l: 'Reparação estrutural', relatorio: false },
+                    { v: 'Acabamentos', l: 'Acabamentos', relatorio: false },
+                ],
+            },
+            outra: { label: 'Outra', servicos: [] },
+        };
+        const COMO_TRABALHA_OPCOES = [
+            { v: 'assistencias', l: 'Assistências' },
+            { v: 'instalacoes', l: 'Instalações' },
+            { v: 'manutencoes_preventivas', l: 'Manutenções preventivas' },
+            { v: 'contratos', l: 'Contratos' },
+            { v: 'obras', l: 'Obras' },
+        ];
+        const MODULOS_ONBOARDING_OPCOES = [
+            { v: 'tecnicos', l: 'Técnicos', fixo: true },
+            { v: 'ponto', l: 'Ponto', fixo: true },
+            { v: 'stock', l: 'Stock', grupo: 'armazem' },
+            { v: 'frota', l: 'Frota', grupo: 'frota' },
+            { v: 'crm', l: 'CRM', grupo: 'comercial' },
+            { v: 'equipamentos', l: 'Equipamentos', grupo: 'obras-servicos' },
+            { v: 'contratos', l: 'Contratos', grupo: 'obras-servicos' },
+        ];
+
         const PLANOS = {
             'demo': { dias: 1, funcionarios: 3, preco: 0, label: 'Demo - 1 dia (Grátis)' },
             'demo_10': { dias: 10, funcionarios: 3, preco: 0, label: 'Demo - 10 dias (Grátis)' },
@@ -11200,6 +11304,8 @@
                                 <div class="form-group" style="margin-bottom:8px;"><label>Tipo *</label><select id="ct_equip_tipo" onchange="onTipoContratoChange(this)">${tipoOpts}</select><div id="ct_equip_tipo_gerir" style="margin-top:6px;"></div></div>
                                 <div class="form-group" style="margin-bottom:8px;"><label>Marca</label><input type="text" id="ct_equip_marca" /></div>
                                 <div class="form-group" style="margin-bottom:8px;"><label>Nº de série</label><input type="text" id="ct_equip_serie" /></div>
+                                <div class="form-group" style="margin-bottom:8px;"><label>Data de instalação/venda</label><input type="date" id="ct_equip_data_instalacao" /></div>
+                                <div class="form-group" style="margin-bottom:8px;"><label>Garantia até</label><input type="date" id="ct_equip_garantia" /></div>
                                 <div class="form-group" style="margin-bottom:0;"><label>Observações</label><textarea id="ct_equip_obs" rows="2" placeholder="Notas sobre o equipamento (opcional)"></textarea></div>
                                 <button type="button" class="btn btn-sm btn-primary" style="margin-top:8px;" onclick="adicionarEquipContrato()">➕ Criar e adicionar este equipamento</button>
                             </div>
@@ -11213,6 +11319,11 @@
                             <div class="form-group"><label>Tipo de intervenção *</label><select id="ct_interv"><option value="presencial">Presencial</option><option value="remota">Remota</option></select></div>
                             <div class="form-group ff-span2"><div class="help-text" id="ct_regra_help" style="margin-top:-4px;"></div></div>
                             <div class="form-group ff-span2"><label>Técnico responsável</label><select id="ct_tecnico"><option value="">—</option>${(dados.funcionarios || []).filter(f => f.adminId === adminId && f.role !== 'admin' && !f.suspenso).map(t => `<option value="${t.id}" ${c && c.tecnicoId === t.id ? 'selected' : ''}>${t.nome}</option>`).join('')}</select></div>
+                            <div class="form-group ff-span2" style="border-top:1px dashed #e2e8f0;padding-top:12px;margin-top:4px;">
+                                <label>Validade do contrato (opcional)</label>
+                                <input type="date" id="ct_validade" value="${c?.validadeContrato || ''}" />
+                                <div class="help-text">É diferente da "próxima manutenção" — isto é a validade do acordo comercial em si (ex.: renovação anual de preço). Avisa 30 dias antes de vencer. Deixa em branco se o contrato não tiver prazo definido.</div>
+                            </div>
                         </div>
                     </div>
 
@@ -11409,6 +11520,7 @@
                     const label = eq ? `${EQUIP_TIPOS[eq.tipo] || eq.tipo}${eq.marca ? ' - ' + eq.marca : ''}` : 'Equipamento';
                     return `<span style="display:inline-flex;align-items:center;gap:6px;background:#eef2ff;color:#3730a3;padding:5px 10px;border-radius:16px;font-size:.82rem;font-weight:600;">
                         ${label}
+                        <button type="button" onclick="event.stopPropagation();imprimirEtiquetaQrEquip('${id}')" title="Imprimir etiqueta QR" style="background:none;border:none;color:#3730a3;cursor:pointer;"><i class="fas fa-qrcode"></i></button>
                         <button type="button" onclick="removerEquipContrato('${id}')" style="background:none;border:none;color:#3730a3;cursor:pointer;font-weight:700;">×</button>
                     </span>`;
                 }).join('');
@@ -11420,6 +11532,36 @@
             _ctEquipamentosAtuais = _ctEquipamentosAtuais.filter(x => x !== id);
             _renderListaEquipContrato();
             _atualizarSelectEquipDisponivel();
+        }
+        // Abre uma folha simples, pronta a imprimir, com o QR do equipamento — cola-se
+        // fisicamente junto ao equipamento instalado. O QR aponta para a página própria de
+        // histórico (equip.html), que pede login (Login Parceiro) antes de mostrar seja o
+        // que for — não é uma página pública.
+        function imprimirEtiquetaQrEquip(equipId) {
+            const eq = dados.equipamentos?.find(e => e.id === equipId);
+            if (!eq) { alert('Equipamento não encontrado — grava o contrato primeiro.'); return; }
+            const url = `https://www.totalgest.pt/equip.html?id=${encodeURIComponent(equipId)}`;
+            const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=${encodeURIComponent(url)}`;
+            const label = `${EQUIP_TIPOS[eq.tipo] || eq.tipo}${eq.marca ? ' — ' + eq.marca : ''}`;
+            const w = window.open('', '_blank', 'width=420,height=560');
+            if (!w) { alert('O browser bloqueou a janela de impressão — permite pop-ups para este site.'); return; }
+            w.document.write(`
+                <html><head><title>Etiqueta QR — ${label}</title>
+                <style>
+                    body{font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;text-align:center;padding:24px;}
+                    .titulo{font-weight:800;color:#152A52;font-size:1.05rem;margin-bottom:2px;}
+                    .serie{color:#64748b;font-size:.82rem;margin-bottom:16px;}
+                    img{width:220px;height:220px;}
+                    .rodape{margin-top:14px;font-size:.72rem;color:#94a3b8;}
+                </style></head>
+                <body onload="window.print()">
+                    <div class="titulo">${label}</div>
+                    <div class="serie">${eq.numeroSerie ? 'Nº série: ' + eq.numeroSerie : ''}</div>
+                    <img src="${qrImg}" />
+                    <div class="rodape">Total Gest — aponta a câmara para veres o histórico</div>
+                </body></html>
+            `);
+            w.document.close();
         }
 
         function adicionarEquipContrato(localIdOverride) {
@@ -11437,11 +11579,15 @@
                     marca: document.getElementById('ct_equip_marca').value.trim(),
                     numeroSerie: document.getElementById('ct_equip_serie').value.trim(),
                     observacoes: document.getElementById('ct_equip_obs').value.trim(),
+                    dataInstalacao: document.getElementById('ct_equip_data_instalacao')?.value || null,
+                    garantiaAte: document.getElementById('ct_equip_garantia')?.value || null,
                     dataCriacao: Date.now()
                 });
                 document.getElementById('ct_equip_marca').value = '';
                 document.getElementById('ct_equip_serie').value = '';
                 document.getElementById('ct_equip_obs').value = '';
+                if (document.getElementById('ct_equip_data_instalacao')) document.getElementById('ct_equip_data_instalacao').value = '';
+                if (document.getElementById('ct_equip_garantia')) document.getElementById('ct_equip_garantia').value = '';
             } else if (val) {
                 equipId = val;
             } else {
@@ -11666,14 +11812,15 @@
             const tiposTrabalho = _ctTiposTrabalhoSelecionados();
             const vigilanciaAtiva = document.getElementById('ct_vigilancia')?.checked || false;
             const valorMensalVigilancia = vigilanciaAtiva ? (parseFloat(document.getElementById('ct_valor_mensal')?.value) || 0) : null;
+            const validadeContrato = document.getElementById('ct_validade')?.value || null;
             if (contratoEditandoId) {
                 const c = dados.contratos.find(x => x.id === contratoEditandoId);
                 if (c) {
-                    Object.assign(c, { clienteId, localId, equipamentoId, equipamentosIds, tipo, tiposTrabalho, periodicidade, tipoIntervencao, tecnicoId, dataInicio, valor, vigilanciaAtiva, valorMensalVigilancia });
+                    Object.assign(c, { clienteId, localId, equipamentoId, equipamentosIds, tipo, tiposTrabalho, periodicidade, tipoIntervencao, tecnicoId, dataInicio, valor, vigilanciaAtiva, valorMensalVigilancia, validadeContrato });
                     c.proximaManutencao = calcularProximaManutencao(c);
                 }
             } else {
-                const novo = { id: gerarId(), numero: gerarNumeroContrato(clienteId), adminId, clienteId, localId, equipamentoId, equipamentosIds, tipo, tiposTrabalho, periodicidade, tipoIntervencao, tecnicoId, dataInicio, valor, vigilanciaAtiva, valorMensalVigilancia, dataCriacao: Date.now() };
+                const novo = { id: gerarId(), numero: gerarNumeroContrato(clienteId), adminId, clienteId, localId, equipamentoId, equipamentosIds, tipo, tiposTrabalho, periodicidade, tipoIntervencao, tecnicoId, dataInicio, valor, vigilanciaAtiva, valorMensalVigilancia, validadeContrato, dataCriacao: Date.now() };
                 novo.proximaManutencao = calcularProximaManutencao(novo);
                 dados.contratos.push(novo);
             }
@@ -14175,6 +14322,48 @@
                         _notificarAdminESubadmin(adminId, '📄 Contrato de manutenção a vencer', 'Contrato ' + (c.numero || '#' + c.id) + ' — ' + _clienteLabel(dados.clientes?.find(cl => cl.id === c.clienteId) || {}) + ' vence em ' + dias + ' dia(s).', "abrirSecao('contratos')");
                     });
                 });
+                // Validade do CONTRATO em si (o acordo comercial) — diferente da próxima
+                // manutenção. Avisa 30 dias antes, só quando o campo estiver preenchido.
+                const contratosValidadeLista = (dados.contratos || []).filter(c => c.adminId === adminId && c.validadeContrato);
+                contratosValidadeLista.forEach(c => {
+                    const diasValidade = calcularDiasRestantes(new Date(c.validadeContrato + 'T00:00:00').getTime());
+                    if (diasValidade <= 30) {
+                        alertas.push({ tipo: 'warning', titulo: `📄 Contrato a renovar — ${_clienteLabel(dados.clientes?.find(cl => cl.id === c.clienteId) || {})}`, sub: `A validade do contrato (${c.numero || '#' + c.id}) termina em ${diasValidade} dia(s). Confirma se precisa de renovação/reajuste de preço.`, acao: "abrirSecao('contratos')" });
+                        _notificarPorFaseVencimento('contrato_validade_' + adminId, c.id, diasValidade, () => {
+                            _notificarAdminESubadmin(adminId, '📄 Contrato a renovar', 'A validade do contrato ' + (c.numero || '#' + c.id) + ' — ' + _clienteLabel(dados.clientes?.find(cl => cl.id === c.clienteId) || {}) + ' termina em ' + diasValidade + ' dia(s).', "abrirSecao('contratos')");
+                        });
+                    }
+                });
+                // Manutenção preditiva — equipamento com assistências corretivas repetidas nos
+                // últimos 90 dias, sinal de que a periodicidade atual pode não estar a chegar, ou
+                // o equipamento estar a ficar no fim de vida.
+                const _limiteFalhas90d = Date.now() - 90 * 24 * 60 * 60 * 1000;
+                const contratosDoAdmin = (dados.contratos || []).filter(c => c.adminId === adminId);
+                contratosDoAdmin.forEach(c => {
+                    const equipIds = (c.equipamentosIds && c.equipamentosIds.length) ? c.equipamentosIds : [c.equipamentoId].filter(Boolean);
+                    if (!equipIds.length) return;
+                    const assistenciasRecentes = (dados.servicos || []).filter(s =>
+                        s.adminId === adminId && s.origem === 'assistencia' && s.equipamentoId && equipIds.includes(s.equipamentoId) &&
+                        s.data && new Date(s.data + 'T00:00:00').getTime() >= _limiteFalhas90d
+                    );
+                    if (assistenciasRecentes.length >= 3) {
+                        alertas.push({
+                            tipo: 'danger',
+                            titulo: `⚠️ Equipamento com falhas repetidas — ${_clienteLabel(dados.clientes?.find(cl => cl.id === c.clienteId) || {})}`,
+                            sub: `${assistenciasRecentes.length} assistências nos últimos 90 dias. Considera aumentar a frequência de manutenção ou avaliar substituir o equipamento.`,
+                            acao: `abrirSecao('contratos')`
+                        });
+                        // Só notifica de novo quando o número de falhas MUDAR desde a última vez
+                        // (evita repetir a mesma notificação todos os dias sem nada de novo).
+                        const _chaveFalhas = 'tg_falhas_repetidas_' + c.id;
+                        let _ultimoValor = null;
+                        try { _ultimoValor = localStorage.getItem(_chaveFalhas); } catch (e) {}
+                        if (String(assistenciasRecentes.length) !== _ultimoValor) {
+                            try { localStorage.setItem(_chaveFalhas, String(assistenciasRecentes.length)); } catch (e) {}
+                            _notificarAdminESubadmin(adminId, '⚠️ Equipamento com falhas repetidas', 'O equipamento do contrato ' + (c.numero || '#' + c.id) + ' (' + _clienteLabel(dados.clientes?.find(cl => cl.id === c.clienteId) || {}) + ') teve ' + assistenciasRecentes.length + ' assistências nos últimos 90 dias.', "abrirSecao('contratos')");
+                        }
+                    }
+                });
             }
 
             const veics = (dados.veiculos || []).filter(v => v.adminId === adminId);
@@ -14352,7 +14541,49 @@
         }
         function _marcasTenant() {
             const adminId = _tenantArmazem();
-            return [...new Set((dados.artigos || []).filter(a => a.adminId === adminId).map(a => a.marca).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt'));
+            // Deduplicação sem sensibilidade a maiúsculas/minúsculas — "Dahua" e "DAHUA" contam
+            // como a mesma marca, mantém-se sempre a primeira grafia que apareceu.
+            const vistos = new Map(); // chave em minúsculas -> grafia original a manter
+            (dados.artigos || []).filter(a => a.adminId === adminId).forEach(a => {
+                const m = (a.marca || '').trim();
+                if (!m) return;
+                const chave = m.toLowerCase();
+                if (!vistos.has(chave)) vistos.set(chave, m);
+            });
+            return [...vistos.values()].sort((a, b) => a.localeCompare(b, 'pt'));
+        }
+        // Corrige de uma vez os artigos JÁ EXISTENTES que ficaram com a mesma marca escrita de
+        // formas diferentes (ex.: "Dahua" nuns artigos, "DAHUA" ou "dahua" noutros) — a partir de
+        // agora a app já não deixa isto voltar a acontecer, mas isto arruma o que já lá estava.
+        function arrumarMarcasDuplicadas() {
+            const adminId = _tenantArmazem();
+            const artigosDaEmpresa = (dados.artigos || []).filter(a => a.adminId === adminId && a.marca);
+            const canonica = new Map(); // minúsculas -> primeira grafia encontrada (por ordem de criação)
+            artigosDaEmpresa
+                .slice()
+                .sort((a, b) => (a.dataCriacao || 0) - (b.dataCriacao || 0))
+                .forEach(a => {
+                    const chave = a.marca.trim().toLowerCase();
+                    if (!canonica.has(chave)) canonica.set(chave, a.marca.trim());
+                });
+            // Primeiro só calcula o que MUDARIA, sem tocar em nada ainda — só mexe nos dados a
+            // sério depois de confirmares, para um "Cancelar" ser mesmo um cancelar.
+            const aCorrigir = [];
+            const resumo = [];
+            artigosDaEmpresa.forEach(a => {
+                const chave = a.marca.trim().toLowerCase();
+                const certa = canonica.get(chave);
+                if (a.marca.trim() !== certa) {
+                    resumo.push(`"${a.marca}" → "${certa}"`);
+                    aCorrigir.push({ artigo: a, certa });
+                }
+            });
+            if (!aCorrigir.length) { alert('✅ Já estava tudo arrumado — não encontrei nenhuma marca escrita de forma diferente.'); return; }
+            if (!confirm(`Encontrei ${aCorrigir.length} artigo(s) com marcas a corrigir:\n\n${[...new Set(resumo)].join('\n')}\n\nConfirmar e gravar?`)) return;
+            aCorrigir.forEach(({ artigo, certa }) => { artigo.marca = certa; });
+            guardarDados(dados);
+            renderizarTudo();
+            alert('✅ Marcas arrumadas — ' + aCorrigir.length + ' artigo(s) corrigido(s).');
         }
         function _optsCategoria(sel) {
             return '<option value="">— Categoria —</option>' + _categoriasTenant().map(c => `<option value="${c}" ${sel === c ? 'selected' : ''}>${c}</option>`).join('') + '<option value="__nova">➕ Nova categoria…</option>';
@@ -14576,7 +14807,9 @@
                     sel.innerHTML = `<option value="">${placeholder}</option>` + valores.map(v => `<option value="${escapeHtmlSimples(v)}">${escapeHtmlSimples(v)}</option>`).join('');
                     if (valores.includes(atual)) sel.value = atual;
                 };
-                const marcas = [...new Set(lista.map(a => (a.marca || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt'));
+                const _marcasVistas = new Map();
+                lista.forEach(a => { const m = (a.marca || '').trim(); if (m && !_marcasVistas.has(m.toLowerCase())) _marcasVistas.set(m.toLowerCase(), m); });
+                const marcas = [..._marcasVistas.values()].sort((a, b) => a.localeCompare(b, 'pt'));
                 const categorias = [...new Set(lista.map(a => (a.categoria || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt'));
                 const referencias = [...new Set(lista.map(a => (a.referencia || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt'));
                 _preencherSelect(selMarca, marcas, 'Todas as marcas');
@@ -18163,7 +18396,9 @@
             const cont = document.getElementById('om_itens_cont'); if (!cont) return;
             const adminId = _tenantId();
             const arts = (dados.artigos || []).filter(a => a.adminId === adminId);
-            const marcas = [...new Set(arts.map(a => a.marca).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt'));
+            const _marcasVistas2 = new Map();
+            arts.forEach(a => { const m = (a.marca || '').trim(); if (m && !_marcasVistas2.has(m.toLowerCase())) _marcasVistas2.set(m.toLowerCase(), m); });
+            const marcas = [..._marcasVistas2.values()].sort((a, b) => a.localeCompare(b, 'pt'));
             if (!_omItens.length) { cont.innerHTML = '<div style="color:#94a3b8;font-size:.85rem;">Sem materiais no plano. Adicione pelo menos um.</div>'; return; }
             cont.innerHTML = _omItens.map((it, idx) => {
                 const marcaOpts = '<option value="">— marca —</option>' + marcas.map(m => `<option value="${m}" ${it.marca === m ? 'selected' : ''}>${m}</option>`).join('');
@@ -26082,7 +26317,32 @@ async function salvarAdmin(e) {
                 if (!nome) { alert('Indique o nome do artigo.'); return; }
                 const cat = document.getElementById('ar_categoria').value;
                 const _arTemSerie = document.getElementById('ar_temserie') ? document.getElementById('ar_temserie').checked : false;
-                obj = { nome, marca: document.getElementById('ar_marca').value.trim(), categoria: (cat === '__nova' ? '' : cat), referencia: document.getElementById('ar_ref').value.trim(), codigoBarras: (_arTemSerie || !document.getElementById('ar_codbarras')) ? '' : document.getElementById('ar_codbarras').value.trim(), temNumeroSerie: _arTemSerie, unidade: document.getElementById('ar_unidade').value, stockMinimo: (document.getElementById('ar_stockmin').value === '' ? '' : _intVal('ar_stockmin', '')), alertaStock: document.getElementById('ar_alerta') ? document.getElementById('ar_alerta').checked : false, precoVenda: document.getElementById('ar_preco').value, precoCompra: document.getElementById('ar_preco_compra') ? document.getElementById('ar_preco_compra').value : '', observacoes: document.getElementById('ar_obs').value.trim(), adminId: (usuarioLogado.role === 'admin' ? usuarioLogado.id : usuarioLogado.adminId) };
+                const _arAdminId = (usuarioLogado.role === 'admin' ? usuarioLogado.id : usuarioLogado.adminId);
+
+                // Referência duplicada — bloqueia mesmo, sem sensibilidade a maiúsculas/minúsculas
+                // nem a espaços a mais, para não ficarem dois artigos "iguais" na prática.
+                const _arRefNova = document.getElementById('ar_ref').value.trim();
+                if (_arRefNova) {
+                    const _arRefDuplicada = (dados.artigos || []).some(a =>
+                        a.adminId === _arAdminId && a.id !== idEditando &&
+                        (a.referencia || '').trim().toLowerCase() === _arRefNova.toLowerCase()
+                    );
+                    if (_arRefDuplicada) {
+                        alert('⚠️ Já existe um artigo com a referência "' + _arRefNova + '" (maiúsculas/minúsculas não fazem diferença). Usa uma referência diferente, ou edita o artigo já existente.');
+                        return;
+                    }
+                }
+
+                // Marca — se já existir uma marca igual noutra grafia (ex.: "Dahua" já existe e
+                // escreveste "DAHUA"), reaproveita sempre a grafia já usada, para nunca ficarem
+                // duas variantes da mesma marca a conviver na lista.
+                let _arMarcaNova = document.getElementById('ar_marca').value.trim();
+                if (_arMarcaNova) {
+                    const _marcaExistente = _marcasTenant().find(m => m.toLowerCase() === _arMarcaNova.toLowerCase());
+                    if (_marcaExistente) _arMarcaNova = _marcaExistente;
+                }
+
+                obj = { nome, marca: _arMarcaNova, categoria: (cat === '__nova' ? '' : cat), referencia: _arRefNova, codigoBarras: (_arTemSerie || !document.getElementById('ar_codbarras')) ? '' : document.getElementById('ar_codbarras').value.trim(), temNumeroSerie: _arTemSerie, unidade: document.getElementById('ar_unidade').value, stockMinimo: (document.getElementById('ar_stockmin').value === '' ? '' : _intVal('ar_stockmin', '')), alertaStock: document.getElementById('ar_alerta') ? document.getElementById('ar_alerta').checked : false, precoVenda: document.getElementById('ar_preco').value, precoCompra: document.getElementById('ar_preco_compra') ? document.getElementById('ar_preco_compra').value : '', observacoes: document.getElementById('ar_obs').value.trim(), adminId: _arAdminId };
                 if (!isEdit) obj.stockInicial = _intVal('ar_stockini', 0);
                 _guardarArmazem('artigos', obj, isEdit); return;
             } else if (ent === 'obra') {
@@ -26766,8 +27026,17 @@ async function salvarAdmin(e) {
         const TIPOS_ESPECIALIDADE = ['REX', 'RBI', 'RSI', 'RCM', 'RIE', 'RCP', 'RCCTV', 'RIN', 'RDI'];
 
         function _sTiposDisponiveis() {
-            const customs = (dados.tiposTrabalhoCustom || []).filter(t => t.adminId === _tenantId());
-            return [...TIPOS_TRABALHO_BASE, ...customs.map(t => ({ codigo: t.codigo, nome: t.nome }))];
+            const tid = _tenantId();
+            const customs = (dados.tiposTrabalhoCustom || []).filter(t => t.adminId === tid);
+            const admin = dados.administradores?.find(a => a.id === tid);
+            // Os tipos base (REX, RBI, RCCTV, RIN, etc.) só aparecem se "Segurança eletrónica"
+            // fizer parte das áreas de negócio escolhidas no onboarding. Contas antigas, que
+            // nunca passaram pelo onboarding (areasNegocio ainda não definido), continuam a ver
+            // tudo como sempre viram — para não lhes desaparecer nada sem aviso.
+            const baseFiltrada = (!admin || !admin.areasNegocio) ? TIPOS_TRABALHO_BASE
+                : admin.areasNegocio.includes('seguranca') ? TIPOS_TRABALHO_BASE
+                : TIPOS_TRABALHO_BASE.filter(t => t.codigo === 'RDI'); // RDI (Declaração de Instalação) é genérico, mantém-se sempre
+            return [...baseFiltrada, ...customs.map(t => ({ codigo: t.codigo, nome: t.nome }))];
         }
 
         function _tiposTrabalhoGrupoHtml(checkboxClass, selecionados, onchangeAttr) {
@@ -26778,10 +27047,19 @@ async function salvarAdmin(e) {
             const colSeguranca = TIPOS_TRABALHO_GRUPO_SEGURANCA.map(porCodigo).filter(Boolean);
             const usados = new Set([...TIPOS_TRABALHO_GRUPO_INCENDIO, ...TIPOS_TRABALHO_GRUPO_SEGURANCA]);
             const outros = todos.filter(t => !usados.has(t.codigo));
-            const linha = t => `<label style="display:flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid #e2e8f0;border-radius:20px;cursor:pointer;font-size:.85rem;margin-bottom:6px;">
+            const codigosBaseSet = new Set(TIPOS_TRABALHO_BASE.map(t => t.codigo));
+            const linha = t => {
+                // Só os tipos personalizados (não os REX/RBI/etc. de origem) é que podem estar
+                // "sem relatório desenhado ainda" — avisa logo aqui, no sítio onde se escolhem os
+                // tipos de trabalho, para o admin lembrar-se de o configurar.
+                const custom = !codigosBaseSet.has(t.codigo) ? (dados.tiposTrabalhoCustom || []).find(c => c.codigo === t.codigo && c.adminId === _tenantId()) : null;
+                const semRelatorio = custom && !(custom.campos || []).length;
+                return `<label style="display:flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid #e2e8f0;border-radius:20px;cursor:pointer;font-size:.85rem;margin-bottom:6px;">
                 <input type="checkbox" class="${checkboxClass}" value="${t.codigo}" ${sel.includes(t.codigo) ? 'checked' : ''} ${onchangeAttr || ''} style="width:auto;" />
                 ${t.nome}
+                ${semRelatorio ? `<span style="color:#b45309;font-size:.74rem;font-weight:700;" title="Ainda não tem relatório configurado">· Crie o seu relatório</span>` : ''}
             </label>`;
+            };
             return `
                 <div style="display:flex;gap:0;flex-wrap:wrap;width:100%;">
                     <div style="flex:1 1 220px;padding-right:14px;">
@@ -27090,7 +27368,7 @@ async function salvarAdmin(e) {
                             <label>Tipo de trabalho</label>
                             <select id="rp_tipo_select" onchange="_rpRenderCampos(this.value)">
                                 <option value="">— Escolhe —</option>
-                                ${tipos.map(t => `<option value="${t.codigo}">${escapeHtmlSimples(t.nome)}${(t.campos || []).length ? ` (${t.campos.length} campo${t.campos.length === 1 ? '' : 's'})` : ''}</option>`).join('')}
+                                ${tipos.map(t => `<option value="${t.codigo}">${escapeHtmlSimples(t.nome)}${(t.campos || []).length ? ` (${t.campos.length} campo${t.campos.length === 1 ? '' : 's'})` : ' — Crie o seu relatório'}</option>`).join('')}
                             </select>
                         </div>
                         <div id="rp_campos_area"></div>
@@ -31251,6 +31529,208 @@ window._relPrefill = function(msg){
                     <span style="${p.ok ? 'text-decoration:line-through;' : ''}">${p.label}</span>
                 </div>`).join('');
         }
+        // =============================================================
+        //  ONBOARDING — Wizard de "Área de Negócio" (4 passos)
+        //  Corre automaticamente na primeira vez que um admin entra (se ainda não tiver sido
+        //  concluído), e fica sempre disponível depois em Perfil, para reconfigurar.
+        // =============================================================
+        let _onb = { passo: 1, atividades: [], servicos: [], comoTrabalha: [], modulos: ['tecnicos', 'ponto'] };
+
+        function abrirOnboardingAtividade() {
+            const admin = adminAtual();
+            // Ao reabrir para reconfigurar, começa com o que já estava escolhido, em vez de vazio.
+            _onb = {
+                passo: 1,
+                atividades: admin?.areasNegocio ? [...admin.areasNegocio] : [],
+                servicos: [],
+                comoTrabalha: admin?.onboardingComoTrabalha ? [...admin.onboardingComoTrabalha] : [],
+                modulos: admin?.modulosAtivos ? [...admin.modulosAtivos] : ['tecnicos', 'ponto'],
+            };
+            document.getElementById('onbOverlay').classList.add('open');
+            _onbRenderPasso();
+        }
+        function _onbFechar() {
+            document.getElementById('onbOverlay').classList.remove('open');
+        }
+
+        function _onbRenderPasso() {
+            const cont = document.getElementById('onbConteudo');
+            const bolinhas = [1, 2, 3, 4].map(n => `<span style="width:8px;height:8px;border-radius:50%;display:inline-block;margin:0 3px;background:${n <= _onb.passo ? '#f4520e' : '#e2e8f0'};"></span>`).join('');
+            let corpo = '';
+
+            if (_onb.passo === 1) {
+                corpo = `
+                    <p style="text-align:center;color:#64748b;margin-bottom:4px;">1. Qual é a sua atividade? <span style="font-weight:400;">(pode escolher mais do que uma)</span></p>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;">
+                        ${Object.entries(ATIVIDADES_ONBOARDING).map(([chave, a]) => `
+                            <button type="button" onclick="_onbToggleAtividade('${chave}')" style="padding:16px 10px;border-radius:12px;border:2px solid ${_onb.atividades.includes(chave) ? '#f4520e' : '#e2e8f0'};background:${_onb.atividades.includes(chave) ? '#fff7ed' : '#fff'};cursor:pointer;font-weight:700;color:#152a52;font-size:.88rem;position:relative;">
+                                ${_onb.atividades.includes(chave) ? '<i class="fas fa-circle-check" style="position:absolute;top:8px;right:8px;color:#f4520e;"></i>' : ''}
+                                ${a.label}
+                            </button>
+                        `).join('')}
+                    </div>
+                `;
+            } else if (_onb.passo === 2) {
+                // Junta os serviços de TODAS as atividades escolhidas, sem repetir.
+                const vistos = new Set();
+                const servicosDisp = [];
+                _onb.atividades.forEach(chave => {
+                    (ATIVIDADES_ONBOARDING[chave]?.servicos || []).forEach(s => {
+                        if (vistos.has(s.v)) return;
+                        vistos.add(s.v);
+                        servicosDisp.push(s);
+                    });
+                });
+                corpo = `
+                    <p style="text-align:center;color:#64748b;margin-bottom:4px;">2. Que serviços realiza?</p>
+                    <div style="margin-top:14px;">
+                        ${servicosDisp.length ? servicosDisp.map(s => `
+                            <label style="display:flex;align-items:center;gap:10px;padding:11px 4px;border-bottom:1px solid #f1f5f9;cursor:pointer;">
+                                <input type="checkbox" ${_onb.servicos.includes(s.v) ? 'checked' : ''} onchange="_onbToggleServico('${s.v}')" style="width:18px;height:18px;" />
+                                <span style="font-weight:600;color:#1e293b;">${s.l}</span>
+                            </label>
+                        `).join('') : `<p class="help-text" style="text-align:center;">Sem sugestões pré-definidas — cria os teus Tipos de Trabalho depois, em Obras e Serviços.</p>`}
+                    </div>
+                `;
+            } else if (_onb.passo === 3) {
+                corpo = `
+                    <p style="text-align:center;color:#64748b;margin-bottom:4px;">3. Como trabalha?</p>
+                    <div style="margin-top:14px;">
+                        ${COMO_TRABALHA_OPCOES.map(o => `
+                            <label style="display:flex;align-items:center;gap:10px;padding:11px 4px;border-bottom:1px solid #f1f5f9;cursor:pointer;">
+                                <input type="checkbox" ${_onb.comoTrabalha.includes(o.v) ? 'checked' : ''} onchange="_onbToggleComoTrabalha('${o.v}')" style="width:18px;height:18px;" />
+                                <span style="font-weight:600;color:#1e293b;">${o.l}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                `;
+            } else if (_onb.passo === 4) {
+                corpo = `
+                    <p style="text-align:center;color:#64748b;margin-bottom:4px;">4. O que pretende gerir?</p>
+                    <div style="margin-top:14px;">
+                        ${MODULOS_ONBOARDING_OPCOES.map(o => `
+                            <label style="display:flex;align-items:center;gap:10px;padding:11px 4px;border-bottom:1px solid #f1f5f9;${o.fixo ? 'opacity:.6;' : 'cursor:pointer;'}">
+                                <input type="checkbox" ${_onb.modulos.includes(o.v) ? 'checked' : ''} ${o.fixo ? 'disabled' : ''} onchange="_onbToggleModulo('${o.v}')" style="width:18px;height:18px;" />
+                                <span style="font-weight:600;color:#1e293b;">${o.l}</span>${o.fixo ? ' <span class="help-text">(sempre incluído)</span>' : ''}
+                            </label>
+                        `).join('')}
+                    </div>
+                `;
+            } else if (_onb.passo === 'a_preparar') {
+                corpo = `
+                    <div style="text-align:center;padding:30px 10px;">
+                        <i class="fas fa-circle-notch fa-spin" style="font-size:2.4rem;color:#f4520e;"></i>
+                        <p style="font-weight:800;color:#152a52;margin-top:16px;">A preparar a sua Total Gest...</p>
+                        <p class="help-text">A plataforma configura-se automaticamente.</p>
+                    </div>
+                `;
+            }
+
+            cont.innerHTML = `
+                <div style="text-align:center;margin-bottom:6px;">${bolinhas}</div>
+                <h3 style="text-align:center;color:#152a52;margin:6px 0 2px;">Vamos preparar a Total Gest para a sua empresa.</h3>
+                ${corpo}
+                ${_onb.passo !== 'a_preparar' ? `
+                    <div style="display:flex;gap:10px;margin-top:22px;">
+                        ${_onb.passo > 1 ? `<button type="button" class="btn btn-outline" onclick="_onbVoltar()" style="flex:1;">Voltar</button>` : `<button type="button" class="btn btn-outline" onclick="_onbFechar()" style="flex:1;">Saltar por agora</button>`}
+                        <button type="button" class="btn btn-primary" onclick="_onbAvancar()" style="flex:2;" ${_onb.passo === 1 && !_onb.atividades.length ? 'disabled' : ''}>${_onb.passo === 4 ? 'Concluir' : 'Continuar'}</button>
+                    </div>
+                ` : ''}
+            `;
+        }
+
+        function _onbToggleAtividade(chave) {
+            if (_onb.atividades.includes(chave)) {
+                _onb.atividades = _onb.atividades.filter(x => x !== chave);
+                // Tira também os serviços dessa atividade que já estivessem marcados.
+                const codigosDaAtividade = new Set((ATIVIDADES_ONBOARDING[chave]?.servicos || []).map(s => s.v));
+                _onb.servicos = _onb.servicos.filter(v => !codigosDaAtividade.has(v));
+            } else {
+                _onb.atividades.push(chave);
+                // Pré-marca os serviços sugeridos dessa atividade.
+                (ATIVIDADES_ONBOARDING[chave]?.servicos || []).forEach(s => { if (!_onb.servicos.includes(s.v)) _onb.servicos.push(s.v); });
+            }
+            _onbRenderPasso();
+        }
+        function _onbToggleServico(v) { _onb.servicos = _onb.servicos.includes(v) ? _onb.servicos.filter(x => x !== v) : [..._onb.servicos, v]; }
+        function _onbToggleComoTrabalha(v) { _onb.comoTrabalha = _onb.comoTrabalha.includes(v) ? _onb.comoTrabalha.filter(x => x !== v) : [..._onb.comoTrabalha, v]; }
+        function _onbToggleModulo(v) { _onb.modulos = _onb.modulos.includes(v) ? _onb.modulos.filter(x => x !== v) : [...(_onb.modulos), v]; }
+
+        function _onbVoltar() { if (typeof _onb.passo === 'number' && _onb.passo > 1) _onb.passo--; _onbRenderPasso(); }
+        function _onbAvancar() {
+            if (_onb.passo === 1 && !_onb.atividades.length) return;
+            if (_onb.passo < 4) { _onb.passo++; _onbRenderPasso(); return; }
+            _onbConcluir();
+        }
+
+        function _onbConcluir() {
+            const admin = adminAtual();
+            let sugestoesAddon = [];
+            if (admin) {
+                admin.areasNegocio = [..._onb.atividades];
+                admin.onboardingComoTrabalha = _onb.comoTrabalha;
+                admin.modulosAtivos = _onb.modulos;
+                admin.onboardingAtividadeConcluido = true;
+                const tenantId = admin.id;
+                const codigosBase = new Set(TIPOS_TRABALHO_BASE.map(t => t.codigo));
+                const codigosEscolhidos = new Set(_onb.servicos);
+                // Junta a info (nome/relatório) de todos os serviços de todas as atividades
+                // escolhidas, para conseguir o nome certo de cada código.
+                const infoPorCodigo = {};
+                _onb.atividades.forEach(chave => {
+                    (ATIVIDADES_ONBOARDING[chave]?.servicos || []).forEach(s => { infoPorCodigo[s.v] = s; });
+                });
+                // Reconfigurar substitui, não acumula: remove os tipos que o PRÓPRIO onboarding
+                // tinha criado numa vez anterior e que já não fazem parte da escolha atual — mas
+                // nunca toca em tipos que o admin tenha criado à mão (sem essa marca).
+                dados.tiposTrabalhoCustom = (dados.tiposTrabalhoCustom || []).filter(t =>
+                    !(t.adminId === tenantId && t.criadoPorOnboarding && !codigosEscolhidos.has(t.codigo))
+                );
+                const codigosCustomExistentes = new Set((dados.tiposTrabalhoCustom || []).filter(t => t.adminId === tenantId).map(t => t.codigo));
+                _onb.servicos.forEach(v => {
+                    if (codigosBase.has(v) || codigosCustomExistentes.has(v)) return; // já existe, não duplicar
+                    const servInfo = infoPorCodigo[v];
+                    dados.tiposTrabalhoCustom.push({ id: gerarId(), adminId: tenantId, codigo: v, nome: servInfo?.l || v, criadoEm: Date.now(), criadoPorOnboarding: true });
+                });
+                guardarDados(dados);
+
+                // Frota/Stock/CRM/Contratos são add-ons pagos, com o próprio sistema de
+                // ativação — o onboarding nunca esconde nem força a visibilidade deles, só
+                // SUGERE ativar quando a pessoa diz que precisa, mas ainda não tem o add-on.
+                const mapaAddons = [
+                    { modulo: 'frota', label: 'Frota', ativo: moduloFrotaAtivo },
+                    { modulo: 'stock', label: 'Armazém', ativo: moduloArmazemAtivo },
+                    { modulo: 'crm', label: 'CRM', ativo: moduloCrmAtivo },
+                    { modulo: 'contratos', label: 'Contratos de Manutenção', ativo: moduloContratosAtivo },
+                ];
+                sugestoesAddon = mapaAddons.filter(m => _onb.modulos.includes(m.modulo) && !m.ativo(admin)).map(m => m.label);
+            }
+            _onb.passo = 'a_preparar';
+            _onb.sugestoesAddon = sugestoesAddon;
+            _onbRenderPasso();
+            setTimeout(() => {
+                if (sugestoesAddon.length) {
+                    _onbRenderSugestoes();
+                } else {
+                    _onbFechar(); renderizarTudo();
+                }
+            }, 1400);
+        }
+        function _onbRenderSugestoes() {
+            const cont = document.getElementById('onbConteudo');
+            cont.innerHTML = `
+                <div style="text-align:center;padding:10px;">
+                    <i class="fas fa-circle-check" style="font-size:2.2rem;color:#16a34a;"></i>
+                    <p style="font-weight:800;color:#152a52;margin:14px 0 4px;">A sua Total Gest está configurada!</p>
+                    <p class="help-text">Referiste que precisas de gerir: <strong>${_onb.sugestoesAddon.join(', ')}</strong> — ${_onb.sugestoesAddon.length > 1 ? 'estes ainda não estão ativos' : 'este ainda não está ativo'} na tua licença.</p>
+                    <div style="display:flex;gap:10px;margin-top:18px;">
+                        <button type="button" class="btn btn-outline" style="flex:1;" onclick="_onbFechar(); renderizarTudo();">Continuar sem ativar</button>
+                        <button type="button" class="btn btn-primary" style="flex:1;" onclick="_onbFechar(); renderizarTudo(); abrirSecao('financeiro');">Ver add-ons</button>
+                    </div>
+                </div>
+            `;
+        }
+
         function _renderizarOnboarding(aid) {
             const el = document.getElementById('homeOnboarding');
             if (!el) return;
@@ -31753,7 +32233,16 @@ window._relPrefill = function(msg){
                 if (gEl) gEl.innerHTML = '';
                 const favEl = document.getElementById('homeFavoritos');
                 if (favEl) favEl.innerHTML = _favoritosHTML();
-                if (u.role === 'admin') _renderizarOnboarding(u.id);
+                if (u.role === 'admin') {
+                    _renderizarOnboarding(u.id);
+                    // Primeira vez que este admin entra — mostra o wizard de "Área de Negócio"
+                    // sozinho, uma única vez (fica gravado que já foi concluído/saltado).
+                    const _adminOnb = adminAtual();
+                    if (_adminOnb && !_adminOnb.onboardingAtividadeConcluido && !localStorage.getItem('tg_onb_atividade_visto_' + u.id)) {
+                        localStorage.setItem('tg_onb_atividade_visto_' + u.id, '1');
+                        setTimeout(abrirOnboardingAtividade, 600);
+                    }
+                }
                 const wrap = document.getElementById('homeAgendaWrap');
                 const omeudiaEl = document.getElementById('omeudia');
                 // IMPORTANTE: renderizarOMeuDia() reconstrói todo o conteúdo de "omeudia" com
@@ -32455,6 +32944,16 @@ window._relPrefill = function(msg){
                                         <option value="foco" ${admin?.layout === 'foco' ? 'selected' : ''}>Total Gest Foco (grupos + painel lateral)</option>
                                         <option value="aurora" ${admin?.layout === 'aurora' ? 'selected' : ''}>Total Gest Aurora (visual moderno, escuro)</option>
                                     </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="ff-secao ff-tint-doc">
+                            <div class="ff-secao-head"><i class="fas fa-wand-magic-sparkles"></i> Área de Negócio</div>
+                            <div class="ff-secao-body">
+                                <div class="form-group ff-span2">
+                                    <p class="help-text" style="margin:0 0 10px;">${admin?.areasNegocio?.length ? 'Configurada como: <strong>' + admin.areasNegocio.map(a => ATIVIDADES_ONBOARDING[a]?.label || a).join(', ') + '</strong>.' : 'Ainda não configurada.'} Reconfigura a qualquer momento — os Tipos de Trabalho e módulos visíveis adaptam-se à tua atividade.</p>
+                                    <button type="button" class="btn btn-outline" style="width:100%;" onclick="fecharModalPerfil(); abrirOnboardingAtividade();"><i class="fas fa-wand-magic-sparkles"></i> ${admin?.areasNegocio?.length ? 'Reconfigurar' : 'Configurar'} Área de Negócio</button>
                                 </div>
                             </div>
                         </div>
