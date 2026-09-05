@@ -145,61 +145,36 @@ document.getElementById('formLogin').addEventListener('submit', async (e) => {
 async function carregarFicha() {
     document.getElementById('areaCarregando').style.display = 'block';
     try {
-        // Confirma o perfil de quem entrou, para saber a que empresa (admin_id) pertence —
-        // nunca confia só no que vem na URL, cruza sempre com a empresa de quem está logado.
-        const { data: { user } } = await supa.auth.getUser();
-        if (!user) { document.getElementById('areaLogin').style.display = 'block'; document.getElementById('areaCarregando').style.display = 'none'; return; }
-        const { data: perfil } = await supa.from('perfis').select('*').eq('id', user.id).single();
-        const empresaId = perfil?.papel === 'admin' ? perfil.registo_id : perfil?.admin_id;
+        const { data: { session } } = await supa.auth.getSession();
+        if (!session) { document.getElementById('areaLogin').style.display = 'block'; document.getElementById('areaCarregando').style.display = 'none'; return; }
 
-        const { data: eq, error: errEq } = await supa.from('equipamentos').select('*').eq('id', equipId).eq('admin_id', empresaId).maybeSingle();
-        if (errEq) console.error('Erro a ler equipamentos:', errEq);
-        if (errEq || !eq) {
+        // Tudo montado do lado do servidor (Edge Function), com acesso total — evita por
+        // completo qualquer bloqueio de permissões (RLS) que pudesse impedir de ler
+        // locais/clientes diretamente a partir daqui.
+        const { data, error } = await supa.functions.invoke('historico-equipamento', { body: { equip_id: equipId } });
+        if (error || !data?.ok) {
             document.getElementById('areaCarregando').style.display = 'none';
             document.getElementById('areaFicha').style.display = 'block';
-            document.getElementById('areaFicha').innerHTML = `<div class="card"><div class="vazio">Equipamento não encontrado, ou não pertence à tua empresa.</div>${errEq ? `<div class="erro-diag">${escapeHtml(errEq.message)}</div>` : ''}</div>`;
+            const msg = data?.erro || error?.message || 'Erro desconhecido';
+            document.getElementById('areaFicha').innerHTML = `<div class="card"><div class="vazio">Não foi possível carregar o histórico.</div><div class="erro-diag">${escapeHtml(msg)}</div></div>`;
             return;
         }
 
-        let local = null, cliente = null, contratos = [], registos = [], osLigadas = [], funcionarios = [];
-        try {
-            if (eq.local_id) {
-                const r = await supa.from('locais').select('*').eq('id', eq.local_id).maybeSingle();
-                if (r.error) console.warn('Erro a ler locais:', r.error);
-                local = r.data;
-            }
-        } catch (e) { console.warn('Exceção a ler locais:', e); }
-        try {
-            if (local?.cliente_id) {
-                const r = await supa.from('clientes').select('*').eq('id', local.cliente_id).maybeSingle();
-                if (r.error) console.warn('Erro a ler clientes:', r.error);
-                cliente = r.data;
-            }
-        } catch (e) { console.warn('Exceção a ler clientes:', e); }
-        try {
-            const r = await supa.from('registos_manutencao').select('*').eq('equipamento_id', equipId).order('data_realizacao', { ascending: false });
-            if (r.error) console.warn('Erro a ler registos_manutencao:', r.error);
-            registos = r.data || [];
-        } catch (e) { console.warn('Exceção a ler registos_manutencao:', e); }
-        try {
-            const r = await supa.from('servicos').select('*').eq('admin_id', empresaId).eq('equipamento_id', equipId).order('data', { ascending: false });
-            if (r.error) console.warn('Erro a ler servicos:', r.error);
-            osLigadas = r.data || [];
-        } catch (e) { console.warn('Exceção a ler servicos:', e); }
-        try {
-            const r = await supa.from('funcionarios').select('id, nome').eq('admin_id', empresaId);
-            if (r.error) console.warn('Erro a ler funcionarios:', r.error);
-            funcionarios = r.data || [];
-        } catch (e) { console.warn('Exceção a ler funcionarios:', e); }
-
+        const { equipamento: eq, local, cliente, registos, servicos: osLigadas, funcionarios } = data;
         const nomeTecnico = (id) => (funcionarios || []).find(f => f.id === id)?.nome || '—';
 
         // Junta os dois históricos (registos_manutencao + OS ligadas ao equipamento) por data,
-        // mais recente primeiro. Cada evento só mostra a descrição ao clicar (menos poluído
-        // quando há muitas intervenções).
+        // mais recente primeiro. Cada evento só mostra a descrição ao clicar. O título mostra
+        // sempre a descrição real da OS/intervenção, não só um rótulo genérico.
         const eventos = [
-            ...(registos || []).map(r => ({ data: r.data_realizacao, titulo: 'Manutenção realizada', tecnico: nomeTecnico(r.tecnico_id), obs: r.observacoes, corretiva: false })),
-            ...(osLigadas || []).map(s => ({ data: s.data, titulo: (s.origem === 'assistencia' ? 'Assistência' : 'OS') + (s.descricao ? ' — ' + s.descricao : ''), tecnico: nomeTecnico(s.funcionario_id), obs: s.observacoes || null, corretiva: s.origem === 'assistencia' })),
+            ...(registos || []).map(r => ({ data: r.data_realizacao, titulo: r.observacoes || 'Manutenção realizada', tecnico: nomeTecnico(r.tecnico_id), obs: r.observacoes, corretiva: false })),
+            ...(osLigadas || []).map(s => ({
+                data: s.data,
+                titulo: s.descricao || (s.origem === 'assistencia' ? 'Assistência' : 'Ordem de Serviço'),
+                tecnico: nomeTecnico(s.funcionario_id),
+                obs: s.observacoes || s.descricao || null,
+                corretiva: s.origem === 'assistencia',
+            })),
         ].filter(e => e.data).sort((a, b) => (b.data || '').localeCompare(a.data || ''));
 
         const hoje = new Date().toISOString().slice(0, 10);
