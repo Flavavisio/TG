@@ -356,6 +356,265 @@
 
 </section>
 
+<!-- DASHBOARD CENTRAL -->
+<section id="tg-dashboard-central" class="tgdc">
+  <style>
+    #tg-dashboard-central{ --g:#22c55e; --b:#3b82f6; --o:#f59e0b; --r:#ef4444; --p:#8b5cf6; --t:#14b8a6;
+      --bg:#f4f6fb; --card:#ffffff; --ink:#0f172a; --sub:#64748b; --line:#e6eaf2; padding:72px 0; background:var(--bg); }
+    #tg-dashboard-central .tgdc-head{ text-align:center; max-width:720px; margin:0 auto 40px; }
+    #tg-dashboard-central .tgdc-head h2{ font-size:clamp(1.6rem,3vw,2.3rem); margin:8px 0 10px; color:var(--ink); }
+    #tg-dashboard-central .tgdc-head p{ color:var(--sub); line-height:1.55; }
+    #tg-dashboard-central .tgdc-frame{ background:#e9edf5; border:1px solid var(--line); border-radius:22px; padding:22px; box-shadow:0 30px 70px -30px rgba(15,23,42,.25); }
+    #tg-dashboard-central .tgdc-topbar{ display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:18px; }
+    #tg-dashboard-central .tgdc-greet h3{ margin:0; font-size:1.3rem; color:var(--ink); }
+    #tg-dashboard-central .tgdc-greet p{ margin:2px 0 0; color:var(--sub); font-size:.88rem; }
+    #tg-dashboard-central .tgdc-pill{ background:#fff; border:1px solid var(--line); border-radius:10px; padding:8px 14px; font-size:.82rem; color:var(--ink); font-weight:600; }
+    #tg-dashboard-central .tgdc-card{ background:var(--card); border:1px solid var(--line); border-radius:16px; padding:18px; }
+    #tg-dashboard-central .tgdc-card h4{ margin:0 0 14px; font-size:.95rem; color:var(--ink); }
+    #tg-dashboard-central .tgdc-kpis{ display:grid; grid-template-columns:repeat(6,1fr); gap:14px; margin-bottom:14px; }
+    #tg-dashboard-central .tgdc-kpi{ display:flex; gap:10px; align-items:flex-start; }
+    #tg-dashboard-central .tgdc-kpi .ic{ width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:.95rem; flex-shrink:0; }
+    #tg-dashboard-central .tgdc-kpi .val{ font-size:1.15rem; font-weight:800; color:var(--ink); line-height:1.1; }
+    #tg-dashboard-central .tgdc-kpi .lbl{ font-size:.74rem; color:var(--sub); margin-bottom:3px; }
+    #tg-dashboard-central .tgdc-kpi .delta{ font-size:.72rem; font-weight:700; }
+    #tg-dashboard-central .tgdc-kpi .delta.up{ color:var(--g); } #tg-dashboard-central .tgdc-kpi .delta.down{ color:var(--r); }
+    #tg-dashboard-central .tgdc-row4{ display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr; gap:14px; margin-bottom:14px; }
+    #tg-dashboard-central .tgdc-row3{ display:grid; grid-template-columns:1fr 1.3fr 1fr; gap:14px; margin-bottom:14px; }
+    #tg-dashboard-central .tgdc-row4b{ display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:14px; }
+    #tg-dashboard-central .tgdc-bars{ display:flex; align-items:flex-end; gap:10px; height:130px; }
+    #tg-dashboard-central .tgdc-bars .bcol{ flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; justify-content:flex-end; height:100%; }
+    #tg-dashboard-central .tgdc-bars .bwrap{ display:flex; gap:3px; align-items:flex-end; height:100%; }
+    #tg-dashboard-central .tgdc-bars .b{ width:9px; border-radius:3px 3px 0 0; }
+    #tg-dashboard-central .tgdc-bars .b.fat{ background:var(--b); } #tg-dashboard-central .tgdc-bars .b.cst{ background:#bfdbfe; }
+    #tg-dashboard-central .tgdc-bars .mlbl{ font-size:.68rem; color:var(--sub); }
+    #tg-dashboard-central .tgdc-legend{ display:flex; gap:14px; font-size:.72rem; color:var(--sub); margin-bottom:10px; }
+    #tg-dashboard-central .tgdc-legend span{ display:inline-flex; align-items:center; gap:5px; }
+    #tg-dashboard-central .tgdc-legend i{ width:9px; height:9px; border-radius:2px; display:inline-block; }
+    #tg-dashboard-central .tgdc-donut{ width:130px; height:130px; border-radius:50%; margin:6px auto 10px; position:relative;
+      background:conic-gradient(var(--g) 0 62.8%, var(--b) 62.8% 83.3%, var(--o) 83.3% 92.3%, var(--r) 92.3% 100%); }
+    #tg-dashboard-central .tgdc-donut::after{ content:""; position:absolute; inset:20px; background:var(--card); border-radius:50%; }
+    #tg-dashboard-central .tgdc-donut .lbl{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:1; }
+    #tg-dashboard-central .tgdc-donut .lbl b{ font-size:1.15rem; color:var(--ink); }
+    #tg-dashboard-central .tgdc-donut .lbl small{ font-size:.68rem; color:var(--sub); }
+    #tg-dashboard-central .tgdc-donut2{ background:conic-gradient(var(--g) 0 76.6%, var(--o) 76.6% 86%, var(--r) 86% 92.3%, var(--b) 92.3% 100%); }
+    #tg-dashboard-central .tgdc-legenditem{ display:flex; align-items:center; justify-content:space-between; font-size:.78rem; padding:3px 0; }
+    #tg-dashboard-central .tgdc-legenditem .k{ display:flex; align-items:center; gap:7px; color:var(--ink); }
+    #tg-dashboard-central .tgdc-legenditem i{ width:9px; height:9px; border-radius:50%; display:inline-block; }
+    #tg-dashboard-central .tgdc-legenditem b{ color:var(--sub); font-weight:600; }
+    #tg-dashboard-central .tgdc-hbars .hb{ margin-bottom:10px; }
+    #tg-dashboard-central .tgdc-hbars .hb .t{ display:flex; justify-content:space-between; font-size:.74rem; color:var(--sub); margin-bottom:4px; }
+    #tg-dashboard-central .tgdc-hbars .track{ background:#eef1f7; border-radius:6px; height:8px; overflow:hidden; }
+    #tg-dashboard-central .tgdc-hbars .fill{ height:100%; border-radius:6px; }
+    #tg-dashboard-central .tgdc-feed .fi{ display:flex; gap:9px; padding:8px 0; border-bottom:1px dashed var(--line); font-size:.78rem; }
+    #tg-dashboard-central .tgdc-feed .fi:last-child{ border-bottom:none; }
+    #tg-dashboard-central .tgdc-feed .dot{ width:8px; height:8px; border-radius:50%; margin-top:5px; flex-shrink:0; }
+    #tg-dashboard-central .tgdc-feed .tt{ font-weight:700; color:var(--ink); }
+    #tg-dashboard-central .tgdc-feed .ds{ color:var(--sub); }
+    #tg-dashboard-central .tgdc-feed .ago{ margin-left:auto; color:#94a3b8; font-size:.7rem; white-space:nowrap; }
+    #tg-dashboard-central .tgdc-map{ height:150px; border-radius:12px; background:linear-gradient(135deg,#dbeafe,#e0f2fe); position:relative; overflow:hidden; margin-bottom:12px; }
+    #tg-dashboard-central .tgdc-map .pin{ position:absolute; width:22px; height:22px; border-radius:50% 50% 50% 0; background:var(--p); transform:rotate(-45deg); border:2px solid #fff; }
+    #tg-dashboard-central .tgdc-tec{ display:flex; align-items:center; gap:8px; padding:6px 0; font-size:.78rem; }
+    #tg-dashboard-central .tgdc-tec .av{ width:26px; height:26px; border-radius:50%; background:#cbd5e1; flex-shrink:0; }
+    #tg-dashboard-central .tgdc-tec .nm{ font-weight:700; color:var(--ink); }
+    #tg-dashboard-central .tgdc-tec .st{ color:var(--sub); font-size:.72rem; }
+    #tg-dashboard-central .tgdc-tec .dot{ width:7px; height:7px; border-radius:50%; background:var(--g); margin-left:auto; }
+    #tg-dashboard-central table.tgdc-tbl{ width:100%; border-collapse:collapse; font-size:.78rem; }
+    #tg-dashboard-central table.tgdc-tbl th{ text-align:left; color:var(--sub); font-weight:600; padding:6px 4px; border-bottom:1px solid var(--line); }
+    #tg-dashboard-central table.tgdc-tbl td{ padding:7px 4px; border-bottom:1px solid var(--line); color:var(--ink); }
+    #tg-dashboard-central .tgdc-alertas .al{ display:flex; align-items:center; gap:9px; padding:7px 0; font-size:.8rem; border-bottom:1px dashed var(--line); }
+    #tg-dashboard-central .tgdc-alertas .al:last-child{ border-bottom:none; }
+    #tg-dashboard-central .tgdc-alertas .ic{ width:26px; height:26px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:.75rem; flex-shrink:0; }
+    #tg-dashboard-central .tgdc-alertas .txt{ color:var(--ink); flex:1; }
+    #tg-dashboard-central .tgdc-alertas .num{ font-weight:800; color:var(--ink); }
+    #tg-dashboard-central .tgdc-top5 li{ display:flex; align-items:center; gap:10px; padding:7px 0; font-size:.82rem; list-style:none; border-bottom:1px dashed var(--line); }
+    #tg-dashboard-central .tgdc-top5 li:last-child{ border-bottom:none; }
+    #tg-dashboard-central .tgdc-top5 ul{ margin:0; padding:0; }
+    #tg-dashboard-central .tgdc-top5 .n{ width:20px; height:20px; border-radius:50%; background:#eef1f7; color:var(--sub); font-size:.7rem; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    #tg-dashboard-central .tgdc-top5 .nm{ color:var(--ink); font-weight:600; flex:1; }
+    #tg-dashboard-central .tgdc-top5 .vl{ color:var(--sub); font-weight:700; }
+    #tg-dashboard-central .tgdc-acoes{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    #tg-dashboard-central .tgdc-acoes button{ display:flex; flex-direction:column; align-items:center; gap:6px; padding:14px 6px; border-radius:12px; border:1px solid var(--line); background:#fafbfe; font-size:.72rem; font-weight:700; color:var(--ink); cursor:default; }
+    #tg-dashboard-central .tgdc-acoes .ic{ width:32px; height:32px; border-radius:9px; display:flex; align-items:center; justify-content:center; color:#fff; }
+    @media (max-width: 1100px){
+      #tg-dashboard-central .tgdc-kpis{ grid-template-columns:repeat(3,1fr); }
+      #tg-dashboard-central .tgdc-row4, #tg-dashboard-central .tgdc-row3, #tg-dashboard-central .tgdc-row4b{ grid-template-columns:1fr 1fr; }
+    }
+    @media (max-width: 640px){
+      #tg-dashboard-central .tgdc-kpis{ grid-template-columns:1fr 1fr; }
+      #tg-dashboard-central .tgdc-row4, #tg-dashboard-central .tgdc-row3, #tg-dashboard-central .tgdc-row4b{ grid-template-columns:1fr; }
+    }
+  </style>
+  <div class="wrap">
+    <div class="tgdc-head">
+      <span class="eyebrow">Veja por dentro</span>
+      <h2>Dashboard Central</h2>
+      <p>O centro de comando da sua operação: faturação, ordens de serviço, técnicos no terreno e alertas — tudo num único ecrã, atualizado em tempo real.</p>
+    </div>
+
+    <div class="tgdc-frame">
+      <div class="tgdc-topbar">
+        <div class="tgdc-greet">
+          <h3>Bom dia, Ricardo! 👋</h3>
+          <p>Aqui tem o resumo da sua empresa. Tudo em movimento.</p>
+        </div>
+        <div class="tgdc-pill"><i class="fas fa-calendar" style="margin-right:6px;color:var(--sub);"></i>1 – 31 de Agosto de 2025</div>
+      </div>
+
+      <!-- KPIs -->
+      <div class="tgdc-card tgdc-kpis">
+        <div class="tgdc-kpi">
+          <div class="ic" style="background:var(--g);"><i class="fas fa-building"></i></div>
+          <div><div class="lbl">Faturação (mês)</div><div class="val">€ 48.750</div><div class="delta up">↑ 12% vs. mês anterior</div></div>
+        </div>
+        <div class="tgdc-kpi">
+          <div class="ic" style="background:var(--b);"><i class="fas fa-clipboard-list"></i></div>
+          <div><div class="lbl">Ordens de Serviço</div><div class="val">156</div><div class="delta up">↑ 8% vs. mês anterior</div></div>
+        </div>
+        <div class="tgdc-kpi">
+          <div class="ic" style="background:var(--o);"><i class="fas fa-wrench"></i></div>
+          <div><div class="lbl">OS em atraso</div><div class="val">12</div><div class="delta down">↓ 25% vs. mês anterior</div></div>
+        </div>
+        <div class="tgdc-kpi">
+          <div class="ic" style="background:var(--p);"><i class="fas fa-users"></i></div>
+          <div><div class="lbl">Técnicos ativos</div><div class="val">18 / 22</div><div class="delta" style="color:var(--sub);">82% em serviço</div></div>
+        </div>
+        <div class="tgdc-kpi">
+          <div class="ic" style="background:var(--t);"><i class="fas fa-shield-alt"></i></div>
+          <div><div class="lbl">SLA cumpridos</div><div class="val">96,8%</div><div class="delta up">↑ 2,4% vs. mês anterior</div></div>
+        </div>
+        <div class="tgdc-kpi">
+          <div class="ic" style="background:var(--r);"><i class="fas fa-chart-pie"></i></div>
+          <div><div class="lbl">Margem (mês)</div><div class="val">42,6%</div><div class="delta up">↑ 3,1% vs. mês anterior</div></div>
+        </div>
+      </div>
+
+      <!-- linha 2 -->
+      <div class="tgdc-row4">
+        <div class="tgdc-card">
+          <h4>Faturação e Resultados</h4>
+          <div class="tgdc-legend"><span><i style="background:var(--b);"></i>Faturação</span><span><i style="background:#bfdbfe;"></i>Custos</span></div>
+          <div class="tgdc-bars">
+            <div class="bcol"><div class="bwrap"><div class="b fat" style="height:55%;"></div><div class="b cst" style="height:22%;"></div></div><span class="mlbl">Jan</span></div>
+            <div class="bcol"><div class="bwrap"><div class="b fat" style="height:62%;"></div><div class="b cst" style="height:24%;"></div></div><span class="mlbl">Fev</span></div>
+            <div class="bcol"><div class="bwrap"><div class="b fat" style="height:66%;"></div><div class="b cst" style="height:23%;"></div></div><span class="mlbl">Mar</span></div>
+            <div class="bcol"><div class="bwrap"><div class="b fat" style="height:68%;"></div><div class="b cst" style="height:22%;"></div></div><span class="mlbl">Abr</span></div>
+            <div class="bcol"><div class="bwrap"><div class="b fat" style="height:70%;"></div><div class="b cst" style="height:20%;"></div></div><span class="mlbl">Mai</span></div>
+            <div class="bcol"><div class="bwrap"><div class="b fat" style="height:88%;"></div><div class="b cst" style="height:19%;"></div></div><span class="mlbl">Jun</span></div>
+            <div class="bcol"><div class="bwrap"><div class="b fat" style="height:90%;"></div><div class="b cst" style="height:18%;"></div></div><span class="mlbl">Jul</span></div>
+            <div class="bcol"><div class="bwrap"><div class="b fat" style="height:100%;"></div><div class="b cst" style="height:17%;"></div></div><span class="mlbl">Ago</span></div>
+          </div>
+        </div>
+        <div class="tgdc-card">
+          <h4>Ordens de Serviço</h4>
+          <div class="tgdc-donut"><div class="lbl"><b>156</b><small>Total</small></div></div>
+          <div class="tgdc-legenditem"><span class="k"><i style="background:var(--g);"></i>Concluídas</span><b>98 (62,8%)</b></div>
+          <div class="tgdc-legenditem"><span class="k"><i style="background:var(--b);"></i>Em curso</span><b>32 (20,5%)</b></div>
+          <div class="tgdc-legenditem"><span class="k"><i style="background:var(--o);"></i>Planeadas</span><b>14 (9,0%)</b></div>
+          <div class="tgdc-legenditem"><span class="k"><i style="background:var(--r);"></i>Em atraso</span><b>12 (7,7%)</b></div>
+        </div>
+        <div class="tgdc-card">
+          <h4>Tipos de OS (mês)</h4>
+          <div class="tgdc-hbars">
+            <div class="hb"><div class="t"><span>Manutenção Preventiva</span><b>48</b></div><div class="track"><div class="fill" style="width:77%;background:var(--b);"></div></div></div>
+            <div class="hb"><div class="t"><span>Avaria / Assistência</span><b>62</b></div><div class="track"><div class="fill" style="width:100%;background:var(--r);"></div></div></div>
+            <div class="hb"><div class="t"><span>Instalação</span><b>18</b></div><div class="track"><div class="fill" style="width:29%;background:var(--g);"></div></div></div>
+            <div class="hb"><div class="t"><span>Inspeção</span><b>14</b></div><div class="track"><div class="fill" style="width:22%;background:var(--o);"></div></div></div>
+            <div class="hb"><div class="t"><span>Outros</span><b>14</b></div><div class="track"><div class="fill" style="width:22%;background:var(--p);"></div></div></div>
+          </div>
+        </div>
+        <div class="tgdc-card tgdc-feed">
+          <h4>Atividade em Tempo Real</h4>
+          <div class="fi"><span class="dot" style="background:var(--g);"></span><div><div class="tt">OS #2873 concluída</div><div class="ds">Cliente: Hotel ABC</div></div><span class="ago">há 5 min</span></div>
+          <div class="fi"><span class="dot" style="background:var(--r);"></span><div><div class="tt">Novo pedido de assistência</div><div class="ds">Cliente: Condomínio do Parque</div></div><span class="ago">há 12 min</span></div>
+          <div class="fi"><span class="dot" style="background:var(--b);"></span><div><div class="tt">Técnico iniciou OS #2869</div><div class="ds">João Santos</div></div><span class="ago">há 18 min</span></div>
+          <div class="fi"><span class="dot" style="background:var(--g);"></span><div><div class="tt">Proposta #P-045 ganha</div><div class="ds">Cliente: Empresa XYZ</div></div><span class="ago">há 35 min</span></div>
+          <div class="fi"><span class="dot" style="background:var(--o);"></span><div><div class="tt">Material reservado</div><div class="ds">OS #2871</div></div><span class="ago">há 42 min</span></div>
+        </div>
+      </div>
+
+      <!-- linha 3 -->
+      <div class="tgdc-row3">
+        <div class="tgdc-card">
+          <h4>Técnicos em Serviço</h4>
+          <div class="tgdc-map">
+            <div class="pin" style="top:30%;left:60%;"></div>
+            <div class="pin" style="top:55%;left:35%;background:var(--b);"></div>
+            <div class="pin" style="top:60%;left:50%;background:var(--t);"></div>
+          </div>
+          <div class="tgdc-tec"><div class="av"></div><div><div class="nm">João Santos</div><div class="st">Em serviço · Cascais</div></div><span class="dot"></span></div>
+          <div class="tgdc-tec"><div class="av"></div><div><div class="nm">Pedro Costa</div><div class="st">Em serviço · Lisboa</div></div><span class="dot"></span></div>
+          <div class="tgdc-tec"><div class="av"></div><div><div class="nm">André Martins</div><div class="st">Em serviço · Oeiras</div></div><span class="dot"></span></div>
+          <div class="tgdc-tec"><div class="av"></div><div><div class="nm">Miguel Pereira</div><div class="st">Em pausa</div></div><span class="dot" style="background:var(--o);"></span></div>
+        </div>
+        <div class="tgdc-card">
+          <h4>Próximas Manutenções</h4>
+          <table class="tgdc-tbl">
+            <thead><tr><th>Data</th><th>Cliente</th><th>Equipamento</th><th>Técnico</th></tr></thead>
+            <tbody>
+              <tr><td>02/09</td><td>Hotel ABC</td><td>Central Incêndio</td><td>João Santos</td></tr>
+              <tr><td>03/09</td><td>Continente Alverca</td><td>AVAC - UTA</td><td>Pedro Costa</td></tr>
+              <tr><td>04/09</td><td>Condomínio Sol</td><td>Elevador #2</td><td>André Martins</td></tr>
+              <tr><td>05/09</td><td>Escola Primária</td><td>CCTV</td><td>Rui Almeida</td></tr>
+              <tr><td>08/09</td><td>Centro Comercial</td><td>Gerador</td><td>Miguel Pereira</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tgdc-card tgdc-alertas">
+          <h4>Alertas e Pendências</h4>
+          <div class="al"><div class="ic" style="background:#fee2e2;color:var(--r);"><i class="fas fa-wrench"></i></div><div class="txt">OS em atraso</div><div class="num">12</div></div>
+          <div class="al"><div class="ic" style="background:#fef3c7;color:var(--o);"><i class="fas fa-file-contract"></i></div><div class="txt">Contratos a renovar (30 dias)</div><div class="num">5</div></div>
+          <div class="al"><div class="ic" style="background:#fef3c7;color:var(--o);"><i class="fas fa-triangle-exclamation"></i></div><div class="txt">Equipamentos com anomalias</div><div class="num">8</div></div>
+          <div class="al"><div class="ic" style="background:#fef3c7;color:var(--o);"><i class="fas fa-box"></i></div><div class="txt">Stock abaixo do mínimo</div><div class="num">11</div></div>
+          <div class="al"><div class="ic" style="background:#ede9fe;color:var(--p);"><i class="fas fa-certificate"></i></div><div class="txt">Certificações a expirar</div><div class="num">3</div></div>
+          <div class="al"><div class="ic" style="background:#dbeafe;color:var(--b);"><i class="fas fa-file"></i></div><div class="txt">Documentos em falta</div><div class="num">4</div></div>
+          <div class="al"><div class="ic" style="background:#fee2e2;color:var(--r);"><i class="fas fa-shield-alt"></i></div><div class="txt">SLA em risco</div><div class="num">2</div></div>
+        </div>
+      </div>
+
+      <!-- linha 4 -->
+      <div class="tgdc-row4b">
+        <div class="tgdc-card tgdc-top5">
+          <h4>Top 5 Clientes (faturação)</h4>
+          <ul>
+            <li><span class="n">1</span><span class="nm">Hotel ABC</span><span class="vl">€ 12.450</span></li>
+            <li><span class="n">2</span><span class="nm">Continente Alverca</span><span class="vl">€ 9.870</span></li>
+            <li><span class="n">3</span><span class="nm">Condomínio do Parque</span><span class="vl">€ 6.320</span></li>
+            <li><span class="n">4</span><span class="nm">Empresa XYZ</span><span class="vl">€ 5.980</span></li>
+            <li><span class="n">5</span><span class="nm">Escola Primária</span><span class="vl">€ 4.760</span></li>
+          </ul>
+        </div>
+        <div class="tgdc-card">
+          <h4>Rentabilidade por Serviço</h4>
+          <div class="tgdc-legend"><span><i style="background:var(--b);"></i>Receita</span><span><i style="background:#bfdbfe;"></i>Custo</span></div>
+          <div class="tgdc-bars">
+            <div class="bcol"><div class="bwrap"><div class="b fat" style="height:100%;"></div><div class="b cst" style="height:34%;"></div></div><span class="mlbl">Preventiva</span></div>
+            <div class="bcol"><div class="bwrap"><div class="b fat" style="height:70%;"></div><div class="b cst" style="height:40%;"></div></div><span class="mlbl">Corretiva</span></div>
+            <div class="bcol"><div class="bwrap"><div class="b fat" style="height:55%;"></div><div class="b cst" style="height:30%;"></div></div><span class="mlbl">Instalação</span></div>
+            <div class="bcol"><div class="bwrap"><div class="b fat" style="height:40%;"></div><div class="b cst" style="height:22%;"></div></div><span class="mlbl">Inspeção</span></div>
+            <div class="bcol"><div class="bwrap"><div class="b fat" style="height:30%;"></div><div class="b cst" style="height:16%;"></div></div><span class="mlbl">Outros</span></div>
+          </div>
+        </div>
+        <div class="tgdc-card">
+          <h4>Estado dos Contratos</h4>
+          <div class="tgdc-donut tgdc-donut2"><div class="lbl"><b>128</b><small>Total</small></div></div>
+          <div class="tgdc-legenditem"><span class="k"><i style="background:var(--g);"></i>Ativos</span><b>98 (76,6%)</b></div>
+          <div class="tgdc-legenditem"><span class="k"><i style="background:var(--o);"></i>A renovar</span><b>12 (9,4%)</b></div>
+          <div class="tgdc-legenditem"><span class="k"><i style="background:var(--r);"></i>Expirados</span><b>8 (6,3%)</b></div>
+          <div class="tgdc-legenditem"><span class="k"><i style="background:var(--b);"></i>Em negociação</span><b>10 (7,8%)</b></div>
+        </div>
+        <div class="tgdc-card tgdc-acoes">
+          <button><div class="ic" style="background:var(--b);"><i class="fas fa-plus"></i></div>Nova OS</button>
+          <button><div class="ic" style="background:var(--p);"><i class="fas fa-user-plus"></i></div>Novo Cliente</button>
+          <button><div class="ic" style="background:var(--t);"><i class="fas fa-file-invoice"></i></div>Nova Proposta</button>
+          <button><div class="ic" style="background:var(--o);"><i class="fas fa-euro-sign"></i></div>Registar Despesa</button>
+          <button><div class="ic" style="background:var(--g);"><i class="fas fa-chart-column"></i></div>Ver Relatórios</button>
+          <button><div class="ic" style="background:#64748b;"><i class="fas fa-gear"></i></div>Configurações</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- CLIENTES -->
 <section class="clientes-strip">
   <div class="wrap">
@@ -2136,6 +2395,13 @@
         <div id="despesasConteudo"></div>
     </div>
 
+    <div id="secao-dashboard-central" class="section-container">
+        <div class="section-header">
+            <h2><i class="fas fa-chart-line"></i> Dashboard Central</h2>
+        </div>
+        <div id="dashboardCentralConteudo"></div>
+    </div>
+
     <div id="secao-dashboard-analitico" class="section-container">
         <div class="section-header">
             <h2><i class="fas fa-chart-pie"></i> Dashboard Analítico</h2>
@@ -3278,8 +3544,8 @@
             },
             servicos: {
                 tabela: 'servicos',
-                from: r => ({ id: r.id, numeroRegisto: r.numero_registo, clienteId: r.cliente_id, funcionarioId: r.funcionario_id, funcionariosIds: Array.isArray(r.funcionarios_ids) ? r.funcionarios_ids : [], relatorioResponsavelId: r.relatorio_responsavel_id || null, contratoId: r.contrato_id, obraId: r.obra_id, localId: r.local_id || null, assistenciaId: r.assistencia_id || null, valor: r.valor != null ? Number(r.valor) : null, duracao: r.duracao != null ? Number(r.duracao) : null, duracaoDias: r.duracao_dias != null ? Number(r.duracao_dias) : null, morada: r.morada || null, numeroPorta: r.numero_porta || null, codigoPostal: r.codigo_postal || null, cidade: r.cidade || null, freguesia: r.freguesia || null, data: r.data || '', hora: hhmm(r.hora) || '', descricao: r.descricao, observacoes: r.observacoes || null, checklist: r.checklist || {}, checklistEntrada: r.checklist_entrada || {}, status: r.status, origem: r.origem || null, tiposTrabalho: Array.isArray(r.tipos_trabalho) ? r.tipos_trabalho : [], adminId: r.admin_id, pagamentoLocal: r.pagamento_local === true, pago: r.pago == null ? null : (r.pago === true), faturaMoloniId: r.fatura_moloni_id || null, faturaMoloniUrl: r.fatura_moloni_url || null, reciboMoloniId: r.recibo_moloni_id || null, reciboMoloniUrl: r.recibo_moloni_url || null, guiaMoloniId: r.guia_moloni_id || null, guiaMoloniUrl: r.guia_moloni_url || null, notaCreditoMoloniId: r.nota_credito_moloni_id || null, notaCreditoMoloniUrl: r.nota_credito_moloni_url || null, faturaTOConlineId: r.fatura_toconline_id || null, faturaTOConlineUrl: r.fatura_toconline_url || null }),
-                to:   o => ({ id: o.id, numero_registo: o.numeroRegisto || null, cliente_id: o.clienteId || null, funcionario_id: o.funcionarioId || null, funcionarios_ids: o.funcionariosIds || [], relatorio_responsavel_id: o.relatorioResponsavelId || null, contrato_id: o.contratoId || null, obra_id: o.obraId || null, local_id: o.localId || null, assistencia_id: o.assistenciaId || null, valor: (o.valor === '' || o.valor == null) ? null : Number(o.valor), duracao: (o.duracao === '' || o.duracao == null) ? null : parseInt(o.duracao,10), duracao_dias: (o.duracaoDias === '' || o.duracaoDias == null) ? null : parseInt(o.duracaoDias,10), morada: o.morada || null, numero_porta: o.numeroPorta || null, codigo_postal: o.codigoPostal || null, cidade: o.cidade || null, freguesia: o.freguesia || null, data: nn(o.data), hora: nn(o.hora), descricao: o.descricao || null, observacoes: o.observacoes || null, checklist: o.checklist || {}, checklist_entrada: o.checklistEntrada || {}, status: o.status || 'pendente', origem: o.origem || null, tipos_trabalho: o.tiposTrabalho || [], admin_id: o.adminId, pagamento_local: o.pagamentoLocal === true, pago: o.pago === undefined ? null : o.pago, fatura_moloni_id: o.faturaMoloniId || null, fatura_moloni_url: o.faturaMoloniUrl || null, recibo_moloni_id: o.reciboMoloniId || null, recibo_moloni_url: o.reciboMoloniUrl || null, guia_moloni_id: o.guiaMoloniId || null, guia_moloni_url: o.guiaMoloniUrl || null, nota_credito_moloni_id: o.notaCreditoMoloniId || null, nota_credito_moloni_url: o.notaCreditoMoloniUrl || null, fatura_toconline_id: o.faturaTOConlineId || null, fatura_toconline_url: o.faturaTOConlineUrl || null })
+                from: r => ({ id: r.id, numeroRegisto: r.numero_registo, clienteId: r.cliente_id, funcionarioId: r.funcionario_id, funcionariosIds: Array.isArray(r.funcionarios_ids) ? r.funcionarios_ids : [], relatorioResponsavelId: r.relatorio_responsavel_id || null, contratoId: r.contrato_id, obraId: r.obra_id, localId: r.local_id || null, assistenciaId: r.assistencia_id || null, valor: r.valor != null ? Number(r.valor) : null, duracao: r.duracao != null ? Number(r.duracao) : null, duracaoDias: r.duracao_dias != null ? Number(r.duracao_dias) : null, morada: r.morada || null, numeroPorta: r.numero_porta || null, codigoPostal: r.codigo_postal || null, cidade: r.cidade || null, freguesia: r.freguesia || null, data: r.data || '', hora: hhmm(r.hora) || '', descricao: r.descricao, observacoes: r.observacoes || null, checklist: r.checklist || {}, checklistEntrada: r.checklist_entrada || {}, status: r.status, origem: r.origem || null, tiposTrabalho: Array.isArray(r.tipos_trabalho) ? r.tipos_trabalho : [], adminId: r.admin_id, pagamentoLocal: r.pagamento_local === true, pago: r.pago == null ? null : (r.pago === true), faturaMoloniId: r.fatura_moloni_id || null, faturaMoloniUrl: r.fatura_moloni_url || null, reciboMoloniId: r.recibo_moloni_id || null, reciboMoloniUrl: r.recibo_moloni_url || null, guiaMoloniId: r.guia_moloni_id || null, guiaMoloniUrl: r.guia_moloni_url || null, notaCreditoMoloniId: r.nota_credito_moloni_id || null, notaCreditoMoloniUrl: r.nota_credito_moloni_url || null, faturaTOConlineId: r.fatura_toconline_id || null, faturaTOConlineUrl: r.fatura_toconline_url || null, fotos: Array.isArray(r.fotos) ? r.fotos : [] }),
+                to:   o => ({ id: o.id, numero_registo: o.numeroRegisto || null, cliente_id: o.clienteId || null, funcionario_id: o.funcionarioId || null, funcionarios_ids: o.funcionariosIds || [], relatorio_responsavel_id: o.relatorioResponsavelId || null, contrato_id: o.contratoId || null, obra_id: o.obraId || null, local_id: o.localId || null, assistencia_id: o.assistenciaId || null, valor: (o.valor === '' || o.valor == null) ? null : Number(o.valor), duracao: (o.duracao === '' || o.duracao == null) ? null : parseInt(o.duracao,10), duracao_dias: (o.duracaoDias === '' || o.duracaoDias == null) ? null : parseInt(o.duracaoDias,10), morada: o.morada || null, numero_porta: o.numeroPorta || null, codigo_postal: o.codigoPostal || null, cidade: o.cidade || null, freguesia: o.freguesia || null, data: nn(o.data), hora: nn(o.hora), descricao: o.descricao || null, observacoes: o.observacoes || null, checklist: o.checklist || {}, checklist_entrada: o.checklistEntrada || {}, status: o.status || 'pendente', origem: o.origem || null, tipos_trabalho: o.tiposTrabalho || [], admin_id: o.adminId, pagamento_local: o.pagamentoLocal === true, pago: o.pago === undefined ? null : o.pago, fatura_moloni_id: o.faturaMoloniId || null, fatura_moloni_url: o.faturaMoloniUrl || null, recibo_moloni_id: o.reciboMoloniId || null, recibo_moloni_url: o.reciboMoloniUrl || null, guia_moloni_id: o.guiaMoloniId || null, guia_moloni_url: o.guiaMoloniUrl || null, nota_credito_moloni_id: o.notaCreditoMoloniId || null, nota_credito_moloni_url: o.notaCreditoMoloniUrl || null, fatura_toconline_id: o.faturaTOConlineId || null, fatura_toconline_url: o.faturaTOConlineUrl || null, fotos: o.fotos || [] })
             },
             assistencias: {
                 tabela: 'assistencias',
@@ -3816,6 +4082,34 @@
         // (PDF). Qualquer outro tipo (ex.: executáveis, scripts, HTML) é recusado.
         const _TIPOS_FICHEIRO_PERMITIDOS = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif', 'application/pdf'];
         const _TAMANHO_MAX_FICHEIRO = 15 * 1024 * 1024; // 15 MB
+        // Reduz uma foto tirada no telemóvel (que normalmente vem com vários MB) para um
+        // tamanho pequeno antes de guardar — redimensiona para no máximo 1280px no lado maior,
+        // e volta a comprimir como JPEG de qualidade média. Uma foto de telemóvel típica (4-8 MB)
+        // fica normalmente entre 80-200 KB depois disto, sem perder qualidade visível num ecrã.
+        function _comprimirImagem(file, ladoMax = 1280, qualidade = 0.65) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onerror = () => reject(new Error('Não foi possível ler o ficheiro.'));
+                reader.onload = () => {
+                    const img = new Image();
+                    img.onerror = () => reject(new Error('Não foi possível processar a imagem.'));
+                    img.onload = () => {
+                        let { width, height } = img;
+                        if (width > ladoMax || height > ladoMax) {
+                            if (width >= height) { height = Math.round(height * (ladoMax / width)); width = ladoMax; }
+                            else { width = Math.round(width * (ladoMax / height)); height = ladoMax; }
+                        }
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width; canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        resolve(canvas.toDataURL('image/jpeg', qualidade));
+                    };
+                    img.src = reader.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
         async function uploadDataURL(dataUrl, pasta) {
             const m = /^data:([^;]+);base64,(.*)$/.exec(dataUrl || '');
             if (!m) return dataUrl; // já é URL ou está vazio
@@ -3836,6 +4130,84 @@
             return supa.storage.from('ficheiros').getPublicUrl(path).data.publicUrl;
         }
 
+        // Fotos de uma OS — qualquer técnico ou admin pode adicionar, a partir do telemóvel
+        // (câmara) ou da galeria. Ficam sempre comprimidas antes de subir, e guardadas no mesmo
+        // bucket "ficheiros" já usado para o resto da app — nunca em base64 dentro da própria OS,
+        // para não fazer crescer os dados sincronizados a cada abertura da app.
+        function _osPedirFoto(osId) {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.capture = 'environment'; // abre logo a câmara traseira em telemóveis, quando disponível
+            input.onchange = () => _osFotoSelecionada(osId, input);
+            document.body.appendChild(input);
+            input.click();
+            setTimeout(() => input.remove(), 5000);
+        }
+        async function _osFotoSelecionada(osId, input) {
+            const file = input.files && input.files[0];
+            if (!file) return;
+            const s = dados.servicos?.find(x => x.id === osId); if (!s) return;
+            _mostrarCarregando('A comprimir e a guardar a foto…');
+            try {
+                const comprimida = await _comprimirImagem(file);
+                const url = await uploadDataURL(comprimida, 'os_fotos/' + osId);
+                s.fotos = s.fotos || [];
+                s.fotos.push({ url, dataCriacao: Date.now(), funcionarioId: usuarioLogado?.id || null });
+                guardarDados(dados);
+                _osRenderFotos(osId);
+            } catch (e) {
+                console.error('Erro ao guardar foto da OS:', e);
+                alert('⚠️ Não foi possível guardar a foto: ' + (e.message || e));
+            } finally {
+                _esconderCarregando();
+            }
+        }
+        function _osRenderFotos(osId) {
+            const cont = document.getElementById('os_fotos_galeria_' + osId);
+            if (!cont) return;
+            const s = dados.servicos?.find(x => x.id === osId);
+            const fotos = s?.fotos || [];
+            cont.innerHTML = fotos.map((f, i) => `
+                <div style="position:relative;width:72px;height:72px;flex-shrink:0;">
+                    <img src="${f.url}" onclick="_osVerFotoAmpliada('${f.url.replace(/'/g, "\\'")}')" style="width:100%;height:100%;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid #e2e8f0;" />
+                    <button type="button" onclick="_osRemoverFoto('${osId}', ${i})" title="Remover" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#dc2626;color:#fff;border:none;font-size:.7rem;cursor:pointer;line-height:1;">×</button>
+                </div>
+            `).join('');
+        }
+        function _osVerFotoAmpliada(url) {
+            const w = document.createElement('div');
+            w.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.9);z-index:400000;display:flex;align-items:center;justify-content:center;padding:20px;';
+            w.onclick = () => w.remove();
+            w.innerHTML = `<img src="${url}" style="max-width:100%;max-height:100%;border-radius:8px;" />`;
+            document.body.appendChild(w);
+        }
+        function _osRemoverFoto(osId, indice) {
+            const s = dados.servicos?.find(x => x.id === osId); if (!s || !s.fotos) return;
+            if (!confirm('Remover esta foto?')) return;
+            s.fotos.splice(indice, 1);
+            guardarDados(dados);
+            _osRenderFotos(osId);
+        }
+        // Bloco HTML pronto a inserir em qualquer ecrã de "Ver OS" — galeria + botão de adicionar.
+        function _osBlocoFotosHtml(s) {
+            return `
+                <div class="form-group ff-span2">
+                    <label><i class="fas fa-camera"></i> Fotos</label>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                        <div id="os_fotos_galeria_${s.id}" style="display:flex;gap:8px;flex-wrap:wrap;">
+                            ${(s.fotos || []).map((f, i) => `
+                                <div style="position:relative;width:72px;height:72px;flex-shrink:0;">
+                                    <img src="${f.url}" onclick="_osVerFotoAmpliada('${f.url.replace(/'/g, "\\'")}')" style="width:100%;height:100%;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid #e2e8f0;" />
+                                    <button type="button" onclick="_osRemoverFoto('${s.id}', ${i})" title="Remover" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#dc2626;color:#fff;border:none;font-size:.7rem;cursor:pointer;line-height:1;">×</button>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline" onclick="_osPedirFoto('${s.id}')"><i class="fas fa-camera"></i> Adicionar Foto</button>
+                    </div>
+                </div>
+            `;
+        }
         async function migrarFicheirosPendentes() {
             for (const col of Object.keys(FICHEIRO_CAMPOS)) {
                 for (const o of (dados[col] || [])) {
@@ -8180,6 +8552,7 @@
                     <button type="button" class="btn btn-sm" id="verOsBtnRelatorios" onclick="_verOsMostrar('${osId}','relatorios')" style="flex:1;min-width:110px;background:#f1f5f9;color:#334155;"><i class="fas fa-file-signature"></i> Relatórios</button>
                     <button type="button" class="btn btn-sm" id="verOsBtnMateriais" onclick="_verOsMostrar('${osId}','materiais')" style="flex:1;min-width:110px;background:#f1f5f9;color:#334155;"><i class="fas fa-boxes-stacked"></i> Materiais</button>
                     <button type="button" class="btn btn-sm" id="verOsBtnChecklist" onclick="_verOsMostrar('${osId}','checklist')" style="flex:1;min-width:110px;background:#f1f5f9;color:#334155;"><i class="fas fa-clipboard-check"></i> Checklist</button>
+                    <button type="button" class="btn btn-sm" id="verOsBtnFotos" onclick="_verOsMostrar('${osId}','fotos')" style="flex:1;min-width:110px;background:#f1f5f9;color:#334155;"><i class="fas fa-camera"></i> Fotos${(os.fotos || []).length ? ' (' + os.fotos.length + ')' : ''}</button>
                 </div>
                 <div id="verOsConteudo"></div>
             `;
@@ -8196,11 +8569,19 @@
             const btnRelatorios = document.getElementById('verOsBtnRelatorios');
             const btnMateriais = document.getElementById('verOsBtnMateriais');
             const btnChecklist = document.getElementById('verOsBtnChecklist');
-            [['folhas', btnFolhas], ['relatorios', btnRelatorios], ['materiais', btnMateriais], ['checklist', btnChecklist]].forEach(([chave, btn]) => {
+            const btnFotos = document.getElementById('verOsBtnFotos');
+            [['folhas', btnFolhas], ['relatorios', btnRelatorios], ['materiais', btnMateriais], ['checklist', btnChecklist], ['fotos', btnFotos]].forEach(([chave, btn]) => {
                 if (!btn) return;
                 btn.style.background = aba === chave ? '#0ea5e9' : '#f1f5f9';
                 btn.style.color = aba === chave ? '#fff' : '#334155';
             });
+            if (aba === 'fotos') {
+                cont.innerHTML = `
+                    <p class="help-text" style="margin-bottom:10px;">Fotos tiradas com o telemóvel ou carregadas da galeria, ligadas a esta OS. Ficam sempre comprimidas antes de guardar, para ocupar pouco espaço.</p>
+                    ${_osBlocoFotosHtml(os)}
+                `;
+                return;
+            }
             if (aba === 'checklist') {
                 const adminChk = dados.administradores?.find(a => a.id === os.adminId);
                 const itensEntradaChk = (adminChk?.checklistEntradaItens || []).filter(it => it.ativo !== false);
@@ -11009,6 +11390,7 @@
                                 <button class="btn btn-sm" style="background:#7c3aed;color:#fff;" title="Gerar Ordem de Serviço para um encarregado" onclick="abrirGerarOSContrato('${c.id}')"><i class="fas fa-clipboard-list"></i></button>
                                 <button class="btn btn-sm" style="background:#16a34a;color:#fff;" title="Registar manutenção" onclick="abrirModalRegisto('${c.id}')"><i class="fas fa-screwdriver-wrench"></i></button>
                                 <button class="btn btn-sm" style="background:#0ea5e9;color:#fff;" title="Histórico" onclick="abrirHistoricoContrato('${c.id}')"><i class="fas fa-clock-rotate-left"></i></button>
+                                <button class="btn btn-sm" style="background:#0d9488;color:#fff;" title="Equipamentos e QR" onclick="abrirModalEquipamentosContrato('${c.id}')"><i class="fas fa-qrcode"></i></button>
                                 <button class="btn btn-sm btn-warning" title="Editar" onclick="abrirModalContrato('${c.id}')"><i class="fas fa-edit"></i></button>
                                 <button class="btn btn-sm btn-danger" title="Eliminar" onclick="excluirContrato('${c.id}')"><i class="fas fa-trash"></i></button>
                             </div></td>
@@ -11532,6 +11914,40 @@
             _ctEquipamentosAtuais = _ctEquipamentosAtuais.filter(x => x !== id);
             _renderListaEquipContrato();
             _atualizarSelectEquipDisponivel();
+        }
+        // Lista de equipamentos de um contrato, com o QR de cada um já visível — pensado para
+        // quem chega a uma instalação e quer ver/ imprimir rapidamente os QRs sem ter de abrir o
+        // contrato inteiro para edição.
+        function abrirModalEquipamentosContrato(contratoId) {
+            const c = dados.contratos?.find(x => x.id === contratoId);
+            if (!c) { alert('Contrato não encontrado.'); return; }
+            const ids = (c.equipamentosIds && c.equipamentosIds.length) ? c.equipamentosIds : (c.equipamentoId ? [c.equipamentoId] : []);
+            const equipamentos = ids.map(id => dados.equipamentos?.find(e => e.id === id)).filter(Boolean);
+            document.getElementById('modalGenericoTitulo').innerHTML = '<i class="fas fa-qrcode"></i> Equipamentos — Contrato ' + (c.numero || '');
+            const cont = document.getElementById('modalGenericoCampos');
+            if (!equipamentos.length) {
+                cont.innerHTML = '<p class="help-text">Este contrato ainda não tem equipamentos associados.</p>';
+            } else {
+                cont.innerHTML = `<div style="display:flex;flex-direction:column;gap:14px;max-height:60vh;overflow-y:auto;">
+                    ${equipamentos.map(eq => {
+                        const label = `${EQUIP_TIPOS[eq.tipo] || eq.tipo}${eq.marca ? ' — ' + eq.marca : ''}`;
+                        const url = `https://www.totalgest.pt/equip.html?id=${encodeURIComponent(eq.id)}`;
+                        const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(url)}`;
+                        return `<div style="display:flex;gap:14px;align-items:center;border:1px solid #e6eaf2;border-radius:12px;padding:12px;">
+                            <img src="${qrImg}" alt="QR ${escapeHtmlSimples(label)}" style="width:80px;height:80px;border-radius:8px;flex-shrink:0;" />
+                            <div style="flex:1;">
+                                <div style="font-weight:700;color:#152a52;">${escapeHtmlSimples(label)}</div>
+                                ${eq.numeroSerie ? `<div style="font-size:.82rem;color:#64748b;">Nº série: ${escapeHtmlSimples(eq.numeroSerie)}</div>` : ''}
+                                <button type="button" class="btn btn-sm btn-outline" style="margin-top:8px;" onclick="imprimirEtiquetaQrEquip('${eq.id}')"><i class="fas fa-print"></i> Imprimir etiqueta</button>
+                            </div>
+                        </div>`;
+                    }).join('')}
+                </div>`;
+            }
+            const form = document.getElementById('modalGenericoForm');
+            form.onsubmit = (ev) => ev.preventDefault();
+            document.getElementById('modalGenericoAcoes').innerHTML = '<button type="button" class="btn" style="background:#e9edf2;" onclick="_fecharModalGenerico()">Fechar</button>';
+            document.getElementById('modalGenericoOverlay').classList.add('open');
         }
         // Abre uma folha simples, pronta a imprimir, com o QR do equipamento — cola-se
         // fisicamente junto ao equipamento instalado. O QR aponta para a página própria de
@@ -15516,6 +15932,9 @@
                 [...g.querySelectorAll('.card-principal')].some(c => !c.classList.contains('hidden-card'))
             );
             const itens = [`<div class="menu-inf-item ativo" id="menuInfHome" onclick="_voltarMeuDia()"><i class="fas fa-sun"></i><span>O Meu Dia</span></div>`];
+            if (usuarioLogado && (usuarioLogado.role === 'admin' || usuarioLogado.role === 'subadmin')) {
+                itens.push(`<div class="menu-inf-item" id="menuInfDashboardCentral" onclick="_abrirDashboardCentralMobile()"><i class="fas fa-chart-line"></i><span>Dashboard</span></div>`);
+            }
             gruposVisiveis.forEach(g => {
                 const chave = g.dataset.grupo;
                 const titulo = g.querySelector('.grupo-header h3')?.textContent?.trim() || chave;
@@ -15572,6 +15991,21 @@
             const _gridV = document.querySelector('.cards-grid'); if (_gridV) _gridV.style.marginBottom = '';
             document.querySelectorAll('#menuInferiorMobile .menu-inf-item').forEach(el => el.classList.remove('ativo'));
             document.getElementById('menuInfHome')?.classList.add('ativo');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        // Item "Dashboard" do menu inferior mobile — fica entre "O Meu Dia" e "Equipa", só
+        // visível para Admin/Subadmin. Abre a mesma secção "dashboard-central" do desktop,
+        // reaproveitando abrirSecao() (que já sabe esconder "O Meu Dia" e mostrar a secção
+        // no layout mobile — ver abrirSecao, bloco "_ehPerfilMobile()").
+        function _abrirDashboardCentralMobile() {
+            _ultimoGrupoMobileAberto = null;
+            const painel = document.getElementById('painelGrupoMobile');
+            if (painel) painel.style.display = 'none';
+            const omeudia = document.getElementById('omeudia');
+            if (omeudia) omeudia.style.display = 'none';
+            abrirSecao('dashboard-central');
+            document.querySelectorAll('#menuInferiorMobile .menu-inf-item').forEach(el => el.classList.remove('ativo'));
+            document.getElementById('menuInfDashboardCentral')?.classList.add('ativo');
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
         function renderizarOMeuDia(forcarDesktop) {
@@ -19219,6 +19653,66 @@
             const partes = (nome || '').trim().split(/\s+/).filter(Boolean);
             if (partes.length <= 1) return partes[0] || '';
             return partes[0] + ' ' + partes[partes.length - 1];
+        }
+        // Mapa da equipa dentro do "Dashboard Central" — instância própria do Leaflet (não usa o
+        // mesmo mapa da secção "Frota/Rondas", para não haver dois L.map() a apontar ao mesmo
+        // div). Reaproveita a localização real já guardada nos pontos (_ultimaLocalizacaoPessoa).
+        let _hdcMapaEquipa = null, _hdcMapaMarkers = null, _hdcMarkersPorPessoa = {};
+        // Clicar no nome da pessoa na lista "Equipa Agora" faz exatamente o mesmo que clicar na
+        // sua bolinha no mapa — centra o mapa nela e abre o popup com o estado/localização.
+        function _hdcClicarPessoaNoMapa(pessoaId) {
+            const m = _hdcMarkersPorPessoa[pessoaId];
+            if (!m || !_hdcMapaEquipa) return;
+            _hdcMapaEquipa.setView(m.getLatLng(), Math.max(_hdcMapaEquipa.getZoom(), 14));
+            m.openPopup();
+            document.getElementById('hdcMapaEquipa')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        function _renderizarMapaEquipaDashboardCentral() {
+            const info = document.getElementById('hdcMapaEquipaInfo');
+            if (typeof L === 'undefined') { if (info) info.textContent = 'Mapa indisponível (a carregar…).'; return; }
+            const cont = document.getElementById('hdcMapaEquipa');
+            if (!cont) return;
+            if (!_hdcMapaEquipa) {
+                _hdcMapaEquipa = L.map('hdcMapaEquipa', { zoomControl: false, attributionControl: false }).setView([39.5, -8.0], 6);
+                L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(_hdcMapaEquipa);
+                _hdcMapaMarkers = L.layerGroup().addTo(_hdcMapaEquipa);
+            }
+            setTimeout(() => { try { _hdcMapaEquipa.invalidateSize(); } catch (e) {} }, 150);
+            _hdcMapaMarkers.clearLayers();
+            _hdcMarkersPorPessoa = {};
+            const adminId = _tenantId();
+            const pessoas = [
+                ...(dados.funcionarios || []).filter(f => f.adminId === adminId && f.role !== 'admin').map(f => ({ id: f.id, nome: f.nome, tipo: 'Funcionário', foto: f.foto })),
+                ...(dados.encarregados || []).filter(e => e.adminId === adminId).map(e => ({ id: e.id, nome: e.nome, tipo: 'Encarregado', foto: null }))
+            ];
+            const hoje = getDataHoje();
+            const pts = []; let semLoc = 0;
+            pessoas.forEach(p => {
+                const loc = _ultimaLocalizacaoPessoa(p.id);
+                if (!loc) { semLoc++; return; }
+                const aberto = (dados.ponto || []).find(x => x.funcionarioId === p.id && x.data === hoje && x.entrada && !x.saida)
+                    || (dados.obraPontoLonga || []).find(x => x.funcionarioId === p.id && x.data === hoje && x.entrada && !x.saida);
+                const emServico = !!aberto;
+                const online = presenca[p.id] && (Date.now() - presenca[p.id]) < LIMITE_ONLINE_MS;
+                const ring = emServico ? '#16a34a' : '#94a3b8';
+                const inner = p.foto
+                    ? `<img src="${p.foto}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;display:block;" />`
+                    : `<div style="width:28px;height:28px;border-radius:50%;background:#e0e7ff;color:#4f46e5;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.7rem;">${(p.nome || '?').charAt(0).toUpperCase()}</div>`;
+                const icone = L.divIcon({ className: 'tg-map-avatar', html: `<div style="width:34px;height:34px;border-radius:50%;border:3px solid ${ring};box-shadow:0 1px 5px rgba(0,0,0,.45);overflow:hidden;background:#fff;">${inner}</div>`, iconSize: [34, 34], iconAnchor: [17, 17], popupAnchor: [0, -19] });
+                const m = L.marker([loc.lat, loc.lng], { icon: icone });
+                m.bindPopup(`<strong>${escapeHtmlSimples(p.nome)}</strong> (${p.tipo})<br>${emServico ? '● Em serviço' + (loc.obra ? ' — ' + escapeHtmlSimples(loc.obra) : '') : '○ Fora de serviço'}<br>Na app: ${online ? '🟢 online' : '⚪ offline'}<br><span style="color:#64748b;">Última localização: ${loc.quando}</span>`);
+                m.addTo(_hdcMapaMarkers);
+                _hdcMarkersPorPessoa[p.id] = m;
+                pts.push([loc.lat, loc.lng]);
+            });
+            if (info) info.textContent = pts.length ? `${pts.length} com localização · ${semLoc} sem localização hoje` : 'Sem localizações registadas ainda.';
+            if (pts.length) { try { _hdcMapaEquipa.fitBounds(pts, { padding: [24, 24], maxZoom: 15 }); } catch (e) {} }
+        }
+        function renderizarDashboardCentralSecao() {
+            const cont = document.getElementById('dashboardCentralConteudo'); if (!cont || !usuarioLogado) return;
+            if (usuarioLogado.role !== 'admin' && usuarioLogado.role !== 'subadmin') { cont.innerHTML = '<p style="color:#64748b;">Apenas o administrador acede a este dashboard.</p>'; return; }
+            cont.innerHTML = _htmlDashboardCentralConteudo();
+            setTimeout(_renderizarMapaEquipaDashboardCentral, 60);
         }
         function renderizarDashboardAnalitico() {
             const cont = document.getElementById('dashAnaliticoConteudo'); if (!cont || !usuarioLogado) return;
@@ -31304,6 +31798,7 @@ window._relPrefill = function(msg){
         }
         function _papelLabel(r) { return r === 'superadmin' ? 'Super Admin' : r === 'admin' ? 'Administrador' : r === 'subadmin' ? 'Sub-Admin' : r === 'encarregado' ? 'Encarregado' : r === 'funcionario' ? 'Funcionário' : ''; }
         function _tituloSecao(nome) {
+            if (nome === 'dashboard-central') return 'Dashboard Central';
             const c = document.querySelector(`#cardsGrid .card-principal[data-card="${nome}"] .info h3`);
             return c ? c.textContent.trim() : (nome || '');
         }
@@ -31336,6 +31831,9 @@ window._relPrefill = function(msg){
             }
             const layoutAtual = adminAtual()?.layout || 'sidebar';
             let html = `<a class="tg-nav-item" data-secao="__inicio" onclick="irParaInicio()"><i class="fas fa-gauge-high"></i><span>Início</span></a>`;
+            if (usuarioLogado.role === 'admin' || usuarioLogado.role === 'subadmin') {
+                html += `<a class="tg-nav-item" data-secao="dashboard-central" onclick="abrirSecao('dashboard-central')"><i class="fas fa-chart-line"></i><span>Dashboard Central</span></a>`;
+            }
             if (layoutAtual === 'foco' || layoutAtual === 'aurora') {
                 // "Total Gest Foco": clicar num grupo abre-o em acordeão, com os itens logo por
                 // baixo desse grupo — não abre mais nenhum painel lateral à parte.
@@ -32229,6 +32727,327 @@ window._relPrefill = function(msg){
             }
         }
 
+        // Bloco visual "Dashboard Central" mostrado por baixo de "O Meu Dia" na Início do
+        // Admin/Subadmin. Por agora usa dados de exemplo (é o mesmo mockup mostrado no site
+        // público) — quando quiseres, ligamos os números aos dados reais da empresa (dados.servicos,
+        // dados.clientes, dados.contratos, etc.), célula a célula.
+        // Bloco visual "Dashboard Central" — todos os números vêm dos dados reais da empresa
+        // (dados.servicos, dados.clientes, dados.contratos, dados.artigos, dados.auditoria, a
+        // presença em tempo real da equipa, etc.). Sem dados de exemplo.
+        function _htmlDashboardCentralConteudo() {
+            const adminId = _tenantId();
+            const hoje = getDataHoje();
+            const agora = Date.now();
+            const chaveMes = d => (d || '').slice(0, 7);
+            const nomeMesCurto = (ano, mes0) => new Date(ano, mes0, 1).toLocaleDateString('pt-PT', { month: 'short' }).replace('.', '');
+
+            const todasOS = (dados.servicos || []).filter(s => s.adminId === adminId);
+            const mesAtualKey = chaveMes(hoje);
+            const osMes = todasOS.filter(s => chaveMes(s.data) === mesAtualKey);
+            const concluidasMes = osMes.filter(s => s.status === 'concluído');
+            const emAndamentoMes = osMes.filter(s => s.status === 'em andamento');
+            const pendentesMes = osMes.filter(s => (s.status || 'pendente') === 'pendente');
+            const atrasadasAgora = todasOS.filter(s => s.status !== 'concluído' && s.status !== 'cancelado' && s.data && s.data < hoje);
+            const faturacaoMes = concluidasMes.reduce((a, s) => a + (Number(s.valor) || 0), 0);
+
+            // Compras (encomendas recebidas) do mês, para custos/margem — mesma lógica de _finCompras.
+            const comprasDoMes = (mesKey) => {
+                let total = 0;
+                (dados.encomendas || []).filter(e => e.adminId === adminId && e.estado === 'recebida' && chaveMes(e.data) === mesKey).forEach(e => {
+                    (dados.encomendaItens || []).filter(i => i.encomendaId === e.id).forEach(i => { total += (parseInt(i.quantidade, 10) || 0) * (Number(i.precoUnit) || 0); });
+                });
+                return total;
+            };
+            const comprasMes = comprasDoMes(mesAtualKey);
+            const margemMes = faturacaoMes > 0 ? ((faturacaoMes - comprasMes) / faturacaoMes) * 100 : null;
+
+            // Mês anterior — só para a variação (↑/↓) da faturação e das OS.
+            const dAnt = new Date(); dAnt.setMonth(dAnt.getMonth() - 1);
+            const mesAnteriorKey = dAnt.getFullYear() + '-' + String(dAnt.getMonth() + 1).padStart(2, '0');
+            const osMesAnterior = todasOS.filter(s => chaveMes(s.data) === mesAnteriorKey);
+            const faturacaoMesAnterior = osMesAnterior.filter(s => s.status === 'concluído').reduce((a, s) => a + (Number(s.valor) || 0), 0);
+            const _delta = (atual, anterior) => {
+                if (!anterior) return null;
+                return ((atual - anterior) / anterior) * 100;
+            };
+            const deltaFaturacao = _delta(faturacaoMes, faturacaoMesAnterior);
+            const deltaOS = _delta(osMes.length, osMesAnterior.length);
+            const _deltaHtml = (d) => {
+                if (d == null) return '<div class="delta" style="color:var(--hsub);">sem dados do mês anterior</div>';
+                const up = d >= 0;
+                return `<div class="delta ${up ? 'up' : 'down'}">${up ? '↑' : '↓'} ${Math.abs(d).toFixed(0)}% vs. mês anterior</div>`;
+            };
+
+            // Últimos 8 meses — faturação (OS concluídas) vs custos (compras recebidas).
+            const meses8 = [];
+            const nowD = new Date();
+            for (let k = 7; k >= 0; k--) {
+                const d = new Date(nowD.getFullYear(), nowD.getMonth() - k, 1);
+                const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+                const fat = todasOS.filter(s => s.status === 'concluído' && chaveMes(s.data) === key).reduce((a, s) => a + (Number(s.valor) || 0), 0);
+                meses8.push({ label: nomeMesCurto(d.getFullYear(), d.getMonth()), fat, cst: comprasDoMes(key) });
+            }
+            const maxFat8 = Math.max(1, ...meses8.map(m => Math.max(m.fat, m.cst)));
+
+            // Equipa e presença em tempo real (mesma lógica do painel "O Meu Dia" do admin).
+            const equipa = [
+                ...(dados.funcionarios || []).filter(f => f.adminId === adminId && f.role !== 'admin' && f.role !== 'superadmin' && f.suspenso !== true),
+                ...(dados.encarregados || []).filter(e => e.adminId === adminId && e.suspenso !== true)
+            ];
+            const estadoPessoa = p => {
+                const emOS = (dados.ponto || []).find(x => x.funcionarioId === p.id && x.servicoId && x.data === hoje && x.entrada && !x.saida);
+                if (emOS) { const os = dados.servicos?.find(s => s.id === emOS.servicoId); return { label: 'Em OS — ' + (obterNomeCliente(os?.clienteId) || '—'), cor: '#0ea5e9', ativo: true }; }
+                const emObra = (dados.obraPontoLonga || []).find(x => x.funcionarioId === p.id && x.data === hoje && x.entrada && !x.saida);
+                if (emObra) { const ob = dados.obras?.find(o => o.id === emObra.obraId); return { label: 'Em Obra — ' + (ob?.nome || '—'), cor: '#0ea5e9', ativo: true }; }
+                const geral = (dados.ponto || []).find(x => x.funcionarioId === p.id && !x.servicoId && !x.obraId && x.data === hoje && x.entrada);
+                if (geral && !geral.saida) return { label: 'Em serviço', cor: '#16a34a', ativo: true };
+                if (geral && geral.saida) {
+                    const aindaTrabalhouDepois = (dados.ponto || []).some(x => x.funcionarioId === p.id && x.servicoId && x.data === hoje && x.entrada > geral.saida)
+                        || (dados.obraPontoLonga || []).some(x => x.funcionarioId === p.id && x.data === hoje && x.entrada > geral.saida);
+                    if (aindaTrabalhouDepois) return { label: 'Em serviço', cor: '#16a34a', ativo: true };
+                    return { label: 'Terminou o dia', cor: '#f97316', ativo: false };
+                }
+                return { label: 'Ainda não começou', cor: '#94a3b8', ativo: false };
+            };
+            const equipaComEstado = equipa.map(p => ({ p, e: estadoPessoa(p) }));
+            const tecnicosAtivos = equipaComEstado.filter(x => x.e.ativo).length;
+
+            // OS por técnico (mês) — pela atribuição real de cada OS (funcionariosIds/funcionarioId).
+            const porTecnico = {};
+            osMes.forEach(s => {
+                const ids = (s.funcionariosIds && s.funcionariosIds.length) ? s.funcionariosIds : [s.funcionarioId].filter(Boolean);
+                const nomes = ids.length ? ids.map(id => obterNomeFuncionario(id) || '—') : ['Sem atribuição'];
+                nomes.forEach(n => { porTecnico[n] = (porTecnico[n] || 0) + 1; });
+            });
+            const tiposOS = Object.entries(porTecnico).sort((a, b) => b[1] - a[1]).slice(0, 6);
+            const maxTipo = Math.max(1, ...tiposOS.map(([, v]) => v));
+            const coresTipo = ['var(--hb)', 'var(--hr)', 'var(--hg)', 'var(--ho)', 'var(--hp)', 'var(--ht)'];
+
+            // Atividade em tempo real — últimas entradas do histórico/auditoria da empresa.
+            const atividade = (dados.auditoria || []).filter(a => a.adminId === adminId).sort((a, b) => b.data - a.data).slice(0, 6);
+            const corAcao = (acao) => acao === 'eliminar' ? 'var(--hr)' : acao === 'criar' ? 'var(--hg)' : acao === 'aprovar' ? 'var(--hg)' : 'var(--hb)';
+
+            // Próximas manutenções (contratos) — usa o mesmo cálculo já existente em Contratos.
+            const contratosAdmin = (dados.contratos || []).filter(c => c.adminId === adminId);
+            const proximasManutencoes = contratosAdmin.map(c => {
+                const prox = calcularProximaManutencao(c);
+                return { c, prox, estado: estadoManutencao(prox) };
+            }).filter(x => x.prox).sort((a, b) => (a.prox || '').localeCompare(b.prox || '')).slice(0, 5);
+
+            // Estado dos contratos (agenda de manutenção) — em dia / a vencer / vencidos / sem agenda.
+            const estadosContrato = { em_dia: 0, a_vencer: 0, vencido: 0, sem: 0 };
+            contratosAdmin.forEach(c => { const e = estadoManutencao(calcularProximaManutencao(c)); estadosContrato[e.chave] = (estadosContrato[e.chave] || 0) + 1; });
+            const totalContratos = contratosAdmin.length;
+            const pct = (n) => totalContratos ? (n / totalContratos * 100) : 0;
+
+            // Top 5 clientes por faturação (OS concluídas, mês atual).
+            const porCliente = {};
+            concluidasMes.forEach(s => { const n = obterNomeCliente(s.clienteId) || '—'; porCliente[n] = (porCliente[n] || 0) + (Number(s.valor) || 0); });
+            const topClientes = Object.entries(porCliente).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+            // Faturação por técnico (mês) — soma do valor das OS concluídas atribuídas a cada um.
+            const rentPorTecnico = {};
+            concluidasMes.forEach(s => {
+                const ids = (s.funcionariosIds && s.funcionariosIds.length) ? s.funcionariosIds : [s.funcionarioId].filter(Boolean);
+                const nomes = ids.length ? ids.map(id => obterNomeFuncionario(id) || '—') : ['Sem atribuição'];
+                const valorPorPessoa = (Number(s.valor) || 0) / nomes.length;
+                nomes.forEach(n => { rentPorTecnico[n] = (rentPorTecnico[n] || 0) + valorPorPessoa; });
+            });
+            const rentEntradas = Object.entries(rentPorTecnico).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            const maxRent = Math.max(1, ...rentEntradas.map(([, v]) => v));
+
+            // Donut "Ordens de Serviço" (mês) — em ângulos acumulados.
+            const totalOSMes = osMes.length || 1;
+            const pConcl = concluidasMes.length / totalOSMes * 100;
+            const pAndam = emAndamentoMes.length / totalOSMes * 100;
+            const pPend = pendentesMes.length / totalOSMes * 100;
+            const acc1 = pConcl, acc2 = acc1 + pAndam, acc3 = acc2 + pPend;
+
+            const eur = n => (Number(n) || 0).toLocaleString('pt-PT', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' €';
+            const alertasSrcHtml = document.getElementById('alertasPendencias')?.innerHTML?.trim() || '';
+
+            return `
+            <style>
+                #secao-dashboard-central{ --hg:#22c55e; --hb:#3b82f6; --ho:#f59e0b; --hr:#ef4444; --hp:#8b5cf6; --ht:#14b8a6;
+                    --hline:#e6eaf2; --hsub:#64748b; --hink:#0f172a; }
+                #secao-dashboard-central .hdc-frame{ background:#eef1f7; border:1px solid var(--hline); border-radius:18px; padding:18px; }
+                #secao-dashboard-central .hdc-titulo{ display:flex; align-items:center; gap:9px; margin:0 0 14px; font-size:1.05rem; font-weight:800; color:var(--hink); }
+                #secao-dashboard-central .hdc-titulo i{ color:var(--hb); }
+                #secao-dashboard-central .hdc-card{ background:#fff; border:1px solid var(--hline); border-radius:14px; padding:16px; }
+                #secao-dashboard-central .hdc-card h4{ margin:0 0 12px; font-size:.88rem; color:var(--hink); }
+                #secao-dashboard-central .hdc-kpis{ display:grid; grid-template-columns:repeat(6,1fr); gap:12px; margin-bottom:12px; }
+                #secao-dashboard-central .hdc-kpi{ display:flex; gap:9px; align-items:flex-start; }
+                #secao-dashboard-central .hdc-kpi .ic{ width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:.85rem; flex-shrink:0; }
+                #secao-dashboard-central .hdc-kpi .val{ font-size:1.05rem; font-weight:800; color:var(--hink); line-height:1.1; }
+                #secao-dashboard-central .hdc-kpi .lbl{ font-size:.7rem; color:var(--hsub); margin-bottom:2px; }
+                #secao-dashboard-central .hdc-kpi .delta{ font-size:.68rem; font-weight:700; }
+                #secao-dashboard-central .hdc-kpi .delta.up{ color:var(--hg); } #secao-dashboard-central .hdc-kpi .delta.down{ color:var(--hr); }
+                #secao-dashboard-central .hdc-row4{ display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr; gap:12px; margin-bottom:12px; }
+                #secao-dashboard-central .hdc-row3{ display:grid; grid-template-columns:1fr 1.3fr 1fr; gap:12px; margin-bottom:12px; }
+                #secao-dashboard-central .hdc-row4b{ display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:12px; }
+                #secao-dashboard-central .hdc-bars{ display:flex; align-items:flex-end; gap:8px; height:110px; }
+                #secao-dashboard-central .hdc-bars .bcol{ flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; justify-content:flex-end; height:100%; }
+                #secao-dashboard-central .hdc-bars .bwrap{ display:flex; gap:3px; align-items:flex-end; height:100%; }
+                #secao-dashboard-central .hdc-bars .b{ width:8px; border-radius:3px 3px 0 0; }
+                #secao-dashboard-central .hdc-bars .b.fat{ background:var(--hb); } #secao-dashboard-central .hdc-bars .b.cst{ background:#bfdbfe; }
+                #secao-dashboard-central .hdc-bars .mlbl{ font-size:.64rem; color:var(--hsub); }
+                #secao-dashboard-central .hdc-legend{ display:flex; gap:12px; font-size:.68rem; color:var(--hsub); margin-bottom:8px; }
+                #secao-dashboard-central .hdc-legend span{ display:inline-flex; align-items:center; gap:5px; }
+                #secao-dashboard-central .hdc-legend i{ width:8px; height:8px; border-radius:2px; display:inline-block; }
+                #secao-dashboard-central .hdc-donut{ width:110px; height:110px; border-radius:50%; margin:4px auto 8px; position:relative; }
+                #secao-dashboard-central .hdc-donut::after{ content:""; position:absolute; inset:17px; background:#fff; border-radius:50%; }
+                #secao-dashboard-central .hdc-donut .lbl{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:1; }
+                #secao-dashboard-central .hdc-donut .lbl b{ font-size:1.05rem; color:var(--hink); }
+                #secao-dashboard-central .hdc-donut .lbl small{ font-size:.64rem; color:var(--hsub); }
+                #secao-dashboard-central .hdc-legenditem{ display:flex; align-items:center; justify-content:space-between; font-size:.74rem; padding:3px 0; }
+                #secao-dashboard-central .hdc-legenditem .k{ display:flex; align-items:center; gap:7px; color:var(--hink); }
+                #secao-dashboard-central .hdc-legenditem i{ width:8px; height:8px; border-radius:50%; display:inline-block; }
+                #secao-dashboard-central .hdc-legenditem b{ color:var(--hsub); font-weight:600; }
+                #secao-dashboard-central .hdc-hbars .hb{ margin-bottom:9px; }
+                #secao-dashboard-central .hdc-hbars .t{ display:flex; justify-content:space-between; font-size:.7rem; color:var(--hsub); margin-bottom:4px; }
+                #secao-dashboard-central .hdc-hbars .track{ background:#eef1f7; border-radius:6px; height:7px; overflow:hidden; }
+                #secao-dashboard-central .hdc-hbars .fill{ height:100%; border-radius:6px; }
+                #secao-dashboard-central .hdc-feed .fi{ display:flex; gap:8px; padding:7px 0; border-bottom:1px dashed var(--hline); font-size:.74rem; }
+                #secao-dashboard-central .hdc-feed .fi:last-child{ border-bottom:none; }
+                #secao-dashboard-central .hdc-feed .dot{ width:7px; height:7px; border-radius:50%; margin-top:5px; flex-shrink:0; }
+                #secao-dashboard-central .hdc-feed .tt{ font-weight:700; color:var(--hink); }
+                #secao-dashboard-central .hdc-feed .ds{ color:var(--hsub); }
+                #secao-dashboard-central .hdc-feed .ago{ margin-left:auto; color:#94a3b8; font-size:.66rem; white-space:nowrap; }
+                #secao-dashboard-central .hdc-tec{ display:flex; align-items:center; gap:8px; padding:5px 0; font-size:.74rem; cursor:pointer; border-radius:8px; }
+                #secao-dashboard-central .hdc-tec:hover{ background:#f8fafc; }
+                #secao-dashboard-central .hdc-tec .av{ width:24px; height:24px; border-radius:50%; background:#cbd5e1; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:.62rem; font-weight:800; color:#475569; }
+                #secao-dashboard-central .hdc-tec .nm{ font-weight:700; color:var(--hink); }
+                #secao-dashboard-central .hdc-tec .st{ color:var(--hsub); font-size:.68rem; }
+                #secao-dashboard-central .hdc-tec .dot{ width:7px; height:7px; border-radius:50%; margin-left:auto; flex-shrink:0; }
+                #secao-dashboard-central table.hdc-tbl{ width:100%; border-collapse:collapse; font-size:.74rem; }
+                #secao-dashboard-central table.hdc-tbl th{ text-align:left; color:var(--hsub); font-weight:600; padding:5px 4px; border-bottom:1px solid var(--hline); }
+                #secao-dashboard-central table.hdc-tbl td{ padding:6px 4px; border-bottom:1px solid var(--hline); color:var(--hink); }
+                #secao-dashboard-central table.hdc-tbl tbody tr{ cursor:pointer; }
+                #secao-dashboard-central table.hdc-tbl tbody tr:hover{ background:#f8fafc; }
+                #secao-dashboard-central .hdc-alertas .al{ display:flex; align-items:center; gap:8px; padding:6px 0; font-size:.76rem; border-bottom:1px dashed var(--hline); }
+                #secao-dashboard-central .hdc-alertas .al:last-child{ border-bottom:none; }
+                #secao-dashboard-central .hdc-top5 ul{ margin:0; padding:0; }
+                #secao-dashboard-central .hdc-top5 li{ display:flex; align-items:center; gap:9px; padding:6px 0; font-size:.78rem; list-style:none; border-bottom:1px dashed var(--hline); }
+                #secao-dashboard-central .hdc-top5 li:last-child{ border-bottom:none; }
+                #secao-dashboard-central .hdc-top5 .n{ width:18px; height:18px; border-radius:50%; background:#eef1f7; color:var(--hsub); font-size:.66rem; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+                #secao-dashboard-central .hdc-top5 .nm{ color:var(--hink); font-weight:600; flex:1; }
+                #secao-dashboard-central .hdc-top5 .vl{ color:var(--hsub); font-weight:700; }
+                #secao-dashboard-central .hdc-acoes{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+                #secao-dashboard-central .hdc-acoes button{ display:flex; flex-direction:column; align-items:center; gap:5px; padding:12px 6px; border-radius:11px; border:1px solid var(--hline); background:#fafbfe; font-size:.68rem; font-weight:700; color:var(--hink); cursor:pointer; }
+                #secao-dashboard-central .hdc-acoes .ic{ width:28px; height:28px; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#fff; }
+                #secao-dashboard-central .hdc-vazio{ color:#94a3b8; font-size:.78rem; padding:10px 0; text-align:center; }
+                @media (max-width: 1100px){
+                    #secao-dashboard-central .hdc-kpis{ grid-template-columns:repeat(3,1fr); }
+                    #secao-dashboard-central .hdc-row4, #secao-dashboard-central .hdc-row3, #secao-dashboard-central .hdc-row4b{ grid-template-columns:1fr 1fr; }
+                }
+                @media (max-width: 640px){
+                    #secao-dashboard-central .hdc-kpis{ grid-template-columns:1fr 1fr; }
+                    #secao-dashboard-central .hdc-row4, #secao-dashboard-central .hdc-row3, #secao-dashboard-central .hdc-row4b{ grid-template-columns:1fr; }
+                }
+            </style>
+            <div class="hdc-frame">
+                <h3 class="hdc-titulo"><i class="fas fa-chart-line"></i> Dashboard Central <span style="font-weight:400;font-size:.72rem;color:var(--hsub);margin-left:auto;">Atualizado agora · ${new Date(agora).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}</span></h3>
+
+                <div class="hdc-card hdc-kpis">
+                    <div class="hdc-kpi"><div class="ic" style="background:var(--hg);"><i class="fas fa-building"></i></div>
+                        <div><div class="lbl">Faturação (mês)</div><div class="val">${eur(faturacaoMes)}</div>${_deltaHtml(deltaFaturacao)}</div></div>
+                    <div class="hdc-kpi"><div class="ic" style="background:var(--hb);"><i class="fas fa-clipboard-list"></i></div>
+                        <div><div class="lbl">Ordens de Serviço (mês)</div><div class="val">${osMes.length}</div>${_deltaHtml(deltaOS)}</div></div>
+                    <div class="hdc-kpi"><div class="ic" style="background:var(--ho);"><i class="fas fa-wrench"></i></div>
+                        <div><div class="lbl">OS em atraso</div><div class="val">${atrasadasAgora.length}</div><div class="delta" style="color:var(--hsub);">neste momento</div></div></div>
+                    <div class="hdc-kpi"><div class="ic" style="background:var(--hp);"><i class="fas fa-users"></i></div>
+                        <div><div class="lbl">Técnicos ativos</div><div class="val">${tecnicosAtivos} / ${equipa.length}</div><div class="delta" style="color:var(--hsub);">${equipa.length ? Math.round(tecnicosAtivos / equipa.length * 100) : 0}% agora</div></div></div>
+                    <div class="hdc-kpi"><div class="ic" style="background:var(--ht);"><i class="fas fa-circle-check"></i></div>
+                        <div><div class="lbl">Taxa de conclusão (mês)</div><div class="val">${osMes.length ? Math.round(concluidasMes.length / osMes.length * 100) : 0}%</div><div class="delta" style="color:var(--hsub);">${concluidasMes.length} de ${osMes.length} OS</div></div></div>
+                    <div class="hdc-kpi"><div class="ic" style="background:var(--hr);"><i class="fas fa-chart-pie"></i></div>
+                        <div><div class="lbl">Margem (mês)</div><div class="val">${margemMes == null ? '—' : margemMes.toFixed(1) + '%'}</div><div class="delta" style="color:var(--hsub);">${margemMes == null ? 'sem faturação' : 'faturação − compras'}</div></div></div>
+                </div>
+
+                <div class="hdc-row4">
+                    <div class="hdc-card">
+                        <h4>Faturação e Resultados (8 meses)</h4>
+                        <div class="hdc-legend"><span><i style="background:var(--hb);"></i>Faturação (OS concluídas)</span><span><i style="background:#bfdbfe;"></i>Custos (compras)</span></div>
+                        <div class="hdc-bars">
+                            ${meses8.map(m => `<div class="bcol"><div class="bwrap"><div class="b fat" style="height:${Math.max(2, Math.round(m.fat / maxFat8 * 100))}%;" title="${eur(m.fat)}"></div><div class="b cst" style="height:${Math.max(0, Math.round(m.cst / maxFat8 * 100))}%;" title="${eur(m.cst)}"></div></div><span class="mlbl">${m.label}</span></div>`).join('')}
+                        </div>
+                    </div>
+                    <div class="hdc-card">
+                        <h4>Ordens de Serviço (mês)</h4>
+                        ${osMes.length ? `
+                        <div class="hdc-donut" style="background:conic-gradient(var(--hg) 0 ${acc1}%, var(--hb) ${acc1}% ${acc2}%, var(--ho) ${acc2}% ${acc3}%, var(--hr) ${acc3}% 100%);"><div class="lbl"><b>${osMes.length}</b><small>Total</small></div></div>
+                        <div class="hdc-legenditem"><span class="k"><i style="background:var(--hg);"></i>Concluídas</span><b>${concluidasMes.length} (${pConcl.toFixed(0)}%)</b></div>
+                        <div class="hdc-legenditem"><span class="k"><i style="background:var(--hb);"></i>Em curso</span><b>${emAndamentoMes.length} (${pAndam.toFixed(0)}%)</b></div>
+                        <div class="hdc-legenditem"><span class="k"><i style="background:var(--ho);"></i>Pendentes</span><b>${pendentesMes.length} (${pPend.toFixed(0)}%)</b></div>
+                        <div class="hdc-legenditem"><span class="k"><i style="background:var(--hr);"></i>Em atraso (total)</span><b>${atrasadasAgora.length}</b></div>
+                        ` : `<div class="hdc-vazio">Sem OS registadas este mês.</div>`}
+                    </div>
+                    <div class="hdc-card">
+                        <h4>OS por Técnico (mês)</h4>
+                        ${tiposOS.length ? `<div class="hdc-hbars">
+                            ${tiposOS.map(([lbl, v], i) => `<div class="hb"><div class="t"><span>${escapeHtmlSimples(lbl)}</span><b>${v}</b></div><div class="track"><div class="fill" style="width:${Math.round(v / maxTipo * 100)}%;background:${coresTipo[i % coresTipo.length]};"></div></div></div>`).join('')}
+                        </div>` : `<div class="hdc-vazio">Sem OS atribuídas este mês.</div>`}
+                    </div>
+                    <div class="hdc-card hdc-feed">
+                        <h4>Atividade em Tempo Real</h4>
+                        ${atividade.length ? atividade.map(a => `<div class="fi"><span class="dot" style="background:${corAcao(a.acao)};"></span><div><div class="tt">${escapeHtmlSimples(a.descricao || a.acao || '')}</div><div class="ds">${escapeHtmlSimples(a.utilizadorNome || '')}</div></div><span class="ago">${_tempoRelativo(a.data)}</span></div>`).join('') : `<div class="hdc-vazio">Sem atividade registada.</div>`}
+                    </div>
+                </div>
+
+                <div class="hdc-row3">
+                    <div class="hdc-card">
+                        <h4>Equipa Agora</h4>
+                        <div id="hdcMapaEquipa" style="height:180px;border-radius:12px;margin-bottom:10px;background:#eef1f7;"></div>
+                        <div id="hdcMapaEquipaInfo" style="font-size:.68rem;color:var(--hsub);margin:-4px 0 8px;"></div>
+                        ${equipaComEstado.length ? equipaComEstado.slice(0, 8).map(({ p, e }) => `<div class="hdc-tec" onclick="_hdcClicarPessoaNoMapa('${p.id}')"><div class="av">${escapeHtmlSimples((p.nome || '?').trim().charAt(0).toUpperCase())}</div><div><div class="nm">${escapeHtmlSimples(p.nome || '')}</div><div class="st">${escapeHtmlSimples(e.label)}</div></div><span class="dot" style="background:${e.cor};"></span></div>`).join('') : `<div class="hdc-vazio">Sem equipa registada.</div>`}
+                    </div>
+                    <div class="hdc-card">
+                        <h4>Próximas Manutenções</h4>
+                        ${proximasManutencoes.length ? `<table class="hdc-tbl">
+                            <thead><tr><th>Data</th><th>Cliente</th><th>Contrato</th><th>Estado</th></tr></thead>
+                            <tbody>
+                                ${proximasManutencoes.map(({ c, prox, estado }) => `<tr onclick="abrirCardContratos()"><td>${(prox || '').split('-').reverse().slice(0, 2).join('/')}</td><td>${escapeHtmlSimples(obterNomeCliente(c.clienteId) || '—')}</td><td>${escapeHtmlSimples(c.numero || '—')}</td><td><span style="color:${estado.cor};font-weight:700;">${estado.label}</span></td></tr>`).join('')}
+                            </tbody>
+                        </table>` : `<div class="hdc-vazio">Sem contratos de manutenção ativos.</div>`}
+                    </div>
+                    <div class="hdc-card hdc-alertas">
+                        <h4>Alertas e Pendências</h4>
+                        ${alertasSrcHtml || '<div style="color:#16a34a;"><i class="fas fa-circle-check"></i> Sem pendências. Tudo em dia!</div>'}
+                    </div>
+                </div>
+
+                <div class="hdc-row4b">
+                    <div class="hdc-card hdc-top5">
+                        <h4>Top Clientes (faturação do mês)</h4>
+                        ${topClientes.length ? `<ul>${topClientes.map(([n, v], i) => `<li><span class="n">${i + 1}</span><span class="nm">${escapeHtmlSimples(n)}</span><span class="vl">${eur(v)}</span></li>`).join('')}</ul>` : `<div class="hdc-vazio">Sem OS concluídas com valor este mês.</div>`}
+                    </div>
+                    <div class="hdc-card">
+                        <h4>Faturação por Técnico (mês)</h4>
+                        ${rentEntradas.length ? `<div class="hdc-legend"><span><i style="background:var(--hb);"></i>OS concluídas atribuídas</span></div>
+                        <div class="hdc-bars">
+                            ${rentEntradas.map(([lbl, v]) => `<div class="bcol"><div class="bwrap"><div class="b fat" style="height:${Math.max(2, Math.round(v / maxRent * 100))}%;" title="${eur(v)}"></div></div><span class="mlbl">${escapeHtmlSimples(lbl)}</span></div>`).join('')}
+                        </div>` : `<div class="hdc-vazio">Sem OS concluídas com valor este mês.</div>`}
+                    </div>
+                    <div class="hdc-card">
+                        <h4>Estado dos Contratos</h4>
+                        ${totalContratos ? `
+                        <div class="hdc-donut" style="background:conic-gradient(var(--hg) 0 ${pct(estadosContrato.em_dia)}%, var(--ho) ${pct(estadosContrato.em_dia)}% ${pct(estadosContrato.em_dia) + pct(estadosContrato.a_vencer)}%, var(--hr) ${pct(estadosContrato.em_dia) + pct(estadosContrato.a_vencer)}% ${pct(estadosContrato.em_dia) + pct(estadosContrato.a_vencer) + pct(estadosContrato.vencido)}%, #94a3b8 ${pct(estadosContrato.em_dia) + pct(estadosContrato.a_vencer) + pct(estadosContrato.vencido)}% 100%);"><div class="lbl"><b>${totalContratos}</b><small>Total</small></div></div>
+                        <div class="hdc-legenditem"><span class="k"><i style="background:var(--hg);"></i>Em dia</span><b>${estadosContrato.em_dia} (${pct(estadosContrato.em_dia).toFixed(0)}%)</b></div>
+                        <div class="hdc-legenditem"><span class="k"><i style="background:var(--ho);"></i>A vencer (≤30 dias)</span><b>${estadosContrato.a_vencer} (${pct(estadosContrato.a_vencer).toFixed(0)}%)</b></div>
+                        <div class="hdc-legenditem"><span class="k"><i style="background:var(--hr);"></i>Vencidos</span><b>${estadosContrato.vencido} (${pct(estadosContrato.vencido).toFixed(0)}%)</b></div>
+                        <div class="hdc-legenditem"><span class="k"><i style="background:#94a3b8;"></i>Sem agenda</span><b>${estadosContrato.sem} (${pct(estadosContrato.sem).toFixed(0)}%)</b></div>
+                        ` : `<div class="hdc-vazio">Sem contratos de manutenção.</div>`}
+                    </div>
+                    <div class="hdc-card hdc-acoes">
+                        <button onclick="abrirSecao('servicos')"><div class="ic" style="background:var(--hb);"><i class="fas fa-plus"></i></div>Nova OS</button>
+                        <button onclick="abrirSecao('clientes')"><div class="ic" style="background:var(--hp);"><i class="fas fa-user-plus"></i></div>Novo Cliente</button>
+                        <button onclick="abrirSecao('financeiro')"><div class="ic" style="background:var(--ht);"><i class="fas fa-file-invoice"></i></div>Financeiro</button>
+                        <button onclick="abrirSecao('encomendas')"><div class="ic" style="background:var(--ho);"><i class="fas fa-euro-sign"></i></div>Encomendas</button>
+                        <button onclick="abrirSecao('relatorio-os')"><div class="ic" style="background:var(--hg);"><i class="fas fa-chart-column"></i></div>Ver Relatórios</button>
+                        <button onclick="abrirSecao('minha-licenca')"><div class="ic" style="background:#64748b;"><i class="fas fa-gear"></i></div>Configurações</button>
+                    </div>
+                </div>
+            </div>`;
+        }
         function renderizarHomeDashboard() {
             const u = usuarioLogado; if (!u) return;
             const kpisEl = document.getElementById('homeKpis'); if (!kpisEl) return;
@@ -32555,6 +33374,10 @@ window._relPrefill = function(msg){
                 alert('Acesso restrito ao Super Admin.');
                 return;
             }
+            if (nome === 'dashboard-central' && usuarioLogado?.role !== 'admin' && usuarioLogado?.role !== 'subadmin') {
+                alert('Acesso restrito ao Administrador.');
+                return;
+            }
             if (nome === 'ajuda-peticoes' && usuarioLogado?.role === 'funcionario') {
                 alert('Funcionários não podem aceder a esta secção.');
                 return;
@@ -32613,6 +33436,9 @@ window._relPrefill = function(msg){
             }
             if (nome === 'analytics') {
                 renderizarAnalyticsSite();
+            }
+            if (nome === 'dashboard-central') {
+                renderizarDashboardCentralSecao();
             }
             if (nome === 'funcionarios') {
                 renderizarFuncionarios();
