@@ -27061,17 +27061,23 @@ async function salvarAdmin(e) {
             </label>`;
             };
             return `
+                ${(colIncendio.length || colSeguranca.length) ? `
                 <div style="display:flex;gap:0;flex-wrap:wrap;width:100%;">
+                    ${colIncendio.length ? `
                     <div style="flex:1 1 220px;padding-right:14px;">
                         <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;color:#dc2626;letter-spacing:.4px;margin-bottom:8px;"><i class="fas fa-fire"></i> Incêndio</div>
-                        ${colIncendio.map(linha).join('') || '<span class="help-text">—</span>'}
+                        ${colIncendio.map(linha).join('')}
                     </div>
-                    <div style="width:1px;background:#e2e8f0;margin:0 14px;"></div>
+                    ` : ''}
+                    ${(colIncendio.length && colSeguranca.length) ? `<div style="width:1px;background:#e2e8f0;margin:0 14px;"></div>` : ''}
+                    ${colSeguranca.length ? `
                     <div style="flex:1 1 220px;">
                         <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;color:#2563eb;letter-spacing:.4px;margin-bottom:8px;"><i class="fas fa-shield-halved"></i> Segurança</div>
-                        ${colSeguranca.map(linha).join('') || '<span class="help-text">—</span>'}
+                        ${colSeguranca.map(linha).join('')}
                     </div>
+                    ` : ''}
                 </div>
+                ` : ''}
                 ${outros.length ? `<div style="margin-top:10px;width:100%;"><div style="font-size:.72rem;font-weight:700;text-transform:uppercase;color:#64748b;letter-spacing:.4px;margin-bottom:8px;">Outros</div><div style="display:flex;flex-wrap:wrap;gap:8px;">${outros.map(linha).join('')}</div></div>` : ''}
             `;
         }
@@ -31659,7 +31665,7 @@ window._relPrefill = function(msg){
             _onbConcluir();
         }
 
-        function _onbConcluir() {
+        async function _onbConcluir() {
             const admin = adminAtual();
             let sugestoesAddon = [];
             if (admin) {
@@ -31679,9 +31685,18 @@ window._relPrefill = function(msg){
                 // Reconfigurar substitui, não acumula: remove os tipos que o PRÓPRIO onboarding
                 // tinha criado numa vez anterior e que já não fazem parte da escolha atual — mas
                 // nunca toca em tipos que o admin tenha criado à mão (sem essa marca).
-                dados.tiposTrabalhoCustom = (dados.tiposTrabalhoCustom || []).filter(t =>
-                    !(t.adminId === tenantId && t.criadoPorOnboarding && !codigosEscolhidos.has(t.codigo))
+                const aRemover = (dados.tiposTrabalhoCustom || []).filter(t =>
+                    t.adminId === tenantId && t.criadoPorOnboarding && !codigosEscolhidos.has(t.codigo)
                 );
+                // IMPORTANTE: tirar só do array local não chega — sem apagar a sério na Supabase,
+                // o registo "voltava" sozinho da próxima vez que a app sincronizasse, dando a
+                // sensação de que nunca tinha sido removido (ia sempre acumulando).
+                for (const t of aRemover) {
+                    try { await supa.from('tipos_trabalho_custom').delete().eq('id', t.id); } catch (e) { console.warn('Falha ao apagar tipo de trabalho antigo:', t.id, e); }
+                }
+                const idsRemovidos = new Set(aRemover.map(t => t.id));
+                dados.tiposTrabalhoCustom = (dados.tiposTrabalhoCustom || []).filter(t => !idsRemovidos.has(t.id));
+
                 const codigosCustomExistentes = new Set((dados.tiposTrabalhoCustom || []).filter(t => t.adminId === tenantId).map(t => t.codigo));
                 _onb.servicos.forEach(v => {
                     if (codigosBase.has(v) || codigosCustomExistentes.has(v)) return; // já existe, não duplicar
