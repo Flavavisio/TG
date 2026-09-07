@@ -11835,6 +11835,39 @@
         // Botão "Apagar" unificado (Marca / Categoria / Artigo) — pergunta o que apagar, mostra
         // quantos artigos (e, no caso da marca, quantas categorias) ficam afetados, e só apaga
         // depois de confirmado com Sim/Não.
+        // Modal com um <select> em lista (combobox de várias linhas, ordenado alfabeticamente,
+        // com scroll) — usado para escolher UMA marca/categoria/artigo quando a lista pode ter
+        // muitas entradas (ao contrário do tgEscolher, que mostra um botão por opção e fica
+        // impraticável com dezenas delas).
+        function _escolherComboLista(titulo, opcoes) {
+            return new Promise(resolve => {
+                const opcoesOrdenadas = opcoes.slice().sort((a, b) => a.rotulo.localeCompare(b.rotulo, 'pt'));
+                const overlay = document.createElement('div');
+                overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:999998;display:flex;align-items:center;justify-content:center;padding:20px;';
+                overlay.innerHTML = `
+                    <div style="background:#fff;border-radius:14px;padding:22px;max-width:380px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.3);">
+                        <h3 style="margin:0 0 14px;font-size:1.02rem;color:#0f172a;">${escapeHtmlSimples(titulo)}</h3>
+                        <select id="_comboListaEscolha" size="6" style="width:100%;border:1px solid #e2e8f0;border-radius:8px;padding:4px;font-size:.9rem;overflow-y:auto;">
+                            ${opcoesOrdenadas.map((o, i) => `<option value="${i}">${escapeHtmlSimples(o.rotulo)}</option>`).join('')}
+                        </select>
+                        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;">
+                            <button type="button" class="btn btn-outline" id="_comboListaCancelar">Cancelar</button>
+                            <button type="button" class="btn btn-primary" id="_comboListaOk">Selecionar</button>
+                        </div>
+                    </div>`;
+                document.body.appendChild(overlay);
+                const sel = overlay.querySelector('#_comboListaEscolha');
+                if (sel.options.length) sel.selectedIndex = 0;
+                sel.ondblclick = () => concluir(sel.value);
+                function concluir(indice) {
+                    document.body.removeChild(overlay);
+                    resolve(indice === '' || indice == null ? null : opcoesOrdenadas[Number(indice)].valor);
+                }
+                overlay.querySelector('#_comboListaOk').onclick = () => concluir(sel.value);
+                overlay.querySelector('#_comboListaCancelar').onclick = () => concluir(null);
+                overlay.onclick = (e) => { if (e.target === overlay) concluir(null); };
+            });
+        }
         async function apagarMarcaCategoriaArtigo() {
             const adminId = _tenantArmazem();
             const tipo = await tgEscolher('O que pretende apagar?', [
@@ -11852,7 +11885,7 @@
                 });
                 const marcas = [...vistas.values()].sort((a, b) => a.localeCompare(b, 'pt'));
                 if (!marcas.length) { alert('Não há marcas registadas.'); return; }
-                const escolhida = await tgEscolher('Qual marca pretende apagar?', marcas.map(m => ({ rotulo: m, valor: m })), { titulo: 'Apagar marca', icone: 'fa-trash' });
+                const escolhida = await _escolherComboLista('Qual marca pretende apagar?', marcas.map(m => ({ rotulo: m, valor: m })));
                 if (!escolhida) return;
                 const chave = escolhida.trim().toLowerCase();
                 const artigosDaMarca = (dados.artigos || []).filter(a => a.adminId === adminId && (a.marca || '').trim().toLowerCase() === chave);
@@ -11871,7 +11904,7 @@
             if (tipo === 'categoria') {
                 const categorias = [...new Set((dados.artigos || []).filter(a => a.adminId === adminId).map(a => (a.categoria || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt'));
                 if (!categorias.length) { alert('Não há categorias registadas.'); return; }
-                const escolhida = await tgEscolher('Qual categoria pretende apagar?', categorias.map(c => ({ rotulo: c, valor: c })), { titulo: 'Apagar categoria', icone: 'fa-trash' });
+                const escolhida = await _escolherComboLista('Qual categoria pretende apagar?', categorias.map(c => ({ rotulo: c, valor: c })));
                 if (!escolhida) return;
                 const artigosDaCategoria = (dados.artigos || []).filter(a => a.adminId === adminId && (a.categoria || '').trim() === escolhida.trim());
                 if (!artigosDaCategoria.length) { alert('Essa categoria já não tem artigos.'); return; }
@@ -11899,8 +11932,8 @@
             if (candidatos.length === 1) {
                 artigo = candidatos[0];
             } else {
-                if (candidatos.length > 30) { alert(`Há ${candidatos.length} artigos a corresponder à pesquisa/filtros atuais — escreva mais na pesquisa (ou escolha marca/categoria) para reduzir a lista, ou use o ícone 🗑 na linha do artigo na tabela.`); return; }
-                const escolhido = await tgEscolher('Qual artigo pretende apagar?', candidatos.map(a => ({ rotulo: a.nome, valor: a.id })), { titulo: 'Apagar artigo', icone: 'fa-trash' });
+                if (candidatos.length > 300) { alert(`Há ${candidatos.length} artigos a corresponder à pesquisa/filtros atuais — escreva mais na pesquisa (ou escolha marca/categoria) para reduzir a lista, ou use o ícone 🗑 na linha do artigo na tabela.`); return; }
+                const escolhido = await _escolherComboLista('Qual artigo pretende apagar?', candidatos.map(a => ({ rotulo: a.nome, valor: a.id })));
                 if (!escolhido) return;
                 artigo = candidatos.find(a => a.id === escolhido);
                 if (!artigo) return;
