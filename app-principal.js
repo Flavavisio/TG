@@ -8824,7 +8824,7 @@
                 cont.innerHTML = `<div style="display:flex;flex-direction:column;gap:14px;max-height:60vh;overflow-y:auto;">
                     ${equipamentos.map(eq => {
                         const label = `${EQUIP_TIPOS[eq.tipo] || eq.tipo}${eq.marca ? ' — ' + eq.marca : ''}`;
-                        const url = `https://www.totalgest.pt/equip.html?id=${encodeURIComponent(eq.id)}`;
+                        const url = `https://totalgest.pt/equip.html?id=${encodeURIComponent(eq.id)}`;
                         const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(url)}`;
                         return `<div style="display:flex;gap:14px;align-items:center;border:1px solid #e6eaf2;border-radius:12px;padding:12px;">
                             <img src="${qrImg}" alt="QR ${escapeHtmlSimples(label)}" style="width:80px;height:80px;border-radius:8px;flex-shrink:0;" />
@@ -8849,7 +8849,7 @@
         function imprimirEtiquetaQrEquip(equipId) {
             const eq = dados.equipamentos?.find(e => e.id === equipId);
             if (!eq) { alert('Equipamento não encontrado — grava o contrato primeiro.'); return; }
-            const url = `https://www.totalgest.pt/equip.html?id=${encodeURIComponent(equipId)}`;
+            const url = `https://totalgest.pt/equip.html?id=${encodeURIComponent(equipId)}`;
             const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&data=${encodeURIComponent(url)}`;
             const label = `${EQUIP_TIPOS[eq.tipo] || eq.tipo}${eq.marca ? ' — ' + eq.marca : ''}`;
             const w = window.open('', '_blank', 'width=420,height=560');
