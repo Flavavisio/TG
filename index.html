@@ -2008,6 +2008,8 @@
                 <input type="file" id="importArtigosFile" accept=".csv,text/csv" style="display:none" onchange="importarArtigosCSV(this)" />
                 <button class="btn btn-sm" id="btnImportarArtigosMoloni" style="background:#0891b2;color:#fff;display:none;" onclick="importarArtigosMoloni()" title="Importar diretamente da Moloni, via API — só cria os novos, nunca altera os já existentes"><i class="fas fa-cloud-arrow-down"></i> Importar da Moloni</button>
                 <button class="btn btn-sm" id="btnSincronizarArtigosMoloni" style="background:#7c3aed;color:#fff;display:none;" onclick="sincronizarArtigosMoloni()" title="Cria os artigos novos e atualiza nome/preço dos já existentes — o stock só é comparado e avisado, nunca alterado sozinho"><i class="fas fa-rotate"></i> Sincronizar</button>
+                <button class="btn btn-sm" id="btnRecalcularCustosMoloni" style="background:#eef2ff;color:#3730a3;display:none;" onclick="recalcularTodosCustosMoloni()" title="Vai buscar à Moloni o preço de custo atual de todos os artigos com referência — sem mexer em nome, preço de venda ou stock"><i class="fas fa-rotate"></i> Recalcular custos</button>
+                <span id="lblUltimaSincMoloniArtigos" style="display:none;align-self:center;font-size:.74rem;color:#64748b;"></span>
                 <button class="btn btn-outline" onclick="abrirGestaoArmazens()"><i class="fas fa-warehouse"></i> Armazéns</button>
                 <button class="btn btn-outline" onclick="abrirTransferenciaStock()"><i class="fas fa-truck-loading"></i> Transferir stock</button>
                 <button class="btn btn-outline" onclick="abrirModalMovimentos()"><i class="fas fa-exchange-alt"></i> Movimentos</button>

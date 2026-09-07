@@ -7064,6 +7064,8 @@
             if (btnArt) btnArt.style.display = _erpProntoImportar ? 'inline-flex' : 'none';
             const btnSincArt = document.getElementById('btnSincronizarArtigosMoloni');
             if (btnSincArt) btnSincArt.style.display = _erpProntoImportar ? 'inline-flex' : 'none';
+            const btnRecalcTodos = document.getElementById('btnRecalcularCustosMoloni');
+            if (btnRecalcTodos) btnRecalcTodos.style.display = _erpProntoImportar ? 'inline-flex' : 'none';
             const btnForn = document.getElementById('btnImportarFornecedoresMoloni');
             if (btnForn) btnForn.style.display = _erpProntoImportar ? 'inline-flex' : 'none';
             const btnFinFat = document.getElementById('btnFaturacaoMoloniFin');
@@ -7149,6 +7151,45 @@
                 console.error('importar-moloni (clientes):', err);
                 const motivo = await _erroMoloniDetalhado(err);
                 alert('⚠️ Não foi possível importar: ' + motivo);
+            }
+        }
+        // Botão geral "Recalcular custos" — vai buscar à Moloni o preço de custo atual de TODOS
+        // os artigos da empresa que tenham referência, de uma vez só (um único pedido ao
+        // servidor, que trata os artigos em paralelo controlado). Não mexe em nome, preço de
+        // venda nem stock — só no preço de compra/custo.
+        async function recalcularTodosCustosMoloni() {
+            const admin = adminAtual();
+            if (!admin || !moduloErpAtivo(admin)) { alert('O add-on "Integração com ERP\'s" não está ativo.'); return; }
+            const artigosComRef = (dados.artigos || []).filter(a => a.adminId === admin.id && a.referencia);
+            if (!artigosComRef.length) { alert('Não há artigos com referência para recalcular.'); return; }
+            if (!confirm(`Recalcular o preço de custo de ${artigosComRef.length} artigo(s) com referência, junto da Moloni?\n\nNão mexe em nome, preço de venda nem stock — só no preço de compra/custo. Pode demorar um pouco.`)) return;
+            const btn = document.getElementById('btnRecalcularCustosMoloni');
+            const btnHtmlOriginal = btn ? btn.innerHTML : null;
+            if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> A recalcular…'; }
+            try {
+                const { data, error } = await supa.functions.invoke('dynamic-processor', { body: { admin_id: admin.id, tipo: 'custos_em_lote', referencias: artigosComRef.map(a => a.referencia) } });
+                if (error) throw error;
+                if (data?.erro) throw new Error(data.erro);
+                const porRef = new Map((data?.itens || []).map(it => [String(it.referencia), it.precoCusto]));
+                let atualizados = 0, semAlteracao = 0, semCusto = 0;
+                artigosComRef.forEach(a => {
+                    const novoCusto = porRef.get(String(a.referencia));
+                    if (novoCusto == null) { semCusto++; return; }
+                    if (a.precoCompra != null && Number(a.precoCompra) === Number(novoCusto)) { semAlteracao++; return; }
+                    a.precoCompra = Number(novoCusto);
+                    atualizados++;
+                });
+                admin.ultimaSincronizacaoMoloniArtigos = Date.now();
+                guardarDados(dados);
+                renderizarTudo();
+                _atualizarLabelUltimaSincMoloni();
+                alert(`✅ Custos recalculados.\n\nAtualizados: ${atualizados}\nJá estavam corretos: ${semAlteracao}\nSem custo na Moloni: ${semCusto}\nTotal verificado: ${artigosComRef.length}`);
+            } catch (err) {
+                console.error('recalcular-custos-lote-moloni:', err);
+                const motivo = await _erroMoloniDetalhado(err);
+                alert('⚠️ Não foi possível recalcular os custos: ' + motivo);
+            } finally {
+                if (btn) { btn.disabled = false; btn.innerHTML = btnHtmlOriginal; }
             }
         }
         // Botão "Recalcular custo" numa linha da tabela de Artigos — vai só buscar o preço de
