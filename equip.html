@@ -153,9 +153,23 @@ async function carregarFicha() {
         // locais/clientes diretamente a partir daqui.
         const { data, error } = await supa.functions.invoke('historico-equipamento', { body: { equip_id: equipId } });
         if (error || !data?.ok) {
+            const msg = data?.erro || error?.message || 'Erro desconhecido';
+            // O telemóvel pode ter guardado uma sessão que entretanto deixou de existir no
+            // servidor (ex.: login feito noutro sítio, sessão expirada/revogada) — a página
+            // ficava presa a mostrar o erro em bruto, sem voltar a pedir login sozinha. Sempre
+            // que o erro é de autenticação, termina essa sessão inválida e volta ao login.
+            const ehErroAutenticacao = /session_not_found|not authenticated|não autenticado|jwt|401|403/i.test(msg);
+            if (ehErroAutenticacao) {
+                await supa.auth.signOut().catch(() => {});
+                document.getElementById('areaCarregando').style.display = 'none';
+                document.getElementById('areaFicha').style.display = 'none';
+                document.getElementById('areaLogin').style.display = 'block';
+                document.getElementById('erroLogin').textContent = 'A tua sessão expirou — entra novamente.';
+                document.getElementById('erroLogin').style.display = 'block';
+                return;
+            }
             document.getElementById('areaCarregando').style.display = 'none';
             document.getElementById('areaFicha').style.display = 'block';
-            const msg = data?.erro || error?.message || 'Erro desconhecido';
             document.getElementById('areaFicha').innerHTML = `<div class="card"><div class="vazio">Não foi possível carregar o histórico.</div><div class="erro-diag">${escapeHtml(msg)}</div></div>`;
             return;
         }
