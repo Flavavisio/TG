@@ -174,21 +174,45 @@ async function carregarFicha() {
             return;
         }
 
-        const { equipamento: eq, local, cliente, registos, servicos: osLigadas, funcionarios } = data;
+        const { equipamento: eq, local, cliente, registos, servicos: osLigadas, folhas, movimentosStock, artigos, funcionarios } = data;
         const nomeTecnico = (id) => (funcionarios || []).find(f => f.id === id)?.nome || '—';
+        const nomeArtigo = (id) => (artigos || []).find(a => a.id === id) || null;
+
+        // Para cada OS, procura a respetiva Folha de Obra (trabalho realizado, materiais) — e,
+        // se a folha não tiver texto de materiais escrito, monta a lista a partir dos consumos
+        // reais de stock ligados a ela (mesma lógica do relatório em PDF da folha, na app).
+        const folhaDaOS = (servicoId) => (folhas || []).find(f => f.servico_id === servicoId) || null;
+        const materiaisDaFolha = (folha) => {
+            if (!folha) return null;
+            if (folha.materiais && folha.materiais.trim()) return folha.materiais.trim();
+            const consumidos = (movimentosStock || []).filter(m => m.origem_id === folha.id);
+            if (!consumidos.length) return null;
+            return consumidos.map(m => {
+                const art = nomeArtigo(m.artigo_id);
+                return `${art ? art.nome : '(artigo removido)'} — ${m.quantidade} ${art ? (art.unidade || 'un') : 'un'}`;
+            }).join('\n');
+        };
 
         // Junta os dois históricos (registos_manutencao + OS ligadas ao equipamento) por data,
-        // mais recente primeiro. Cada evento só mostra a descrição ao clicar. O título mostra
+        // mais recente primeiro. Cada evento só mostra o resumo ao clicar. O título mostra
         // sempre a descrição real da OS/intervenção, não só um rótulo genérico.
         const eventos = [
-            ...(registos || []).map(r => ({ data: r.data_realizacao, titulo: r.observacoes || 'Manutenção realizada', tecnico: nomeTecnico(r.tecnico_id), obs: r.observacoes, corretiva: false })),
-            ...(osLigadas || []).map(s => ({
-                data: s.data,
-                titulo: s.descricao || (s.origem === 'assistencia' ? 'Assistência' : 'Ordem de Serviço'),
-                tecnico: nomeTecnico(s.funcionario_id),
-                obs: s.observacoes || s.descricao || null,
-                corretiva: s.origem === 'assistencia',
-            })),
+            ...(registos || []).map(r => ({ data: r.data_realizacao, titulo: r.observacoes || 'Manutenção realizada', tecnico: nomeTecnico(r.tecnico_id), obs: r.observacoes, corretiva: false, folhaResumo: null })),
+            ...(osLigadas || []).map(s => {
+                const folha = folhaDaOS(s.id);
+                return {
+                    data: s.data,
+                    titulo: s.descricao || (s.origem === 'assistencia' ? 'Assistência' : 'Ordem de Serviço'),
+                    tecnico: nomeTecnico(folha?.funcionario_id ?? s.funcionario_id),
+                    obs: s.observacoes || s.descricao || null,
+                    corretiva: s.origem === 'assistencia',
+                    folhaResumo: folha ? {
+                        trabalho: folha.descricao || null,
+                        horas: folha.horas_trabalhadas || 0,
+                        materiais: materiaisDaFolha(folha),
+                    } : null,
+                };
+            }),
         ].filter(e => e.data).sort((a, b) => (b.data || '').localeCompare(a.data || ''));
 
         const hoje = new Date().toISOString().slice(0, 10);
@@ -208,6 +232,7 @@ async function carregarFicha() {
                 <div class="linha"><span class="rot">Instalação/venda</span><span class="val">${fmtData(eq.data_instalacao)}</span></div>
                 <div class="linha"><span class="rot">Garantia</span><span class="val">${garantiaBadge}</span></div>
                 ${eq.observacoes ? `<div class="linha"><span class="rot">Observações</span><span class="val">${escapeHtml(eq.observacoes)}</span></div>` : ''}
+                ${(!cliente || !local) ? `<div class="linha" style="border-top:1px dashed #fde68a;margin-top:8px;padding-top:10px;"><span class="rot" style="color:#b45309;">⚠️ Este equipamento não tem Local associado — fala com o teu administrador para corrigir.</span></div>` : ''}
             </div>
             <div class="card">
                 <h2>📋 Histórico completo (${eventos.length})</h2>
@@ -218,7 +243,13 @@ async function carregarFicha() {
                             <div class="data"><i class="fas fa-chevron-right seta"></i> ${fmtData(e.data)}</div>
                             <div class="titulo">${escapeHtml(e.titulo)}</div>
                             <div class="tecnico">👤 ${escapeHtml(e.tecnico)}</div>
-                            <div class="obs">${e.obs ? escapeHtml(e.obs) : 'Sem observações registadas nesta intervenção.'}</div>
+                            <div class="obs">
+                                ${e.folhaResumo ? `
+                                    ${e.folhaResumo.trabalho ? `<div><strong>Trabalho realizado:</strong><br>${escapeHtml(e.folhaResumo.trabalho)}</div>` : ''}
+                                    ${e.folhaResumo.horas ? `<div style="margin-top:6px;"><strong>Horas trabalhadas:</strong> ${e.folhaResumo.horas}h</div>` : ''}
+                                    <div style="margin-top:6px;"><strong>Materiais usados:</strong><br>${e.folhaResumo.materiais ? escapeHtml(e.folhaResumo.materiais).replace(/\n/g, '<br>') : 'Nenhum material registado.'}</div>
+                                ` : (e.obs ? escapeHtml(e.obs) : 'Sem observações registadas nesta intervenção.')}
+                            </div>
                         </div>
                     </div>
                 `).join('') : '<div class="vazio">Ainda não há intervenções registadas neste equipamento.</div>'}

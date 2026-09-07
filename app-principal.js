@@ -8811,6 +8811,18 @@
         }
         // Modal que lista todos os equipamentos de um contrato, com o QR de cada um já
         // visível — em vez de teres de abrir um a um, vês/imprimes tudo de uma vez.
+        // Associa um equipamento (que ficou sem local, provavelmente criado antes de o Local
+        // do contrato ter sido escolhido) ao local desse mesmo contrato — corrige de imediato
+        // a ficha do QR code, que passa a mostrar Cliente/Local.
+        function _associarEquipAoLocalContrato(equipId, localId) {
+            const eq = (dados.equipamentos || []).find(e => e.id === equipId);
+            if (!eq || !localId) return;
+            eq.localId = localId;
+            guardarDados(dados);
+            const c = dados.contratos?.find(x => (x.equipamentosIds || []).includes(equipId) || x.equipamentoId === equipId);
+            if (c) abrirModalEquipamentosContrato(c.id);
+            alert('✅ Equipamento associado ao local — a ficha do QR já mostra o Cliente/Local.');
+        }
         function abrirModalEquipamentosContrato(contratoId) {
             const c = dados.contratos?.find(x => x.id === contratoId);
             if (!c) { alert('Contrato não encontrado.'); return; }
@@ -8826,12 +8838,21 @@
                         const label = `${EQUIP_TIPOS[eq.tipo] || eq.tipo}${eq.marca ? ' — ' + eq.marca : ''}`;
                         const url = `https://totalgest.pt/equip.html?id=${encodeURIComponent(eq.id)}`;
                         const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(url)}`;
+                        // Se o equipamento não tem local associado, a ficha do QR nunca consegue
+                        // mostrar Cliente/Local — avisa e deixa corrigir com um clique, associando
+                        // ao local deste contrato (que já sabemos a que cliente pertence).
+                        const semLocal = !eq.localId && c.localId ? `
+                            <div style="margin-top:6px;font-size:.78rem;color:#b45309;background:#fef3c7;border-radius:8px;padding:6px 10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                                <i class="fas fa-triangle-exclamation"></i> Sem local associado — a ficha do QR não mostra Cliente/Local.
+                                <button type="button" class="btn btn-sm" style="background:#f59e0b;color:#fff;" onclick="_associarEquipAoLocalContrato('${eq.id}','${c.localId}')">Associar ao local deste contrato</button>
+                            </div>` : '';
                         return `<div style="display:flex;gap:14px;align-items:center;border:1px solid #e6eaf2;border-radius:12px;padding:12px;">
                             <img src="${qrImg}" alt="QR ${escapeHtmlSimples(label)}" style="width:80px;height:80px;border-radius:8px;flex-shrink:0;" />
                             <div style="flex:1;">
                                 <div style="font-weight:700;color:#152a52;">${escapeHtmlSimples(label)}</div>
                                 ${eq.numeroSerie ? `<div style="font-size:.82rem;color:#64748b;">Nº série: ${escapeHtmlSimples(eq.numeroSerie)}</div>` : ''}
                                 <button type="button" class="btn btn-sm btn-outline" style="margin-top:8px;" onclick="imprimirEtiquetaQrEquip('${eq.id}')"><i class="fas fa-print"></i> Imprimir etiqueta</button>
+                                ${semLocal}
                             </div>
                         </div>`;
                     }).join('')}
@@ -8876,6 +8897,7 @@
         function adicionarEquipContrato(localIdOverride) {
             const adminId = usuarioLogado?.adminId || usuarioLogado?.id;
             const localId = localIdOverride || document.getElementById('ct_local').value;
+            if (!localId) { alert('Escolhe primeiro o Local do contrato — sem local, o equipamento fica sem Cliente/Local associados (a ficha do QR code não os consegue mostrar).'); return; }
             const val = document.getElementById('ct_equip_add').value;
             let equipId;
             if (val === '__novo__') {
