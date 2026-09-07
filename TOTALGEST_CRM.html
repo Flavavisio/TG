@@ -2305,9 +2305,17 @@
         function _orcAoMudarCliente() {
             const cli = dados.clientes?.find(c => c.id === document.getElementById('orc_cliente').value);
             if (cli) {
-                if (!document.getElementById('orc_contacto_nome').value) document.getElementById('orc_contacto_nome').value = cli.pessoaContacto || '';
-                if (!document.getElementById('orc_contacto_tel').value) document.getElementById('orc_contacto_tel').value = cli.telefone || '';
-                if (!document.getElementById('orc_contacto_email').value) document.getElementById('orc_contacto_email').value = cli.email || '';
+                // Atualiza sempre, mesmo que já estivessem preenchidos — antes só preenchia se
+                // estivesse vazio, o que fazia com que trocar de cliente ficasse com os dados de
+                // contacto do cliente ANTERIOR, por engano.
+                document.getElementById('orc_contacto_nome').value = cli.pessoaContacto || '';
+                document.getElementById('orc_contacto_tel').value = cli.telefone || '';
+                document.getElementById('orc_contacto_email').value = cli.email || '';
+            } else {
+                // Sem cliente selecionado — limpa também, para não sobrar contacto de outro cliente.
+                document.getElementById('orc_contacto_nome').value = '';
+                document.getElementById('orc_contacto_tel').value = '';
+                document.getElementById('orc_contacto_email').value = '';
             }
         }
 
