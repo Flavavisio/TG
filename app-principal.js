@@ -14945,9 +14945,12 @@
             if (!cfg || cfg.provider !== 'moloni' || !cfg.moloni?.companyId) return;
             const fornecedor = dados.fornecedores?.find(f => f.id === encomenda.fornecedorId);
             if (!fornecedor) return;
+            // Manda sempre a Referência do artigo — é o que permite à Moloni ligar esta compra
+            // ao MESMO produto que as faturas de venda já usam, e assim repor o stock certo (sem
+            // isto, a compra entrava como texto solto, sem repor stock de artigo nenhum lá).
             const linhas = itens.map(it => {
                 const art = dados.artigos?.find(a => a.id === it.artigoId);
-                return { nome: art ? art.nome : 'Artigo', qty: parseInt(it.quantidade, 10) || 0, preco: it.precoUnit != null ? Number(it.precoUnit) : 0 };
+                return { referencia: art?.referencia || null, nome: art ? art.nome : 'Artigo', qty: parseInt(it.quantidade, 10) || 0, preco: it.precoUnit != null ? Number(it.precoUnit) : 0 };
             });
             try {
                 const { data, error } = await supa.functions.invoke('enviar-compra-moloni', { body: {
@@ -14958,6 +14961,10 @@
                 } });
                 if (error || data?.erro) { console.warn('compra moloni:', error || data?.erro); return; }
                 if (data?.documentId) { encomenda.compraMoloniId = data.documentId; guardarDados(dados); }
+                if (data?.itensSemReferencia?.length) {
+                    console.warn('Compra enviada à Moloni, mas sem referência para: ' + data.itensSemReferencia.join(', ') + ' — esses artigos ficaram sem stock reposto na Moloni. Define a referência deles nos Artigos.');
+                    alert('⚠️ A compra foi registada na Moloni, mas os seguintes artigos não têm Referência definida no TotalGest, por isso não ficaram ligados a nenhum produto lá (o stock deles NÃO foi reposto na Moloni):\n\n' + data.itensSemReferencia.join('\n') + '\n\nDefine a Referência desses artigos em Armazém → Artigos, para as próximas compras já ficarem corretas.');
+                }
             } catch (err) {
                 console.warn('compra moloni:', err);
             }
@@ -22576,8 +22583,8 @@ async function salvarAdmin(e) {
                                 <div class="form-group"><label>Quando vence</label><input type="text" value="${vencimentoTxt}" disabled style="background:#e9edf2;" /><span class="help-text">Calculado sozinho — avisa 30 dias antes de vencer.</span></div>
                                     `;
                                 })() : ''}
-                                ${usuarioLogado?.role === 'admin' ? `<div class="form-group ff-span2"><div class="help-text" style="margin:-2px 0 6px;">Dias de férias: por defeito 22/ano. Fins de semana e feriados nacionais não contam.</div></div>` : ''}
-                                ${usuarioLogado?.role === 'admin' ? `<div class="form-group ff-span2"><label>Carro de empresa</label>
+                                ${(usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin') ? `<div class="form-group ff-span2"><div class="help-text" style="margin:-2px 0 6px;">Dias de férias: por defeito 22/ano. Fins de semana e feriados nacionais não contam.</div></div>` : ''}
+                                ${(usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin') ? `<div class="form-group ff-span2"><label>Carro de empresa</label>
                                     <div style="display:flex;gap:8px;align-items:center;">
                                         <select id="f_veiculo" style="flex:1;">${opcoesVeiculos(item?.veiculoId)}</select>
                                         <button type="button" class="btn btn-outline" onclick="toggleNovoVeiculoFunc()" title="Criar novo veículo"><i class="fas fa-plus"></i></button>
