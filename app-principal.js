@@ -1542,6 +1542,27 @@
         function gerarId() {
             return Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
         }
+        // Normaliza um nome de categoria/marca para comparação (minúsculas, sem acentos, sem
+        // espaços a mais) — usado para reconhecer "Ajax" e "ajax" (ou "Ajax " com espaço a mais)
+        // como a MESMA marca/categoria, sem depender de correr "Arrumar" depois.
+        function _normalizarNomeCategoria(s) {
+            return (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase().replace(/\s+/g, ' ');
+        }
+        // Dado um valor de marca OU categoria vindo de fora (ex.: da Moloni), devolve a grafia já
+        // usada no TotalGest para esse mesmo valor, se já existir um "igual" entre os artigos
+        // desta empresa (ignorando maiúsculas/acentos/espaços) — senão devolve o valor tal como
+        // veio. Evita criar marcas/categorias duplicadas só por causa da escrita.
+        function _valorExistenteOuNovo(campo, valorVindoDeFora, adminId) {
+            const valor = (valorVindoDeFora || '').trim();
+            if (!valor) return valor;
+            const chave = _normalizarNomeCategoria(valor);
+            const existente = (dados.artigos || []).find(a => a.adminId === adminId && a[campo] && _normalizarNomeCategoria(a[campo]) === chave);
+            return existente ? existente[campo] : valor;
+        }
+        // Mantido por compatibilidade — usa a função genérica acima, só para "categoria".
+        function _categoriaExistenteOuNova(nomeVindoDeFora, adminId) {
+            return _valorExistenteOuNovo('categoria', nomeVindoDeFora, adminId);
+        }
 
         // Iniciais da empresa (1ª e última letra do nome) — usadas nos números de contrato/proposta.
         function _empresaIniciais(nome) {
@@ -7250,6 +7271,11 @@
                         // já fazia o botão "Recalcular custos". Se precisares de manter um valor
                         // manual sem ser sobreposto, corrige-o na Moloni também.
                         if (it.precoCusto != null && Number(existente.precoCompra) !== Number(it.precoCusto)) { existente.precoCompra = it.precoCusto; mudou = true; }
+                        // Categoria: só atualiza se ainda estiver vazia ou no valor genérico
+                        // "Geral" (herdado de uma importação antiga, antes de trazermos a
+                        // categoria real da Moloni) — nunca sobrepõe uma categorização que já
+                        // tenhas organizado à tua maneira no TotalGest.
+                        if (it.categoria && (!existente.categoria || existente.categoria === 'Geral')) { existente.categoria = _categoriaExistenteOuNova(it.categoria, admin.id); mudou = true; }
                         if (mudou) atualizados++; else semAlteracao++;
                         // Nunca se ajusta o stock automaticamente — só se avisa da diferença. O
                         // TotalGest pode ter consumos em obras que a Moloni não sabe, e sobrepor
@@ -7263,7 +7289,7 @@
                         }
                     } else {
                         const novo = {
-                            id: gerarId(), adminId: admin.id, nome: it.nomeMoloni || 'Artigo Moloni', marca: 'Importado (Moloni)', categoria: 'Geral',
+                            id: gerarId(), adminId: admin.id, nome: it.nomeMoloni || 'Artigo Moloni', marca: 'Importado (Moloni)', categoria: it.categoria ? _categoriaExistenteOuNova(it.categoria, admin.id) : 'Geral',
                             referencia: it.referencia || null, unidade: it.unidade || 'un', stockInicial: it.stockAtual || 0, stockMinimo: null,
                             precoVenda: it.precoVenda != null ? it.precoVenda : null, precoCompra: it.precoCusto != null ? it.precoCusto : null, alertaStock: false, observacoes: 'Importado automaticamente da Moloni.'
                         };
@@ -7289,7 +7315,11 @@
         async function importarArtigosMoloni() {
             const admin = adminAtual();
             if (!admin || !moduloErpAtivo(admin)) { alert('O add-on "Integração com ERP\'s" não está ativo.'); return; }
-            if (!confirm('Importar todos os artigos/stock da Moloni? Artigos cuja referência já exista no TotalGest não são duplicados — só são criados os novos.')) return;
+            const confirmar = await tgConfirm(
+                'Vai importar os artigos/stock da Moloni.\n\n⚠️ Importante: para o TotalGest saber que um artigo já existe (e não o duplicar), a Referência dele tem de ser exatamente igual nos dois sistemas — mesmas letras, números e maiúsculas/minúsculas. Se a referência não bater certo, o artigo entra como novo, mesmo já existindo cá com outro nome.\n\nArtigos cuja referência já exista no TotalGest não são duplicados — só são criados os novos.',
+                { titulo: 'Importar artigos da Moloni', icone: 'fa-cloud-arrow-down', textoOk: 'Continuar', textoCancelar: 'Cancelar' }
+            );
+            if (!confirmar) return;
             try {
                 const { data, error } = await supa.functions.invoke('dynamic-processor', { body: { admin_id: admin.id, tipo: 'artigos' } });
                 if (error) throw error;
@@ -7301,7 +7331,7 @@
                 itens.forEach(it => {
                     if (it.referencia && existentesPorRef.has(String(it.referencia))) { ignorados++; return; }
                     dados.artigos.push({
-                        id: gerarId(), adminId: admin.id, nome: it.nomeMoloni || 'Artigo Moloni', marca: 'Importado (Moloni)', categoria: 'Geral',
+                        id: gerarId(), adminId: admin.id, nome: it.nomeMoloni || 'Artigo Moloni', marca: 'Importado (Moloni)', categoria: it.categoria ? _categoriaExistenteOuNova(it.categoria, admin.id) : 'Geral',
                         referencia: it.referencia || null, unidade: it.unidade || 'un', stockInicial: it.stockAtual || 0, stockMinimo: null,
                         precoVenda: it.precoVenda != null ? it.precoVenda : null, precoCompra: it.precoCusto != null ? it.precoCusto : null, alertaStock: false, observacoes: 'Importado automaticamente da Moloni.'
                     });
@@ -11888,65 +11918,42 @@
         // Corrige de uma vez os artigos JÁ EXISTENTES que ficaram com a mesma marca escrita de
         // formas diferentes (ex.: "Dahua" nuns artigos, "DAHUA" ou "dahua" noutros) — a partir de
         // agora a app já não deixa isto voltar a acontecer, mas isto arruma o que já lá estava.
-        function arrumarMarcasDuplicadas() {
+        // Junta grafias diferentes do mesmo valor de "campo" (marca ou categoria) na mais antiga
+        // — ex.: "Ajax", "AJÁX" e "ajax " passam todas a "Ajax" (a primeira que foi criada).
+        // Ignora maiúsculas, acentos e espaços a mais na comparação (mesma lógica usada ao
+        // importar da Moloni, em _valorExistenteOuNovo).
+        function _arrumarValorDuplicado(campo, rotulo) {
             const adminId = _tenantArmazem();
-            const artigosDaEmpresa = (dados.artigos || []).filter(a => a.adminId === adminId && a.marca);
-            const canonica = new Map(); // minúsculas -> primeira grafia encontrada (por ordem de criação)
+            const artigosDaEmpresa = (dados.artigos || []).filter(a => a.adminId === adminId && a[campo]);
+            const canonica = new Map(); // chave normalizada -> primeira grafia encontrada (por ordem de criação)
             artigosDaEmpresa
                 .slice()
                 .sort((a, b) => (a.dataCriacao || 0) - (b.dataCriacao || 0))
                 .forEach(a => {
-                    const chave = a.marca.trim().toLowerCase();
-                    if (!canonica.has(chave)) canonica.set(chave, a.marca.trim());
+                    const chave = _normalizarNomeCategoria(a[campo]);
+                    if (!canonica.has(chave)) canonica.set(chave, a[campo].trim());
                 });
             // Primeiro só calcula o que MUDARIA, sem tocar em nada ainda — só mexe nos dados a
             // sério depois de confirmares, para um "Cancelar" ser mesmo um cancelar.
             const aCorrigir = [];
             const resumo = [];
             artigosDaEmpresa.forEach(a => {
-                const chave = a.marca.trim().toLowerCase();
+                const chave = _normalizarNomeCategoria(a[campo]);
                 const certa = canonica.get(chave);
-                if (a.marca.trim() !== certa) {
-                    resumo.push(`"${a.marca}" → "${certa}"`);
+                if (a[campo].trim() !== certa) {
+                    resumo.push(`"${a[campo]}" → "${certa}"`);
                     aCorrigir.push({ artigo: a, certa });
                 }
             });
-            if (!aCorrigir.length) { alert('✅ Já estava tudo arrumado — não encontrei nenhuma marca escrita de forma diferente.'); return; }
-            if (!confirm(`Encontrei ${aCorrigir.length} artigo(s) com marcas a corrigir:\n\n${[...new Set(resumo)].join('\n')}\n\nConfirmar e gravar?`)) return;
-            aCorrigir.forEach(({ artigo, certa }) => { artigo.marca = certa; });
+            if (!aCorrigir.length) { alert(`✅ Já estava tudo arrumado — não encontrei nenhuma ${rotulo} escrita de forma diferente.`); return; }
+            if (!confirm(`Encontrei ${aCorrigir.length} artigo(s) com ${rotulo}s a corrigir:\n\n${[...new Set(resumo)].join('\n')}\n\nConfirmar e gravar?`)) return;
+            aCorrigir.forEach(({ artigo, certa }) => { artigo[campo] = certa; });
             guardarDados(dados);
             renderizarTudo();
-            alert('✅ Marcas arrumadas — ' + aCorrigir.length + ' artigo(s) corrigido(s).');
+            alert(`✅ ${rotulo[0].toUpperCase() + rotulo.slice(1)}s arrumadas — ` + aCorrigir.length + ' artigo(s) corrigido(s).');
         }
-        // Mesma lógica da anterior, mas para a Categoria dos artigos.
-        function arrumarCategoriasDuplicadas() {
-            const adminId = _tenantArmazem();
-            const artigosDaEmpresa = (dados.artigos || []).filter(a => a.adminId === adminId && a.categoria);
-            const canonica = new Map();
-            artigosDaEmpresa
-                .slice()
-                .sort((a, b) => (a.dataCriacao || 0) - (b.dataCriacao || 0))
-                .forEach(a => {
-                    const chave = a.categoria.trim().toLowerCase();
-                    if (!canonica.has(chave)) canonica.set(chave, a.categoria.trim());
-                });
-            const aCorrigir = [];
-            const resumo = [];
-            artigosDaEmpresa.forEach(a => {
-                const chave = a.categoria.trim().toLowerCase();
-                const certa = canonica.get(chave);
-                if (a.categoria.trim() !== certa) {
-                    resumo.push(`"${a.categoria}" → "${certa}"`);
-                    aCorrigir.push({ artigo: a, certa });
-                }
-            });
-            if (!aCorrigir.length) { alert('✅ Já estava tudo arrumado — não encontrei nenhuma categoria escrita de forma diferente.'); return; }
-            if (!confirm(`Encontrei ${aCorrigir.length} artigo(s) com categorias a corrigir:\n\n${[...new Set(resumo)].join('\n')}\n\nConfirmar e gravar?`)) return;
-            aCorrigir.forEach(({ artigo, certa }) => { artigo.categoria = certa; });
-            guardarDados(dados);
-            renderizarTudo();
-            alert('✅ Categorias arrumadas — ' + aCorrigir.length + ' artigo(s) corrigido(s).');
-        }
+        function arrumarMarcasDuplicadas() { _arrumarValorDuplicado('marca', 'marca'); }
+        function arrumarCategoriasDuplicadas() { _arrumarValorDuplicado('categoria', 'categoria'); }
         // Elimina em lote todos os artigos (e movimentos/itens de encomenda ligados) — usado
         // pelo botão "Apagar" unificado, quer para Marca, quer para Categoria.
         function _apagarArtigosEmLote(artigos) {
