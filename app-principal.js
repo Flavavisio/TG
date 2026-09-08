@@ -7228,7 +7228,7 @@
         async function sincronizarArtigosMoloni() {
             const admin = adminAtual();
             if (!admin || !moduloErpAtivo(admin)) { alert('O add-on "Integração com ERP\'s" não está ativo.'); return; }
-            if (!confirm('Sincronizar artigos com a Moloni?\n\nArtigos novos são criados, e os que já existem (mesma referência) são atualizados: nome e preço de venda.\n\nO STOCK não é ajustado automaticamente — se houver diferença, a app só avisa no final, para decidires tu (o TotalGest sabe do que gastaste em obras que a Moloni pode não saber).')) return;
+            if (!confirm('Sincronizar artigos com a Moloni?\n\nArtigos novos são criados, e os que já existem (mesma referência) são atualizados: nome, preço de venda e preço de custo.\n\nO STOCK não é ajustado automaticamente — se houver diferença, a app só avisa no final, para decidires tu (o TotalGest sabe do que gastaste em obras que a Moloni pode não saber).')) return;
             try {
                 const { data, error } = await supa.functions.invoke('dynamic-processor', { body: { admin_id: admin.id, tipo: 'artigos' } });
                 if (error) throw error;
@@ -7245,9 +7245,11 @@
                         let mudou = false;
                         if (it.nomeMoloni && existente.nome !== it.nomeMoloni) { existente.nome = it.nomeMoloni; mudou = true; }
                         if (it.precoVenda != null && Number(existente.precoVenda) !== Number(it.precoVenda)) { existente.precoVenda = it.precoVenda; mudou = true; }
-                        // Preço de custo: só preenche se ainda estiver vazio — nunca sobrepõe um
-                        // valor que já tenhas corrigido/preenchido manualmente no TotalGest.
-                        if (it.precoCusto != null && existente.precoCompra == null) { existente.precoCompra = it.precoCusto; mudou = true; }
+                        // Preço de custo: atualiza sempre que a Moloni trouxer um valor diferente
+                        // do que está gravado — tal como já acontece com o preço de venda e como
+                        // já fazia o botão "Recalcular custos". Se precisares de manter um valor
+                        // manual sem ser sobreposto, corrige-o na Moloni também.
+                        if (it.precoCusto != null && Number(existente.precoCompra) !== Number(it.precoCusto)) { existente.precoCompra = it.precoCusto; mudou = true; }
                         if (mudou) atualizados++; else semAlteracao++;
                         // Nunca se ajusta o stock automaticamente — só se avisa da diferença. O
                         // TotalGest pode ter consumos em obras que a Moloni não sabe, e sobrepor
