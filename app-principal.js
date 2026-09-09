@@ -378,8 +378,8 @@
             },
             registosManutencao: {
                 tabela: 'registos_manutencao',
-                from: r => ({ id: r.id, adminId: r.admin_id, contratoId: r.contrato_id, equipamentoId: r.equipamento_id, dataRealizacao: r.data_realizacao, tecnicoId: r.tecnico_id, observacoes: r.observacoes, proximaData: r.proxima_data, dataCriacao: isoToMs(r.data_criacao) }),
-                to:   o => ({ id: o.id, admin_id: o.adminId, contrato_id: o.contratoId, equipamento_id: o.equipamentoId || null, data_realizacao: nn(o.dataRealizacao), tecnico_id: o.tecnicoId || null, observacoes: o.observacoes || null, proxima_data: nn(o.proximaData), data_criacao: msToISO(o.dataCriacao) })
+                from: r => ({ id: r.id, adminId: r.admin_id, contratoId: r.contrato_id, equipamentoId: r.equipamento_id, servicoId: r.servico_id || null, dataRealizacao: r.data_realizacao, tecnicoId: r.tecnico_id, observacoes: r.observacoes, proximaData: r.proxima_data, dataCriacao: isoToMs(r.data_criacao) }),
+                to:   o => ({ id: o.id, admin_id: o.adminId, contrato_id: o.contratoId, equipamento_id: o.equipamentoId || null, servico_id: o.servicoId || null, data_realizacao: nn(o.dataRealizacao), tecnico_id: o.tecnicoId || null, observacoes: o.observacoes || null, proxima_data: nn(o.proximaData), data_criacao: msToISO(o.dataCriacao) })
             },
             veiculos: {
                 tabela: 'veiculos',
@@ -24216,7 +24216,7 @@ async function salvarAdmin(e) {
                             const proximaData = avancarPeriodicidade(obj.data || getDataHoje(), cont.periodicidade);
                             dados.registosManutencao = dados.registosManutencao || [];
                             dados.registosManutencao.push({
-                                id: gerarId(), adminId: cont.adminId, contratoId: cont.id, equipamentoId: cont.equipamentoId,
+                                id: gerarId(), adminId: cont.adminId, contratoId: cont.id, equipamentoId: cont.equipamentoId, servicoId: obj.servicoId,
                                 dataRealizacao: obj.data || getDataHoje(),
                                 tecnicoId: obj.funcionarioId || cont.tecnicoId || null,
                                 observacoes: 'Manutenção concluída via OS ' + (osv.numeroRegisto || '') + '.',

@@ -196,9 +196,30 @@ async function carregarFicha() {
         // Junta os dois históricos (registos_manutencao + OS ligadas ao equipamento) por data,
         // mais recente primeiro. Cada evento só mostra o resumo ao clicar. O título mostra
         // sempre a descrição real da OS/intervenção, não só um rótulo genérico.
+        //
+        // Um registo de manutenção criado automaticamente a partir de uma OS (contrato) já vem
+        // com o servico_id dessa OS — por isso também tem direito ao resumo da Folha de Obra
+        // (trabalho realizado, materiais), tal como as OS encontradas pelo local. Evita-se
+        // mostrar a MESMA OS duas vezes (uma como registo, outra como OS por local) marcando
+        // essas OS como "já cobertas" pelo registo.
+        const osJaCobertasPorRegisto = new Set((registos || []).map(r => r.servico_id).filter(Boolean));
         const eventos = [
-            ...(registos || []).map(r => ({ data: r.data_realizacao, titulo: r.observacoes || 'Manutenção realizada', tecnico: nomeTecnico(r.tecnico_id), obs: r.observacoes, corretiva: false, folhaResumo: null })),
-            ...(osLigadas || []).map(s => {
+            ...(registos || []).map(r => {
+                const folha = folhaDaOS(r.servico_id);
+                return {
+                    data: r.data_realizacao,
+                    titulo: r.observacoes || 'Manutenção realizada',
+                    tecnico: nomeTecnico(folha?.funcionario_id ?? r.tecnico_id),
+                    obs: r.observacoes,
+                    corretiva: false,
+                    folhaResumo: folha ? {
+                        trabalho: folha.descricao || null,
+                        horas: folha.horas_trabalhadas || 0,
+                        materiais: materiaisDaFolha(folha),
+                    } : null,
+                };
+            }),
+            ...(osLigadas || []).filter(s => !osJaCobertasPorRegisto.has(s.id)).map(s => {
                 const folha = folhaDaOS(s.id);
                 return {
                     data: s.data,
