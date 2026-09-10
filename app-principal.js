@@ -363,8 +363,8 @@
             },
             contratos: {
                 tabela: 'contratos',
-                from: r => ({ id: r.id, numero: r.numero, adminId: r.admin_id, clienteId: r.cliente_id, localId: r.local_id, equipamentoId: r.equipamento_id, equipamentosIds: Array.isArray(r.equipamentos_ids) ? r.equipamentos_ids : [], tipo: r.tipo, tiposTrabalho: Array.isArray(r.tipos_trabalho) ? r.tipos_trabalho : [], periodicidade: r.periodicidade, tipoIntervencao: r.tipo_intervencao, tecnicoId: r.tecnico_id, dataInicio: r.data_inicio, valor: r.valor, marca: r.marca, numeroSerie: r.numero_serie, proximaManutencao: r.proxima_manutencao, ultimaOSGeradaData: r.ultima_os_gerada_data || null, ultimaOSGeradaId: r.ultima_os_gerada_id || null, vigilanciaAtiva: r.vigilancia_ativa === true, valorMensalVigilancia: r.valor_mensal_vigilancia != null ? Number(r.valor_mensal_vigilancia) : null, ultimoMesFaturadoVigilancia: r.ultimo_mes_faturado_vigilancia || null, faturasVigilancia: Array.isArray(r.faturas_vigilancia) ? r.faturas_vigilancia : [], validadeContrato: r.validade_contrato || null, dataCriacao: isoToMs(r.data_criacao) }),
-                to:   o => ({ id: o.id, numero: o.numero, admin_id: o.adminId, cliente_id: o.clienteId, local_id: o.localId || null, equipamento_id: o.equipamentoId || null, equipamentos_ids: o.equipamentosIds || [], tipo: o.tipo, tipos_trabalho: o.tiposTrabalho || [], periodicidade: o.periodicidade || null, tipo_intervencao: o.tipoIntervencao || null, tecnico_id: o.tecnicoId || null, data_inicio: nn(o.dataInicio), valor: (o.valor === '' || o.valor == null) ? null : Number(o.valor), marca: o.marca || null, numero_serie: o.numeroSerie || null, proxima_manutencao: nn(o.proximaManutencao), ultima_os_gerada_data: o.ultimaOSGeradaData || null, ultima_os_gerada_id: o.ultimaOSGeradaId || null, vigilancia_ativa: o.vigilanciaAtiva === true, valor_mensal_vigilancia: o.valorMensalVigilancia ?? null, ultimo_mes_faturado_vigilancia: o.ultimoMesFaturadoVigilancia || null, faturas_vigilancia: o.faturasVigilancia || [], validade_contrato: o.validadeContrato || null, data_criacao: msToISO(o.dataCriacao) })
+                from: r => ({ id: r.id, numero: r.numero, adminId: r.admin_id, clienteId: r.cliente_id, localId: r.local_id, equipamentoId: r.equipamento_id, equipamentosIds: Array.isArray(r.equipamentos_ids) ? r.equipamentos_ids : [], tipo: r.tipo, tiposTrabalho: Array.isArray(r.tipos_trabalho) ? r.tipos_trabalho : [], periodicidade: r.periodicidade, tipoIntervencao: r.tipo_intervencao, tecnicoId: r.tecnico_id, dataInicio: r.data_inicio, valor: r.valor, marca: r.marca, numeroSerie: r.numero_serie, proximaManutencao: r.proxima_manutencao, ultimaOSGeradaData: r.ultima_os_gerada_data || null, ultimaOSGeradaId: r.ultima_os_gerada_id || null, vigilanciaAtiva: r.vigilancia_ativa === true, valorMensalVigilancia: r.valor_mensal_vigilancia != null ? Number(r.valor_mensal_vigilancia) : null, ultimoMesFaturadoVigilancia: r.ultimo_mes_faturado_vigilancia || null, faturasVigilancia: Array.isArray(r.faturas_vigilancia) ? r.faturas_vigilancia : [], validadeContrato: r.validade_contrato || null, documentoUrl: r.documento_url || null, documentoNome: r.documento_nome || null, dataCriacao: isoToMs(r.data_criacao) }),
+                to:   o => ({ id: o.id, numero: o.numero, admin_id: o.adminId, cliente_id: o.clienteId, local_id: o.localId || null, equipamento_id: o.equipamentoId || null, equipamentos_ids: o.equipamentosIds || [], tipo: o.tipo, tipos_trabalho: o.tiposTrabalho || [], periodicidade: o.periodicidade || null, tipo_intervencao: o.tipoIntervencao || null, tecnico_id: o.tecnicoId || null, data_inicio: nn(o.dataInicio), valor: (o.valor === '' || o.valor == null) ? null : Number(o.valor), marca: o.marca || null, numero_serie: o.numeroSerie || null, proxima_manutencao: nn(o.proximaManutencao), ultima_os_gerada_data: o.ultimaOSGeradaData || null, ultima_os_gerada_id: o.ultimaOSGeradaId || null, vigilancia_ativa: o.vigilanciaAtiva === true, valor_mensal_vigilancia: o.valorMensalVigilancia ?? null, ultimo_mes_faturado_vigilancia: o.ultimoMesFaturadoVigilancia || null, faturas_vigilancia: o.faturasVigilancia || [], validade_contrato: o.validadeContrato || null, documento_url: o.documentoUrl || null, documento_nome: o.documentoNome || null, data_criacao: msToISO(o.dataCriacao) })
             },
             locais: {
                 tabela: 'locais',
@@ -6904,6 +6904,37 @@
             if (PERIODICIDADE_DIAS[periodicidade] != null) return addDias(dataStr, PERIODICIDADE_DIAS[periodicidade]);
             return addMeses(dataStr, PERIODICIDADE_MESES[periodicidade] || 12);
         }
+        // Custo/hora de um técnico ou encarregado — ordenado bruto ÷ (horas semanais × 4,33
+        // semanas/mês) — mesma fórmula já usada no relatório em PDF da folha de obra.
+        function _custoHoraPessoa(id) {
+            if (!id) return null;
+            const p = dados.funcionarios?.find(x => x.id === id) || dados.encarregados?.find(x => x.id === id);
+            if (!p || !p.ordenadoBruto || !p.horasSemanais) return null;
+            return Number(p.ordenadoBruto) / (Number(p.horasSemanais) * 4.33);
+        }
+        // Rentabilidade de um contrato: valor cobrado vs. custo real (mão de obra + materiais)
+        // de TODAS as folhas de obra já feitas ao abrigo dele, desde o início. É acumulado, não
+        // só do último mês — dá uma visão "desde sempre" de se o contrato está a compensar.
+        function _margemContrato(contratoId) {
+            const c = dados.contratos?.find(x => x.id === contratoId);
+            if (!c) return null;
+            const folhas = (dados.folhasObra || []).filter(f => f.contratoId === contratoId);
+            let custoMaoDeObra = 0, custoMateriais = 0;
+            folhas.forEach(f => {
+                const custoHora = _custoHoraPessoa(f.funcionarioId);
+                if (custoHora != null && f.horasTrabalhadas) custoMaoDeObra += custoHora * Number(f.horasTrabalhadas);
+                const movs = (dados.movimentosStock || []).filter(m => m.origemTipo === 'folha' && m.origemId === f.id && m.tipo === 'saida');
+                movs.forEach(m => {
+                    const art = dados.artigos?.find(a => a.id === m.artigoId);
+                    if (art && art.precoCompra != null) custoMateriais += Number(art.precoCompra) * Number(m.quantidade || 0);
+                });
+            });
+            const custoTotal = custoMaoDeObra + custoMateriais;
+            const valorContrato = Number(c.valor) || 0;
+            const margem = valorContrato - custoTotal;
+            const margemPct = valorContrato > 0 ? (margem / valorContrato) * 100 : null;
+            return { nFolhas: folhas.length, custoMaoDeObra, custoMateriais, custoTotal, valorContrato, margem, margemPct };
+        }
         function ultimoRegistoContrato(contratoId) {
             const regs = (dados.registosManutencao || []).filter(r => r.contratoId === contratoId && r.dataRealizacao);
             if (!regs.length) return null;
@@ -8310,7 +8341,7 @@
                             <td>${c.dataInicio || '-'}</td>
                             <td>${prox || '-'}</td>
                             <td>${c.valor != null ? Number(c.valor).toFixed(2) + ' €' : '-'}</td>
-                            <td><span class="badge" style="background:${est.cor};color:#fff;">${est.label}</span>${c.ultimaOSGeradaData ? `<div style="font-size:.68rem;color:#0e7490;"><i class="fas fa-clipboard-check"></i> OS ${_fmtDataPT(c.ultimaOSGeradaData)}</div>` : ''}</td>
+                            <td><span class="badge" style="background:${est.cor};color:#fff;">${est.label}</span>${c.ultimaOSGeradaData ? `<div style="font-size:.68rem;color:#0e7490;"><i class="fas fa-clipboard-check"></i> OS ${_fmtDataPT(c.ultimaOSGeradaData)}</div>` : ''}${(() => { if (usuarioLogado?.role !== 'admin' && usuarioLogado?.role !== 'subadmin') return ''; const m = _margemContrato(c.id); return (m && m.nFolhas > 0 && m.margem < 0) ? `<div style="font-size:.68rem;color:#dc2626;font-weight:700;" title="Custo real (mão de obra + materiais) já ultrapassou o valor do contrato"><i class="fas fa-triangle-exclamation"></i> Margem negativa</div>` : ''; })()}</td>
                             <td><div class="acoes">
                                 ${c.vigilanciaAtiva ? `<button class="btn btn-sm" style="background:${c.ultimoMesFaturadoVigilancia === _mesAtualStr() ? '#94a3b8' : '#ea580c'};color:#fff;" title="${c.ultimoMesFaturadoVigilancia === _mesAtualStr() ? 'Já faturado este mês' : 'Faturar vigilância deste mês'}" onclick="faturarContratoVigilancia('${c.id}')"><i class="fas fa-shield-halved"></i></button>` : ''}
                                 <button class="btn btn-sm" style="background:#7c3aed;color:#fff;" title="Gerar Ordem de Serviço para um encarregado" onclick="abrirGerarOSContrato('${c.id}')"><i class="fas fa-clipboard-list"></i></button>
@@ -8653,6 +8684,24 @@
                         </div>
                     </div>
 
+                    <div class="ff-secao">
+                        <div class="ff-secao-head"><i class="fas fa-paperclip"></i> Documento anexo (opcional)</div>
+                        <div class="ff-secao-body">
+                            <div class="form-group ff-span2">
+                                <input type="hidden" id="ct_documento_url" value="${c && c.documentoUrl ? c.documentoUrl : ''}" />
+                                <input type="hidden" id="ct_documento_nome" value="${c && c.documentoNome ? escapeHtmlSimples(c.documentoNome) : ''}" />
+                                <div id="ct_documento_atual" style="${c && c.documentoUrl ? '' : 'display:none;'}margin-bottom:8px;display:flex;align-items:center;gap:10px;background:#f8fafc;border-radius:8px;padding:8px 12px;">
+                                    <i class="fas fa-file-pdf" style="color:#dc2626;"></i>
+                                    <a href="${c && c.documentoUrl ? c.documentoUrl : '#'}" target="_blank" rel="noopener" id="ct_documento_link" style="flex:1;color:#152a52;font-weight:600;text-decoration:none;">${c && c.documentoNome ? escapeHtmlSimples(c.documentoNome) : ''}</a>
+                                    <button type="button" class="btn btn-sm btn-danger" onclick="removerDocumentoContrato()"><i class="fas fa-trash"></i></button>
+                                </div>
+                                <input type="file" id="ct_documento_input" accept="application/pdf" onchange="uploadDocumentoContrato(this)" />
+                                <div class="help-text">Só PDF, até 2 MB — apólice, condições assinadas, ficha técnica, etc. Um documento por contrato; carregar um novo substitui o anterior.</div>
+                                <div id="ct_documento_estado" style="margin-top:6px;font-size:.82rem;"></div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="ff-secao ff-tint-fin" style="background:#eff6ff;">
                         <div class="ff-secao-head"><i class="fas fa-shield-halved"></i> Vigilância / Monitorização (opcional)</div>
                         <div class="ff-secao-body">
@@ -8685,6 +8734,56 @@
             if (!id && adminAtual()?.contratoModoWizard) setTimeout(_ctWizardAtivar, 30);
         }
 
+        // Documento anexo do contrato (apólice, condições assinadas, etc.) — só PDF, até 2 MB,
+        // um único ficheiro por contrato (carregar um novo substitui sempre o anterior). Usa o
+        // mesmo bucket "ficheiros" já usado no resto da app, mas com um limite bem mais apertado
+        // do que o geral (15 MB) e sem aceitar imagens aqui — só PDF.
+        const _TAMANHO_MAX_DOCUMENTO_CONTRATO = 2 * 1024 * 1024; // 2 MB
+        async function uploadDocumentoContrato(inputEl) {
+            const file = inputEl.files?.[0];
+            if (!file) return;
+            const estadoEl = document.getElementById('ct_documento_estado');
+            if (file.type !== 'application/pdf') {
+                if (estadoEl) { estadoEl.textContent = '⚠️ Só é permitido ficheiro PDF.'; estadoEl.style.color = '#dc2626'; }
+                inputEl.value = '';
+                return;
+            }
+            if (file.size > _TAMANHO_MAX_DOCUMENTO_CONTRATO) {
+                if (estadoEl) { estadoEl.textContent = '⚠️ Ficheiro demasiado grande (' + (file.size / 1024 / 1024).toFixed(1) + ' MB) — máximo 2 MB.'; estadoEl.style.color = '#dc2626'; }
+                inputEl.value = '';
+                return;
+            }
+            if (estadoEl) { estadoEl.textContent = 'A enviar…'; estadoEl.style.color = '#64748b'; }
+            try {
+                const dataUrl = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                });
+                const url = await uploadDataURL(dataUrl, 'contratos-documentos');
+                document.getElementById('ct_documento_url').value = url;
+                document.getElementById('ct_documento_nome').value = file.name;
+                const atualEl = document.getElementById('ct_documento_atual');
+                const linkEl = document.getElementById('ct_documento_link');
+                if (linkEl) { linkEl.href = url; linkEl.textContent = file.name; }
+                if (atualEl) atualEl.style.display = 'flex';
+                if (estadoEl) { estadoEl.textContent = '✅ Documento carregado.'; estadoEl.style.color = '#16a34a'; }
+                inputEl.value = '';
+            } catch (err) {
+                console.error('upload documento contrato:', err);
+                if (estadoEl) { estadoEl.textContent = '⚠️ Falha ao enviar: ' + (err.message || err); estadoEl.style.color = '#dc2626'; }
+                inputEl.value = '';
+            }
+        }
+        function removerDocumentoContrato() {
+            document.getElementById('ct_documento_url').value = '';
+            document.getElementById('ct_documento_nome').value = '';
+            const atualEl = document.getElementById('ct_documento_atual');
+            if (atualEl) atualEl.style.display = 'none';
+            const estadoEl = document.getElementById('ct_documento_estado');
+            if (estadoEl) estadoEl.textContent = '';
+        }
         function apagarLocalContrato() {
             const localId = document.getElementById('ct_local').value;
             if (!localId || localId === '__novo__') { alert('Seleciona um local existente para apagar.'); return; }
@@ -9176,14 +9275,16 @@
             const vigilanciaAtiva = document.getElementById('ct_vigilancia')?.checked || false;
             const valorMensalVigilancia = vigilanciaAtiva ? (parseFloat(document.getElementById('ct_valor_mensal')?.value) || 0) : null;
             const validadeContrato = document.getElementById('ct_validade')?.value || null;
+            const documentoUrl = document.getElementById('ct_documento_url')?.value || null;
+            const documentoNome = document.getElementById('ct_documento_nome')?.value || null;
             if (contratoEditandoId) {
                 const c = dados.contratos.find(x => x.id === contratoEditandoId);
                 if (c) {
-                    Object.assign(c, { clienteId, localId, equipamentoId, equipamentosIds, tipo, tiposTrabalho, periodicidade, tipoIntervencao, tecnicoId, dataInicio, valor, vigilanciaAtiva, valorMensalVigilancia, validadeContrato });
+                    Object.assign(c, { clienteId, localId, equipamentoId, equipamentosIds, tipo, tiposTrabalho, periodicidade, tipoIntervencao, tecnicoId, dataInicio, valor, vigilanciaAtiva, valorMensalVigilancia, validadeContrato, documentoUrl, documentoNome });
                     c.proximaManutencao = calcularProximaManutencao(c);
                 }
             } else {
-                const novo = { id: gerarId(), numero: gerarNumeroContrato(clienteId), adminId, clienteId, localId, equipamentoId, equipamentosIds, tipo, tiposTrabalho, periodicidade, tipoIntervencao, tecnicoId, dataInicio, valor, vigilanciaAtiva, valorMensalVigilancia, validadeContrato, dataCriacao: Date.now() };
+                const novo = { id: gerarId(), numero: gerarNumeroContrato(clienteId), adminId, clienteId, localId, equipamentoId, equipamentosIds, tipo, tiposTrabalho, periodicidade, tipoIntervencao, tecnicoId, dataInicio, valor, vigilanciaAtiva, valorMensalVigilancia, validadeContrato, documentoUrl, documentoNome, dataCriacao: Date.now() };
                 novo.proximaManutencao = calcularProximaManutencao(novo);
                 dados.contratos.push(novo);
             }
@@ -9323,6 +9424,23 @@
             const regs = (dados.registosManutencao || []).filter(r => r.contratoId === contratoId)
                 .sort((a, b) => (a.dataRealizacao < b.dataRealizacao ? 1 : -1));
             let html = `<div class="help-text" style="margin-bottom:10px;">Contrato ${c.numero} — ${cli?.nome || ''}</div>`;
+            if (usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin') {
+                const m = _margemContrato(contratoId);
+                if (m && m.nFolhas > 0) {
+                    const cor = m.margem < 0 ? '#dc2626' : '#16a34a';
+                    const fundo = m.margem < 0 ? '#fef2f2' : '#f0fdf4';
+                    html += `<div style="background:${fundo};border:1px solid ${cor}33;border-radius:10px;padding:12px 14px;margin-bottom:14px;">
+                        <div style="font-weight:700;color:#152a52;margin-bottom:6px;"><i class="fas fa-scale-balanced"></i> Rentabilidade (acumulada, ${m.nFolhas} folha${m.nFolhas === 1 ? '' : 's'} de obra)</div>
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;font-size:.85rem;">
+                            <div><div style="color:#64748b;">Valor do contrato</div><div style="font-weight:700;">${m.valorContrato.toFixed(2)} €</div></div>
+                            <div><div style="color:#64748b;">Custo mão de obra</div><div style="font-weight:700;">${m.custoMaoDeObra.toFixed(2)} €</div></div>
+                            <div><div style="color:#64748b;">Custo materiais</div><div style="font-weight:700;">${m.custoMateriais.toFixed(2)} €</div></div>
+                            <div><div style="color:#64748b;">Margem</div><div style="font-weight:700;color:${cor};">${m.margem.toFixed(2)} €${m.margemPct != null ? ' (' + m.margemPct.toFixed(0) + '%)' : ''}</div></div>
+                        </div>
+                        ${m.margem < 0 ? '<div style="margin-top:8px;font-size:.8rem;color:#b91c1c;"><i class="fas fa-triangle-exclamation"></i> O custo real já ultrapassa o valor cobrado — vale a pena rever o preço na próxima renovação.</div>' : ''}
+                    </div>`;
+                }
+            }
             if (!regs.length) {
                 html += '<p class="text-muted text-center">Ainda não há intervenções registadas.</p>';
             } else {
