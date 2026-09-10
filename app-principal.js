@@ -348,8 +348,8 @@
             },
             pedidosRenovacao: {
                 tabela: 'pedidos_renovacao',
-                from: r => ({ id: r.id, adminId: r.admin_id, tipo: r.tipo, planoAtual: r.plano_atual, planoPedido: r.plano_pedido, observacao: r.observacao, status: r.status, dataCriacao: isoToMs(r.data_criacao), assinaturaNome: r.assinatura_nome || null, assinaturaImg: r.assinatura_img || null, dataAssinatura: isoToMs(r.data_assinatura), prazoRecolha: isoToMs(r.prazo_recolha) }),
-                to:   o => ({ id: o.id, admin_id: o.adminId, tipo: o.tipo, plano_atual: o.planoAtual || null, plano_pedido: o.planoPedido || null, observacao: o.observacao || null, status: o.status || 'pendente', data_criacao: msToISO(o.dataCriacao), assinatura_nome: o.assinaturaNome || null, assinatura_img: o.assinaturaImg || null, data_assinatura: o.dataAssinatura ? msToISO(o.dataAssinatura) : null, prazo_recolha: o.prazoRecolha ? msToISO(o.prazoRecolha) : null })
+                from: r => ({ id: r.id, adminId: r.admin_id, tipo: r.tipo, planoAtual: r.plano_atual, planoPedido: r.plano_pedido, observacao: r.observacao, status: r.status, dataCriacao: isoToMs(r.data_criacao), assinaturaNome: r.assinatura_nome || null, assinaturaImg: r.assinatura_img || null, dataAssinatura: isoToMs(r.data_assinatura), prazoRecolha: isoToMs(r.prazo_recolha), grupoId: r.grupo_id || null }),
+                to:   o => ({ id: o.id, admin_id: o.adminId, tipo: o.tipo, plano_atual: o.planoAtual || null, plano_pedido: o.planoPedido || null, observacao: o.observacao || null, status: o.status || 'pendente', data_criacao: msToISO(o.dataCriacao), assinatura_nome: o.assinaturaNome || null, assinatura_img: o.assinaturaImg || null, data_assinatura: o.dataAssinatura ? msToISO(o.dataAssinatura) : null, prazo_recolha: o.prazoRecolha ? msToISO(o.prazoRecolha) : null, grupo_id: o.grupoId || null })
             },
             ajudas: {
                 tabela: 'ajudas',
@@ -4110,6 +4110,13 @@
                 return;
             }
             empty.style.display = 'none';
+            // Pedidos pendentes que pertencem ao mesmo grupo (criados juntos, ex.: renovação
+            // consolidada com licença base + add-ons, ou "Ativar Add-ons" com vários módulos)
+            // ganham uma linha de cabeçalho com "Aprovar tudo" — para nunca aprovares só uma
+            // parte de uma renovação sem dares por isso (era exatamente isto que acontecia antes).
+            const _contagemGrupo = {};
+            pendentes.forEach(p => { if (p.grupoId) _contagemGrupo[p.grupoId] = (_contagemGrupo[p.grupoId] || 0) + 1; });
+            const _gruposJaMostrados = new Set();
             tbody.innerHTML = pedidos.map(p => {
                 const admin = dados.administradores?.find(a => a.id === p.adminId);
                 const ehContrato = (p.tipo || '').startsWith('contrato');
@@ -4163,6 +4170,15 @@
                     p.status === 'concluido' ? 'badge-concluido' :
                     p.status === 'rejeitado' ? 'badge-rejeitado' : '';
                 return `
+                        ${(p.status === 'pendente' && p.grupoId && _contagemGrupo[p.grupoId] > 1 && !_gruposJaMostrados.has(p.grupoId)) ? (() => {
+                            _gruposJaMostrados.add(p.grupoId);
+                            return `<tr style="background:#eff6ff;">
+                                <td colspan="9" style="padding:9px 12px;">
+                                    <i class="fas fa-layer-group"></i> <strong>${_contagemGrupo[p.grupoId]} pedidos pendentes</strong> feitos juntos por ${escapeHtmlSimples(admin?.nome || '')} — aprovar um a um deixa os outros por confirmar.
+                                    <button class="btn btn-sm btn-success" style="margin-left:8px;" onclick="aprovarGrupoPedidosRenovacao('${p.grupoId}')"><i class="fas fa-check-double"></i> Aprovar tudo</button>
+                                </td>
+                            </tr>`;
+                        })() : ''}
                         <tr>
                             <td>${admin?.nome || 'Admin removido'}</td>
                             <td>${admin?.empresa || '-'}</td>
@@ -17201,6 +17217,7 @@
         // Dashboard Central (KPIs, gráficos, tabelas, etc.)
         function _htmlDashboardCentralConteudo() {
             const adminId = _tenantId();
+            const admin = dados.administradores?.find(a => a.id === adminId);
             const hoje = getDataHoje();
             const agora = Date.now();
             const chaveMes = d => (d || '').slice(0, 7);
@@ -17346,6 +17363,31 @@
             const rentEntradas = Object.entries(rentPorTecnico).sort((a, b) => b[1] - a[1]).slice(0, 5);
             const maxRent = Math.max(1, ...rentEntradas.map(([, v]) => v));
 
+            // Km percorridos por técnico no mesmo período do filtro ativo — soma kmFim-kmInicio
+            // de cada picagem (Registo de Ponto geral + Obras de longa duração) com os dois
+            // valores preenchidos. Se o filtro estiver em "Mês", mostra o total do mês; se
+            // estiver em "Hoje", só o de hoje — segue sempre o mesmo período dos KPIs lá em cima.
+            const kmPorTecnico = {};
+            const _somarKmPeriodo = (lista) => {
+                (lista || []).forEach(p => {
+                    if (!p.funcionarioId || p.kmInicio == null || p.kmFim == null || !p.data) return;
+                    if (p.data < range.ini || p.data > range.fim) return;
+                    const nomeKm = obterNomeFuncionario(p.funcionarioId) || '—';
+                    kmPorTecnico[nomeKm] = (kmPorTecnico[nomeKm] || 0) + Math.max(0, p.kmFim - p.kmInicio);
+                });
+            };
+            _somarKmPeriodo((dados.ponto || []).filter(p => p.adminId === adminId));
+            _somarKmPeriodo((dados.obraPontoLonga || []).filter(p => p.adminId === adminId));
+
+            // Este painel só passa a ser "Km por Técnico" quando a empresa tem mesmo o registo
+            // de km da Frota ativo (Entrada/Saída Geral, ou por OS/Obra) — sem isso não há dados
+            // de km fiáveis para mostrar, e o painel fica exatamente como era antes: Faturação.
+            const _kmFrotaAtiva = !!(admin?.kmPontoGeralAtivo || admin?.kmPorOsAtivo);
+            const rentOuKmEntradas = _kmFrotaAtiva
+                ? Object.entries(kmPorTecnico).sort((a, b) => b[1] - a[1]).slice(0, 5)
+                : rentEntradas;
+            const maxRentOuKm = Math.max(1, ...rentOuKmEntradas.map(([, v]) => v));
+
             // Donut "Ordens de Serviço" (mês) — em ângulos acumulados.
             const totalOSMes = osMes.length || 1;
             const pConcl = concluidasMes.length / totalOSMes * 100;
@@ -17387,6 +17429,7 @@
                 #secao-dashboard-central .hdc-bars .b{ width:8px; border-radius:3px 3px 0 0; }
                 #secao-dashboard-central .hdc-bars .b.fat{ background:var(--hb); } #secao-dashboard-central .hdc-bars .b.cst{ background:#bfdbfe; }
                 #secao-dashboard-central .hdc-bars .mlbl{ font-size:.64rem; color:var(--hsub); }
+                #secao-dashboard-central .hdc-bars .kmlbl{ font-size:.6rem; color:var(--hsub); opacity:.75; }
                 #secao-dashboard-central .hdc-legend{ display:flex; gap:12px; font-size:.68rem; color:var(--hsub); margin-bottom:8px; }
                 #secao-dashboard-central .hdc-legend span{ display:inline-flex; align-items:center; gap:5px; }
                 #secao-dashboard-central .hdc-legend i{ width:8px; height:8px; border-radius:2px; display:inline-block; }
@@ -17527,11 +17570,11 @@
                         ${topClientes.length ? `<ul>${topClientes.map(([n, v], i) => `<li><span class="n">${i + 1}</span><span class="nm">${escapeHtmlSimples(n)}</span><span class="vl">${eur(v)}</span></li>`).join('')}</ul>` : `<div class="hdc-vazio">Sem OS concluídas com valor neste período.</div>`}
                     </div>
                     <div class="hdc-card">
-                        <h4>Faturação por Técnico (${range.label})</h4>
-                        ${rentEntradas.length ? `<div class="hdc-legend"><span><i style="background:var(--hb);"></i>OS concluídas atribuídas</span></div>
+                        <h4>${_kmFrotaAtiva ? 'Km por Técnico' : 'Faturação por Técnico'} (${range.label})</h4>
+                        ${rentOuKmEntradas.length ? `<div class="hdc-legend"><span><i style="background:var(--hb);"></i>${_kmFrotaAtiva ? 'Km percorridos' : 'OS concluídas atribuídas'}</span></div>
                         <div class="hdc-bars">
-                            ${rentEntradas.map(([lbl, v]) => `<div class="bcol"><div class="bwrap"><div class="b fat" style="height:${Math.max(2, Math.round(v / maxRent * 100))}%;" title="${eur(v)}"></div></div><span class="mlbl">${escapeHtmlSimples(lbl)}</span></div>`).join('')}
-                        </div>` : `<div class="hdc-vazio">Sem OS concluídas com valor este mês.</div>`}
+                            ${rentOuKmEntradas.map(([lbl, v]) => `<div class="bcol"><div class="bwrap"><div class="b fat" style="height:${Math.max(2, Math.round(v / maxRentOuKm * 100))}%;" title="${_kmFrotaAtiva ? Math.round(v).toLocaleString('pt-PT') + ' km' : eur(v)}"></div></div><span class="mlbl">${escapeHtmlSimples(lbl)}</span>${(!_kmFrotaAtiva && kmPorTecnico[lbl]) ? `<span class="kmlbl"><i class="fas fa-road"></i> ${Math.round(kmPorTecnico[lbl]).toLocaleString('pt-PT')} km</span>` : ''}</div>`).join('')}
+                        </div>` : `<div class="hdc-vazio">${_kmFrotaAtiva ? 'Sem km registados neste período.' : 'Sem OS concluídas com valor este mês.'}</div>`}
                     </div>
                     <div class="hdc-card">
                         <h4>Estado dos Contratos</h4>
@@ -22268,17 +22311,18 @@ async function salvarAdmin(e) {
             const planoInfo = PLANOS[chavePlano];
             dados.pedidosRenovacao = dados.pedidosRenovacao || [];
             const _adminIdPedido = admin.id;
+            const _grupoIdRenov = gerarId();
             const resumoPartes = [];
             let total = 0;
 
             if (planoInfo) {
-                dados.pedidosRenovacao.push({ id: gerarId(), adminId: _adminIdPedido, tipo: 'renovacao', planoAtual: admin.licenca?.plano, planoPedido: chavePlano, observacao: obs, status: 'pendente', dataCriacao: Date.now() });
+                dados.pedidosRenovacao.push({ id: gerarId(), adminId: _adminIdPedido, tipo: 'renovacao', planoAtual: admin.licenca?.plano, planoPedido: chavePlano, observacao: obs, status: 'pendente', dataCriacao: Date.now(), grupoId: _grupoIdRenov });
                 total += planoInfo.preco;
                 resumoPartes.push(planoInfo.label + ' — ' + planoInfo.preco.toFixed(2) + ' €');
             }
             itens.forEach(it => {
                 const preco = _renConsolPeriodo === 'anual' ? it.anual : it.mensal;
-                dados.pedidosRenovacao.push({ id: gerarId(), adminId: _adminIdPedido, tipo: it.tipoBase + '_' + _renConsolPeriodo, planoAtual: null, planoPedido: null, observacao: 'Renovação de ' + it.label + ' (' + (_renConsolPeriodo === 'anual' ? 'Anual' : 'Mensal') + ') — pedida junto com a renovação consolidada', status: 'pendente', dataCriacao: Date.now() });
+                dados.pedidosRenovacao.push({ id: gerarId(), adminId: _adminIdPedido, tipo: it.tipoBase + '_' + _renConsolPeriodo, planoAtual: null, planoPedido: null, observacao: 'Renovação de ' + it.label + ' (' + (_renConsolPeriodo === 'anual' ? 'Anual' : 'Mensal') + ') — pedida junto com a renovação consolidada', status: 'pendente', dataCriacao: Date.now(), grupoId: _grupoIdRenov });
                 total += preco;
                 resumoPartes.push(it.label + ' — ' + preco.toFixed(2) + ' €');
             });
@@ -22385,12 +22429,13 @@ async function salvarAdmin(e) {
             const resumoPartes = [];
             let total = 0;
             let algumBloqueado = false;
+            const _grupoIdAtivacao = gerarId();
             _ativAddonsEscolhidos.forEach(tipoBase => {
                 const m = inativos.find(x => x.tipoBase === tipoBase); if (!m) return;
                 const jaPendente = (dados.pedidosRenovacao || []).some(p => p.adminId === admin.id && p.status === 'pendente' && (p.tipo || '').startsWith(tipoBase));
                 if (jaPendente) { algumBloqueado = true; return; }
                 const preco = _ativAddonsPeriodo === 'anual' ? m.anual : m.mensal;
-                dados.pedidosRenovacao.push({ id: gerarId(), adminId: admin.id, tipo: tipoBase + '_' + _ativAddonsPeriodo, planoAtual: null, planoPedido: null, observacao: 'Ativação de ' + m.label + ' (' + (_ativAddonsPeriodo === 'anual' ? 'Anual' : 'Mensal') + ') — pedida via Ativar Add-ons', status: 'pendente', dataCriacao: Date.now() });
+                dados.pedidosRenovacao.push({ id: gerarId(), adminId: admin.id, tipo: tipoBase + '_' + _ativAddonsPeriodo, planoAtual: null, planoPedido: null, observacao: 'Ativação de ' + m.label + ' (' + (_ativAddonsPeriodo === 'anual' ? 'Anual' : 'Mensal') + ') — pedida via Ativar Add-ons', status: 'pendente', dataCriacao: Date.now(), grupoId: _grupoIdAtivacao });
                 total += preco;
                 resumoPartes.push(m.label + ' — ' + preco.toFixed(2) + ' €');
             });
@@ -22512,13 +22557,17 @@ async function salvarAdmin(e) {
             const r = await _enviarEmailServidor('renovacao_aprovada', params);
             if (r.ok) console.log('Confirmação enviada para', admin.email);
         }
-        function aprovarPedidoRenovacao(pedidoId) {
+        // O 2º parâmetro (silencioso) é usado quando isto é chamado várias vezes seguidas pelo
+        // "Aprovar tudo" de um grupo — nesse caso não mostra alert nem manda email por cada um
+        // (isso é feito uma única vez, no fim, por aprovarGrupoPedidosRenovacao). Devolve sempre
+        // uma etiqueta com o que foi aprovado, para esse resumo final poder ser montado.
+        function aprovarPedidoRenovacao(pedidoId, silencioso) {
             const pedido = dados.pedidosRenovacao?.find(p => p.id === pedidoId);
-            if (!pedido) return;
+            if (!pedido) return null;
             const admin = dados.administradores?.find(a => a.id === pedido.adminId);
             if (!admin) {
-                alert('Administrador não encontrado.');
-                return;
+                if (!silencioso) alert('Administrador não encontrado.');
+                return null;
             }
             admin.notificarAprovacao = true;
             // Helper partilhado: se o que está a ser renovado ainda não expirou, a nova validade
@@ -22536,10 +22585,11 @@ async function salvarAdmin(e) {
                 admin.licencaFeedback = 'verde';
                 guardarDados(dados);
                 piscarAdmin(admin.id, 'verde');
-                alert(`✅ Licença de Contratos de Manutenção ativada (${planoC === 'anual' ? 'Anual' : 'Mensal'}) para ${admin.nome}.`);
-                registarHistoricoLicenca(admin.id, 'renovacao_aprovada', 'Contratos de Manutenção — ' + (planoC === 'anual' ? 'Anual' : 'Mensal'), planoC === 'anual' ? PRECO_CONTRATOS_ANUAL : PRECO_CONTRATOS_MENSAL);
-                _enviarEmailRenovacaoAprovada(admin, 'Contratos de Manutenção — ' + (planoC === 'anual' ? 'Anual' : 'Mensal'));
-                return;
+                const labelC = 'Contratos de Manutenção — ' + (planoC === 'anual' ? 'Anual' : 'Mensal');
+                if (!silencioso) alert(`✅ Licença de Contratos de Manutenção ativada (${planoC === 'anual' ? 'Anual' : 'Mensal'}) para ${admin.nome}.`);
+                registarHistoricoLicenca(admin.id, 'renovacao_aprovada', labelC, planoC === 'anual' ? PRECO_CONTRATOS_ANUAL : PRECO_CONTRATOS_MENSAL);
+                if (!silencioso) _enviarEmailRenovacaoAprovada(admin, labelC);
+                return labelC;
             }
             if ((pedido.tipo || '').startsWith('frota')) {
                 const planoF = pedido.tipo === 'frota_anual' ? 'anual' : 'mensal';
@@ -22550,10 +22600,11 @@ async function salvarAdmin(e) {
                 admin.licencaFeedback = 'verde';
                 guardarDados(dados);
                 piscarAdmin(admin.id, 'verde');
-                alert(`✅ Licença de Frota ativada (${planoF === 'anual' ? 'Anual' : 'Mensal'}) para ${admin.nome}.`);
-                registarHistoricoLicenca(admin.id, 'renovacao_aprovada', 'Frota — ' + (planoF === 'anual' ? 'Anual' : 'Mensal'), planoF === 'anual' ? PRECO_FROTA_ANUAL : PRECO_FROTA_MENSAL);
-                _enviarEmailRenovacaoAprovada(admin, 'Frota — ' + (planoF === 'anual' ? 'Anual' : 'Mensal'));
-                return;
+                const labelF = 'Frota — ' + (planoF === 'anual' ? 'Anual' : 'Mensal');
+                if (!silencioso) alert(`✅ Licença de Frota ativada (${planoF === 'anual' ? 'Anual' : 'Mensal'}) para ${admin.nome}.`);
+                registarHistoricoLicenca(admin.id, 'renovacao_aprovada', labelF, planoF === 'anual' ? PRECO_FROTA_ANUAL : PRECO_FROTA_MENSAL);
+                if (!silencioso) _enviarEmailRenovacaoAprovada(admin, labelF);
+                return labelF;
             }
             if ((pedido.tipo || '').startsWith('armazem')) {
                 const planoA = pedido.tipo === 'armazem_anual' ? 'anual' : 'mensal';
@@ -22564,10 +22615,11 @@ async function salvarAdmin(e) {
                 admin.licencaFeedback = 'verde';
                 guardarDados(dados);
                 piscarAdmin(admin.id, 'verde');
-                alert(`✅ Licença de Armazém ativada (${planoA === 'anual' ? 'Anual' : 'Mensal'}) para ${admin.nome}.`);
-                registarHistoricoLicenca(admin.id, 'renovacao_aprovada', 'Armazém / Stock / Gestão de Obras — ' + (planoA === 'anual' ? 'Anual' : 'Mensal'), planoA === 'anual' ? PRECO_ARMAZEM_ANUAL : PRECO_ARMAZEM_MENSAL);
-                _enviarEmailRenovacaoAprovada(admin, 'Armazém / Stock / Gestão de Obras — ' + (planoA === 'anual' ? 'Anual' : 'Mensal'));
-                return;
+                const labelA = 'Armazém / Stock / Gestão de Obras — ' + (planoA === 'anual' ? 'Anual' : 'Mensal');
+                if (!silencioso) alert(`✅ Licença de Armazém ativada (${planoA === 'anual' ? 'Anual' : 'Mensal'}) para ${admin.nome}.`);
+                registarHistoricoLicenca(admin.id, 'renovacao_aprovada', labelA, planoA === 'anual' ? PRECO_ARMAZEM_ANUAL : PRECO_ARMAZEM_MENSAL);
+                if (!silencioso) _enviarEmailRenovacaoAprovada(admin, labelA);
+                return labelA;
             }
             if ((pedido.tipo || '').startsWith('rondas')) {
                 const planoR = pedido.tipo === 'rondas_anual' ? 'anual' : 'mensal';
@@ -22578,10 +22630,11 @@ async function salvarAdmin(e) {
                 admin.licencaFeedback = 'verde';
                 guardarDados(dados);
                 piscarAdmin(admin.id, 'verde');
-                alert(`✅ Licença de Rondas / Vigilância ativada (${planoR === 'anual' ? 'Anual' : 'Mensal'}) para ${admin.nome}.`);
-                registarHistoricoLicenca(admin.id, 'renovacao_aprovada', 'Rondas / Vigilância — ' + (planoR === 'anual' ? 'Anual' : 'Mensal'), 0);
-                _enviarEmailRenovacaoAprovada(admin, 'Rondas / Vigilância — ' + (planoR === 'anual' ? 'Anual' : 'Mensal'));
-                return;
+                const labelR = 'Rondas / Vigilância — ' + (planoR === 'anual' ? 'Anual' : 'Mensal');
+                if (!silencioso) alert(`✅ Licença de Rondas / Vigilância ativada (${planoR === 'anual' ? 'Anual' : 'Mensal'}) para ${admin.nome}.`);
+                registarHistoricoLicenca(admin.id, 'renovacao_aprovada', labelR, 0);
+                if (!silencioso) _enviarEmailRenovacaoAprovada(admin, labelR);
+                return labelR;
             }
             if ((pedido.tipo || '').startsWith('notificacoes')) {
                 const planoN = pedido.tipo === 'notificacoes_anual' ? 'anual' : 'mensal';
@@ -22592,10 +22645,11 @@ async function salvarAdmin(e) {
                 admin.licencaFeedback = 'verde';
                 guardarDados(dados);
                 piscarAdmin(admin.id, 'verde');
-                alert(`✅ Licença de Notificações ativada (${planoN === 'anual' ? 'Anual' : 'Mensal'}) para ${admin.nome}.`);
-                registarHistoricoLicenca(admin.id, 'renovacao_aprovada', 'Notificações — ' + (planoN === 'anual' ? 'Anual' : 'Mensal'), planoN === 'anual' ? PRECO_NOTIFICACOES_ANUAL : PRECO_NOTIFICACOES_MENSAL);
-                _enviarEmailRenovacaoAprovada(admin, 'Notificações — ' + (planoN === 'anual' ? 'Anual' : 'Mensal'));
-                return;
+                const labelN = 'Notificações — ' + (planoN === 'anual' ? 'Anual' : 'Mensal');
+                if (!silencioso) alert(`✅ Licença de Notificações ativada (${planoN === 'anual' ? 'Anual' : 'Mensal'}) para ${admin.nome}.`);
+                registarHistoricoLicenca(admin.id, 'renovacao_aprovada', labelN, planoN === 'anual' ? PRECO_NOTIFICACOES_ANUAL : PRECO_NOTIFICACOES_MENSAL);
+                if (!silencioso) _enviarEmailRenovacaoAprovada(admin, labelN);
+                return labelN;
             }
             if ((pedido.tipo || '').startsWith('crm')) {
                 const planoCr = pedido.tipo === 'crm_anual' ? 'anual' : 'mensal';
@@ -22609,10 +22663,11 @@ async function salvarAdmin(e) {
                 admin.licencaFeedback = 'verde';
                 guardarDados(dados);
                 piscarAdmin(admin.id, 'verde');
-                alert(`✅ Licença de CRM Comercial + Assist ativada (${planoCr === 'anual' ? 'Anual' : 'Mensal'}) para ${admin.nome}.`);
-                registarHistoricoLicenca(admin.id, 'renovacao_aprovada', 'CRM Comercial + Assist — ' + (planoCr === 'anual' ? 'Anual' : 'Mensal'), planoCr === 'anual' ? PRECO_CRM_ANUAL : PRECO_CRM_MENSAL);
-                _enviarEmailRenovacaoAprovada(admin, 'CRM Comercial + Assist — ' + (planoCr === 'anual' ? 'Anual' : 'Mensal'));
-                return;
+                const labelCr = 'CRM Comercial + Assist — ' + (planoCr === 'anual' ? 'Anual' : 'Mensal');
+                if (!silencioso) alert(`✅ Licença de CRM Comercial + Assist ativada (${planoCr === 'anual' ? 'Anual' : 'Mensal'}) para ${admin.nome}.`);
+                registarHistoricoLicenca(admin.id, 'renovacao_aprovada', labelCr, planoCr === 'anual' ? PRECO_CRM_ANUAL : PRECO_CRM_MENSAL);
+                if (!silencioso) _enviarEmailRenovacaoAprovada(admin, labelCr);
+                return labelCr;
             }
             if ((pedido.tipo || '').startsWith('erp')) {
                 const planoE = pedido.tipo === 'erp_anual' ? 'anual' : 'mensal';
@@ -22623,10 +22678,11 @@ async function salvarAdmin(e) {
                 admin.licencaFeedback = 'verde';
                 guardarDados(dados);
                 piscarAdmin(admin.id, 'verde');
-                alert(`✅ Licença de Integração com ERP's ativada (${planoE === 'anual' ? 'Anual' : 'Mensal'}) para ${admin.nome}.`);
-                registarHistoricoLicenca(admin.id, 'renovacao_aprovada', "Integração com ERP's — " + (planoE === 'anual' ? 'Anual' : 'Mensal'), planoE === 'anual' ? PRECO_ERP_ANUAL : PRECO_ERP_MENSAL);
-                _enviarEmailRenovacaoAprovada(admin, "Integração com ERP's — " + (planoE === 'anual' ? 'Anual' : 'Mensal'));
-                return;
+                const labelE = "Integração com ERP's — " + (planoE === 'anual' ? 'Anual' : 'Mensal');
+                if (!silencioso) alert(`✅ Licença de Integração com ERP's ativada (${planoE === 'anual' ? 'Anual' : 'Mensal'}) para ${admin.nome}.`);
+                registarHistoricoLicenca(admin.id, 'renovacao_aprovada', labelE, planoE === 'anual' ? PRECO_ERP_ANUAL : PRECO_ERP_MENSAL);
+                if (!silencioso) _enviarEmailRenovacaoAprovada(admin, labelE);
+                return labelE;
             }
             if ((pedido.tipo || '').startsWith('portal')) {
                 const planoP = pedido.tipo === 'portal_anual' ? 'anual' : 'mensal';
@@ -22637,19 +22693,20 @@ async function salvarAdmin(e) {
                 admin.licencaFeedback = 'verde';
                 guardarDados(dados);
                 piscarAdmin(admin.id, 'verde');
-                alert(`✅ Licença do Portal do Cliente ativada (${planoP === 'anual' ? 'Anual' : 'Mensal'}) para ${admin.nome}.`);
-                registarHistoricoLicenca(admin.id, 'renovacao_aprovada', 'Portal do Cliente — ' + (planoP === 'anual' ? 'Anual' : 'Mensal'), planoP === 'anual' ? PRECO_PORTAL_ANUAL : PRECO_PORTAL_MENSAL);
-                _enviarEmailRenovacaoAprovada(admin, 'Portal do Cliente — ' + (planoP === 'anual' ? 'Anual' : 'Mensal'));
-                return;
+                const labelP = 'Portal do Cliente — ' + (planoP === 'anual' ? 'Anual' : 'Mensal');
+                if (!silencioso) alert(`✅ Licença do Portal do Cliente ativada (${planoP === 'anual' ? 'Anual' : 'Mensal'}) para ${admin.nome}.`);
+                registarHistoricoLicenca(admin.id, 'renovacao_aprovada', labelP, planoP === 'anual' ? PRECO_PORTAL_ANUAL : PRECO_PORTAL_MENSAL);
+                if (!silencioso) _enviarEmailRenovacaoAprovada(admin, labelP);
+                return labelP;
             }
             if (pedido.tipo === 'cancelamento') {
-                alert(`Pedido de cancelamento de subscrição — ${admin.nome} (${admin.empresa || ''}).\n\nEsta ação não é automática por segurança. Contacta o cliente para confirmar, e depois usa o botão de Desativar/Eliminar administrador se for para avançar.`);
-                return;
+                if (!silencioso) alert(`Pedido de cancelamento de subscrição — ${admin.nome} (${admin.empresa || ''}).\n\nEsta ação não é automática por segurança. Contacta o cliente para confirmar, e depois usa o botão de Desativar/Eliminar administrador se for para avançar.`);
+                return null;
             }
             const plano = PLANOS[pedido.planoPedido];
             if (!plano) {
-                alert('Plano inválido.');
-                return;
+                if (!silencioso) alert('Plano inválido.');
+                return null;
             }
             const now = Date.now();
             // Se a empresa estava em Demo/Trial e está agora a passar para um plano base real,
@@ -22688,9 +22745,27 @@ async function salvarAdmin(e) {
             admin.licencaFeedback = 'verde';
             guardarDados(dados);
             piscarAdmin(admin.id, 'verde');
-            alert(`✅ Pedido aprovado! Licença atualizada para ${PLANOS[pedido.planoPedido].label}.`);
+            if (!silencioso) alert(`✅ Pedido aprovado! Licença atualizada para ${PLANOS[pedido.planoPedido].label}.`);
             registarHistoricoLicenca(admin.id, 'renovacao_aprovada', PLANOS[pedido.planoPedido].label, PLANOS[pedido.planoPedido].preco);
-            _enviarEmailRenovacaoAprovada(admin, PLANOS[pedido.planoPedido].label);
+            if (!silencioso) _enviarEmailRenovacaoAprovada(admin, PLANOS[pedido.planoPedido].label);
+            return PLANOS[pedido.planoPedido].label;
+        }
+        // "Aprovar tudo" de um grupo de pedidos criados juntos (ex.: renovação consolidada com
+        // licença base + add-ons, ou "Ativar Add-ons" com vários módulos de uma vez) — aprova
+        // cada um por baixo (em silêncio, sem alert/email individual) e só no fim mostra um único
+        // resumo e manda um único email de confirmação, já com tudo o que foi ativado.
+        function aprovarGrupoPedidosRenovacao(grupoId) {
+            const pendentes = (dados.pedidosRenovacao || []).filter(p => p.grupoId === grupoId && p.status === 'pendente');
+            if (!pendentes.length) return;
+            const admin = dados.administradores?.find(a => a.id === pendentes[0].adminId);
+            if (!admin) { alert('Administrador não encontrado.'); return; }
+            if (!confirm(`Aprovar todos os ${pendentes.length} pedidos deste grupo (${admin.nome})?`)) return;
+            const labels = [];
+            pendentes.forEach(p => { const lbl = aprovarPedidoRenovacao(p.id, true); if (lbl) labels.push(lbl); });
+            if (!labels.length) { alert('Nenhum dos pedidos deste grupo pôde ser aprovado.'); renderizarTudo(); return; }
+            alert(`✅ ${labels.length} pedido(s) aprovado(s) para ${admin.nome}:\n\n` + labels.map(l => '• ' + l).join('\n'));
+            _enviarEmailRenovacaoAprovada(admin, labels.join(' + '));
+            renderizarTudo();
         }
 
         function rejeitarPedidoRenovacao(pedidoId) {
