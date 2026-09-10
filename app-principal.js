@@ -4598,20 +4598,26 @@
             const anoAnterior = (ano || new Date().getFullYear()) - 1;
             // Só transita saldo se houver mesmo histórico fiável desse ano anterior — sem isso,
             // assumir "não gastou nada" estaria a inventar dias que a pessoa nunca teve.
-            // 1) Se o funcionário tem data de criação de conta própria, usa-a.
+            // 1) Se o funcionário/encarregado tem data de criação de conta própria, usa-a
+            //    (contaCriadaEm — e, por segurança, também aceita dataCriacao, caso algum
+            //    registo antigo só tenha esse campo preenchido).
             // 2) Senão, usa a data de criação da conta da EMPRESA (admin) — cobre o caso de
             //    empresas que só começaram a usar a app este ano, mesmo que o registo do
             //    funcionário em si não tenha essa data preenchida.
             const p = _pessoaEquipa(id);
-            let referenciaMs = p?.contaCriadaEm || null;
+            let referenciaMs = p?.contaCriadaEm || p?.dataCriacao || null;
             if (!referenciaMs) {
                 const admin = dados.administradores?.find(a => a.id === (p?.adminId));
                 referenciaMs = admin?.dataCriacao || null;
             }
-            if (referenciaMs) {
-                const anoReferencia = new Date(referenciaMs).getFullYear();
-                if (anoReferencia >= anoAnterior) return 0;
-            }
+            // Sem NENHUMA data de referência fiável (nem da pessoa, nem da empresa), não há como
+            // saber se a conta já existia no ano anterior — o valor seguro por defeito é "não
+            // transita nada", nunca inventar uma quota extra a dobrar os dias disponíveis. É
+            // preferível a pessoa reclamar de menos dias (fácil de corrigir à mão) do que a app
+            // dar dias a mais sem ninguém dar por isso.
+            if (!referenciaMs) return 0;
+            const anoReferencia = new Date(referenciaMs).getFullYear();
+            if (anoReferencia >= anoAnterior) return 0;
             const restoAnoAnterior = feriasTotaisPessoa(id) - feriasUsadas(id, anoAnterior);
             return Math.max(0, restoAnoAnterior);
         }
@@ -8731,6 +8737,7 @@
                         </div>
                     </div>
 
+                    ${(!_admC?.areasNegocio || _admC.areasNegocio.includes('seguranca') || (c && c.vigilanciaAtiva)) ? `
                     <div class="ff-secao ff-tint-fin" style="background:#eff6ff;">
                         <div class="ff-secao-head"><i class="fas fa-shield-halved"></i> Vigilância / Monitorização (opcional)</div>
                         <div class="ff-secao-body">
@@ -8743,7 +8750,7 @@
                                 <div class="help-text">Fica disponível um botão "Faturar este mês" na lista de contratos — não é automático (precisas de clicar), mas nunca deixa faturar duas vezes o mesmo mês por engano.</div>
                             </div>
                         </div>
-                    </div>
+                    </div>` : ''}
                     </div>
                 `;
             _preencherDatalistClientes();
@@ -9147,6 +9154,7 @@
             const secPeriodicidade = secoes.find(s => s.querySelector('#ct_period'));
             const secEspecialidades = secoes.find(s => s.querySelector('#ct_tipos_trabalho_cont'));
             const secDatasValor = secoes.find(s => s.querySelector('#ct_inicio'));
+            const secDocumento = secoes.find(s => s.querySelector('#ct_documento_input'));
             const secVigilancia = secoes.find(s => s.querySelector('#ct_vigilancia'));
             if (!secLocal || !secPeriodicidade || !secDatasValor) return; // estrutura inesperada — não arrisca, fica no formulário normal
 
@@ -9172,6 +9180,7 @@
                 { titulo: 'Periodicidade e Responsável', el: secPeriodicidade },
                 secEspecialidades ? { titulo: 'Especialidades', el: secEspecialidades } : null,
                 { titulo: 'Datas e Valor', el: secDatasValor },
+                secDocumento ? { titulo: 'Documento anexo', el: secDocumento } : null,
                 secVigilancia ? { titulo: 'Vigilância/Monitorização', el: secVigilancia } : null,
             ].filter(Boolean);
 
@@ -10854,11 +10863,11 @@
         }
         let _agendaVistaObras = 'semana';
         function alternarVistaAgendaObras() {
-            _agendaVistaObras = _agendaVistaObras === 'semana' ? 'mes' : 'semana';
+            _agendaVistaObras = _agendaVistaObras === 'semana' ? 'mes' : (_agendaVistaObras === 'mes' ? 'gantt' : 'semana');
             const btn = document.getElementById('agObrasVistaBtn');
             if (btn) {
-                btn.innerHTML = _agendaVistaObras === 'mes' ? '<i class="fas fa-calendar-week"></i>' : '<i class="fas fa-calendar-alt"></i>';
-                btn.title = _agendaVistaObras === 'mes' ? 'Ver por semana' : 'Ver o mês todo';
+                btn.innerHTML = _agendaVistaObras === 'mes' ? '<i class="fas fa-users-rectangle"></i>' : (_agendaVistaObras === 'gantt' ? '<i class="fas fa-calendar-week"></i>' : '<i class="fas fa-calendar-alt"></i>');
+                btn.title = _agendaVistaObras === 'mes' ? 'Ver por técnico (semana)' : (_agendaVistaObras === 'gantt' ? 'Ver por semana' : 'Ver o mês todo');
             }
             renderizarAgendaObras();
         }
@@ -11015,6 +11024,10 @@
             const _duracaoBadge = (s.duracaoDias && s.duracaoDias > 1) ? `<span style="background:#eef2ff;color:#4f46e5;font-size:.68rem;padding:1px 6px;border-radius:8px;font-weight:700;" title="Duração estimada"><i class="fas fa-calendar-week"></i> ${s.duracaoDias}d</span>` : '';
             const _mapaInfo = _osMapaInfo(s.clienteId, s.morada, s.localId);
             const _moradaBadge = _mapaInfo ? `<a href="${_mapaInfo.url}" target="_blank" rel="noopener" onclick="event.stopPropagation();" title="${_mapaInfo.exato ? 'Ver pin exato no mapa' : 'Ver morada da instalação no mapa (aproximado)'}${s.morada ? ': ' + s.morada.replace(/"/g,'&quot;') : ''}" style="color:${_mapaInfo.exato ? '#16a34a' : '#dc2626'};text-decoration:none;"><i class="fas fa-map-location-dot"></i></a>` : '';
+            // Espaço reservado para o aviso de tempo adverso — só se preenche depois (via
+            // _agendaCarregarClimas), de forma assíncrona, e só quando há mesmo condições
+            // adversas (senão fica vazio, sem poluir a agenda com sol/nuvens irrelevantes).
+            const _climaBadge = (_mapaInfo?.exato && _mapaInfo.lat != null && s.data) ? `<span id="clima-${s.id}" class="ag-clima"></span>` : '';
             const _pontoAbertoOS = (dados.ponto || []).find(p => p.servicoId === s.id && p.funcionarioId === usuarioLogado?.id && p.entrada && !p.saida);
             const _estouAtribuido = ((s.funcionariosIds && s.funcionariosIds.length) ? s.funcionariosIds : [s.funcionarioId].filter(Boolean)).includes(usuarioLogado?.id);
             const _pontoBadge = _estouAtribuido ? (
@@ -11029,6 +11042,7 @@
                         <span class="agenda-os-hora">${s.hora || '--:--'}</span>
                         ${_duracaoBadge}
                         ${_moradaBadge}
+                        ${_climaBadge}
                         ${_pontoBadge}
                     </div>
                     <div style="margin-top:5px;">${_estadoEditavel}</div>
@@ -11046,6 +11060,7 @@
                     <span class="agenda-os-hora">${s.hora || '--:--'}</span>
                     ${_duracaoBadge}
                     ${_moradaBadge}
+                    ${_climaBadge}
                     ${_pontoBadge}
                 </div>
                 <div style="margin-top:5px;"><span class="ag-estado ${cls}">${estado}</span></div>
@@ -11064,6 +11079,34 @@
                 ${bloqueada ? '<div style="font-size:.7rem;color:#16a34a;margin-top:4px;font-weight:600;"><i class="fas fa-lock"></i> Concluída — bloqueada</div>' : ''}
             </div>`;
         }
+        // Depois de desenhar a agenda, vai buscar a previsão do tempo só para as OS que têm um
+        // clima-badge reservado no HTML (ver _cardOSAgenda) — ou seja, só as próximas ~14 dias
+        // com pin exato no mapa. Corre à parte (async), preenchendo os badges à medida que cada
+        // pedido responde — não atrasa o resto da agenda a aparecer.
+        async function _agendaCarregarClimas(oss) {
+            const hojeCk = getDataHoje();
+            const alvo = [];
+            const vistos = new Set();
+            oss.forEach(s => {
+                if (!s.data || s.data < hojeCk || vistos.has(s.id)) return;
+                const dias = Math.round((new Date(s.data + 'T00:00:00') - new Date(hojeCk + 'T00:00:00')) / 86400000);
+                if (dias > 14) return;
+                const el = document.getElementById('clima-' + s.id);
+                if (!el) return;
+                const coords = _osCoordenadasExatas(s);
+                if (!coords) return;
+                vistos.add(s.id);
+                alvo.push({ s, el, ...coords });
+            });
+            for (const item of alvo) {
+                const clima = await _climaPrevisaoDia(item.lat, item.lng, item.s.data);
+                if (!item.el.isConnected || !clima) continue; // a agenda pode ter sido re-renderizada entretanto
+                if (!_climaEAdverso(clima)) continue; // sem nada de especial — deixa o badge vazio
+                const ceu = _tgmDescreverCeu(clima.codigo);
+                item.el.innerHTML = `<i class="fas ${ceu.icone}" style="color:#dc2626;"></i>`;
+                item.el.title = `${ceu.texto} previsto${clima.tempMax != null ? ' — ' + Math.round(clima.tempMax) + '°C' : ''}${clima.chuvaProb != null ? ', ' + clima.chuvaProb + '% probabilidade de chuva' : ''}`;
+            }
+        }
         function renderizarAgendaObras() {
             const cont = document.getElementById('agendaObrasConteudo');
             if (!cont) return;
@@ -11075,6 +11118,7 @@
             oss = _aplicarFiltrosAgenda(oss);
             const hojeStr = getDataHoje();
             if (_agendaVistaObras === 'mes') { renderAgendaMes(cont, oss, hojeStr, conflitos, readOnly); return; }
+            if (_agendaVistaObras === 'gantt') { renderAgendaGantt(cont, oss, hojeStr, conflitos, readOnly); return; }
             const pessoas = _pessoasTenantAg();
             const optPessoas = sel => '<option value="">— responsável —</option>' + pessoas.map(p => `<option value="${p.id}" ${sel === p.id ? 'selected' : ''}>${p.nome}</option>`).join('');
             const seg = new Date(_semanaAgenda || _segundaDaSemana(new Date()).getTime());
@@ -11114,6 +11158,7 @@
             }
             html += b1.html + (emPainelTV ? '' : ('<div style="height:18px;"></div>' + b2.html));
             cont.innerHTML = html;
+            _agendaCarregarClimas(oss);
         }
         function renderAgendaMes(cont, oss, hojeStr, conflitos, readOnly) {
             const ref = new Date(_semanaAgenda || Date.now());
@@ -11146,6 +11191,86 @@
             }
             html += '</div>';
             cont.innerHTML = html;
+        }
+        // Vista "Por Técnico" (Gantt semanal) — técnicos/encarregados nas linhas, dias da
+        // semana nas colunas, cada OS um bloco colorido pelo estado. Dá visão imediata de quem
+        // está sobrecarregado e quem tem a semana livre, mais fácil de rebalancear do que ir
+        // dia a dia na vista normal. Reaproveita os mesmos dados e o mesmo mecanismo de
+        // arrastar já usados nas vistas Semana/Mês — só muda a disposição visual.
+        function renderAgendaGantt(cont, oss, hojeStr, conflitos, readOnly) {
+            const seg = new Date(_semanaAgenda || _segundaDaSemana(new Date()).getTime());
+            const dias = [];
+            for (let i = 0; i < 7; i++) { const d = new Date(seg); d.setDate(seg.getDate() + i); dias.push(d); }
+            const nomesSemana = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+            const label = document.getElementById('agendaObrasLabel');
+            if (label) label.textContent = `${dias[0].getDate()}/${dias[0].getMonth() + 1} a ${dias[6].getDate()}/${dias[6].getMonth() + 1} — por técnico`;
+
+            const pessoas = _pessoasTenantAg();
+            const atribuidosDe = s => ((s.funcionariosIds && s.funcionariosIds.length) ? s.funcionariosIds : [s.funcionarioId].filter(Boolean));
+            const semResponsavel = oss.filter(s => !atribuidosDe(s).length);
+
+            const chip = (s) => {
+                const cls = _estadoClasseAg(s.status || 'pendente');
+                const emConf = conflitos && conflitos.has(s.id);
+                const bloqueada = _osBloqueada(s);
+                const draggableAttr = (!readOnly && !bloqueada) ? `draggable="true" ondragstart="agendaDragStart(event,'${s.id}')"` : '';
+                const cliente = escapeHtmlSimples(_nomeClienteOS(s.clienteId).slice(0, 22));
+                const coordsChip = _osCoordenadasExatas(s);
+                const climaSpanChip = coordsChip ? ` <span id="clima-${s.id}" class="ag-clima"></span>` : '';
+                return `<div class="agenda-gantt-chip ag-est-${cls}${emConf ? ' conflito' : ''}${bloqueada ? ' bloqueada' : ''}" ${draggableAttr} onclick="abrirModal('servico','${s.id}')" title="${s.hora || '--:--'} ${cliente}${emConf ? ' — sobreposição' : ''}">
+                    ${bloqueada ? '<i class="fas fa-lock"></i> ' : ''}${emConf ? '<i class="fas fa-triangle-exclamation"></i> ' : ''}<span style="font-weight:700;">${s.hora || '--:--'}</span> ${cliente}${climaSpanChip}
+                </div>`;
+            };
+
+            let html = `<div class="agenda-gantt-wrap"><div class="agenda-gantt" style="grid-template-columns:150px repeat(7,1fr);">`;
+            html += `<div class="agg-cab agg-canto"></div>`;
+            dias.forEach((d, idx) => {
+                const ds = _fmtDataAg(d);
+                html += `<div class="agg-cab${ds === hojeStr ? ' agenda-hoje' : ''}">${nomesSemana[idx]} <span class="dnum">${d.getDate()}/${d.getMonth() + 1}</span></div>`;
+            });
+
+            const linhaPessoa = (pessoaId, nomeLabel) => {
+                html += `<div class="agg-nome">${escapeHtmlSimples(nomeLabel)}</div>`;
+                dias.forEach(d => {
+                    const ds = _fmtDataAg(d);
+                    const doDia = (pessoaId ? oss.filter(s => s.data === ds && atribuidosDe(s).includes(pessoaId)) : semResponsavel.filter(s => s.data === ds)).sort(_ordenarPorHora);
+                    const dropAttrs = readOnly ? '' : `ondragover="agendaDragOver(event)" ondragleave="agendaDragLeave(event)" ondrop="agendaDropGantt(event,'${ds}',${pessoaId ? `'${pessoaId}'` : 'null'})"`;
+                    html += `<div class="agg-cel${ds === hojeStr ? ' agenda-hoje' : ''}" ${dropAttrs}>${doDia.map(chip).join('') || ''}</div>`;
+                });
+            };
+
+            if (semResponsavel.length) linhaPessoa(null, '⚠️ Sem responsável');
+            pessoas.forEach(p => linhaPessoa(p.id, p.nome));
+            if (!pessoas.length && !semResponsavel.length) html += `<div class="agg-vazio" style="grid-column:1/-1;padding:20px;text-align:center;color:#94a3b8;">Sem técnicos/encarregados para mostrar.</div>`;
+
+            html += `</div></div>`;
+            cont.innerHTML = html;
+            _agendaCarregarClimas(oss);
+        }
+        // Largar uma OS numa célula do Gantt reatribui-a de imediato ao técnico dessa linha
+        // (substitui o responsável principal) além de mudar o dia, tal como o arrastar nas
+        // outras vistas já muda o dia — aqui muda os dois de uma vez, porque a própria posição
+        // na grelha representa "este dia, esta pessoa".
+        function agendaDropGantt(e, dataDia, pessoaId) {
+            if (usuarioLogado?.role === 'funcionario' || document.getElementById('tgPainelTVOverlay')?.classList.contains('aberto')) return;
+            e.preventDefault(); e.currentTarget.classList.remove('ag-drop');
+            const id = _agendaDragId || (e.dataTransfer && e.dataTransfer.getData('text/plain'));
+            _agendaDragId = null;
+            if (!id) return;
+            const s = dados.servicos?.find(x => x.id === id); if (!s) return;
+            if (_osBloqueada(s)) { alert('OS concluída — destranque-a primeiro para a mover.'); renderizarAgendaObras(); return; }
+            const atribuidosAntes = [...(s.funcionariosIds || []), s.funcionarioId].filter(Boolean);
+            if (pessoaId && _bloquearSeAusenteEmOS([pessoaId], dataDia)) { renderizarAgendaObras(); return; }
+            const antesData = s.data;
+            let mudou = false;
+            if (s.data !== dataDia) { s.data = dataDia; mudou = true; }
+            if (pessoaId && s.funcionarioId !== pessoaId) { s.funcionarioId = pessoaId; if (s.funcionariosIds) s.funcionariosIds = s.funcionariosIds.includes(pessoaId) ? s.funcionariosIds : [pessoaId, ...s.funcionariosIds.filter(x => x !== s.funcionarioId)]; mudou = true; }
+            if (!pessoaId) { s.funcionarioId = null; s.funcionariosIds = []; mudou = true; } // largou em "Sem responsável" — desatribui
+            if (mudou) {
+                guardarDados(dados);
+                _notificarAlteracaoOS(s, antesData, s.hora, [...new Set([...atribuidosAntes, ...(pessoaId ? [pessoaId] : [])])]);
+            }
+            renderizarAgendaObras(); if (typeof renderizarServicos === 'function') renderizarServicos();
         }
         function _corStatusPessoaOS(s, pessoaId) {
             const hoje = getDataHoje();
@@ -13528,6 +13653,45 @@
             if ([71, 73, 75, 77, 85, 86].includes(codigo)) return { icone: 'fa-snowflake', texto: 'Neve' };
             if ([95, 96, 99].includes(codigo)) return { icone: 'fa-bolt', texto: 'Trovoada' };
             return { icone: 'fa-cloud', texto: 'Nublado' };
+        }
+        // Previsão do tempo (não o "agora" do widget de "O Meu Dia") para um dia/local específico
+        // — usada para avisar de trabalhos exteriores agendados com condições adversas à vista, na
+        // Agenda de Obras e no Dashboard Central. Mesma API gratuita (Open-Meteo), só que a pedir
+        // "daily" para uma data futura em vez de "current". Só funciona quando o cliente/local tem
+        // um pin exato no mapa (com lat/lng) — sem isso não há coordenadas para consultar.
+        const _climaPrevisaoCache = new Map(); // chave "lat,lng,data" -> resultado (ou null)
+        async function _climaPrevisaoDia(lat, lng, dataISO) {
+            const chave = `${lat.toFixed(3)},${lng.toFixed(3)},${dataISO}`;
+            if (_climaPrevisaoCache.has(chave)) return _climaPrevisaoCache.get(chave);
+            try {
+                const resp = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&daily=weather_code,precipitation_probability_max,temperature_2m_max,wind_speed_10m_max&timezone=auto&start_date=${dataISO}&end_date=${dataISO}`);
+                if (!resp.ok) { _climaPrevisaoCache.set(chave, null); return null; }
+                const json = await resp.json();
+                const d = json?.daily;
+                if (!d || !d.time || !d.time.length) { _climaPrevisaoCache.set(chave, null); return null; }
+                const info = { codigo: d.weather_code[0], chuvaProb: d.precipitation_probability_max?.[0] ?? null, tempMax: d.temperature_2m_max?.[0] ?? null, vento: d.wind_speed_10m_max?.[0] ?? null };
+                _climaPrevisaoCache.set(chave, info);
+                return info;
+            } catch (e) { _climaPrevisaoCache.set(chave, null); return null; }
+        }
+        // Considera "adversa" para trabalho exterior: chuva/neve/trovoada previstas, probabilidade
+        // de chuva ≥60%, ou vento ≥50 km/h — limiares simples, só para dar um alerta visual, não
+        // uma previsão precisa.
+        function _climaEAdverso(info) {
+            if (!info) return false;
+            if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 71, 73, 75, 77, 80, 81, 82, 85, 86, 95, 96, 99].includes(info.codigo)) return true;
+            if (info.chuvaProb != null && info.chuvaProb >= 60) return true;
+            if (info.vento != null && info.vento >= 50) return true;
+            return false;
+        }
+        // Vai buscar as coordenadas exatas de uma OS (cliente/local com pin no mapa) — devolve
+        // null se não houver pin exato, para nunca inventar localização a partir de texto de morada.
+        function _osCoordenadasExatas(s) {
+            const cliente = dados.clientes?.find(c => c.id === s.clienteId);
+            const moradaFallback = cliente ? [cliente.morada, cliente.codigoPostal, cliente.localidade].filter(Boolean).join(', ') : '';
+            const info = _osMapaInfo(s.clienteId, s.morada || moradaFallback, s.localId);
+            if (!info || info.lat == null || info.lng == null) return null;
+            return { lat: info.lat, lng: info.lng };
         }
         function _tgmRenderTempo(alvo, c) {
             const ceu = _tgmDescreverCeu(c.weather_code);
@@ -16943,6 +17107,37 @@
             if (usuarioLogado.role !== 'admin' && usuarioLogado.role !== 'subadmin') { cont.innerHTML = '<p style="color:#64748b;">Apenas o administrador acede a este dashboard.</p>'; return; }
             cont.innerHTML = _htmlDashboardCentralConteudo();
             setTimeout(_renderizarMapaEquipaDashboardCentral, 60);
+            _dashboardCarregarAlertasClima();
+        }
+        // Verifica as OS dos próximos 3 dias com pin exato no mapa e avisa se houver condições
+        // adversas previstas — dá tempo de reagendar antes de mandar a equipa para debaixo de
+        // chuva/trovoada, em vez de descobrir isso só no dia. Corre à parte (async) e só mostra
+        // algo se encontrar mesmo tempo adverso — sem alarmar sem motivo.
+        async function _dashboardCarregarAlertasClima() {
+            const alvo = document.getElementById('hdcClimaAlertas');
+            if (!alvo) return;
+            const adminId = _tenantId ? _tenantId() : (usuarioLogado?.adminId || usuarioLogado?.id);
+            const hojeCk = getDataHoje();
+            const fimJanela = new Date(hojeCk + 'T00:00:00'); fimJanela.setDate(fimJanela.getDate() + 3);
+            const fimJanelaStr = _fmtDataAg ? _fmtDataAg(fimJanela) : fimJanela.toISOString().slice(0, 10);
+            const proximas = (dados.servicos || []).filter(s => s.adminId === adminId && s.data && s.data >= hojeCk && s.data <= fimJanelaStr && s.status !== 'concluído' && s.status !== 'cancelado');
+            const avisos = [];
+            for (const s of proximas) {
+                const coords = _osCoordenadasExatas(s);
+                if (!coords) continue;
+                const clima = await _climaPrevisaoDia(coords.lat, coords.lng, s.data);
+                if (!_climaEAdverso(clima)) continue;
+                const ceu = _tgmDescreverCeu(clima.codigo);
+                avisos.push({ s, ceu, clima });
+            }
+            if (!alvo.isConnected) return; // o dashboard pode ter sido re-renderizado entretanto
+            if (!avisos.length) { alvo.innerHTML = ''; return; }
+            alvo.innerHTML = avisos.map(({ s, ceu, clima }) => `
+                <div class="al" style="cursor:pointer;color:#b91c1c;" onclick="abrirVerOS('${s.id}')">
+                    <i class="fas ${ceu.icone}"></i>
+                    <span>${s.data === hojeCk ? 'Hoje' : (s.data.split('-').reverse().slice(0, 2).join('/'))}${s.hora ? ', ' + s.hora : ''} — ${escapeHtmlSimples(_nomeClienteOS(s.clienteId) || 'OS')}: ${ceu.texto.toLowerCase()} previst${ceu.texto.endsWith('a') ? 'a' : 'o'}${clima.chuvaProb != null ? ' (' + clima.chuvaProb + '% chuva)' : ''}</span>
+                </div>
+            `).join('');
         }
         // ===== Filtro de período dos KPIs do Dashboard Central =====
         // Estado só de UI (não é gravado em BD) — persiste enquanto a página estiver aberta.
@@ -17321,6 +17516,7 @@
                     </div>
                     <div class="hdc-card hdc-alertas">
                         <h4>Alertas e Pendências</h4>
+                        <div id="hdcClimaAlertas"></div>
                         ${alertasSrcHtml || '<div style="color:#16a34a;"><i class="fas fa-circle-check"></i> Sem pendências. Tudo em dia!</div>'}
                     </div>
                 </div>
@@ -23970,7 +24166,8 @@ async function salvarAdmin(e) {
                         funcionariosIds: Array.from(document.querySelectorAll('.f-equipa-check:checked')).map(cb => cb.value),
                         mudarSenha: true,
                         gpsPonto: true,
-                        dataCriacao: Date.now()
+                        dataCriacao: Date.now(),
+                        contaCriadaEm: Date.now() // usado para saber se a pessoa já existia no ano anterior, nas férias (ver feriasSaldoTransitado) — dataCriacao sozinho não chegava, a função lê contaCriadaEm
                     };
                     dados.encarregados = dados.encarregados || [];
                     dados.encarregados.push(encObj);
@@ -24005,6 +24202,7 @@ async function salvarAdmin(e) {
                     role: (!isEdit && _roleTipo === 'subadmin') ? 'subadmin' : (!isEdit && _roleTipo === 'vendedor') ? 'vendedor' : (!isEdit && _roleTipo === 'vigilante') ? 'vigilante' : (!isEdit && _roleTipo === 'supervisor_vigilantes') ? 'supervisor_vigilantes' : (isEdit ? undefined : 'funcionario'),
                     adminId: (usuarioLogado.role === 'admin' ? usuarioLogado.id : usuarioLogado.adminId)
                 };
+                if (!isEdit) obj.contaCriadaEm = Date.now(); // usado para saber se a pessoa já existia no ano anterior, nas férias (ver feriasSaldoTransitado)
                 if (obj.role === undefined) delete obj.role;
                 if (!isEdit && _roleTipo === 'vigilante') {
                     const _supEl = document.getElementById('f_vigilante_supervisor_id');
@@ -25383,7 +25581,7 @@ async function salvarAdmin(e) {
             { valor: 'texto', label: 'Texto curto', icon: 'fa-font' },
             { valor: 'textarea', label: 'Texto longo', icon: 'fa-align-left' },
             { valor: 'numero', label: 'Número', icon: 'fa-hashtag' },
-            { valor: 'checkbox', label: 'Sim / Não', icon: 'fa-square-check' },
+            { valor: 'checkbox', label: 'Sim / Não', icon: 'fa-toggle-on' },
             { valor: 'checklist', label: 'Passo do checklist (obrigatório)', icon: 'fa-list-check' },
         ];
         // Relatório de Km Percorridos (estimados) — só admin/subadmin. Junta os registos de
@@ -25652,7 +25850,11 @@ async function salvarAdmin(e) {
                 const idAttr = `id="${c.id}"`;
                 if (c.tipo === 'textarea') return `<textarea ${idAttr} style="width:100%;min-height:70px;font-family:inherit;font-size:.9rem;padding:8px;border:1px solid var(--line);border-radius:6px;"></textarea>`;
                 if (c.tipo === 'numero') return `<input type="number" step="0.01" ${idAttr} style="width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:6px;font-family:inherit;font-size:.9rem;">`;
-                if (c.tipo === 'checkbox') return `<label style="display:flex;align-items:center;gap:8px;font-size:.88rem;"><input type="checkbox" ${idAttr} style="width:18px;height:18px;"> Sim</label>`;
+                if (c.tipo === 'checkbox') return `<div class="campo-sim-nao" data-simnao="${c.id}">
+                    <input type="hidden" ${idAttr} value="">
+                    <button type="button" class="btn-simnao" data-val="sim" onclick="_relSimNao('${c.id}','sim')">Sim</button>
+                    <button type="button" class="btn-simnao" data-val="nao" onclick="_relSimNao('${c.id}','nao')">Não</button>
+                </div>`;
                 if (c.tipo === 'checklist') return `<label style="display:flex;align-items:center;gap:8px;font-size:.88rem;"><input type="checkbox" ${idAttr} style="width:18px;height:18px;"> Verificado / concluído</label>`;
                 return `<input type="text" ${idAttr} style="width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:6px;font-family:inherit;font-size:.9rem;">`;
             };
@@ -25698,6 +25900,11 @@ async function salvarAdmin(e) {
   button.ghost{background:transparent;color:var(--accent);}
   @media print{ body{background:#fff;padding:0;} .actions,[data-relbar]{display:none;} .sheet{border:none;box-shadow:none;} }
   @media (max-width:700px){ input,select,textarea{font-size:16px !important;min-height:38px;} header.top{grid-template-columns:1fr;} header.top .meta{text-align:left;} }
+  .campo-sim-nao{display:flex;gap:8px;}
+  .btn-simnao{font-family:inherit;font-size:.85rem;font-weight:700;padding:8px 22px;border-radius:6px;border:1px solid var(--line);background:#fff;color:var(--muted);cursor:pointer;}
+  .btn-simnao[data-val="sim"].ativo{background:#166534;border-color:#166534;color:#fff;}
+  .btn-simnao[data-val="nao"].ativo{background:var(--warn);border-color:var(--warn);color:#fff;}
+  @media print{ .btn-simnao:not(.ativo){display:none;} .btn-simnao.ativo{border:none;padding:4px 0;background:none !important;font-size:.9rem;} .btn-simnao.ativo[data-val="sim"]{color:#166534 !important;} .btn-simnao.ativo[data-val="nao"]{color:var(--warn) !important;} }
 </style>
 </head>
 <body>
@@ -25798,6 +26005,24 @@ window._relPrefill = function(msg){
     c.ontouchend=()=>drawing=false;
   }
   window._relLimpar = function(id){ const c=document.getElementById(id); if(c&&c._relCtx) c._relCtx.clearRect(0,0,c.width,c.height); if(c) c._relDrawn=false; };
+  // Campo "Sim / Não" dos relatórios personalizados — dois botões em vez de uma checkbox, para
+  // nunca ficar ambíguo (uma checkbox por marcar podia ser "Não" ou "ainda não respondi"; aqui
+  // fica sempre claro qual das duas opções foi mesmo escolhida). O valor vai para um campo
+  // escondido com o mesmo id de sempre, para o resto do mecanismo (rascunho/PDF) continuar a
+  // funcionar sem precisar de saber que isto agora são botões.
+  window._relSimNao = function(id, valor){
+    const hid = document.getElementById(id);
+    if (hid) hid.value = valor;
+    const grupo = document.querySelector('[data-simnao="' + id + '"]');
+    if (!grupo) return;
+    grupo.querySelectorAll('.btn-simnao').forEach(b => b.classList.toggle('ativo', b.getAttribute('data-val') === valor));
+  };
+  // Ao reabrir um rascunho, o valor já vem gravado no atributo "value" do campo escondido (o
+  // resto do mecanismo de rascunho já trata disso) — só falta repintar os botões certos.
+  document.querySelectorAll('[data-simnao]').forEach(grupo => {
+    const hid = document.getElementById(grupo.getAttribute('data-simnao'));
+    if (hid && hid.value) window._relSimNao(hid.id, hid.value);
+  });
   function capture(id){ const c=document.getElementById(id); if(!c||!c._relDrawn) return ''; try{return c.toDataURL('image/png');}catch(e){return '';} }
 
   window._relGarantirCanvases = function(){ initCanvas(document.getElementById('sign_tecnico')); initCanvas(document.getElementById('sign_cliente')); };
@@ -27838,36 +28063,47 @@ window._relPrefill = function(msg){
                     return;
                 }
                 const obraAberta = (dados.ponto || []).find(p => p.funcionarioId === usuarioLogado.id && p.servicoId && p.entrada && !p.saida);
-                _picandoEntrada = true;
-                const agora = new Date().toTimeString().slice(0, 5);
-                const loc = _gpsPontoAtivo() ? await obterLocalizacao() : null;
-                aberto.saida = agora;
-                if (loc) { aberto.latSaida = loc.lat; aberto.lngSaida = loc.lng; }
+                const _finalizarSaidaGeral = async (kmFim) => {
+                    _picandoEntrada = true;
+                    const agora = new Date().toTimeString().slice(0, 5);
+                    const loc = _gpsPontoAtivo() ? await obterLocalizacao() : null;
+                    aberto.saida = agora;
+                    if (loc) { aberto.latSaida = loc.lat; aberto.lngSaida = loc.lng; }
+                    if (kmFim != null) aberto.kmFim = kmFim;
 
-                if (obraAberta && obraAberta.servicoId) {
-                    const os = dados.servicos?.find(s => s.id === obraAberta.servicoId);
-                    if (os) {
-                        const horasSessao = calcularHoras(obraAberta.entrada, obraAberta.saida);
-                        dados.folhasObra = dados.folhasObra || [];
-                        dados.folhasObra.push({
-                            id: gerarId(), obraId: os.obraId || null, obraDescricao: (os.descricao || _nomeClienteOS(os.clienteId)) + _especialidadesEfetuadasTexto(os.id),
-                            descricao: 'Picagem via Registo de Ponto (' + obraAberta.entrada + ' – ' + obraAberta.saida + ')',
-                            horasTrabalhadas: +horasSessao.toFixed(2), data: getDataHoje(), funcionarioId: usuarioLogado.id,
-                            adminId: _tenantId() || null, servicoId: os.id, dataAtualizacao: Date.now(), origem: 'ponto_saida_os_legado'
-                        });
-                        if (os.status !== 'concluído') os.status = 'em andamento';
-                        guardarDados(dados);
-                        renderizarTudo();
-                        _picandoEntrada = false;
-                        alert('✅ Saída registada às ' + agora + '. Folha de obra criada automaticamente (' + horasSessao.toFixed(2) + 'h) para "' + (os.descricao || _nomeClienteOS(os.clienteId)) + '".');
-                        return;
+                    if (obraAberta && obraAberta.servicoId) {
+                        const os = dados.servicos?.find(s => s.id === obraAberta.servicoId);
+                        if (os) {
+                            const horasSessao = calcularHoras(obraAberta.entrada, obraAberta.saida);
+                            dados.folhasObra = dados.folhasObra || [];
+                            dados.folhasObra.push({
+                                id: gerarId(), obraId: os.obraId || null, obraDescricao: (os.descricao || _nomeClienteOS(os.clienteId)) + _especialidadesEfetuadasTexto(os.id),
+                                descricao: 'Picagem via Registo de Ponto (' + obraAberta.entrada + ' – ' + obraAberta.saida + ')',
+                                horasTrabalhadas: +horasSessao.toFixed(2), data: getDataHoje(), funcionarioId: usuarioLogado.id,
+                                adminId: _tenantId() || null, servicoId: os.id, dataAtualizacao: Date.now(), origem: 'ponto_saida_os_legado'
+                            });
+                            if (os.status !== 'concluído') os.status = 'em andamento';
+                            guardarDados(dados);
+                            renderizarTudo();
+                            _picandoEntrada = false;
+                            alert('✅ Saída registada às ' + agora + '. Folha de obra criada automaticamente (' + horasSessao.toFixed(2) + 'h) para "' + (os.descricao || _nomeClienteOS(os.clienteId)) + '".');
+                            return;
+                        }
                     }
-                }
 
-                guardarDados(dados);
-                renderizarTudo();
-                _picandoEntrada = false;
-                alert('Saída registada ✓ às ' + agora + (loc ? ' (localização guardada)' : ''));
+                    guardarDados(dados);
+                    renderizarTudo();
+                    _picandoEntrada = false;
+                    alert('Saída registada ✓ às ' + agora + (loc ? ' (localização guardada)' : ''));
+                };
+                // Só a "Saída Geral" (não ligada a uma OS específica) é que pede km — mesma regra
+                // da Entrada Geral, e mesma opção da Frota a controlar isto.
+                const adminSaida = dados.administradores?.find(a => a.id === _tenantId());
+                if (!aberto.servicoId && adminSaida?.kmPontoGeralAtivo) {
+                    _kmPedirRegisto(usuarioLogado.id, 'Saída ao serviço', (km) => { _finalizarSaidaGeral(km); });
+                    return;
+                }
+                _finalizarSaidaGeral(null);
             } else {
                 abrirModalEntradaPonto();
             }
@@ -28400,7 +28636,7 @@ window._relPrefill = function(msg){
             const agora = new Date().toTimeString().slice(0, 5);
             const loc = _gpsPontoAtivo() ? await obterLocalizacao() : null;
 
-            function criar(fotoData) {
+            function criar(fotoData, kmInicio) {
                 const servicoIdEscolhido = document.getElementById('pe_servico_id')?.value || null;
                 const osEscolhida = servicoIdEscolhido ? dados.servicos?.find(s => s.id === servicoIdEscolhido) : null;
                 const rec = {
@@ -28417,7 +28653,8 @@ window._relPrefill = function(msg){
                     lat: loc ? loc.lat : null,
                     lng: loc ? loc.lng : null,
                     latSaida: null,
-                    lngSaida: null
+                    lngSaida: null,
+                    kmInicio: kmInicio ?? null
                 };
                 if (pontoAbertoHoje()) { _picandoEntrada = false; if (_btnSub) _btnSub.disabled = false; _fecharModalGenerico(); return; }
                 if (!dados.ponto) dados.ponto = [];
@@ -28430,14 +28667,32 @@ window._relPrefill = function(msg){
                 alert('Entrada registada ✓ às ' + agora + (loc ? ' (localização guardada)' : ' (sem localização)'));
             }
 
-            if (fileInput && fileInput.files && fileInput.files[0]) {
-                const reader = new FileReader();
-                reader.onload = ev => criar(ev.target.result);
-                reader.onerror = () => criar(null);
-                reader.readAsDataURL(fileInput.files[0]);
-            } else {
-                criar(null);
+            function prosseguirComFoto(kmInicio) {
+                if (fileInput && fileInput.files && fileInput.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = ev => criar(ev.target.result, kmInicio);
+                    reader.onerror = () => criar(null, kmInicio);
+                    reader.readAsDataURL(fileInput.files[0]);
+                } else {
+                    criar(null, kmInicio);
+                }
             }
+
+            // Esta é a "Entrada Geral" do dia (não uma entrada dentro de uma OS específica — essa
+            // tem a validação própria em picarPontoOS) — só aqui é que se aplica a opção "Registo
+            // de Km de início e fim do dia" da Frota. Sem viatura atribuída, _kmPedirRegisto avança
+            // sozinho sem pedir nada.
+            const servicoJaEscolhido = document.getElementById('pe_servico_id')?.value || null;
+            const adminEP = dados.administradores?.find(a => a.id === _tenantId());
+            if (!servicoJaEscolhido && adminEP?.kmPontoGeralAtivo) {
+                _picandoEntrada = false; if (_btnSub) _btnSub.disabled = false; // liberta enquanto se decide o km — não fica "a picar" às escuras
+                _kmPedirRegisto(usuarioLogado.id, 'Entrada ao serviço', (km) => {
+                    _picandoEntrada = true; if (_btnSub) _btnSub.disabled = true;
+                    prosseguirComFoto(km);
+                });
+                return;
+            }
+            prosseguirComFoto(null);
         }
 
         function abrirModalPonto() {
