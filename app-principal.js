@@ -4464,8 +4464,7 @@
                             </div>`
                             : (!isDemo ? `
                             <div style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap;">
-                                ${diasRest <= 10 ? `<button class="btn btn-sm btn-renovar" onclick="abrirModalRenovacao('renovacao')"><i class="fas fa-sync-alt"></i> Pedir Renovação</button>` : ''}
-                                <button class="btn btn-sm btn-warning" onclick="abrirModalRenovacao('alteracao')"><i class="fas fa-exchange-alt"></i> Alterar Plano</button>
+                                <button class="btn btn-sm btn-renovar" onclick="abrirModalRenovacao('renovacao')"><i class="fas fa-sync-alt"></i> Pedir Renovação / Alteração ao seu Plano</button>
                             </div>
                         ` : `
                             <div style="margin-top:16px; padding:12px; background:#fef3c7; border-radius:8px; color:#92400e;">
@@ -22023,7 +22022,7 @@ async function salvarAdmin(e) {
             }
             renovacaoTipo = tipo;
             const overlay = document.getElementById('modalRenovacaoOverlay');
-            const titulo = tipo === 'renovacao' ? 'Pedir Renovação de Licença' : 'Alterar Plano';
+            const titulo = tipo === 'renovacao' ? 'Pedir Renovação / Alteração ao seu Plano' : 'Alterar Plano';
             document.getElementById('modalRenovacaoTitulo').innerHTML =
                 `<i class="fas ${tipo === 'renovacao' ? 'fa-sync-alt' : 'fa-exchange-alt'}"></i> ${titulo}`;
             if (tipo !== 'alteracao') {
@@ -22239,12 +22238,12 @@ async function salvarAdmin(e) {
         let _renConsolPeriodo = 'mensal';
         function _renItensAtivosPagos(admin) {
             const mapa = [
-                { tipoBase: 'contrato', label: 'Contratos de Manutenção', plano: admin.contratosPlano, mensal: PRECO_CONTRATOS_MENSAL, anual: PRECO_CONTRATOS_ANUAL },
-                { tipoBase: 'frota', label: 'Frota', plano: admin.frotaPlano, mensal: PRECO_FROTA_MENSAL, anual: PRECO_FROTA_ANUAL },
-                { tipoBase: 'armazem', label: 'Armazém / Stock / Gestão de Obras', plano: admin.armazemPlano, mensal: PRECO_ARMAZEM_MENSAL, anual: PRECO_ARMAZEM_ANUAL },
-                { tipoBase: 'crm', label: 'CRM Comercial + Assist', plano: admin.crmPlano, mensal: PRECO_CRM_MENSAL, anual: PRECO_CRM_ANUAL },
-                { tipoBase: 'erp', label: "Integração com ERP's", plano: admin.erpPlano, mensal: PRECO_ERP_MENSAL, anual: PRECO_ERP_ANUAL },
-                { tipoBase: 'rondas', label: 'Rondas / Vigilância', plano: admin.rondasPlano, mensal: PRECO_RONDAS_MENSAL, anual: PRECO_RONDAS_ANUAL },
+                { tipoBase: 'contrato', label: 'Contratos de Manutenção', icone: 'fa-file-signature', plano: admin.contratosPlano, mensal: PRECO_CONTRATOS_MENSAL, anual: PRECO_CONTRATOS_ANUAL },
+                { tipoBase: 'frota', label: 'Frota', icone: 'fa-truck', plano: admin.frotaPlano, mensal: PRECO_FROTA_MENSAL, anual: PRECO_FROTA_ANUAL },
+                { tipoBase: 'armazem', label: 'Armazém / Stock / Gestão de Obras', icone: 'fa-warehouse', plano: admin.armazemPlano, mensal: PRECO_ARMAZEM_MENSAL, anual: PRECO_ARMAZEM_ANUAL },
+                { tipoBase: 'crm', label: 'CRM Comercial + Assist', icone: 'fa-handshake', plano: admin.crmPlano, mensal: PRECO_CRM_MENSAL, anual: PRECO_CRM_ANUAL },
+                { tipoBase: 'erp', label: "Integração com ERP's", icone: 'fa-plug', plano: admin.erpPlano, mensal: PRECO_ERP_MENSAL, anual: PRECO_ERP_ANUAL },
+                { tipoBase: 'rondas', label: 'Rondas / Vigilância', icone: 'fa-shield-halved', plano: admin.rondasPlano, mensal: PRECO_RONDAS_MENSAL, anual: PRECO_RONDAS_ANUAL },
             ];
             // Só entra quem está mesmo ativo (mensal/anual — não demo, não vazio) E tem preço
             // real (>0). Os grátis (ex.: Rondas em lançamento) ficam de fora sozinhos, como pedido.
@@ -22266,11 +22265,11 @@ async function salvarAdmin(e) {
             const chavePlano = (_renConsolPeriodo === 'anual' ? '365_' : '30_') + tierAtual;
             const planoInfo = PLANOS[chavePlano];
             let total = planoInfo ? planoInfo.preco : 0;
-            const linhasHtml = [planoInfo ? `<div class="report-item"><span>${planoInfo.label}</span><span>${planoInfo.preco.toFixed(2)} €</span></div>` : ''];
+            const linhasHtml = [planoInfo ? `<div class="report-item" style="display:flex;justify-content:space-between;align-items:center;"><span><i class="fas fa-file-lines" style="width:18px;color:#64748b;"></i> ${planoInfo.label}</span><span style="text-align:right;min-width:70px;">${planoInfo.preco.toFixed(2)} €</span></div>` : ''];
             itens.forEach(it => {
                 const preco = _renConsolPeriodo === 'anual' ? it.anual : it.mensal;
                 total += preco;
-                linhasHtml.push(`<div class="report-item"><span>${it.label}</span><span>${preco.toFixed(2)} €</span></div>`);
+                linhasHtml.push(`<div class="report-item" style="display:flex;justify-content:space-between;align-items:center;"><span><i class="fas ${it.icone}" style="width:18px;color:#64748b;"></i> ${it.label}</span><span style="text-align:right;min-width:70px;">${preco.toFixed(2)} €</span></div>`);
             });
             document.getElementById('modalGenericoTitulo') && null; // (sem efeito — mantém o título já definido pelo abrirModalRenovacao)
             document.getElementById('renovacaoCampos').innerHTML = `
@@ -22284,7 +22283,7 @@ async function salvarAdmin(e) {
                 </div>
                 <div style="margin:14px 0;padding:12px;background:#f8fafc;border-radius:8px;">
                     ${linhasHtml.join('')}
-                    <div class="report-item" style="border-top:1px solid #e2e8f0;margin-top:8px;padding-top:8px;font-weight:700;"><span>Total</span><span>${total.toFixed(2)} €</span></div>
+                    <div class="report-item" style="border-top:1px solid #e2e8f0;margin-top:8px;padding-top:8px;font-weight:700;display:flex;justify-content:space-between;"><span>Total</span><span style="text-align:right;min-width:70px;">${total.toFixed(2)} €</span></div>
                 </div>
                 <div class="form-group"><label>Observação (opcional)</label><textarea id="renovacao_obs" placeholder="Detalhes adicionais..."></textarea></div>
                 <button type="button" class="btn btn-primary" style="width:100%;justify-content:center;" onclick="_renConsolidadoSubmeter()"><i class="fas fa-check"></i> Confirmar Pedido de Renovação</button>
@@ -22352,13 +22351,18 @@ async function salvarAdmin(e) {
             const admin = adminAtual(); if (!admin) return;
             _ativAddonsPeriodo = 'mensal';
             _ativAddonsEscolhidos = [];
+            // Contador "X/Y" — quantos add-ons ainda faltam ativar, do total possível (4:
+            // Contratos, Frota, Armazém, CRM). Só mostra os que ainda não tem — não conta os
+            // que já estão ativos na conta dele.
+            const _totalAddonsBase = 4;
+            const _faltamAtivar = _ativModulosInativos(admin).length;
             const overlay = document.createElement('div');
             overlay.className = 'modal-overlay open';
             overlay.id = 'ativAddonsOverlay';
             overlay.innerHTML = `
                 <div class="modal" style="max-width:520px;">
                     <div style="display:flex; align-items:center; justify-content:space-between;">
-                        <h3><i class="fas fa-puzzle-piece"></i> Ativar Add-ons</h3>
+                        <h3><i class="fas fa-puzzle-piece"></i> Ativar Add-ons <span style="font-weight:400;font-size:.78rem;color:#64748b;">(${_faltamAtivar}/${_totalAddonsBase} por ativar)</span></h3>
                         <button class="close-modal" onclick="document.getElementById('ativAddonsOverlay').remove()">&times;</button>
                     </div>
                     <div id="ativAddonsConteudo"></div>
