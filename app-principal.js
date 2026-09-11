@@ -1439,6 +1439,10 @@
             'distribuidor': { dias: 36500, funcionarios: 0, preco: 0, label: 'Conta de Distribuidor (sem licença base)' }
         };
         const PLANOS_NAO_VENDAVEIS = ['distribuidor']; // nunca aparecem nos dropdowns de escolha de plano
+        // Etiqueta pequena "(IVA Inc.)" a juntar a qualquer valor mostrado ao cliente — para
+        // nunca ficar ambíguo se o preço já inclui IVA ou não. Usada em todos os ecrãs de
+        // licença/renovação (Minha Licença, Renovar tudo, Ativar Add-ons, Alterar Plano).
+        const _IVA_INC = '<span style="font-size:.72em;color:#94a3b8;font-weight:400;"> (IVA Inc.)</span>';
 
         function ehPlanoDemo(plano) { return typeof plano === 'string' && plano.indexOf('demo') === 0; }
 
@@ -4377,7 +4381,7 @@
                 const badgeCor = o.ativo ? '#16a34a' : (o.corInativo || '#94a3b8');
                 const badgeTexto = o.ativo ? 'Ativo' : (o.badgeInativo || 'Inativo');
                 const expTxt = (o.ativo && o.expiracaoMs) ? ` até ${new Date(o.expiracaoMs).toLocaleDateString('pt-PT')}` : '';
-                const precoTxt = o.precoMensal != null ? `<span style="color:#64748b;font-weight:400;font-size:.85rem;"> — ${o.precoMensal.toFixed(2)} €/mês</span>` : (o.precoTexto ? `<span style="color:#64748b;font-weight:400;font-size:.85rem;"> — ${o.precoTexto}</span>` : '');
+                const precoTxt = o.precoMensal != null ? `<span style="color:#64748b;font-weight:400;font-size:.85rem;"> — ${o.precoMensal.toFixed(2)} €/mês${_IVA_INC}</span>` : (o.precoTexto ? `<span style="color:#64748b;font-weight:400;font-size:.85rem;"> — ${o.precoTexto}</span>` : '');
                 let aviso = '';
                 if (o.ativo && o.expiracaoMs && calcularDiasRestantes(o.expiracaoMs) <= 10) {
                     aviso = o.pedidoPendente
@@ -22147,7 +22151,7 @@ async function salvarAdmin(e) {
                     <div style="background:#f8fafc;border-radius:10px;padding:14px;margin-bottom:14px;">
                         <div style="font-weight:700;color:#152a52;margin-bottom:6px;font-size:.88rem;">Resumo do pedido</div>
                         ${partes.length ? partes.map(p => `<div style="font-size:.85rem;color:#475569;padding:2px 0;">• ${escapeHtmlSimples(p)}</div>`).join('') : '<div class="text-muted" style="font-size:.85rem;">Nada selecionado ainda.</div>'}
-                        <div style="text-align:right;font-weight:800;color:#152a52;font-size:1.1rem;margin-top:8px;border-top:1px solid #e2e8f0;padding-top:8px;">Total: ${total.toFixed(2)} €${_renWiz.periodo === 'anual' ? ' /ano' : ' /mês'}</div>
+                        <div style="text-align:right;font-weight:800;color:#152a52;font-size:1.1rem;margin-top:8px;border-top:1px solid #e2e8f0;padding-top:8px;">Total: ${total.toFixed(2)} €${_renWiz.periodo === 'anual' ? ' /ano' : ' /mês'}${_IVA_INC}</div>
                     </div>
                     <div class="form-group"><label>Observação (opcional)</label><textarea id="renovacao_obs_wiz" placeholder="Detalhes adicionais...">${escapeHtmlSimples(_renWiz.obs || '')}</textarea></div>
                     <div style="display:flex;justify-content:space-between;margin-top:16px;">
@@ -22314,14 +22318,14 @@ async function salvarAdmin(e) {
             const disponiveis = mapaAddons.filter(m => !_renConsolAddonsNoPedido.includes(m.tipoBase));
 
             let total = planoInfo ? planoInfo.preco : 0;
-            const linhaBase = planoInfo ? `<div class="report-item" style="display:flex;justify-content:space-between;align-items:center;"><span><i class="fas fa-file-lines" style="width:18px;color:#64748b;"></i> ${planoInfo.label}</span><span style="text-align:right;min-width:70px;">${planoInfo.preco.toFixed(2)} €</span></div>` : '';
+            const linhaBase = planoInfo ? `<div class="report-item" style="display:flex;justify-content:space-between;align-items:center;"><span><i class="fas fa-file-lines" style="width:18px;color:#64748b;"></i> ${planoInfo.label}</span><span style="text-align:right;min-width:70px;">${planoInfo.preco.toFixed(2)} €${_IVA_INC}</span></div>` : '';
             const linhasNoPedido = noPedido.map(m => {
                 const preco = _renConsolPeriodo === 'anual' ? m.anual : m.mensal;
                 total += preco;
                 return `<div class="report-item" style="display:flex;justify-content:space-between;align-items:center;">
                     <span><i class="fas ${m.icone}" style="width:18px;color:#64748b;"></i> ${m.label}</span>
                     <span style="display:flex;align-items:center;gap:10px;">
-                        <span style="text-align:right;min-width:70px;">${preco.toFixed(2)} €</span>
+                        <span style="text-align:right;min-width:70px;">${preco.toFixed(2)} €${_IVA_INC}</span>
                         <i class="fas fa-xmark" style="cursor:pointer;color:#dc2626;" title="Remover deste pedido" onclick="_renConsolRemoverAddon('${m.tipoBase}')"></i>
                     </span>
                 </div>`;
@@ -22331,7 +22335,7 @@ async function salvarAdmin(e) {
                 return `<div class="report-item" style="display:flex;justify-content:space-between;align-items:center;opacity:.85;">
                     <span><i class="fas ${m.icone}" style="width:18px;color:#94a3b8;"></i> ${m.label}</span>
                     <span style="display:flex;align-items:center;gap:10px;">
-                        <span style="text-align:right;min-width:70px;color:#64748b;">${preco.toFixed(2)} €/mês</span>
+                        <span style="text-align:right;min-width:70px;color:#64748b;">${preco.toFixed(2)} €/mês${_IVA_INC}</span>
                         <i class="fas fa-cart-plus" style="cursor:pointer;color:#16a34a;" title="Adicionar ao pedido" onclick="_renConsolAdicionarAddon('${m.tipoBase}')"></i>
                     </span>
                 </div>`;
@@ -22349,7 +22353,7 @@ async function salvarAdmin(e) {
                 <div style="margin:14px 0;padding:12px;background:#f8fafc;border-radius:8px;">
                     ${linhaBase}
                     ${linhasNoPedido}
-                    <div class="report-item" style="border-top:1px solid #e2e8f0;margin-top:8px;padding-top:8px;font-weight:700;display:flex;justify-content:space-between;"><span>Total</span><span style="text-align:right;min-width:70px;">${total.toFixed(2)} €</span></div>
+                    <div class="report-item" style="border-top:1px solid #e2e8f0;margin-top:8px;padding-top:8px;font-weight:700;display:flex;justify-content:space-between;"><span>Total</span><span style="text-align:right;min-width:70px;">${total.toFixed(2)} €${_IVA_INC}</span></div>
                 </div>
                 <div style="text-align:center;margin:-6px 0 14px;">
                     <button type="button" class="btn btn-sm btn-outline" onclick="_renConsolToggleTiers()"><i class="fas fa-users"></i> Mudar nº de funcionários / plano base</button>
@@ -22481,7 +22485,7 @@ async function salvarAdmin(e) {
                     <input type="checkbox" ${escolhido ? 'checked' : ''} style="width:auto;" onchange="_ativAddonsToggle('${m.tipoBase}')" />
                     <i class="fas ${m.icone}" style="width:18px;color:#64748b;"></i>
                     <span style="font-weight:600;flex:1;">${m.label}</span>
-                    <span style="font-size:.85rem;color:#64748b;">${preco.toFixed(2)} €</span>
+                    <span style="font-size:.85rem;color:#64748b;">${preco.toFixed(2)} €${_IVA_INC}</span>
                 </label>`;
             }).join('');
             cont.innerHTML = `
@@ -22494,7 +22498,7 @@ async function salvarAdmin(e) {
                         <button type="button" class="btn btn-sm ${_ativAddonsPeriodo === 'anual' ? 'btn-primary' : 'btn-outline'}" onclick="_ativAddonsEscolherPeriodo('anual')" style="flex:1;">Anual (-10%)</button>
                     </div>
                 </div>
-                <div class="report-item" style="border-top:1px solid #e2e8f0;margin-top:12px;padding-top:10px;font-weight:700;"><span>Total</span><span>${total.toFixed(2)} €</span></div>
+                <div class="report-item" style="border-top:1px solid #e2e8f0;margin-top:12px;padding-top:10px;font-weight:700;"><span>Total</span><span>${total.toFixed(2)} €${_IVA_INC}</span></div>
                 <button type="button" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:14px;" onclick="_ativAddonsSubmeter()"><i class="fas fa-paper-plane"></i> Enviar Pedido</button>
             `;
         }
