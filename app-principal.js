@@ -4388,7 +4388,9 @@
                         ? `<div style="margin-top:8px; padding:8px; background:#fef3c7; border-radius:6px; color:#92400e; font-size:13px;"><i class="fas fa-clock"></i> Renovação pedida — a aguardar confirmação.</div>`
                         : `<div style="margin-top:8px; padding:8px; background:#eff6ff; border-radius:6px; color:#1e40af; font-size:13px;"><i class="fas fa-circle-info"></i> A vencer em breve — usa "Renovar tudo" ou "Alterar Plano" no topo desta página.</div>`;
                 } else if (!o.ativo) {
-                    aviso = o.pedidoPendente ? blocoInstrucoesPagamento(o.pedidoPendente) : (o.descricaoInativo ? `<div style="margin-top:8px; font-size:13px; color:#475569;">${o.descricaoInativo}</div>` : '');
+                    aviso = o.pedidoPendente
+                        ? `<div style="margin-top:8px; padding:8px; background:#fef3c7; border-radius:6px; color:#92400e; font-size:13px;"><i class="fas fa-clock"></i> Pedido enviado — os dados de pagamento estão no resumo, mais abaixo.</div>`
+                        : (o.descricaoInativo ? `<div style="margin-top:8px; font-size:13px; color:#475569;">${o.descricaoInativo}</div>` : '');
                 }
                 return `<div style="margin-top:14px; padding:12px; background:#f1f5f9; border-radius:8px; text-align:left;">
                     <div><span class="badge" style="background:${badgeCor};color:#fff;">${badgeTexto}${expTxt}</span></div>
@@ -4475,15 +4477,16 @@
                         `)}
                         ${(() => {
                             const _pendentesTodos = [pedidoBasePend, contratoPedidoPend, frotaPedidoPend, armazemPedidoPend, crmPedidoPend].filter(Boolean);
-                            if (_pendentesTodos.length < 2) return ''; // só faz sentido mostrar resumo quando há mais do que 1 pedido junto
+                            if (!_pendentesTodos.length) return ''; // sem nada pendente, não há resumo nenhum a mostrar
                             const _totalPend = _pendentesTodos.reduce((s, p) => s + valorDoPedido(p), 0);
                             const _nomesTipo = { contrato: 'Contratos de Manutenção', frota: 'Frota', armazem: 'Armazém / Stock / Gestão de Obras', crm: 'CRM Comercial + Assist' };
                             const _nomeLinha = (p) => (p.tipo === 'renovacao' || p.tipo === 'alteracao') ? (PLANOS[p.planoPedido]?.label || 'Licença base') : (_nomesTipo[(p.tipo || '').split('_')[0]] || p.tipo);
                             return `
                             <div style="margin-top:16px;padding:14px 16px;background:#f0fdfa;border:1px solid #99f6e4;border-radius:10px;">
-                                <div style="font-weight:700;color:#0f766e;margin-bottom:8px;"><i class="fas fa-receipt"></i> Resumo do pedido conjunto</div>
+                                <div style="font-weight:700;color:#0f766e;margin-bottom:8px;"><i class="fas fa-receipt"></i> Resumo do pedido${_pendentesTodos.length > 1 ? ' conjunto' : ''}</div>
                                 ${_pendentesTodos.map(p => `<div style="display:flex;justify-content:space-between;font-size:.88rem;color:#134e4a;padding:3px 0;"><span>${_nomeLinha(p)}</span><span>${valorDoPedido(p).toFixed(2)} €</span></div>`).join('')}
                                 <div style="display:flex;justify-content:space-between;font-weight:700;color:#0f766e;border-top:1px solid #99f6e4;margin-top:6px;padding-top:6px;"><span>Total</span><span>${_totalPend.toFixed(2)} €</span></div>
+                                ${blocoInstrucoesPagamentoGrupo(_pendentesTodos)}
                             </div>`;
                         })()}
                         ${(!isDemo && (!modAtivo || !frotaAtivo || !armazemAtivo || !crmAtivo)) ? `
@@ -7635,6 +7638,32 @@
                         ${db.banco ? `<div><strong>Banco:</strong> ${db.banco}</div>` : ''}
                         ${db.swift ? `<div><strong>BIC/SWIFT:</strong> ${db.swift}</div>` : ''}
                         <div style="margin-top:4px;"><strong>Referência a indicar:</strong> ${ref}</div>
+                        ${db.instrucoes ? `<div style="margin-top:6px; color:#475569;">${db.instrucoes}</div>` : ''}
+                        <div style="margin-top:8px; color:#92400e; background:#fef3c7; padding:6px 8px; border-radius:6px;"><i class="fas fa-info-circle"></i> Após recebermos o pagamento, a licença é ativada pelo Super Admin.</div>
+                    </div>`;
+        }
+        // Versão combinada — um bloco só, para todos os pedidos pendentes de uma vez (em vez de
+        // repetir os dados bancários em cada cartão de módulo). Usa a mesma referência que já vai
+        // no email ao cliente (baseada no grupoId partilhado), para nunca haver duas referências
+        // diferentes para o mesmo pedido feito em conjunto.
+        function blocoInstrucoesPagamentoGrupo(pedidos) {
+            const db = obterDadosBancarios();
+            const total = pedidos.reduce((s, p) => s + valorDoPedido(p), 0);
+            const gruposUnicos = [...new Set(pedidos.map(p => p.grupoId).filter(Boolean))];
+            const todosMesmoGrupo = gruposUnicos.length === 1 && pedidos.every(p => p.grupoId === gruposUnicos[0]);
+            const refs = todosMesmoGrupo ? [gruposUnicos[0].slice(-8).toUpperCase()] : pedidos.map(p => refPagamento(p.id));
+            if (!db || !db.iban) {
+                return `<div style="margin-top:10px; padding:10px; background:#fef3c7; border-radius:6px; color:#92400e; font-size:13px;">
+                            <i class="fas fa-clock"></i> Pedido enviado. Aguarde o contacto do Super Admin com os dados de pagamento.
+                        </div>`;
+            }
+            return `<div style="margin-top:12px; padding:12px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; font-size:13px; color:#1e3a8a;">
+                        <div style="font-weight:700; margin-bottom:6px;"><i class="fas fa-university"></i> Para ativar, faça a transferência de <strong>${total.toFixed(2)} €</strong>:</div>
+                        ${db.titular ? `<div><strong>Titular:</strong> ${db.titular}</div>` : ''}
+                        <div><strong>IBAN:</strong> ${db.iban}</div>
+                        ${db.banco ? `<div><strong>Banco:</strong> ${db.banco}</div>` : ''}
+                        ${db.swift ? `<div><strong>BIC/SWIFT:</strong> ${db.swift}</div>` : ''}
+                        <div style="margin-top:4px;"><strong>Referência${refs.length > 1 ? 's' : ''} a indicar:</strong> ${refs.join(', ')}</div>
                         ${db.instrucoes ? `<div style="margin-top:6px; color:#475569;">${db.instrucoes}</div>` : ''}
                         <div style="margin-top:8px; color:#92400e; background:#fef3c7; padding:6px 8px; border-radius:6px;"><i class="fas fa-info-circle"></i> Após recebermos o pagamento, a licença é ativada pelo Super Admin.</div>
                     </div>`;
