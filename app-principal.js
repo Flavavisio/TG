@@ -2248,7 +2248,10 @@
                 dataAssinatura: agora,
                 prazoRecolha: prazoRecolha
             });
-            _avisarSuperAdminNovoPedido(dados.pedidosRenovacao[dados.pedidosRenovacao.length - 1], admin);
+            // (nota: havia aqui uma chamada a uma função de aviso que nunca chegou a ser
+            // definida em lado nenhum do código — rebentava sempre a seguir a isto, impedindo o
+            // guardarDados()/email/fecho do modal de sequer correr. O email já é enviado logo a
+            // seguir, por isso a remoção não perde nenhum aviso.)
             guardarDados(dados);
             _fecharModalCancelamento();
             renderizarTudo();
@@ -4370,14 +4373,11 @@
                             <div class="report-item"><span>Contratos de Manutenção</span><span class="licenca-ativa">Ativo — ${admin.contratosPlano === 'demo' ? 'Demo' : admin.contratosPlano === 'anual' ? 'Anual' : 'Mensal'} (até ${modExp})</span></div>
                             ${calcularDiasRestantes(admin.contratosExpiracao) <= 10 ? (contratoPedidoPend
                                 ? `<div style="margin-top:8px; padding:8px; background:#fef3c7; border-radius:6px; color:#92400e; font-size:13px;"><i class="fas fa-clock"></i> Renovação pedida — a aguardar confirmação.</div>`
-                                : `<div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
-                                <button class="btn btn-sm btn-renovar" onclick="solicitarContratos('mensal')"><i class="fas fa-sync-alt"></i> Renovar Mensal — ${PRECO_CONTRATOS_MENSAL.toFixed(2)} €</button>
-                                <button class="btn btn-sm btn-renovar" onclick="solicitarContratos('anual')"><i class="fas fa-sync-alt"></i> Renovar Anual — ${PRECO_CONTRATOS_ANUAL.toFixed(2)} €</button>
-                            </div>`) : ''}
+                                : `<div style="margin-top:8px; padding:8px; background:#eff6ff; border-radius:6px; color:#1e40af; font-size:13px;"><i class="fas fa-circle-info"></i> A vencer em breve — usa "Renovar tudo" ou "Alterar Plano" no topo desta página.</div>`) : ''}
                         </div>`
                 : `<div style="margin-top:14px; padding:12px; background:#f1f5f9; border-radius:8px; text-align:left;">
                             <strong>Contratos de Manutenção</strong> <span class="badge" style="background:#94a3b8;color:#fff;">Inativo</span>
-                            <div style="margin-top:8px; font-size:13px; color:#475569;">Ative o módulo para gerir contratos de manutenção. A ativação é feita pelo Super Admin após confirmação do pagamento.</div>
+                            <div style="margin-top:8px; font-size:13px; color:#475569;">Ative o módulo para gerir contratos de manutenção, em "Alterar Plano" no topo desta página. A ativação é feita pelo Super Admin após confirmação do pagamento.</div>
                             ${contratoPedidoPend ? blocoInstrucoesPagamento(contratoPedidoPend) : ''}
                         </div>`;
             const frotaAtivo = moduloFrotaAtivo(admin);
@@ -4388,14 +4388,11 @@
                             <div class="report-item"><span>Frota</span><span class="licenca-ativa">Ativo — ${admin.frotaPlano === 'demo' ? 'Demo' : admin.frotaPlano === 'anual' ? 'Anual' : 'Mensal'} (até ${frotaExp})</span></div>
                             ${calcularDiasRestantes(admin.frotaExpiracao) <= 10 ? (frotaPedidoPend
                                 ? `<div style="margin-top:8px; padding:8px; background:#fef3c7; border-radius:6px; color:#92400e; font-size:13px;"><i class="fas fa-clock"></i> Renovação pedida — a aguardar confirmação.</div>`
-                                : `<div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
-                                <button class="btn btn-sm btn-renovar" onclick="solicitarFrota('mensal')"><i class="fas fa-sync-alt"></i> Renovar Mensal — ${PRECO_FROTA_MENSAL.toFixed(2)} €</button>
-                                <button class="btn btn-sm btn-renovar" onclick="solicitarFrota('anual')"><i class="fas fa-sync-alt"></i> Renovar Anual — ${PRECO_FROTA_ANUAL.toFixed(2)} €</button>
-                            </div>`) : ''}
+                                : `<div style="margin-top:8px; padding:8px; background:#eff6ff; border-radius:6px; color:#1e40af; font-size:13px;"><i class="fas fa-circle-info"></i> A vencer em breve — usa "Renovar tudo" ou "Alterar Plano" no topo desta página.</div>`) : ''}
                         </div>`
                 : `<div style="margin-top:14px; padding:12px; background:#f1f5f9; border-radius:8px; text-align:left;">
                             <strong>Frota</strong> <span class="badge" style="background:#94a3b8;color:#fff;">Inativo</span>
-                            <div style="margin-top:8px; font-size:13px; color:#475569;">Ative o módulo para gerir a frota de veículos. A ativação é feita pelo Super Admin após confirmação do pagamento.</div>
+                            <div style="margin-top:8px; font-size:13px; color:#475569;">Ative o módulo para gerir a frota de veículos, em "Alterar Plano" no topo desta página. A ativação é feita pelo Super Admin após confirmação do pagamento.</div>
                             ${frotaPedidoPend ? blocoInstrucoesPagamento(frotaPedidoPend) : ''}
                         </div>`;
             const armazemAtivo = moduloArmazemAtivo(admin);
@@ -4406,14 +4403,11 @@
                             <div class="report-item"><span>Armazém / Stock / Gestão de Obras</span><span class="licenca-ativa">Ativo — ${admin.armazemPlano === 'demo' ? 'Demo' : admin.armazemPlano === 'anual' ? 'Anual' : 'Mensal'} (até ${armazemExp})</span></div>
                             ${calcularDiasRestantes(admin.armazemExpiracao) <= 10 ? (armazemPedidoPend
                                 ? `<div style="margin-top:8px; padding:8px; background:#fef3c7; border-radius:6px; color:#92400e; font-size:13px;"><i class="fas fa-clock"></i> Renovação pedida — a aguardar confirmação.</div>`
-                                : `<div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
-                                <button class="btn btn-sm btn-renovar" onclick="solicitarArmazem('mensal')"><i class="fas fa-sync-alt"></i> Renovar Mensal — ${PRECO_ARMAZEM_MENSAL.toFixed(2)} €</button>
-                                <button class="btn btn-sm btn-renovar" onclick="solicitarArmazem('anual')"><i class="fas fa-sync-alt"></i> Renovar Anual — ${PRECO_ARMAZEM_ANUAL.toFixed(2)} €</button>
-                            </div>`) : ''}
+                                : `<div style="margin-top:8px; padding:8px; background:#eff6ff; border-radius:6px; color:#1e40af; font-size:13px;"><i class="fas fa-circle-info"></i> A vencer em breve — usa "Renovar tudo" ou "Alterar Plano" no topo desta página.</div>`) : ''}
                         </div>`
                 : `<div style="margin-top:14px; padding:12px; background:#f1f5f9; border-radius:8px; text-align:left;">
                             <strong>Armazém / Stock / Gestão de Obras</strong> <span class="badge" style="background:#94a3b8;color:#fff;">Inativo</span>
-                            <div style="margin-top:8px; font-size:13px; color:#475569;">Add-on de gestão de stock: artigos, fornecedores, obras, encomendas e planos de materiais. A ativação é feita pelo Super Admin após confirmação do pagamento.</div>
+                            <div style="margin-top:8px; font-size:13px; color:#475569;">Add-on de gestão de stock: artigos, fornecedores, obras, encomendas e planos de materiais. Ative em "Alterar Plano" no topo desta página. A ativação é feita pelo Super Admin após confirmação do pagamento.</div>
                             ${armazemPedidoPend ? blocoInstrucoesPagamento(armazemPedidoPend) : ''}
                         </div>`;
             const portalBloco = `<div style="margin-top:10px;"><div class="report-item"><span>Portal do Cliente</span><span class="licenca-ativa">Incluído na licença base</span></div></div>`;
@@ -4426,14 +4420,11 @@
                             <div class="report-item"><span>CRM Comercial + Assist</span><span class="licenca-ativa">Ativo — ${admin.crmPlano === 'demo' ? 'Demo' : admin.crmPlano === 'anual' ? 'Anual' : 'Mensal'} (até ${crmExp})</span></div>
                             ${calcularDiasRestantes(admin.crmExpiracao) <= 10 ? (crmPedidoPend
                                 ? `<div style="margin-top:8px; padding:8px; background:#fef3c7; border-radius:6px; color:#92400e; font-size:13px;"><i class="fas fa-clock"></i> Renovação pedida — a aguardar confirmação.</div>`
-                                : `<div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
-                                <button class="btn btn-sm btn-renovar" onclick="solicitarCrm('mensal')"><i class="fas fa-sync-alt"></i> Renovar Mensal — ${PRECO_CRM_MENSAL.toFixed(2)} €</button>
-                                <button class="btn btn-sm btn-renovar" onclick="solicitarCrm('anual')"><i class="fas fa-sync-alt"></i> Renovar Anual — ${PRECO_CRM_ANUAL.toFixed(2)} €</button>
-                            </div>`) : ''}
+                                : `<div style="margin-top:8px; padding:8px; background:#eff6ff; border-radius:6px; color:#1e40af; font-size:13px;"><i class="fas fa-circle-info"></i> A vencer em breve — usa "Renovar tudo" ou "Alterar Plano" no topo desta página.</div>`) : ''}
                         </div>`
                 : `<div style="margin-top:14px; padding:12px; background:#f1f5f9; border-radius:8px; text-align:left;">
                             <strong>CRM Comercial + Assist</strong> <span class="badge" style="background:#7c3aed;color:#fff;">Inativo</span>
-                            <div style="margin-top:8px; font-size:13px; color:#475569;">Gestão do ciclo comercial completo — leads, pipeline, propostas, mapa de visitas e conversão automática em cliente/contrato assim que um negócio é ganho — mais o Total Gest Assist (pedidos de suporte e assistência técnica com criação direta de OS), incluído sem custo extra. A ativação é feita pelo Super Admin após confirmação do pagamento.</div>
+                            <div style="margin-top:8px; font-size:13px; color:#475569;">Gestão do ciclo comercial completo — leads, pipeline, propostas, mapa de visitas e conversão automática em cliente/contrato assim que um negócio é ganho — mais o Total Gest Assist (pedidos de suporte e assistência técnica com criação direta de OS), incluído sem custo extra. Ative em "Alterar Plano" no topo desta página. A ativação é feita pelo Super Admin após confirmação do pagamento.</div>
                             ${crmPedidoPend ? blocoInstrucoesPagamento(crmPedidoPend) : ''}
                         </div>`;
             const erpBloco = `<div style="margin-top:14px; padding:12px; background:#f1f5f9; border-radius:8px; text-align:left; opacity:.85;">
@@ -4452,9 +4443,7 @@
                             <div style="margin-top:8px; font-size:13px; color:#475569;">Gestão de rondas de segurança: postos com QR/NFC, rotas com horário e SLA, execução com scanner no telemóvel e alertas automáticos de postos saltados ou fora de horário. Grátis por agora, fase de lançamento.</div>
                             ${rondasPedidoPend
                                 ? blocoInstrucoesPagamento(rondasPedidoPend)
-                                : `<div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
-                                <button class="btn btn-sm btn-success" onclick="solicitarRondas('mensal')"><i class="fas fa-shield-halved"></i> Ativar (Grátis)</button>
-                            </div>`}
+                                : `<div style="margin-top:8px; font-size:13px; color:#475569;">Ative em "Alterar Plano" no topo desta página.</div>`}
                         </div>`;
             container.innerHTML = `
                     ${fbBanner}
@@ -7087,7 +7076,7 @@
                 status: 'pendente',
                 dataCriacao: Date.now()
             });
-            _avisarSuperAdminNovoPedido(dados.pedidosRenovacao[dados.pedidosRenovacao.length - 1], admin);
+            // (função de aviso que nunca existiu — removida; esta função em si já não é chamada por nenhum botão)
             guardarDados(dados);
             renderizarTudo();
             alert('✅ Pedido enviado ao Super Admin. Aguarde a aprovação.');
@@ -7507,7 +7496,7 @@
             const _idPedidoArmazem = gerarId();
             dados.pedidosRenovacao = dados.pedidosRenovacao || [];
             dados.pedidosRenovacao.push({ id: _idPedidoArmazem, adminId: admin.id, tipo: plano === 'anual' ? 'armazem_anual' : 'armazem_mensal', planoAtual: null, planoPedido: null, observacao: 'Licença de Armazém (' + (plano === 'anual' ? 'Anual' : 'Mensal') + ')', status: 'pendente', dataCriacao: Date.now() });
-            _avisarSuperAdminNovoPedido(dados.pedidosRenovacao[dados.pedidosRenovacao.length - 1], admin);
+            // (função de aviso que nunca existiu — removida; esta função em si já não é chamada por nenhum botão)
             guardarDados(dados);
             renderizarTudo();
             alert('✅ Pedido enviado ao Super Admin. Aguarde a aprovação.');
@@ -7551,7 +7540,7 @@
                 status: 'pendente',
                 dataCriacao: Date.now()
             });
-            _avisarSuperAdminNovoPedido(dados.pedidosRenovacao[dados.pedidosRenovacao.length - 1], admin);
+            // (função de aviso que nunca existiu — removida; esta função em si já não é chamada por nenhum botão)
             guardarDados(dados);
             renderizarTudo();
             alert('✅ Pedido enviado ao Super Admin. Aguarde a aprovação.');
@@ -7576,7 +7565,7 @@
                 status: 'pendente',
                 dataCriacao: Date.now()
             });
-            _avisarSuperAdminNovoPedido(dados.pedidosRenovacao[dados.pedidosRenovacao.length - 1], admin);
+            // (função de aviso que nunca existiu — removida; esta função em si já não é chamada por nenhum botão)
             guardarDados(dados);
             renderizarTudo();
             alert('✅ Pedido enviado ao Super Admin. Aguarde a aprovação.');
@@ -8277,7 +8266,7 @@
                 status: 'pendente',
                 dataCriacao: Date.now()
             });
-            _avisarSuperAdminNovoPedido(dados.pedidosRenovacao[dados.pedidosRenovacao.length - 1], admin);
+            // (função de aviso que nunca existiu — removida; esta função em si já não é chamada por nenhum botão)
             guardarDados(dados);
             renderizarTudo();
             alert('✅ Pedido enviado ao Super Admin. Aguarde a aprovação.');
@@ -22468,6 +22457,7 @@ async function salvarAdmin(e) {
             }
             const obs = document.getElementById('renovacao_obs').value.trim();
             let planoPedido = admin.licenca?.plano;
+            const _grupoIdSalvarRenov = gerarId(); // liga entre si o pedido do plano base + os add-ons escolhidos aqui, para o "Aprovar tudo" da tabela de pedidos os apanhar juntos
 
             const ADDONS_DEF = [
                 { chk: 'rn_add_contratos', sel: 'rn_add_contratos_periodo', tipoBase: 'contrato', label: 'Contratos de Manutenção', mensal: PRECO_CONTRATOS_MENSAL, anual: PRECO_CONTRATOS_ANUAL },
@@ -22500,10 +22490,15 @@ async function salvarAdmin(e) {
                     planoPedido: planoPedido,
                     observacao: obs,
                     status: 'pendente',
-                    dataCriacao: Date.now()
+                    dataCriacao: Date.now(),
+                    grupoId: _grupoIdSalvarRenov
                 };
                 dados.pedidosRenovacao.push(pedido);
-                _avisarSuperAdminNovoPedido(pedido, admin);
+                // (nota: havia aqui uma chamada a uma função de aviso que nunca chegou a ser
+                // definida — rebentava sempre a seguir a isto, impedindo o resto desta função
+                // (guardarDados, email, fecho do modal) de sequer correr. Era EXATAMENTE isto
+                // que fazia um pedido de renovação com add-ons juntos nunca chegar a gravar os
+                // add-ons — a função parava aqui, mesmo antes do loop deles mais abaixo.)
             }
             const _adminIdPedido = (usuarioLogado.role === 'admin' ? usuarioLogado.id : usuarioLogado.adminId);
 
@@ -22520,9 +22515,8 @@ async function salvarAdmin(e) {
                         id: gerarId(), adminId: _adminIdPedido, tipo: ad.tipoBase + '_' + periodo,
                         planoAtual: null, planoPedido: null,
                         observacao: 'Licença de ' + ad.label + ' (' + (periodo === 'anual' ? 'Anual' : 'Mensal') + ') — pedida junto com a alteração de plano',
-                        status: 'pendente', dataCriacao: Date.now()
+                        status: 'pendente', dataCriacao: Date.now(), grupoId: _grupoIdSalvarRenov
                     });
-                    _avisarSuperAdminNovoPedido(dados.pedidosRenovacao[dados.pedidosRenovacao.length - 1], admin);
                     totalAddons += preco;
                     itensAddon.push(ad.label + ' (' + (periodo === 'anual' ? 'Anual' : 'Mensal') + ') — ' + preco.toFixed(2) + '€');
                 });
