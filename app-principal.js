@@ -1425,14 +1425,14 @@
             'demo_30': { dias: 14, funcionarios: 5, preco: 0, label: 'Licença Trial 14 dias' },
             '30_5': { dias: 30, funcionarios: 5, preco: 29.99, label: '30 dias - 5 func.' },
             '30_10': { dias: 30, funcionarios: 10, preco: 34.99, label: '30 dias - 10 func.' },
-            '30_25': { dias: 30, funcionarios: 25, preco: 39.99, label: '30 dias - 25 func.' },
-            '30_50': { dias: 30, funcionarios: 50, preco: 59.99, label: '30 dias - 50 func.' },
-            '30_100': { dias: 30, funcionarios: 100, preco: 89.99, label: '30 dias - 100 func.' },
+            '30_25': { dias: 30, funcionarios: 25, preco: 49.99, label: '30 dias - 25 func.' },
+            '30_50': { dias: 30, funcionarios: 50, preco: 89.99, label: '30 dias - 50 func.' },
+            '30_100': { dias: 30, funcionarios: 100, preco: 179.90, label: '30 dias - 100 func.' },
             '365_5': { dias: 365, funcionarios: 5, preco: +(29.99 * 12 * 0.9).toFixed(2), label: '365 dias - 5 func. (10% desc)' },
             '365_10': { dias: 365, funcionarios: 10, preco: +(34.99 * 12 * 0.9).toFixed(2), label: '365 dias - 10 func. (10% desc)' },
-            '365_25': { dias: 365, funcionarios: 25, preco: +(39.99 * 12 * 0.9).toFixed(2), label: '365 dias - 25 func. (10% desc)' },
-            '365_50': { dias: 365, funcionarios: 50, preco: +(59.99 * 12 * 0.9).toFixed(2), label: '365 dias - 50 func. (10% desc)' },
-            '365_100': { dias: 365, funcionarios: 100, preco: +(89.99 * 12 * 0.9).toFixed(2), label: '365 dias - 100 func. (10% desc)' },
+            '365_25': { dias: 365, funcionarios: 25, preco: +(49.99 * 12 * 0.9).toFixed(2), label: '365 dias - 25 func. (10% desc)' },
+            '365_50': { dias: 365, funcionarios: 50, preco: +(89.99 * 12 * 0.9).toFixed(2), label: '365 dias - 50 func. (10% desc)' },
+            '365_100': { dias: 365, funcionarios: 100, preco: +(179.90 * 12 * 0.9).toFixed(2), label: '365 dias - 100 func. (10% desc)' },
             // Conta de Distribuidor: não é um plano à venda (por isso fica de fora de qualquer
             // dropdown de "escolher plano") — é só para dar um "licenca" tecnicamente válido a
             // quem só existe para revender, sem lhe cobrar uma licença base que não usa.
@@ -2265,8 +2265,8 @@
                 cliente_email: admin.email,
                 mensagem: 'Pedido enviado através de "Minha Licença" na plataforma.'
             };
-            supa.functions.invoke('enviar-mail', { body: { tipo: 'cancelamento_licenca', to_email: admin.email, ...dadosEmail } }).catch(err => console.warn('email cancelamento (cliente):', err));
-            supa.functions.invoke('enviar-mail', { body: { tipo: 'cancelamento_licenca_interno', to_email: 'totalgestpro@gmail.com', ...dadosEmail } }).catch(err => console.warn('email cancelamento (interno):', err));
+            supa.functions.invoke('super-function', { body: { tipo: 'cancelamento_licenca', to_email: admin.email, ...dadosEmail } }).catch(err => console.warn('email cancelamento (cliente):', err));
+            supa.functions.invoke('super-function', { body: { tipo: 'cancelamento_licenca_interno', to_email: 'totalgestpro@gmail.com', ...dadosEmail } }).catch(err => console.warn('email cancelamento (interno):', err));
             alert('✅ Pedido de encerramento enviado. Vais receber um email de confirmação com o prazo de 24h para exportares os teus dados.');
         }
         function _abrirModalNotif() {
@@ -4179,6 +4179,7 @@
                                 <td colspan="9" style="padding:9px 12px;">
                                     <i class="fas fa-layer-group"></i> <strong>${_contagemGrupo[p.grupoId]} pedidos pendentes</strong> feitos juntos por ${escapeHtmlSimples(admin?.nome || '')} — aprovar um a um deixa os outros por confirmar.
                                     <button class="btn btn-sm btn-success" style="margin-left:8px;" onclick="aprovarGrupoPedidosRenovacao('${p.grupoId}')"><i class="fas fa-check-double"></i> Aprovar tudo</button>
+                                    <button class="btn btn-sm btn-danger" onclick="rejeitarGrupoPedidosRenovacao('${p.grupoId}')"><i class="fas fa-xmark"></i> Rejeitar tudo</button>
                                 </td>
                             </tr>`;
                         })() : ''}
@@ -4469,14 +4470,15 @@
                             </div>
                         `)}
                         ${(() => {
-                            const _pendentesTodos = [contratoPedidoPend, frotaPedidoPend, armazemPedidoPend, crmPedidoPend].filter(Boolean);
+                            const _pendentesTodos = [pedidoBasePend, contratoPedidoPend, frotaPedidoPend, armazemPedidoPend, crmPedidoPend].filter(Boolean);
                             if (_pendentesTodos.length < 2) return ''; // só faz sentido mostrar resumo quando há mais do que 1 pedido junto
                             const _totalPend = _pendentesTodos.reduce((s, p) => s + valorDoPedido(p), 0);
                             const _nomesTipo = { contrato: 'Contratos de Manutenção', frota: 'Frota', armazem: 'Armazém / Stock / Gestão de Obras', crm: 'CRM Comercial + Assist' };
+                            const _nomeLinha = (p) => (p.tipo === 'renovacao' || p.tipo === 'alteracao') ? (PLANOS[p.planoPedido]?.label || 'Licença base') : (_nomesTipo[(p.tipo || '').split('_')[0]] || p.tipo);
                             return `
                             <div style="margin-top:16px;padding:14px 16px;background:#f0fdfa;border:1px solid #99f6e4;border-radius:10px;">
                                 <div style="font-weight:700;color:#0f766e;margin-bottom:8px;"><i class="fas fa-receipt"></i> Resumo do pedido conjunto</div>
-                                ${_pendentesTodos.map(p => `<div style="display:flex;justify-content:space-between;font-size:.88rem;color:#134e4a;padding:3px 0;"><span>${_nomesTipo[(p.tipo || '').split('_')[0]] || p.tipo}</span><span>${valorDoPedido(p).toFixed(2)} €</span></div>`).join('')}
+                                ${_pendentesTodos.map(p => `<div style="display:flex;justify-content:space-between;font-size:.88rem;color:#134e4a;padding:3px 0;"><span>${_nomeLinha(p)}</span><span>${valorDoPedido(p).toFixed(2)} €</span></div>`).join('')}
                                 <div style="display:flex;justify-content:space-between;font-weight:700;color:#0f766e;border-top:1px solid #99f6e4;margin-top:6px;padding-top:6px;"><span>Total</span><span>${_totalPend.toFixed(2)} €</span></div>
                             </div>`;
                         })()}
@@ -7662,6 +7664,18 @@
                 const msg = (err && (err.text || err.message)) ? (err.text || err.message) : ('estado ' + (err && err.status));
                 return { ok: false, erro: msg };
             }
+        }
+        // Faltava esta função em todo o lado — chamada em 10 sítios diferentes do código, mas
+        // nunca tinha sido definida. Isso fazia rebentar (e travar tudo o que vinha a seguir,
+        // nas chamadas sem try/catch à volta) sempre que qualquer email deste tipo tentava sair:
+        // pedidos de renovação, lembretes de pagamento, avisos de licença a expirar, boas-vindas
+        // à equipa, etc. É só um wrapper fino para a Edge Function que já envia os emails a
+        // sério — o slug dela no Supabase é "super-function" (nome antigo/interno; o ficheiro
+        // fonte identifica-se como tal), não "enviar-mail".
+        async function _enviarEmailServidor(tipo, params) {
+            const { data, error } = await supa.functions.invoke('super-function', { body: { tipo, ...params } });
+            if (error) throw error;
+            return data || { ok: true };
         }
         async function enviarEmailPagamento(admin, descricaoLicenca, total, referencia, contexto) {
             if (!admin || !admin.email) { console.warn('Cliente sem email — não foi possível enviar.'); return false; }
@@ -22382,7 +22396,13 @@ async function salvarAdmin(e) {
             if (!resumoPartes.length) { alert('Não há nada selecionado para renovar/ativar.'); return; }
 
             guardarDados(dados);
-            // Um único email consolidado — não um por módulo — resumindo tudo o que foi pedido.
+            // Duas notificações: uma ao cliente (com o valor a pagar e os dados bancários — é o
+            // mesmo template já usado no pedido inicial de licença, "pagamento"), outra à Total
+            // Gest a avisar do pedido novo. Antes disto só ia a segunda, e mesmo essa nunca
+            // chegava a sair (a função que a mandava nem existia) — por isso o cliente nunca
+            // recebia nada com o valor a pagar.
+            const _refGrupo = _grupoIdRenov.slice(-8).toUpperCase();
+            enviarEmailPagamento(admin, resumoPartes.join('; '), total, _refGrupo, 'renovacao').catch(err => console.warn('email renovação (cliente):', err));
             _enviarEmailServidor('pedido_renovacao_consolidado', {
                 to_email: 'totalgestpro@gmail.com',
                 adminId: admin.id,
@@ -22392,9 +22412,9 @@ async function salvarAdmin(e) {
                 itens: resumoPartes,
                 total: total.toFixed(2),
                 observacao: obs
-            }).catch(() => {});
+            }).catch(err => console.warn('email renovação (interno):', err));
             fecharModalRenovacao();
-            alert('✅ Pedido de renovação enviado ao Super Admin — ' + resumoPartes.length + ' módulo(s), total ' + total.toFixed(2) + ' €.');
+            alert('✅ Pedido de renovação enviado — ' + resumoPartes.length + ' módulo(s), total ' + total.toFixed(2) + ' €. Enviámos-te um email com os dados para pagamento.');
         }
         // ============================================================================
         //  ATIVAR ADD-ONS — versão consolidada da ativação (a mesma ideia da renovação
@@ -22498,6 +22518,8 @@ async function salvarAdmin(e) {
             });
             if (!resumoPartes.length) { alert(algumBloqueado ? 'Já tens um pedido pendente para os módulos escolhidos.' : 'Nada para enviar.'); return; }
             guardarDados(dados);
+            const _refGrupoAtiv = _grupoIdAtivacao.slice(-8).toUpperCase();
+            enviarEmailPagamento(admin, resumoPartes.join('; '), total, _refGrupoAtiv, 'renovacao').catch(err => console.warn('email ativação add-ons (cliente):', err));
             _enviarEmailServidor('pedido_renovacao_consolidado', {
                 to_email: 'totalgestpro@gmail.com',
                 adminId: admin.id,
@@ -22507,10 +22529,10 @@ async function salvarAdmin(e) {
                 itens: resumoPartes,
                 total: total.toFixed(2),
                 observacao: 'Pedido de ativação de novos add-ons (via "Ativar Add-ons")'
-            }).catch(() => {});
+            }).catch(err => console.warn('email ativação add-ons (interno):', err));
             document.getElementById('ativAddonsOverlay')?.remove();
             renderizarTudo();
-            alert('✅ Pedido enviado ao Super Admin — ' + resumoPartes.length + ' módulo(s), total ' + total.toFixed(2) + ' €.' + (algumBloqueado ? '\n\n(Alguns módulos escolhidos já tinham um pedido pendente e não foram repetidos.)' : ''));
+            alert('✅ Pedido enviado — ' + resumoPartes.length + ' módulo(s), total ' + total.toFixed(2) + ' €. Enviámos-te um email com os dados para pagamento.' + (algumBloqueado ? '\n\n(Alguns módulos escolhidos já tinham um pedido pendente e não foram repetidos.)' : ''));
         }
         function salvarRenovacao(e) {
             e.preventDefault();
@@ -22840,6 +22862,21 @@ async function salvarAdmin(e) {
             guardarDados(dados);
             piscarAdmin(pedido.adminId, 'vermelho');
             alert('Pedido rejeitado.');
+        }
+        // "Rejeitar tudo" de um grupo — a par do "Aprovar tudo", para nunca ficar meio aprovado
+        // meio pendente por engano quando se decide recusar um pedido feito com vários módulos
+        // juntos.
+        function rejeitarGrupoPedidosRenovacao(grupoId) {
+            const pendentes = (dados.pedidosRenovacao || []).filter(p => p.grupoId === grupoId && p.status === 'pendente');
+            if (!pendentes.length) return;
+            const admin = dados.administradores?.find(a => a.id === pendentes[0].adminId);
+            if (!confirm(`Rejeitar todos os ${pendentes.length} pedidos deste grupo${admin ? ' (' + admin.nome + ')' : ''}?`)) return;
+            pendentes.forEach(p => { p.status = 'rejeitado'; });
+            if (admin) admin.licencaFeedback = 'vermelho';
+            guardarDados(dados);
+            if (admin) piscarAdmin(admin.id, 'vermelho');
+            alert(`${pendentes.length} pedido(s) rejeitado(s).`);
+            renderizarTudo();
         }
 
         // =============================================================
