@@ -670,10 +670,10 @@
                                // para nunca apagar alterações locais ainda não sincronizadas
 
             if (!navigator.onLine) {
-                const _cache = _carregarCacheLocal();
+                const _cache = await _carregarCacheLocal();
                 if (_cache) {
                     dados = _cache;
-                    _restaurarSnapshotDaCache();
+                    await _restaurarSnapshotDaCache();
                     mostrarStatusOffline();
                     return dados;
                 }
@@ -741,8 +741,8 @@
                 }));
             } catch (e) {
                 // falhou a ligação a meio (ex: ficou offline agora) — usa a cópia local se existir
-                const _cache = _carregarCacheLocal();
-                if (_cache) { dados = _cache; _restaurarSnapshotDaCache(); mostrarStatusOffline(); return dados; }
+                const _cache = await _carregarCacheLocal();
+                if (_cache) { dados = _cache; await _restaurarSnapshotDaCache(); mostrarStatusOffline(); return dados; }
                 throw e;
             }
             const map = {};
@@ -775,42 +775,83 @@
         // IMPORTANTE: guarda também o "snapshot" (o que já está confirmado no servidor) —
         // sem isto, ao recarregar a cópia local, alterações feitas offline pareceriam já
         // sincronizadas e nunca mais seriam enviadas ao servidor.
-        let _cacheLocalDesativada = false;
-        function _guardarCacheLocal() {
-            if (_cacheLocalDesativada) return; // já sabemos que não cabe — não repete a tentativa a cada gravação
+        //
+        // Isto vive em IndexedDB (a mesma base "totalgest_cache" já usada para os códigos
+        // postais), não em localStorage — o localStorage tem um limite pequeno (tipicamente
+        // 5-10 MB), e fotos/assinaturas feitas offline (folhas de obra, ponto) ficam em base64
+        // dentro de "dados" até haver rede para as enviar ao Storage. Bastavam 3-4 fotos offline
+        // para estourar esse limite e desativar a cópia local para o resto da sessão — se o
+        // browser fechasse nessa altura, perdia-se tudo o que ainda não tinha sincronizado. O
+        // IndexedDB não tem esse teto (tipicamente vários GB), por isso deixa de ser um problema.
+        function _kvCacheAbrir() {
+            return new Promise((resolve, reject) => {
+                const req = indexedDB.open('totalgest_cache', 1);
+                req.onupgradeneeded = () => { if (!req.result.objectStoreNames.contains('kv')) req.result.createObjectStore('kv'); };
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+        }
+        async function _kvCacheGet(chave) {
+            const db = await _kvCacheAbrir();
+            return new Promise((resolve) => {
+                const tx = db.transaction('kv', 'readonly').objectStore('kv').get(chave);
+                tx.onsuccess = () => resolve(tx.result ?? null);
+                tx.onerror = () => resolve(null);
+            });
+        }
+        async function _kvCacheSet(chave, valor) {
+            const db = await _kvCacheAbrir();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction('kv', 'readwrite').objectStore('kv').put(valor, chave);
+                tx.onsuccess = () => resolve();
+                tx.onerror = () => reject(tx.error);
+            });
+        }
+        async function _guardarCacheLocal() {
             try {
                 const snapPlano = {};
                 for (const col of ORDEM) snapPlano[col] = Object.fromEntries(_snap[col] || new Map());
-                localStorage.setItem('tg_cache_dados_v1', JSON.stringify(dados));
-                localStorage.setItem('tg_cache_snap_v1', JSON.stringify({
+                await _kvCacheSet('tg_cache_dados_v1', dados);
+                await _kvCacheSet('tg_cache_snap_v1', {
                     porColuna: snapPlano,
                     lic: Object.fromEntries(_snapLic || new Map()),
                     junc: Object.fromEntries(_snapJunc || new Map())
-                }));
-                localStorage.setItem('tg_cache_dados_v1_quando', String(Date.now()));
+                });
+                await _kvCacheSet('tg_cache_dados_v1_quando', Date.now());
             } catch (e) {
-                if (e && e.name === 'QuotaExceededError') {
-                    _cacheLocalDesativada = true;
-                    console.warn('Cópia local offline desativada: dados demasiado grandes para o armazenamento do browser. A app continua a funcionar normalmente online.');
-                } else {
-                    console.warn('cache local (guardar):', e);
-                }
-            } // não é crítico — é só uma conveniência para arrancar offline
+                console.warn('cache local (guardar):', e); // não é crítico — é só uma conveniência para arrancar offline
+            }
         }
-        function _carregarCacheLocal() {
+        // Migração de uma vez: se ainda houver uma cópia antiga em localStorage (de antes desta
+        // versão, que usava localStorage em vez de IndexedDB), traz essa cópia para cá e limpa o
+        // localStorage — assim ninguém perde o que já tinha guardado só por causa da mudança.
+        async function _migrarCacheLocalAntiga() {
             try {
-                const txt = localStorage.getItem('tg_cache_dados_v1');
-                if (!txt) return null;
-                return JSON.parse(txt);
+                const antigos = ['tg_cache_dados_v1', 'tg_cache_snap_v1', 'tg_cache_dados_v1_quando'];
+                for (const chave of antigos) {
+                    const txt = localStorage.getItem(chave);
+                    if (txt == null) continue;
+                    const jaTemNoIndexedDB = await _kvCacheGet(chave);
+                    if (jaTemNoIndexedDB == null) {
+                        try { await _kvCacheSet(chave, JSON.parse(txt)); } catch (e) { /* valor não era JSON — ignora */ }
+                    }
+                    localStorage.removeItem(chave);
+                }
+            } catch (e) { /* migração é best-effort — nunca deve impedir o arranque da app */ }
+        }
+        async function _carregarCacheLocal() {
+            try {
+                await _migrarCacheLocalAntiga();
+                const val = await _kvCacheGet('tg_cache_dados_v1');
+                return val ?? null;
             } catch (e) { console.warn('cache local (ler):', e); return null; }
         }
         // Restaura o snapshot guardado (o que já estava confirmado no servidor antes de ficar offline),
         // em vez de _reconstruirSnapshots() — que marcaria tudo como já sincronizado.
-        function _restaurarSnapshotDaCache() {
+        async function _restaurarSnapshotDaCache() {
             try {
-                const txt = localStorage.getItem('tg_cache_snap_v1');
-                if (!txt) { _reconstruirSnapshots(); return; } // sem snapshot guardado, não há alternativa
-                const s = JSON.parse(txt);
+                const s = await _kvCacheGet('tg_cache_snap_v1');
+                if (!s) { _reconstruirSnapshots(); return; } // sem snapshot guardado, não há alternativa
                 _snap = {};
                 for (const col of ORDEM) _snap[col] = new Map(Object.entries(s.porColuna?.[col] || {}));
                 _snapLic = new Map(Object.entries(s.lic || {}));
@@ -17169,6 +17210,34 @@
             cont.innerHTML = _htmlDashboardCentralConteudo();
             setTimeout(_renderizarMapaEquipaDashboardCentral, 60);
             _dashboardCarregarAlertasClima();
+            _hdcAnimarGraficos(cont);
+        }
+        // Anima todos os gráficos do Dashboard Central a "crescer" quando a página abre, em vez
+        // de aparecerem já no tamanho final — barras (verticais e horizontais) crescem de 0 até
+        // ao valor real, e os donuts fazem um "aparecer" suave. Corre uma vez por render, logo a
+        // seguir a desenhar o HTML.
+        function _hdcAnimarGraficos(cont) {
+            // Barras — guarda o valor final (já está no style inline), zera, e no frame seguinte
+            // volta a pôr o valor final: a transição CSS trata do resto.
+            const barras = cont.querySelectorAll('.hdc-bars .b, .hdc-hbars .hbfill, .hdc-hbars .fill');
+            barras.forEach(el => {
+                const propriedade = el.classList.contains('hbfill') || el.classList.contains('fill') ? 'width' : 'height';
+                const valorFinal = el.style[propriedade] || '0%';
+                el.dataset.final = valorFinal;
+                el.style[propriedade] = '0%';
+            });
+            // Donuts (conic-gradient) — não dá para "crescer" um gradiente com transição CSS
+            // normal, por isso faz-se um efeito de aparecer/ampliar, que dá a mesma sensação de
+            // "a carregar" sem precisar de reconstruir o gradiente frame a frame.
+            const donuts = cont.querySelectorAll('.hdc-donut');
+            donuts.forEach(el => { el.style.opacity = '0'; el.style.transform = 'scale(.6)'; });
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                barras.forEach(el => {
+                    const propriedade = el.classList.contains('hbfill') || el.classList.contains('fill') ? 'width' : 'height';
+                    el.style[propriedade] = el.dataset.final;
+                });
+                donuts.forEach(el => { el.style.opacity = '1'; el.style.transform = 'scale(1)'; });
+            }));
         }
         // Verifica as OS dos próximos 3 dias com pin exato no mapa e avisa se houver condições
         // adversas previstas — dá tempo de reagendar antes de mandar a equipa para debaixo de
@@ -17471,10 +17540,17 @@
                 #secao-dashboard-central .hdc-bars{ display:flex; align-items:flex-end; gap:8px; height:110px; }
                 #secao-dashboard-central .hdc-bars .bcol{ flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; justify-content:flex-end; height:100%; }
                 #secao-dashboard-central .hdc-bars .bwrap{ display:flex; gap:3px; align-items:flex-end; height:100%; }
-                #secao-dashboard-central .hdc-bars .b{ width:8px; border-radius:3px 3px 0 0; }
+                #secao-dashboard-central .hdc-bars .bval{ font-size:.62rem; font-weight:700; color:var(--hsub); white-space:nowrap; }
+                #secao-dashboard-central .hdc-bars .b{ width:8px; border-radius:3px 3px 0 0; transition:height .7s cubic-bezier(.22,1,.36,1); }
                 #secao-dashboard-central .hdc-bars .b.fat{ background:var(--hb); } #secao-dashboard-central .hdc-bars .b.cst{ background:#bfdbfe; }
                 #secao-dashboard-central .hdc-bars .mlbl{ font-size:.64rem; color:var(--hsub); }
                 #secao-dashboard-central .hdc-bars .kmlbl{ font-size:.6rem; color:var(--hsub); opacity:.75; }
+                #secao-dashboard-central .hdc-hbars{ display:flex; flex-direction:column; gap:9px; }
+                #secao-dashboard-central .hdc-hbars .hbrow{ display:flex; align-items:center; gap:8px; }
+                #secao-dashboard-central .hdc-hbars .hblbl{ width:92px; flex-shrink:0; font-size:.72rem; color:var(--htxt); text-align:right; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+                #secao-dashboard-central .hdc-hbars .hbtrack{ flex:1; background:var(--hline); border-radius:5px; height:14px; overflow:hidden; }
+                #secao-dashboard-central .hdc-hbars .hbfill{ height:100%; background:var(--hb); border-radius:5px; min-width:3px; transition:width .7s cubic-bezier(.22,1,.36,1); }
+                #secao-dashboard-central .hdc-hbars .hbval{ width:64px; flex-shrink:0; font-size:.7rem; font-weight:700; color:var(--htxt); white-space:nowrap; }
                 #secao-dashboard-central .hdc-legend{ display:flex; gap:12px; font-size:.68rem; color:var(--hsub); margin-bottom:8px; }
                 #secao-dashboard-central .hdc-legend span{ display:inline-flex; align-items:center; gap:5px; }
                 #secao-dashboard-central .hdc-legend i{ width:8px; height:8px; border-radius:2px; display:inline-block; }
@@ -17490,7 +17566,8 @@
                 #secao-dashboard-central .hdc-hbars .hb{ margin-bottom:9px; }
                 #secao-dashboard-central .hdc-hbars .t{ display:flex; justify-content:space-between; font-size:.7rem; color:var(--hsub); margin-bottom:4px; }
                 #secao-dashboard-central .hdc-hbars .track{ background:#eef1f7; border-radius:6px; height:7px; overflow:hidden; }
-                #secao-dashboard-central .hdc-hbars .fill{ height:100%; border-radius:6px; }
+                #secao-dashboard-central .hdc-hbars .fill{ height:100%; border-radius:6px; transition:width .7s cubic-bezier(.22,1,.36,1); }
+                #secao-dashboard-central .hdc-donut{ transition:opacity .5s ease, transform .5s cubic-bezier(.22,1,.36,1); }
                 #secao-dashboard-central .hdc-feed .fi{ display:flex; gap:8px; padding:7px 0; border-bottom:1px dashed var(--hline); font-size:.74rem; }
                 #secao-dashboard-central .hdc-feed .fi:last-child{ border-bottom:none; }
                 #secao-dashboard-central .hdc-feed .dot{ width:7px; height:7px; border-radius:50%; margin-top:5px; flex-shrink:0; }
@@ -17587,6 +17664,22 @@
                 </div>
 
                 <div class="hdc-row3">
+                    ${(moduloCrmAtivo(admin) || moduloAssistAtivo(admin)) ? (() => {
+                        // "Aberta" e sem OS gerada ainda — as que realmente precisam de atenção. Uma
+                        // vez convertida em OS (osGeradaId preenchido) ou marcada como resolvida/fechada,
+                        // deixa de contar aqui.
+                        const _assistAbertas = (dados.assistencias || []).filter(a => a.adminId === adminId && !a.apagadoSuperAdmin && !a.osGeradaId && !['resolvida', 'fechada'].includes(a.estado || 'aberta'));
+                        const _assistUrgentes = _assistAbertas.filter(a => (a.prioridade || '').toLowerCase() === 'urgente' || (a.prioridade || '').toLowerCase() === 'alta').length;
+                        return `<a href="TOTALGEST_ASSIST.html" target="_blank" rel="noopener" onclick="return _abrirAssist(event)" class="hdc-card" style="display:block;text-decoration:none;color:inherit;cursor:pointer;transition:box-shadow .15s;" onmouseover="this.style.boxShadow='0 4px 14px rgba(0,0,0,.1)'" onmouseout="this.style.boxShadow=''">
+                            <h4><i class="fas fa-headset"></i> Assistências</h4>
+                            <div style="display:flex;align-items:baseline;gap:8px;margin:6px 0 2px;">
+                                <span style="font-size:2rem;font-weight:800;color:${_assistAbertas.length ? 'var(--hr)' : 'var(--hg)'};">${_assistAbertas.length}</span>
+                                <span style="font-size:.8rem;color:var(--hsub);">${_assistAbertas.length === 1 ? 'aberta' : 'abertas'}</span>
+                            </div>
+                            ${_assistUrgentes ? `<div style="font-size:.76rem;color:var(--hr);"><i class="fas fa-triangle-exclamation"></i> ${_assistUrgentes} de prioridade alta/urgente</div>` : `<div style="font-size:.76rem;color:var(--hsub);">${_assistAbertas.length ? 'Nenhuma urgente de momento.' : 'Tudo tratado — sem pendências.'}</div>`}
+                            <div style="font-size:.7rem;color:var(--hb);margin-top:8px;">Abrir Assist <i class="fas fa-arrow-right"></i></div>
+                        </a>`;
+                    })() : ''}
                     <div class="hdc-card">
                         <h4>Equipa Agora</h4>
                         <div id="hdcMapaEquipa" style="height:180px;border-radius:12px;margin-bottom:10px;background:#eef1f7;"></div>
@@ -17617,8 +17710,16 @@
                     <div class="hdc-card">
                         <h4>${_kmFrotaAtiva ? 'Km por Técnico' : 'Faturação por Técnico'} (${range.label})</h4>
                         ${rentOuKmEntradas.length ? `<div class="hdc-legend"><span><i style="background:var(--hb);"></i>${_kmFrotaAtiva ? 'Km percorridos' : 'OS concluídas atribuídas'}</span></div>
-                        <div class="hdc-bars">
-                            ${rentOuKmEntradas.map(([lbl, v]) => `<div class="bcol"><div class="bwrap"><div class="b fat" style="height:${Math.max(2, Math.round(v / maxRentOuKm * 100))}%;" title="${_kmFrotaAtiva ? Math.round(v).toLocaleString('pt-PT') + ' km' : eur(v)}"></div></div><span class="mlbl">${escapeHtmlSimples(lbl)}</span>${(!_kmFrotaAtiva && kmPorTecnico[lbl]) ? `<span class="kmlbl"><i class="fas fa-road"></i> ${Math.round(kmPorTecnico[lbl]).toLocaleString('pt-PT')} km</span>` : ''}</div>`).join('')}
+                        <div class="hdc-hbars">
+                            ${rentOuKmEntradas.map(([lbl, v]) => `<div class="hbrow" title="${escapeHtmlSimples(lbl)}">
+                                <span class="hblbl">${escapeHtmlSimples(lbl)}</span>
+                                <div class="hbtrack"><div class="hbfill" style="width:${Math.max(2, Math.round(v / maxRentOuKm * 100))}%;"></div></div>
+                                <span class="hbval">${_kmFrotaAtiva ? Math.round(v).toLocaleString('pt-PT') + ' km' : eur(v)}</span>
+                            </div>`).join('')}
+                        </div>
+                        <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--hline);display:flex;justify-content:space-between;font-weight:700;color:var(--htxt);">
+                            <span>Total${_kmFrotaAtiva ? '' : ' faturado'}</span>
+                            <span>${_kmFrotaAtiva ? Math.round(Object.values(kmPorTecnico).reduce((s, v) => s + v, 0)).toLocaleString('pt-PT') + ' km' : eur(Object.values(rentPorTecnico).reduce((s, v) => s + v, 0))}</span>
                         </div>` : `<div class="hdc-vazio">${_kmFrotaAtiva ? 'Sem km registados neste período.' : 'Sem OS concluídas com valor este mês.'}</div>`}
                     </div>
                     <div class="hdc-card">
