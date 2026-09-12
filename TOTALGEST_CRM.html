@@ -13,6 +13,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/canvas-confetti/1.9.3/confetti.browser.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <style>
     :root {
         --navy:#0f2044; --navy-deep:#0a1730; --navy-light:#1e3a6e; --navy-mid:#1c3363;
@@ -1309,7 +1312,22 @@
                     if (e.name === 'Satélite') { if (!_mapaLeaflet.hasLayer(rotulos)) rotulos.addTo(_mapaLeaflet); }
                     else { _mapaLeaflet.removeLayer(rotulos); }
                 });
-                _mapaMarkersLayer = L.layerGroup().addTo(_mapaLeaflet);
+                // Agrupa pins próximos num só círculo com contagem (ex.: "12") que se separa ao
+                // dar zoom — sem isto, muitos leads/visitas na mesma rua ficavam sobrepostos e
+                // impossíveis de distinguir/clicar individualmente.
+                _mapaMarkersLayer = L.markerClusterGroup({
+                    maxClusterRadius: 55,
+                    spiderfyOnMaxZoom: true,
+                    showCoverageOnHover: false,
+                    iconCreateFunction: (cluster) => {
+                        const n = cluster.getChildCount();
+                        const tamanho = n < 10 ? 34 : (n < 50 ? 40 : 46);
+                        return L.divIcon({
+                            html: `<div style="width:${tamanho}px;height:${tamanho}px;border-radius:50%;background:#152a52;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:${n < 100 ? '.85rem' : '.72rem'};border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35);">${n}</div>`,
+                            className: '', iconSize: [tamanho, tamanho]
+                        });
+                    }
+                }).addTo(_mapaLeaflet);
                 // Clicar numa zona vazia do mapa regista logo um pin e abre o modal da Lead — a morada
                 // vem preenchida automaticamente por geocoding reverso a partir do sítio onde clicaste.
                 _mapaLeaflet.on('click', (e) => _mapaCliqueCriarLead(e.latlng));
@@ -2764,6 +2782,7 @@
             const fornecedores = (dados.fornecedores || []).filter(f => f.adminId === tid).sort((a, b) => a.nome.localeCompare(b.nome, 'pt'));
             if (!fornecedores.length) { alert('Ainda não tens nenhum fornecedor registado — cria pelo menos um em Armazém → Fornecedores, na aplicação principal.'); return; }
 
+            document.getElementById('modalGenericoBox')?.classList.add('modal-wide');
             document.getElementById('modalGenericoTitulo').innerHTML = '<i class="fas fa-truck-loading"></i> Fazer encomenda a fornecedores';
             document.getElementById('modalGenericoCampos').innerHTML = `
                 <p class="help-text">Escolhe quais artigos encomendar (desmarca os que já tens em stock) e a quem — no final, é criada uma encomenda por cada fornecedor escolhido, já pronta para descarregar.</p>

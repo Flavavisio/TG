@@ -17526,6 +17526,8 @@
                 #secao-dashboard-central .hdc-kpi{ cursor:pointer; border-radius:10px; padding:4px; margin:-4px; transition:background .15s; }
                 #secao-dashboard-central .hdc-kpi:hover{ background:#f8fafc; }
                 #secao-dashboard-central .hdc-card{ background:#fff; border:1px solid var(--hline); border-radius:14px; padding:16px; }
+                #secao-dashboard-central .hdc-row4b .hdc-card{ padding:12px; }
+                #secao-dashboard-central .hdc-row4b h4{ font-size:.78rem; margin-bottom:8px; }
                 #secao-dashboard-central .hdc-card h4{ margin:0 0 12px; font-size:.88rem; color:var(--hink); }
                 #secao-dashboard-central .hdc-kpis{ display:grid; grid-template-columns:repeat(6,1fr); gap:12px; margin-bottom:12px; }
                 #secao-dashboard-central .hdc-kpi{ display:flex; gap:9px; align-items:flex-start; }
@@ -17535,13 +17537,13 @@
                 #secao-dashboard-central .hdc-kpi .delta{ font-size:.68rem; font-weight:700; }
                 #secao-dashboard-central .hdc-kpi .delta.up{ color:var(--hg); } #secao-dashboard-central .hdc-kpi .delta.down{ color:var(--hr); }
                 #secao-dashboard-central .hdc-row4{ display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr; gap:12px; margin-bottom:12px; }
-                #secao-dashboard-central .hdc-row3{ display:grid; grid-template-columns:1fr 1.3fr 1fr; gap:12px; margin-bottom:12px; }
+                #secao-dashboard-central .hdc-row3{ display:grid; grid-template-columns:1fr 1.15fr 1fr 1fr; gap:12px; margin-bottom:12px; }
                 #secao-dashboard-central .hdc-row4b{ display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:12px; }
                 #secao-dashboard-central .hdc-bars{ display:flex; align-items:flex-end; gap:8px; height:110px; }
                 #secao-dashboard-central .hdc-bars .bcol{ flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; justify-content:flex-end; height:100%; }
                 #secao-dashboard-central .hdc-bars .bwrap{ display:flex; gap:3px; align-items:flex-end; height:100%; }
                 #secao-dashboard-central .hdc-bars .bval{ font-size:.62rem; font-weight:700; color:var(--hsub); white-space:nowrap; }
-                #secao-dashboard-central .hdc-bars .b{ width:8px; border-radius:3px 3px 0 0; transition:height .7s cubic-bezier(.22,1,.36,1); }
+                #secao-dashboard-central .hdc-bars .b{ width:8px; border-radius:3px 3px 0 0; transition:height 1.2s cubic-bezier(.22,1,.36,1); }
                 #secao-dashboard-central .hdc-bars .b.fat{ background:var(--hb); } #secao-dashboard-central .hdc-bars .b.cst{ background:#bfdbfe; }
                 #secao-dashboard-central .hdc-bars .mlbl{ font-size:.64rem; color:var(--hsub); }
                 #secao-dashboard-central .hdc-bars .kmlbl{ font-size:.6rem; color:var(--hsub); opacity:.75; }
@@ -17549,13 +17551,15 @@
                 #secao-dashboard-central .hdc-hbars .hbrow{ display:flex; align-items:center; gap:8px; }
                 #secao-dashboard-central .hdc-hbars .hblbl{ width:92px; flex-shrink:0; font-size:.72rem; color:var(--htxt); text-align:right; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
                 #secao-dashboard-central .hdc-hbars .hbtrack{ flex:1; background:var(--hline); border-radius:5px; height:14px; overflow:hidden; }
-                #secao-dashboard-central .hdc-hbars .hbfill{ height:100%; background:var(--hb); border-radius:5px; min-width:3px; transition:width .7s cubic-bezier(.22,1,.36,1); }
+                #secao-dashboard-central .hdc-hbars .hbfill{ height:100%; background:var(--hb); border-radius:5px; min-width:3px; transition:width 1.2s cubic-bezier(.22,1,.36,1); }
                 #secao-dashboard-central .hdc-hbars .hbval{ width:64px; flex-shrink:0; font-size:.7rem; font-weight:700; color:var(--htxt); white-space:nowrap; }
                 #secao-dashboard-central .hdc-legend{ display:flex; gap:12px; font-size:.68rem; color:var(--hsub); margin-bottom:8px; }
                 #secao-dashboard-central .hdc-legend span{ display:inline-flex; align-items:center; gap:5px; }
                 #secao-dashboard-central .hdc-legend i{ width:8px; height:8px; border-radius:2px; display:inline-block; }
                 #secao-dashboard-central .hdc-donut{ width:110px; height:110px; border-radius:50%; margin:4px auto 8px; position:relative; }
+                #secao-dashboard-central .hdc-row4b .hdc-donut{ width:84px; height:84px; margin:2px auto 6px; }
                 #secao-dashboard-central .hdc-donut::after{ content:""; position:absolute; inset:17px; background:#fff; border-radius:50%; }
+                #secao-dashboard-central .hdc-row4b .hdc-donut::after{ inset:12px; }
                 #secao-dashboard-central .hdc-donut .lbl{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:1; }
                 #secao-dashboard-central .hdc-donut .lbl b{ font-size:1.05rem; color:var(--hink); }
                 #secao-dashboard-central .hdc-donut .lbl small{ font-size:.64rem; color:var(--hsub); }
@@ -17566,8 +17570,8 @@
                 #secao-dashboard-central .hdc-hbars .hb{ margin-bottom:9px; }
                 #secao-dashboard-central .hdc-hbars .t{ display:flex; justify-content:space-between; font-size:.7rem; color:var(--hsub); margin-bottom:4px; }
                 #secao-dashboard-central .hdc-hbars .track{ background:#eef1f7; border-radius:6px; height:7px; overflow:hidden; }
-                #secao-dashboard-central .hdc-hbars .fill{ height:100%; border-radius:6px; transition:width .7s cubic-bezier(.22,1,.36,1); }
-                #secao-dashboard-central .hdc-donut{ transition:opacity .5s ease, transform .5s cubic-bezier(.22,1,.36,1); }
+                #secao-dashboard-central .hdc-hbars .fill{ height:100%; border-radius:6px; transition:width 1.2s cubic-bezier(.22,1,.36,1); }
+                #secao-dashboard-central .hdc-donut{ transition:opacity .9s ease, transform .9s cubic-bezier(.22,1,.36,1); }
                 #secao-dashboard-central .hdc-feed .fi{ display:flex; gap:8px; padding:7px 0; border-bottom:1px dashed var(--hline); font-size:.74rem; }
                 #secao-dashboard-central .hdc-feed .fi:last-child{ border-bottom:none; }
                 #secao-dashboard-central .hdc-feed .dot{ width:7px; height:7px; border-radius:50%; margin-top:5px; flex-shrink:0; }
