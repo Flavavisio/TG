@@ -895,6 +895,36 @@
         .agenda-gantt-chip.bloqueada { background:#f0fdf4; cursor:not-allowed; }
         body.dark-mode .agenda-gantt-chip { background:#141c2e; color:#e2e8f0; }
         .agenda-os { background:#fff; border:1px solid #e6eaf2; border-radius:8px; padding:7px; margin-bottom:7px; }
+        .agenda-os-mini-wrap { margin-bottom:5px; }
+        .agenda-os-mini { display:flex; align-items:center; gap:5px; background:#fff; border:1px solid #e6eaf2; border-left:4px solid #94a3b8; border-radius:6px; padding:4px 7px; font-size:.72rem; cursor:pointer; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+        .agenda-os-mini:hover { background:#f8fafc; }
+        .agenda-os-mini.ag-est-concluido { border-left-color:#16a34a; }
+        .agenda-os-mini.ag-est-andamento { border-left-color:#facc15; }
+        .agenda-os-mini.ag-est-standby { border-left-color:#64748b; }
+        .agenda-os-mini.ag-est-pausa-almoco { border-left-color:#f59e0b; }
+        .agenda-os-mini.ag-est-pendente { border-left-color:#dc2626; }
+        .agenda-os-mini .mini-tipo { color:#94a3b8; font-weight:400; }
+        .agenda-os-recolher { text-align:center; font-size:.7rem; color:#152a52; cursor:pointer; padding:4px 0 7px; font-weight:600; }
+        .agenda-os-recolher:hover { text-decoration:underline; }
+        body.dark-mode .agenda-os-mini { background:#141c2e; border-color:#334155; color:#e2e8f0; }
+        /* Seletor de vista da Agenda de Obras — 3 botões lado a lado, cada um com um mini-ícone
+           que já mostra visualmente como fica esse layout (colunas / grelha / linhas), em vez de
+           um botão só que ia alternando às escondidas sem se perceber logo o que cada um fazia. */
+        .ag-vista-seletor { display:flex; border:1px solid #cbd5e1; border-radius:8px; overflow:hidden; }
+        .ag-vista-btn { display:flex; flex-direction:column; align-items:center; gap:3px; padding:6px 11px; background:#fff; border:none; border-right:1px solid #e2e8f0; cursor:pointer; color:#64748b; font-family:inherit; }
+        .ag-vista-btn:last-child { border-right:none; }
+        .ag-vista-btn:hover { background:#f1f5f9; }
+        .ag-vista-btn .ag-vista-txt { font-size:.66rem; font-weight:700; white-space:nowrap; }
+        .ag-vista-btn.ativo { background:#152a52; color:#fff; }
+        .ag-vista-btn.ativo:hover { background:#152a52; }
+        .ag-vista-icon { display:flex; gap:2px; width:20px; height:14px; }
+        .ag-vista-icon span { flex:1; background:currentColor; opacity:.55; border-radius:1px; }
+        .ag-vista-btn.ativo .ag-vista-icon span { opacity:.9; }
+        .ag-vista-icon-mes { display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(2,1fr); }
+        .ag-vista-icon-gantt { flex-direction:column; }
+        body.dark-mode .ag-vista-seletor { border-color:#334155; }
+        body.dark-mode .ag-vista-btn { background:#1e293b; color:#94a3b8; border-color:#334155; }
+        body.dark-mode .ag-vista-btn.ativo { background:#152a52; color:#fff; }
         .agenda-os select, .agenda-os input { width:100%; padding:3px 5px; border:1px solid #e2e8f0; border-radius:6px; }
 
         /* ===== FORMULÁRIO MODERNO (funcionário / cliente / etc) ===== */

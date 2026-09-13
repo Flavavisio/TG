@@ -10964,14 +10964,15 @@
             ].sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
         }
         let _agendaVistaObras = 'semana';
-        function alternarVistaAgendaObras() {
-            _agendaVistaObras = _agendaVistaObras === 'semana' ? 'mes' : (_agendaVistaObras === 'mes' ? 'gantt' : 'semana');
-            const btn = document.getElementById('agObrasVistaBtn');
-            if (btn) {
-                btn.innerHTML = _agendaVistaObras === 'mes' ? '<i class="fas fa-users-rectangle"></i>' : (_agendaVistaObras === 'gantt' ? '<i class="fas fa-calendar-week"></i>' : '<i class="fas fa-calendar-alt"></i>');
-                btn.title = _agendaVistaObras === 'mes' ? 'Ver por técnico (semana)' : (_agendaVistaObras === 'gantt' ? 'Ver por semana' : 'Ver o mês todo');
-            }
+        function _escolherVistaAgendaObras(vista) {
+            _agendaVistaObras = vista;
+            _atualizarSeletorVistaAgenda();
             renderizarAgendaObras();
+        }
+        function _atualizarSeletorVistaAgenda() {
+            document.querySelectorAll('#agVistaSeletor .ag-vista-btn').forEach(b => {
+                b.classList.toggle('ativo', b.dataset.vista === _agendaVistaObras);
+            });
         }
         function prepararAgendaObras() {
             if (!_semanaAgenda) _semanaAgenda = _segundaDaSemana(new Date()).getTime();
@@ -10981,6 +10982,7 @@
                 fr.innerHTML = '<option value="__todos">Todos</option>' + _pessoasTenantAg().map(p => `<option value="${p.id}">${p.nome}</option>`).join('');
                 if (cur) fr.value = cur;
             }
+            _atualizarSeletorVistaAgenda();
             renderizarAgendaObras();
         }
         function agendaObrasSemana(delta, hoje) {
@@ -11209,6 +11211,40 @@
                 item.el.title = `${ceu.texto} previsto${clima.tempMax != null ? ' — ' + Math.round(clima.tempMax) + '°C' : ''}${clima.chuvaProb != null ? ', ' + clima.chuvaProb + '% probabilidade de chuva' : ''}`;
             }
         }
+        // Categoria simples do trabalho, para mostrar no cartão reduzido — não é o tipo de
+        // especialidade (REX/RBI/etc.), é só "de onde veio" a OS, em 3 categorias fáceis de
+        // reconhecer de relance.
+        function _tipoOSResumo(s) {
+            if (s.contratoId) return 'Manutenção';
+            if (s.origem === 'assistencia' || s.assistenciaId) return 'Assistência';
+            if (s.propostaId || s.origem === 'proposta') return 'Instalação';
+            return 'OS';
+        }
+        // Cartão reduzido — só técnico, cliente e tipo, numa linha. Ao clicar, troca de sítio com
+        // o cartão completo (que fica escondido ao lado, já pronto, sem precisar de o construir
+        // de novo nesse momento).
+        function _cardOSAgendaMini(s, optPessoas, conflitos, readOnly) {
+            const cls = _estadoClasseAg(s.status || 'pendente');
+            const tecnico = _nomesAtribuidosOSColorido(s);
+            const cliente = escapeHtmlSimples(_nomeClienteOS(s.clienteId));
+            const tipo = _tipoOSResumo(s);
+            const fullHtml = _cardOSAgenda(s, optPessoas, conflitos, readOnly);
+            return `<div class="agenda-os-mini-wrap">
+                <div class="agenda-os-mini ag-est-${cls}" onclick="_agendaAlternarMini(this)" title="Clica para ver os detalhes">
+                    <span class="agenda-os-hora">${s.hora || '--:--'}</span> <b>${tecnico}</b> — ${cliente} <span class="mini-tipo">(${tipo})</span>
+                </div>
+                <div class="agenda-os-full-escondido" style="display:none;">${fullHtml}<div class="agenda-os-recolher" onclick="_agendaAlternarMini(this)"><i class="fas fa-chevron-up"></i> Recolher</div></div>
+            </div>`;
+        }
+        function _agendaAlternarMini(el) {
+            const wrap = el.closest('.agenda-os-mini-wrap');
+            if (!wrap) return;
+            const mini = wrap.querySelector('.agenda-os-mini');
+            const cheio = wrap.querySelector('.agenda-os-full-escondido');
+            const estaReduzido = mini.style.display !== 'none';
+            mini.style.display = estaReduzido ? 'none' : 'flex';
+            cheio.style.display = estaReduzido ? 'block' : 'none';
+        }
         function renderizarAgendaObras() {
             const cont = document.getElementById('agendaObrasConteudo');
             if (!cont) return;
@@ -11236,8 +11272,19 @@
                     const addBtn = readOnly ? '' : `<span class="ag-add" title="Criar OS neste dia" onclick="novaOSNoDia('${ds}')">+</span>`;
                     h += `<div class="agenda-col${ds === hojeStr ? ' agenda-hoje' : ''}" ${dropAttrs}>
                         <div class="agenda-col-h">${nomesSemana[idx]} <span class="dnum">${d.getDate()}/${d.getMonth() + 1}</span> ${addBtn}</div>`;
-                    if (!doDia.length) h += `<div class="agenda-vazio">—</div>`;
-                    else doDia.forEach(s => { h += _cardOSAgenda(s, optPessoas, conflitos, readOnly); });
+                    if (!doDia.length) {
+                        h += `<div class="agenda-vazio">—</div>`;
+                    } else {
+                        // A partir da 4ª OS do mesmo dia, em vez de continuar a empilhar cartões
+                        // completos (a coluna crescia sem fim, difícil de ler de relance), cada
+                        // uma fica reduzida a uma linha — técnico, cliente e tipo de trabalho — e
+                        // clicar expande só essa, sem afetar as outras.
+                        const LIMITE_CARTOES_DIA = 3;
+                        const visiveis = doDia.slice(0, LIMITE_CARTOES_DIA);
+                        const compactas = doDia.slice(LIMITE_CARTOES_DIA);
+                        visiveis.forEach(s => { h += _cardOSAgenda(s, optPessoas, conflitos, readOnly); });
+                        compactas.forEach(s => { h += _cardOSAgendaMini(s, optPessoas, conflitos, readOnly); });
+                    }
                     h += `</div>`;
                 });
                 h += `</div>`;

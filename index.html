@@ -1909,7 +1909,20 @@
         <div class="section-header">
             <h2><i class="fas fa-calendar-week"></i> Agenda — Planeamento de Obras</h2>
             <div style="display:flex;gap:8px;align-items:center;">
-                <button class="btn btn-outline" id="agObrasVistaBtn" onclick="alternarVistaAgendaObras()" title="Ver o mês todo"><i class="fas fa-calendar-alt"></i></button>
+                <div class="ag-vista-seletor" id="agVistaSeletor">
+                    <button type="button" class="ag-vista-btn" data-vista="semana" onclick="_escolherVistaAgendaObras('semana')" title="Vista Semana — cartões detalhados, dia a dia">
+                        <span class="ag-vista-icon"><span></span><span></span><span></span></span>
+                        <span class="ag-vista-txt">Semana</span>
+                    </button>
+                    <button type="button" class="ag-vista-btn" data-vista="mes" onclick="_escolherVistaAgendaObras('mes')" title="Vista Mês — o mês todo de relance">
+                        <span class="ag-vista-icon ag-vista-icon-mes"><span></span><span></span><span></span><span></span><span></span><span></span></span>
+                        <span class="ag-vista-txt">Mês</span>
+                    </button>
+                    <button type="button" class="ag-vista-btn" data-vista="gantt" onclick="_escolherVistaAgendaObras('gantt')" title="Vista Por Técnico — uma linha por pessoa">
+                        <span class="ag-vista-icon ag-vista-icon-gantt"><span></span><span></span><span></span></span>
+                        <span class="ag-vista-txt">Por Técnico</span>
+                    </button>
+                </div>
                 <button class="btn btn-outline" onclick="agendaObrasSemana(-1)"><i class="fas fa-chevron-left"></i></button>
                 <strong id="agendaObrasLabel" style="min-width:170px;text-align:center;">—</strong>
                 <button class="btn btn-outline" onclick="agendaObrasSemana(1)"><i class="fas fa-chevron-right"></i></button>
