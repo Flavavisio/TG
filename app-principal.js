@@ -17714,7 +17714,7 @@
                 #secao-dashboard-central .hdc-kpi .delta{ font-size:.68rem; font-weight:700; }
                 #secao-dashboard-central .hdc-kpi .delta.up{ color:var(--hg); } #secao-dashboard-central .hdc-kpi .delta.down{ color:var(--hr); }
                 #secao-dashboard-central .hdc-row4{ display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr; gap:12px; margin-bottom:12px; }
-                #secao-dashboard-central .hdc-row3{ display:grid; grid-template-columns:0.7fr 2fr 1.1fr 1fr; gap:12px; margin-bottom:12px; }
+                #secao-dashboard-central .hdc-row3{ display:grid; grid-template-columns:2fr 1.1fr 1fr; gap:12px; margin-bottom:12px; }
                 #secao-dashboard-central .hdc-row4b{ display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:12px; }
                 #secao-dashboard-central .hdc-bars{ display:flex; align-items:flex-end; gap:8px; height:110px; }
                 #secao-dashboard-central .hdc-bars .bcol{ flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; justify-content:flex-end; height:100%; }
@@ -17846,26 +17846,10 @@
 
                 <div class="hdc-row3">
                     ${(moduloCrmAtivo(admin) || moduloAssistAtivo(admin)) ? (() => {
-                        const _assistTodas = (dados.assistencias || []).filter(a => a.adminId === adminId && !a.apagadoSuperAdmin);
-                        const _assistConcluidas = _assistTodas.filter(a => ['resolvida', 'fechada'].includes(a.estado || 'aberta'));
-                        return `<div class="hdc-card">
-                            <h4><i class="fas fa-chart-simple"></i> Total de Assistências</h4>
-                            <div style="display:flex;flex-direction:column;gap:14px;margin-top:10px;">
-                                <div>
-                                    <div class="hdc-num-animado" data-final="${_assistTodas.length}" style="font-size:2.2rem;font-weight:800;color:var(--htxt);">0</div>
-                                    <div style="font-size:.72rem;color:var(--hsub);">Criadas</div>
-                                </div>
-                                <div>
-                                    <div class="hdc-num-animado" data-final="${_assistConcluidas.length}" style="font-size:2.2rem;font-weight:800;color:var(--hg);">0</div>
-                                    <div style="font-size:.72rem;color:var(--hsub);">Concluídas</div>
-                                </div>
-                            </div>
-                        </div>`;
-                    })() : ''}
-                    ${(moduloCrmAtivo(admin) || moduloAssistAtivo(admin)) ? (() => {
                         // Assistências ainda sem OS (precisam de decisão) vs. já convertidas em
                         // OS (em curso, só a acompanhar). Excluí sempre as já resolvidas/fechadas.
                         const _assistTodas = (dados.assistencias || []).filter(a => a.adminId === adminId && !a.apagadoSuperAdmin);
+                        const _assistConcluidas = _assistTodas.filter(a => ['resolvida', 'fechada'].includes(a.estado || 'aberta'));
                         const _assistTodasAbertas = _assistTodas.filter(a => !['resolvida', 'fechada'].includes(a.estado || 'aberta'));
                         const _assistSemOS = _assistTodasAbertas.filter(a => !a.osGeradaId);
                         const _assistComOS = _assistTodasAbertas.filter(a => a.osGeradaId);
@@ -17888,6 +17872,10 @@
                             : arr.slice(0, _LIMITE_LISTA).map(fn).join('') + (arr.length > _LIMITE_LISTA ? `<div style="font-size:.68rem;color:var(--hb);padding:3px 0;">+ ${arr.length - _LIMITE_LISTA} mais</div>` : '');
                         return `<div class="hdc-card" onclick="_abrirAssistGeral()" style="cursor:pointer;transition:box-shadow .15s;" onmouseover="this.style.boxShadow='0 4px 14px rgba(0,0,0,.1)'" onmouseout="this.style.boxShadow=''">
                             <h4><i class="fas fa-headset"></i> Assistências</h4>
+                            <div style="display:flex;gap:16px;font-size:.72rem;color:var(--hsub);margin:6px 0 2px;">
+                                <span>Criadas: <b class="hdc-num-animado" data-final="${_assistTodas.length}" style="color:var(--htxt);">0</b></span>
+                                <span>Concluídas: <b class="hdc-num-animado" data-final="${_assistConcluidas.length}" style="color:var(--hg);">0</b></span>
+                            </div>
                             ${_assistUrgentes ? `<div style="font-size:.76rem;color:var(--hr);margin:4px 0;"><i class="fas fa-triangle-exclamation"></i> ${_assistUrgentes} sem OS de prioridade alta/urgente</div>` : ''}
                             <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;margin-top:6px;">
                                 <div style="padding-right:14px;">
