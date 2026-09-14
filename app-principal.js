@@ -17714,7 +17714,7 @@
                 #secao-dashboard-central .hdc-kpi .delta{ font-size:.68rem; font-weight:700; }
                 #secao-dashboard-central .hdc-kpi .delta.up{ color:var(--hg); } #secao-dashboard-central .hdc-kpi .delta.down{ color:var(--hr); }
                 #secao-dashboard-central .hdc-row4{ display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr; gap:12px; margin-bottom:12px; }
-                #secao-dashboard-central .hdc-row3{ display:grid; grid-template-columns:2fr 1.1fr 1fr; gap:12px; margin-bottom:12px; }
+                #secao-dashboard-central .hdc-row3{ display:grid; grid-template-columns:0.7fr 2fr 1.1fr 1fr; gap:12px; margin-bottom:12px; }
                 #secao-dashboard-central .hdc-row4b{ display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:12px; }
                 #secao-dashboard-central .hdc-bars{ display:flex; align-items:flex-end; gap:8px; height:110px; }
                 #secao-dashboard-central .hdc-bars .bcol{ flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; justify-content:flex-end; height:100%; }
@@ -17846,6 +17846,23 @@
 
                 <div class="hdc-row3">
                     ${(moduloCrmAtivo(admin) || moduloAssistAtivo(admin)) ? (() => {
+                        const _assistTodas = (dados.assistencias || []).filter(a => a.adminId === adminId && !a.apagadoSuperAdmin);
+                        const _assistConcluidas = _assistTodas.filter(a => ['resolvida', 'fechada'].includes(a.estado || 'aberta'));
+                        return `<div class="hdc-card">
+                            <h4><i class="fas fa-chart-simple"></i> Total de Assistências</h4>
+                            <div style="display:flex;flex-direction:column;gap:14px;margin-top:10px;">
+                                <div>
+                                    <div class="hdc-num-animado" data-final="${_assistTodas.length}" style="font-size:2.2rem;font-weight:800;color:var(--htxt);">0</div>
+                                    <div style="font-size:.72rem;color:var(--hsub);">Criadas</div>
+                                </div>
+                                <div>
+                                    <div class="hdc-num-animado" data-final="${_assistConcluidas.length}" style="font-size:2.2rem;font-weight:800;color:var(--hg);">0</div>
+                                    <div style="font-size:.72rem;color:var(--hsub);">Concluídas</div>
+                                </div>
+                            </div>
+                        </div>`;
+                    })() : ''}
+                    ${(moduloCrmAtivo(admin) || moduloAssistAtivo(admin)) ? (() => {
                         // Assistências ainda sem OS (precisam de decisão) vs. já convertidas em
                         // OS (em curso, só a acompanhar). Excluí sempre as já resolvidas/fechadas.
                         const _assistTodas = (dados.assistencias || []).filter(a => a.adminId === adminId && !a.apagadoSuperAdmin);
@@ -17864,7 +17881,7 @@
                         };
                         const _linhaComOS = (a) => {
                             const nomeCli = a.clienteId ? _nomeClienteOS(a.clienteId) : (a.nomeCliente || 'Sem cliente');
-                            return `<div onclick="event.stopPropagation();abrirModal('servico','${a.osGeradaId}')" style="font-size:.72rem;color:var(--htxt);cursor:pointer;padding:3px 0;border-bottom:1px dashed var(--hline);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="Abrir a OS desta assistência">${escapeHtmlSimples(a.assunto || nomeCli)}</div>`;
+                            return `<div onclick="event.stopPropagation();abrirVerOS('${a.osGeradaId}')" style="font-size:.72rem;color:var(--htxt);cursor:pointer;padding:3px 0;border-bottom:1px dashed var(--hline);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="Ver resumo da OS desta assistência">${escapeHtmlSimples(a.assunto || nomeCli)}</div>`;
                         };
                         const _lista = (arr, fn, vazioTxt) => !arr.length
                             ? `<div style="font-size:.72rem;color:var(--hsub);padding:4px 0;">${vazioTxt}</div>`
