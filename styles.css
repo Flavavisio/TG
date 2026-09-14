@@ -835,6 +835,8 @@
         .alerta-s { font-size:.85rem; color:#64748b; }
         .alerta-chev { color:#94a3b8; }
         .agenda-os-hora { font-size:.72rem; color:#0f172a; font-weight:700; background:#eef2f7; border-radius:5px; padding:1px 6px; display:inline-block; }
+        .agenda-os-hora-input { font-size:.72rem; color:#0f172a; font-weight:700; background:#eef2f7; border-radius:5px; padding:1px 4px; border:none; width:62px; font-family:inherit; }
+        .agenda-os-hora-input:disabled { opacity:.6; }
         .ag-estado { font-size:.72rem; font-weight:700; text-transform:capitalize; display:inline-block; padding:1px 7px; border-radius:10px; margin-top:3px; }
         .ag-estado.concluido { color:#fff; background:#16a34a; }
         .ag-estado.pendente { color:#fff; background:#dc2626; }
@@ -922,6 +924,7 @@
         .ag-vista-btn.ativo .ag-vista-icon span { opacity:.9; }
         .ag-vista-icon-mes { display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(2,1fr); }
         .ag-vista-icon-gantt { flex-direction:column; }
+        .ag-vista-icon-dia { width:14px; }
         body.dark-mode .ag-vista-seletor { border-color:#334155; }
         body.dark-mode .ag-vista-btn { background:#1e293b; color:#94a3b8; border-color:#334155; }
         body.dark-mode .ag-vista-btn.ativo { background:#152a52; color:#fff; }
@@ -1099,6 +1102,7 @@
         body.dark-mode .agenda-os.ag-est-pendente { border-color:#fff; }
         body.dark-mode .ag-atribuidos { background:#1e293b; color:#e2e8f0 !important; }
         body.dark-mode .agenda-os-hora { background:#1e293b; color:#e2e8f0; }
+        body.dark-mode .agenda-os-hora-input { background:#1e293b; color:#e2e8f0; }
         body.dark-mode .agenda-os [style*="background:#f8fafc"] { background:#1e293b !important; color:#e2e8f0 !important; }
         body.dark-mode .agenda-os input[type="date"],
         body.dark-mode .agenda-os input[type="time"] { background:#1e293b; border:1px solid #334155; color:#e2e8f0; color-scheme:dark; }

@@ -10986,11 +10986,13 @@
             renderizarAgendaObras();
         }
         function agendaObrasSemana(delta, hoje) {
-            if (hoje) { _semanaAgenda = _segundaDaSemana(new Date()).getTime(); renderizarAgendaObras(); return; }
+            if (hoje) { _semanaAgenda = (_agendaVistaObras === 'dia' ? new Date().setHours(0, 0, 0, 0) : _segundaDaSemana(new Date()).getTime()); renderizarAgendaObras(); return; }
             if (_agendaVistaObras === 'mes') {
                 const d = new Date(_semanaAgenda || Date.now());
                 d.setDate(1); d.setMonth(d.getMonth() + delta);
                 _semanaAgenda = d.getTime();
+            } else if (_agendaVistaObras === 'dia') {
+                _semanaAgenda = (_semanaAgenda || Date.now()) + delta * 86400000;
             } else {
                 _semanaAgenda = (_semanaAgenda || _segundaDaSemana(new Date()).getTime()) + delta * 7 * 86400000;
             }
@@ -11118,6 +11120,16 @@
             return `<div style="font-size:.72rem;color:#64748b;margin-top:2px;">${partes.join(' &nbsp;·&nbsp; ')}</div>`;
         }
 
+        // Categoria + detalhe da OS para o cartão da agenda — "Manutenção — Contrato X",
+        // "Obra — nome", "Assistência", "Instalação". Mais completo que _tipoOSResumo (que só
+        // dá a palavra sozinha, usada nos cartões reduzidos/mini).
+        function _tipoOSResumoDetalhado(s) {
+            if (s.obraId) { const o = dados.obras?.find(x => x.id === s.obraId); return 'Obra' + (o ? ' — ' + o.nome : ''); }
+            if (s.contratoId) { const c = dados.contratos?.find(x => x.id === s.contratoId); return 'Manutenção' + (c && c.numero ? ' — Contrato ' + c.numero : ''); }
+            if (s.origem === 'assistencia' || s.assistenciaId) return 'Assistência';
+            if (s.propostaId || s.origem === 'proposta') return 'Instalação';
+            return 'OS';
+        }
         function _cardOSAgenda(s, optPessoas, conflitos, readOnly) {
             const cliente = _nomeClienteOS(s.clienteId);
             const estado = s.status || 'pendente';
@@ -11156,30 +11168,36 @@
                     <div style="font-size:.8rem;color:#475569;margin:2px 0;" title="${escapeHtmlSimples(s.descricao || '')}">${escapeHtmlSimples((s.descricao || '').slice(0, 110))}</div>
                     ${_origemInfoHTML(s)}
                     <div style="font-size:.78rem;color:#334155;margin-top:4px;"><i class="fas fa-users"></i> ${_nomesAtribuidosOSColorido(s)}</div>
-                    ${(readOnly && usuarioLogado?.role === 'funcionario' && !_estouAtribuido) ? `<div style="font-size:.72rem;color:#b3492f;margin-top:4px;"><i class="fas fa-triangle-exclamation"></i> Não estás na lista de atribuídos desta OS — por isso não tens o botão de Entrada. Pede ao Encarregado/Admin para te adicionar em "Atribuição".</div>` : ''}
+                    ${(readOnly && usuarioLogado?.role === 'funcionario' && !_estouAtribuido) ? `<div style="font-size:.72rem;color:#b3492f;margin-top:4px;"><i class="fas fa-triangle-exclamation"></i> Não estás na lista de atribuídos desta OS — por isso não tens o botão de Entrada. Pede ao Encarregado/Admin para te adicionares em "Atribuição".</div>` : ''}
                 </div>`;
             }
-            return `<div class="agenda-os ag-est-${cls}${emConf ? ' conflito' : ''}${bloqueada ? ' bloqueada' : ''}" ${draggableAttr}>
+            // Cartão do admin/sub-admin — compacto de propósito: nº da OS, nº de cliente, tipo
+            // (Manutenção/Instalação/Assistência/Obra), estado, atribuídos e relatórios. Sem o
+            // botão de Entrada (isso é só para quem está no terreno, vista de cima), sem morada/
+            // descrição/tipos de trabalho por extenso — quem quiser mais detalhe clica no cartão
+            // para abrir a OS toda.
+            const clienteObj = dados.clientes?.find(c => c.id === s.clienteId);
+            const numClienteTxt = clienteObj?.numeroCliente ? `Nº ${clienteObj.numeroCliente} — ${cliente}` : cliente;
+            const nRelatorios = (dados.relatoriosEspecialidade || []).filter(r => r.servicoId === s.id).length;
+            const relatoriosLink = nRelatorios
+                ? `<a href="javascript:void(0)" onclick="event.stopPropagation();abrirModal('servico','${s.id}')" style="color:#0e7490;text-decoration:none;font-size:.72rem;font-weight:600;"><i class="fas fa-file-lines"></i> ${nRelatorios} relatório${nRelatorios === 1 ? '' : 's'}</a>`
+                : '';
+            return `<div class="agenda-os ag-est-${cls}${emConf ? ' conflito' : ''}${bloqueada ? ' bloqueada' : ''}" ${draggableAttr} onclick="abrirModal('servico','${s.id}')" style="cursor:pointer;">
                 <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap;">
-                    <span class="agenda-os-hora">${s.hora || '--:--'}</span>
+                    <input type="time" value="${s.hora || ''}" onclick="event.stopPropagation();" onchange="event.stopPropagation();mudarHoraOS('${s.id}', this.value)" title="Mudar a hora" class="agenda-os-hora-input" ${bloqueada ? 'disabled' : ''}>
                     ${_duracaoBadge}
                     ${_moradaBadge}
                     ${_climaBadge}
-                    ${_pontoBadge}
+                    <span class="ag-estado ${cls}">${estado}</span>
                 </div>
-                <div style="margin-top:5px;"><span class="ag-estado ${cls}">${estado}</span></div>
                 ${emConf ? '<div class="ag-conflito-badge"><i class="fas fa-exclamation-triangle"></i> Sobreposição de horário</div>' : ''}
-                <div style="font-weight:600;font-size:.85rem;margin-top:3px;">${s.numeroRegisto ? ('#' + s.numeroRegisto + ' ') : ''}${cliente}</div>
-                ${_tiposTrabalhoBadgesHTML(s)}
-                <div style="font-size:.8rem;color:#475569;margin:2px 0;" title="${escapeHtmlSimples(s.descricao || '')}">${escapeHtmlSimples((s.descricao || '').slice(0, 110))}</div>
-                ${_origemInfoHTML(s)}
-                <div class="ag-atribuidos" style="font-size:.8rem;color:#334155;margin-top:4px;padding:6px 8px;background:#f8fafc;border-radius:6px;${bloqueada ? '' : 'cursor:pointer;'}" ${bloqueada ? '' : `onclick="event.stopPropagation();abrirEditarAtribuidosOS('${s.id}')"`} title="${bloqueada ? '' : 'Clica para mudar quem está atribuído'}">
+                <div style="font-weight:700;font-size:.82rem;margin-top:4px;">OS #${s.numeroRegisto || '—'}</div>
+                <div style="font-size:.78rem;color:#475569;">${escapeHtmlSimples(numClienteTxt)}</div>
+                <div style="font-size:.74rem;color:#0f172a;font-weight:600;margin-top:1px;">${escapeHtmlSimples(_tipoOSResumoDetalhado(s))}</div>
+                <div class="ag-atribuidos" style="font-size:.78rem;color:#334155;margin-top:5px;padding:5px 7px;background:#f8fafc;border-radius:6px;${bloqueada ? '' : 'cursor:pointer;'}" ${bloqueada ? '' : `onclick="event.stopPropagation();abrirEditarAtribuidosOS('${s.id}')"`} title="${bloqueada ? '' : 'Clica para mudar quem está atribuído'}">
                     <i class="fas fa-users"></i> ${_nomesAtribuidosOSColorido(s)} ${bloqueada ? '' : '<i class="fas fa-pen" style="opacity:.5;font-size:.75em;margin-left:4px;"></i>'}
                 </div>
-                <div style="display:flex;gap:6px;margin-top:4px;">
-                    <input type="date" value="${s.data || ''}" onchange="mudarDataOS('${s.id}', this.value)" title="Mudar o dia" style="flex:1;min-width:0;font-size:.78rem;padding:3px 2px;" ${bloqueada ? 'disabled' : ''}>
-                    <input type="time" value="${s.hora || ''}" onchange="mudarHoraOS('${s.id}', this.value)" title="Mudar a hora" style="flex:0 0 78px;font-size:.78rem;padding:3px 2px;" ${bloqueada ? 'disabled' : ''}>
-                </div>
+                ${relatoriosLink ? `<div style="margin-top:4px;">${relatoriosLink}</div>` : ''}
                 ${bloqueada ? '<div style="font-size:.7rem;color:#16a34a;margin-top:4px;font-weight:600;"><i class="fas fa-lock"></i> Concluída — bloqueada</div>' : ''}
             </div>`;
         }
@@ -11212,9 +11230,10 @@
             }
         }
         // Categoria simples do trabalho, para mostrar no cartão reduzido — não é o tipo de
-        // especialidade (REX/RBI/etc.), é só "de onde veio" a OS, em 3 categorias fáceis de
+        // especialidade (REX/RBI/etc.), é só "de onde veio" a OS, em 4 categorias fáceis de
         // reconhecer de relance.
         function _tipoOSResumo(s) {
+            if (s.obraId) return 'Obra';
             if (s.contratoId) return 'Manutenção';
             if (s.origem === 'assistencia' || s.assistenciaId) return 'Assistência';
             if (s.propostaId || s.origem === 'proposta') return 'Instalação';
@@ -11245,6 +11264,35 @@
             mini.style.display = estaReduzido ? 'none' : 'flex';
             cheio.style.display = estaReduzido ? 'block' : 'none';
         }
+        // Vista "Dia" — um único dia, OS em grelha de cartões completos (a mesma lista de sempre,
+        // só que sem as outras colunas da semana à volta a ocupar espaço). Útil quando só queres
+        // mesmo focar no que está agendado para hoje/um dia específico.
+        function renderAgendaDia(cont, oss, hojeStr, conflitos, readOnly) {
+            const d = new Date(_semanaAgenda || Date.now());
+            const ds = _fmtDataAg(d);
+            const nomesSemana = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
+            const diaSemanaIdx = (d.getDay() + 6) % 7; // getDay(): 0=domingo — passa a 0=segunda
+            const label = document.getElementById('agendaObrasLabel');
+            if (label) label.textContent = `${nomesSemana[diaSemanaIdx]}, ${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+            const doDia = oss.filter(s => s.data === ds).sort(_ordenarPorHora);
+            const dropAttrs = readOnly ? '' : `ondragover="agendaDragOver(event)" ondragleave="agendaDragLeave(event)" ondrop="agendaDrop(event,'${ds}')"`;
+            const addBtn = readOnly ? '' : `<button type="button" class="btn btn-sm btn-outline" onclick="novaOSNoDia('${ds}')"><i class="fas fa-plus"></i> Nova OS neste dia</button>`;
+            let html = `<div class="agenda-dia-wrap" ${dropAttrs}>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+                    <div style="font-weight:700;font-size:1.05rem;">${doDia.length} OS${ds === hojeStr ? ' — Hoje' : ''}</div>
+                    ${addBtn}
+                </div>`;
+            if (!doDia.length) {
+                html += `<div class="agenda-vazio" style="padding:34px;text-align:center;">Sem OS agendadas para este dia.</div>`;
+            } else {
+                html += `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;align-items:start;">`;
+                doDia.forEach(s => { html += _cardOSAgenda(s, null, conflitos, readOnly); });
+                html += `</div>`;
+            }
+            html += `</div>`;
+            cont.innerHTML = html;
+            _agendaCarregarClimas(oss);
+        }
         function renderizarAgendaObras() {
             const cont = document.getElementById('agendaObrasConteudo');
             if (!cont) return;
@@ -11257,6 +11305,7 @@
             const hojeStr = getDataHoje();
             if (_agendaVistaObras === 'mes') { renderAgendaMes(cont, oss, hojeStr, conflitos, readOnly); return; }
             if (_agendaVistaObras === 'gantt') { renderAgendaGantt(cont, oss, hojeStr, conflitos, readOnly); return; }
+            if (_agendaVistaObras === 'dia') { renderAgendaDia(cont, oss, hojeStr, conflitos, readOnly); return; }
             const pessoas = _pessoasTenantAg();
             const optPessoas = sel => '<option value="">— responsável —</option>' + pessoas.map(p => `<option value="${p.id}" ${sel === p.id ? 'selected' : ''}>${p.nome}</option>`).join('');
             const seg = new Date(_semanaAgenda || _segundaDaSemana(new Date()).getTime());
@@ -11364,10 +11413,11 @@
                 const bloqueada = _osBloqueada(s);
                 const draggableAttr = (!readOnly && !bloqueada) ? `draggable="true" ondragstart="agendaDragStart(event,'${s.id}')"` : '';
                 const cliente = escapeHtmlSimples(_nomeClienteOS(s.clienteId).slice(0, 22));
+                const tipo = _tipoOSResumo(s);
                 const coordsChip = _osCoordenadasExatas(s);
                 const climaSpanChip = coordsChip ? ` <span id="clima-${s.id}" class="ag-clima"></span>` : '';
-                return `<div class="agenda-gantt-chip ag-est-${cls}${emConf ? ' conflito' : ''}${bloqueada ? ' bloqueada' : ''}" ${draggableAttr} onclick="abrirModal('servico','${s.id}')" title="${s.hora || '--:--'} ${cliente}${emConf ? ' — sobreposição' : ''}">
-                    ${bloqueada ? '<i class="fas fa-lock"></i> ' : ''}${emConf ? '<i class="fas fa-triangle-exclamation"></i> ' : ''}<span style="font-weight:700;">${s.hora || '--:--'}</span> ${cliente}${climaSpanChip}
+                return `<div class="agenda-gantt-chip ag-est-${cls}${emConf ? ' conflito' : ''}${bloqueada ? ' bloqueada' : ''}" ${draggableAttr} onclick="abrirModal('servico','${s.id}')" title="${s.hora || '--:--'} ${cliente} — ${tipo}${emConf ? ' — sobreposição' : ''}">
+                    ${bloqueada ? '<i class="fas fa-lock"></i> ' : ''}${emConf ? '<i class="fas fa-triangle-exclamation"></i> ' : ''}<span style="font-weight:700;">${s.hora || '--:--'}</span> ${cliente} <span class="gantt-chip-tipo">(${tipo})</span>${climaSpanChip}
                 </div>`;
             };
 
@@ -11396,11 +11446,11 @@
             cont.innerHTML = html;
             _agendaCarregarClimas(oss);
         }
-        // Largar uma OS numa célula do Gantt reatribui-a de imediato ao técnico dessa linha
-        // (substitui o responsável principal) além de mudar o dia, tal como o arrastar nas
-        // outras vistas já muda o dia — aqui muda os dois de uma vez, porque a própria posição
-        // na grelha representa "este dia, esta pessoa".
-        function agendaDropGantt(e, dataDia, pessoaId) {
+        // Largar uma OS numa célula do Gantt pergunta sempre, quando muda de pessoa, se é para
+        // ADICIONAR essa pessoa (mantém quem já lá estava) ou PASSAR a OS para ela (substitui o
+        // responsável) — só quando é a mesma pessoa (só está a mudar de dia) é que não pergunta
+        // nada, não há ambiguidade nenhuma nesse caso.
+        async function agendaDropGantt(e, dataDia, pessoaId) {
             if (usuarioLogado?.role === 'funcionario' || document.getElementById('tgPainelTVOverlay')?.classList.contains('aberto')) return;
             e.preventDefault(); e.currentTarget.classList.remove('ag-drop');
             const id = _agendaDragId || (e.dataTransfer && e.dataTransfer.getData('text/plain'));
@@ -11409,11 +11459,36 @@
             const s = dados.servicos?.find(x => x.id === id); if (!s) return;
             if (_osBloqueada(s)) { alert('OS concluída — destranque-a primeiro para a mover.'); renderizarAgendaObras(); return; }
             const atribuidosAntes = [...(s.funcionariosIds || []), s.funcionarioId].filter(Boolean);
+            const jaEstaAtribuido = pessoaId && atribuidosAntes.includes(pessoaId);
+            const pessoaNome = pessoaId ? (_pessoasTenantAg().find(p => p.id === pessoaId)?.nome || '') : null;
+
+            let modo = 'passar';
+            if (pessoaId && !jaEstaAtribuido) {
+                const escolha = await tgEscolher(
+                    `Largaste "${_nomeClienteOS(s.clienteId)}" na linha de ${pessoaNome}. O que fazer?`,
+                    [
+                        { rotulo: `➕ Adicionar ${pessoaNome} a esta OS (mantém quem já lá estava)`, valor: 'adicionar' },
+                        { rotulo: `➡️ Passar a OS para ${pessoaNome} (substitui o responsável)`, valor: 'passar' },
+                    ]
+                );
+                if (!escolha) { renderizarAgendaObras(); return; } // cancelou — repõe a vista como estava, nada muda
+                modo = escolha;
+            }
+
             if (pessoaId && _bloquearSeAusenteEmOS([pessoaId], dataDia)) { renderizarAgendaObras(); return; }
             const antesData = s.data;
             let mudou = false;
             if (s.data !== dataDia) { s.data = dataDia; mudou = true; }
-            if (pessoaId && s.funcionarioId !== pessoaId) { s.funcionarioId = pessoaId; if (s.funcionariosIds) s.funcionariosIds = s.funcionariosIds.includes(pessoaId) ? s.funcionariosIds : [pessoaId, ...s.funcionariosIds.filter(x => x !== s.funcionarioId)]; mudou = true; }
+            if (pessoaId && !jaEstaAtribuido) {
+                if (modo === 'adicionar') {
+                    s.funcionariosIds = [...new Set([...(s.funcionariosIds || []), s.funcionarioId, pessoaId].filter(Boolean))];
+                    if (!s.funcionarioId) s.funcionarioId = pessoaId;
+                } else { // passar — substitui, fica só esta pessoa como responsável
+                    s.funcionarioId = pessoaId;
+                    s.funcionariosIds = [pessoaId];
+                }
+                mudou = true;
+            }
             if (!pessoaId) { s.funcionarioId = null; s.funcionariosIds = []; mudou = true; } // largou em "Sem responsável" — desatribui
             if (mudou) {
                 guardarDados(dados);
