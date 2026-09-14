@@ -17831,54 +17831,47 @@
 
                 <div class="hdc-row3">
                     ${(moduloCrmAtivo(admin) || moduloAssistAtivo(admin)) ? (() => {
-                        // Duas contagens: assistências ainda sem OS (as que precisam de ação —
-                        // decidir se viram trabalho) e as que já foram convertidas em OS mas essa
-                        // OS ainda não está concluída (já em curso, só a acompanhar). Mais os
-                        // totais gerais (todas, concluídas, % concluída), sem filtrar por estado.
+                        // Assistências ainda sem OS (precisam de decisão) vs. já convertidas em
+                        // OS (em curso, só a acompanhar). Excluí sempre as já resolvidas/fechadas.
                         const _assistTodas = (dados.assistencias || []).filter(a => a.adminId === adminId && !a.apagadoSuperAdmin);
-                        const _assistConcluidas = _assistTodas.filter(a => ['resolvida', 'fechada'].includes(a.estado || 'aberta'));
-                        const _assistPct = _assistTodas.length ? Math.round((_assistConcluidas.length / _assistTodas.length) * 100) : 0;
                         const _assistTodasAbertas = _assistTodas.filter(a => !['resolvida', 'fechada'].includes(a.estado || 'aberta'));
                         const _assistSemOS = _assistTodasAbertas.filter(a => !a.osGeradaId);
                         const _assistComOS = _assistTodasAbertas.filter(a => a.osGeradaId);
                         const _assistUrgentes = _assistSemOS.filter(a => (a.prioridade || '').toLowerCase() === 'urgente' || (a.prioridade || '').toLowerCase() === 'alta').length;
                         const _LIMITE_LISTA = 6;
-                        // Cada linha já liga direto a "criar OS a partir desta assistência" no
-                        // Assist (?criarOS=id) — abre logo esse modal, sem precisar de a procurar
-                        // lá dentro. stopPropagation() para não disparar também o clique do cartão
-                        // (que abriria o Assist normal por baixo).
-                        const _linhaAssist = (a) => {
+                        // "Sem OS" liga direto a "criar OS a partir desta assistência" no Assist
+                        // (?criarOS=id). "Com OS" abre a própria OS já criada (é a mesma app, não
+                        // precisa de ir ao Assist para isso). stopPropagation() nos dois para não
+                        // disparar também o clique do cartão (que abre o Assist normal por baixo).
+                        const _linhaSemOS = (a) => {
                             const nomeCli = a.clienteId ? _nomeClienteOS(a.clienteId) : (a.nomeCliente || 'Sem cliente');
                             return `<a href="TOTALGEST_ASSIST.html?criarOS=${a.id}" target="_blank" rel="noopener" onclick="event.stopPropagation();return _abrirAssist(event);" style="display:block;font-size:.72rem;color:var(--htxt);text-decoration:none;padding:3px 0;border-bottom:1px dashed var(--hline);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="Criar OS a partir desta assistência">${escapeHtmlSimples(a.assunto || nomeCli)}</a>`;
                         };
-                        const _listaSemOSHtml = !_assistSemOS.length
-                            ? `<div style="font-size:.72rem;color:var(--hsub);padding:4px 0;">Nenhuma pendente — tudo tratado.</div>`
-                            : _assistSemOS.slice(0, _LIMITE_LISTA).map(_linhaAssist).join('') + (_assistSemOS.length > _LIMITE_LISTA ? `<div style="font-size:.68rem;color:var(--hb);padding:3px 0;">+ ${_assistSemOS.length - _LIMITE_LISTA} mais</div>` : '');
+                        const _linhaComOS = (a) => {
+                            const nomeCli = a.clienteId ? _nomeClienteOS(a.clienteId) : (a.nomeCliente || 'Sem cliente');
+                            return `<div onclick="event.stopPropagation();abrirModal('servico','${a.osGeradaId}')" style="font-size:.72rem;color:var(--htxt);cursor:pointer;padding:3px 0;border-bottom:1px dashed var(--hline);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="Abrir a OS desta assistência">${escapeHtmlSimples(a.assunto || nomeCli)}</div>`;
+                        };
+                        const _lista = (arr, fn, vazioTxt) => !arr.length
+                            ? `<div style="font-size:.72rem;color:var(--hsub);padding:4px 0;">${vazioTxt}</div>`
+                            : arr.slice(0, _LIMITE_LISTA).map(fn).join('') + (arr.length > _LIMITE_LISTA ? `<div style="font-size:.68rem;color:var(--hb);padding:3px 0;">+ ${arr.length - _LIMITE_LISTA} mais</div>` : '');
                         return `<div class="hdc-card" onclick="_abrirAssistGeral()" style="cursor:pointer;transition:box-shadow .15s;" onmouseover="this.style.boxShadow='0 4px 14px rgba(0,0,0,.1)'" onmouseout="this.style.boxShadow=''">
                             <h4><i class="fas fa-headset"></i> Assistências</h4>
-                            <div style="display:flex;gap:14px;font-size:.72rem;color:var(--hsub);margin:4px 0 8px;flex-wrap:wrap;">
-                                <span>Total: <b class="hdc-num-animado" data-final="${_assistTodas.length}" style="color:var(--htxt);">0</b></span>
-                                <span>Concluídas: <b class="hdc-num-animado" data-final="${_assistConcluidas.length}" style="color:var(--htxt);">0</b></span>
-                                <span>% concluída: <b class="hdc-num-animado" data-final="${_assistPct}" data-sufixo="%" style="color:var(--htxt);">0</b></span>
-                            </div>
-                            <div style="display:flex;gap:16px;margin:2px 0;">
-                                <div>
+                            ${_assistUrgentes ? `<div style="font-size:.76rem;color:var(--hr);margin:4px 0;"><i class="fas fa-triangle-exclamation"></i> ${_assistUrgentes} sem OS de prioridade alta/urgente</div>` : ''}
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;margin-top:6px;">
+                                <div style="padding-right:14px;">
                                     <div style="display:flex;align-items:baseline;gap:6px;">
                                         <span class="hdc-num-animado" data-final="${_assistSemOS.length}" style="font-size:1.8rem;font-weight:800;color:var(--hg);">0</span>
                                         <span style="font-size:.72rem;color:var(--hsub);">sem OS</span>
                                     </div>
+                                    <div style="margin-top:6px;">${_lista(_assistSemOS, _linhaSemOS, 'Nenhuma pendente.')}</div>
                                 </div>
-                                <div style="border-left:1px solid var(--hline);padding-left:16px;">
+                                <div style="border-left:1px solid var(--hline);padding-left:14px;">
                                     <div style="display:flex;align-items:baseline;gap:6px;">
                                         <span class="hdc-num-animado" data-final="${_assistComOS.length}" style="font-size:1.8rem;font-weight:800;color:var(--hg);">0</span>
                                         <span style="font-size:.72rem;color:var(--hsub);">com OS</span>
                                     </div>
+                                    <div style="margin-top:6px;">${_lista(_assistComOS, _linhaComOS, 'Nenhuma em curso.')}</div>
                                 </div>
-                            </div>
-                            ${_assistUrgentes ? `<div style="font-size:.76rem;color:var(--hr);margin:4px 0;"><i class="fas fa-triangle-exclamation"></i> ${_assistUrgentes} sem OS de prioridade alta/urgente</div>` : ''}
-                            <div style="margin-top:6px;">
-                                <div style="font-size:.66rem;font-weight:700;color:var(--hsub);text-transform:uppercase;margin-bottom:2px;">Sem OS — clica para criar a OS</div>
-                                ${_listaSemOSHtml}
                             </div>
                             <div style="font-size:.7rem;color:var(--hb);margin-top:8px;">Abrir Assist <i class="fas fa-arrow-right"></i></div>
                         </div>`;
