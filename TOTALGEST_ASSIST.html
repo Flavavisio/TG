@@ -1170,6 +1170,12 @@
                 usuarioLogado.nome = obterNomeFuncionario(usuarioLogado.id) || 'Eu';
                 document.getElementById('crmApp').style.display = 'block';
                 renderizarTudo();
+                // Se veio de um link direto (ex.: da lista "Sem OS" no Dashboard Central da app
+                // principal), abre já o modal de criar OS dessa assistência específica, sem
+                // precisar de navegar até lá dentro do Assist.
+                const _paramsUrl = new URLSearchParams(window.location.search);
+                const _criarOSId = _paramsUrl.get('criarOS');
+                if (_criarOSId) setTimeout(() => criarOSDeAssistencia(_criarOSId), 200);
             } catch (e) {
                 console.error('Arranque do CRM falhou:', e);
                 document.getElementById('loginNecessario').style.display = 'block';

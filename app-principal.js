@@ -7175,6 +7175,16 @@
             }
             return true;
         }
+        // Clique no resto do cartão "Assistências" do Dashboard (fora das linhas da lista, que
+        // já têm o seu próprio link para "criar OS") — abre o Assist normal, numa aba nova.
+        function _abrirAssistGeral() {
+            const admin = adminDoUtilizador();
+            if (!moduloAssistAtivo(admin)) {
+                alert('O Total Gest Assist ainda não está ativo para a tua empresa.\n\nFala com o administrador para ativares este addon — Gestão de pedidos de assistência técnica, com criação direta de Ordens de Serviço.');
+                return;
+            }
+            window.open('TOTALGEST_ASSIST.html', '_blank');
+        }
         // Rondas / Vigilância — ficheiro à parte (TOTALGEST_RONDAS.html), mesmo padrão do CRM/Assist.
         function _abrirRondas(ev) {
             const admin = adminDoUtilizador();
@@ -17373,6 +17383,23 @@
                 });
                 donuts.forEach(el => { el.style.opacity = '1'; el.style.transform = 'scale(1)'; });
             }));
+            // Números soltos (não são barra nem donut) — ex.: totais do cartão de Assistências —
+            // fazem uma contagem a subir de 0 até ao valor final, em vez de aparecerem já prontos.
+            const numeros = cont.querySelectorAll('.hdc-num-animado');
+            numeros.forEach(el => {
+                const final = parseFloat(el.dataset.final || '0') || 0;
+                const sufixo = el.dataset.sufixo || '';
+                const duracao = 1000;
+                const inicio = performance.now();
+                function passo(agora) {
+                    const t = Math.min(1, (agora - inicio) / duracao);
+                    const facilitado = 1 - Math.pow(1 - t, 3); // ease-out cúbico, igual ao das barras
+                    el.textContent = Math.round(final * facilitado) + sufixo;
+                    if (t < 1) requestAnimationFrame(passo);
+                    else el.textContent = final + sufixo;
+                }
+                requestAnimationFrame(passo);
+            });
         }
         // Verifica as OS dos próximos 3 dias com pin exato no mapa e avisa se houver condições
         // adversas previstas — dá tempo de reagendar antes de mandar a equipa para debaixo de
@@ -17672,7 +17699,7 @@
                 #secao-dashboard-central .hdc-kpi .delta{ font-size:.68rem; font-weight:700; }
                 #secao-dashboard-central .hdc-kpi .delta.up{ color:var(--hg); } #secao-dashboard-central .hdc-kpi .delta.down{ color:var(--hr); }
                 #secao-dashboard-central .hdc-row4{ display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr; gap:12px; margin-bottom:12px; }
-                #secao-dashboard-central .hdc-row3{ display:grid; grid-template-columns:2fr 1.1fr 1fr 1fr; gap:12px; margin-bottom:12px; }
+                #secao-dashboard-central .hdc-row3{ display:grid; grid-template-columns:2fr 1.1fr 1fr; gap:12px; margin-bottom:12px; }
                 #secao-dashboard-central .hdc-row4b{ display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:12px; }
                 #secao-dashboard-central .hdc-bars{ display:flex; align-items:flex-end; gap:8px; height:110px; }
                 #secao-dashboard-central .hdc-bars .bcol{ flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; justify-content:flex-end; height:100%; }
@@ -17804,51 +17831,57 @@
 
                 <div class="hdc-row3">
                     ${(moduloCrmAtivo(admin) || moduloAssistAtivo(admin)) ? (() => {
-                        // Duas contagens separadas: assistências ainda sem OS (as que precisam de
-                        // ação — decidir se viram trabalho) e as que já foram convertidas em OS
-                        // mas essa OS ainda não está concluída (já em curso, só a acompanhar).
-                        // Em ambos os casos, exclui as já marcadas como resolvidas/fechadas.
-                        const _assistTodasAbertas = (dados.assistencias || []).filter(a => a.adminId === adminId && !a.apagadoSuperAdmin && !['resolvida', 'fechada'].includes(a.estado || 'aberta'));
+                        // Duas contagens: assistências ainda sem OS (as que precisam de ação —
+                        // decidir se viram trabalho) e as que já foram convertidas em OS mas essa
+                        // OS ainda não está concluída (já em curso, só a acompanhar). Mais os
+                        // totais gerais (todas, concluídas, % concluída), sem filtrar por estado.
+                        const _assistTodas = (dados.assistencias || []).filter(a => a.adminId === adminId && !a.apagadoSuperAdmin);
+                        const _assistConcluidas = _assistTodas.filter(a => ['resolvida', 'fechada'].includes(a.estado || 'aberta'));
+                        const _assistPct = _assistTodas.length ? Math.round((_assistConcluidas.length / _assistTodas.length) * 100) : 0;
+                        const _assistTodasAbertas = _assistTodas.filter(a => !['resolvida', 'fechada'].includes(a.estado || 'aberta'));
                         const _assistSemOS = _assistTodasAbertas.filter(a => !a.osGeradaId);
                         const _assistComOS = _assistTodasAbertas.filter(a => a.osGeradaId);
                         const _assistUrgentes = _assistSemOS.filter(a => (a.prioridade || '').toLowerCase() === 'urgente' || (a.prioridade || '').toLowerCase() === 'alta').length;
-                        const _LIMITE_LISTA = 4;
+                        const _LIMITE_LISTA = 6;
+                        // Cada linha já liga direto a "criar OS a partir desta assistência" no
+                        // Assist (?criarOS=id) — abre logo esse modal, sem precisar de a procurar
+                        // lá dentro. stopPropagation() para não disparar também o clique do cartão
+                        // (que abriria o Assist normal por baixo).
                         const _linhaAssist = (a) => {
                             const nomeCli = a.clienteId ? _nomeClienteOS(a.clienteId) : (a.nomeCliente || 'Sem cliente');
-                            return `<div style="font-size:.72rem;color:var(--htxt);padding:3px 0;border-bottom:1px dashed var(--hline);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtmlSimples(a.assunto || nomeCli)}</div>`;
+                            return `<a href="TOTALGEST_ASSIST.html?criarOS=${a.id}" target="_blank" rel="noopener" onclick="event.stopPropagation();return _abrirAssist(event);" style="display:block;font-size:.72rem;color:var(--htxt);text-decoration:none;padding:3px 0;border-bottom:1px dashed var(--hline);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="Criar OS a partir desta assistência">${escapeHtmlSimples(a.assunto || nomeCli)}</a>`;
                         };
-                        const _listaHTML = (lista, vazioTxt) => !lista.length
-                            ? `<div style="font-size:.7rem;color:var(--hsub);padding:4px 0;">${vazioTxt}</div>`
-                            : lista.slice(0, _LIMITE_LISTA).map(_linhaAssist).join('') + (lista.length > _LIMITE_LISTA ? `<div style="font-size:.68rem;color:var(--hb);padding:3px 0;">+ ${lista.length - _LIMITE_LISTA} mais</div>` : '');
-                        return `<a href="TOTALGEST_ASSIST.html" target="_blank" rel="noopener" onclick="return _abrirAssist(event)" class="hdc-card" style="display:block;text-decoration:none;color:inherit;cursor:pointer;transition:box-shadow .15s;" onmouseover="this.style.boxShadow='0 4px 14px rgba(0,0,0,.1)'" onmouseout="this.style.boxShadow=''">
+                        const _listaSemOSHtml = !_assistSemOS.length
+                            ? `<div style="font-size:.72rem;color:var(--hsub);padding:4px 0;">Nenhuma pendente — tudo tratado.</div>`
+                            : _assistSemOS.slice(0, _LIMITE_LISTA).map(_linhaAssist).join('') + (_assistSemOS.length > _LIMITE_LISTA ? `<div style="font-size:.68rem;color:var(--hb);padding:3px 0;">+ ${_assistSemOS.length - _LIMITE_LISTA} mais</div>` : '');
+                        return `<div class="hdc-card" onclick="_abrirAssistGeral()" style="cursor:pointer;transition:box-shadow .15s;" onmouseover="this.style.boxShadow='0 4px 14px rgba(0,0,0,.1)'" onmouseout="this.style.boxShadow=''">
                             <h4><i class="fas fa-headset"></i> Assistências</h4>
-                            <div style="display:flex;gap:16px;margin:6px 0 2px;">
+                            <div style="display:flex;gap:14px;font-size:.72rem;color:var(--hsub);margin:4px 0 8px;flex-wrap:wrap;">
+                                <span>Total: <b class="hdc-num-animado" data-final="${_assistTodas.length}" style="color:var(--htxt);">0</b></span>
+                                <span>Concluídas: <b class="hdc-num-animado" data-final="${_assistConcluidas.length}" style="color:var(--htxt);">0</b></span>
+                                <span>% concluída: <b class="hdc-num-animado" data-final="${_assistPct}" data-sufixo="%" style="color:var(--htxt);">0</b></span>
+                            </div>
+                            <div style="display:flex;gap:16px;margin:2px 0;">
                                 <div>
                                     <div style="display:flex;align-items:baseline;gap:6px;">
-                                        <span style="font-size:1.8rem;font-weight:800;color:var(--hg);">${_assistSemOS.length}</span>
+                                        <span class="hdc-num-animado" data-final="${_assistSemOS.length}" style="font-size:1.8rem;font-weight:800;color:var(--hg);">0</span>
                                         <span style="font-size:.72rem;color:var(--hsub);">sem OS</span>
                                     </div>
                                 </div>
                                 <div style="border-left:1px solid var(--hline);padding-left:16px;">
                                     <div style="display:flex;align-items:baseline;gap:6px;">
-                                        <span style="font-size:1.8rem;font-weight:800;color:var(--hg);">${_assistComOS.length}</span>
+                                        <span class="hdc-num-animado" data-final="${_assistComOS.length}" style="font-size:1.8rem;font-weight:800;color:var(--hg);">0</span>
                                         <span style="font-size:.72rem;color:var(--hsub);">com OS</span>
                                     </div>
                                 </div>
                             </div>
-                            ${_assistUrgentes ? `<div style="font-size:.76rem;color:var(--hr);margin-bottom:4px;"><i class="fas fa-triangle-exclamation"></i> ${_assistUrgentes} sem OS de prioridade alta/urgente</div>` : ''}
-                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px;">
-                                <div>
-                                    <div style="font-size:.66rem;font-weight:700;color:var(--hsub);text-transform:uppercase;margin-bottom:2px;">Sem OS</div>
-                                    ${_listaHTML(_assistSemOS, 'Nenhuma pendente.')}
-                                </div>
-                                <div>
-                                    <div style="font-size:.66rem;font-weight:700;color:var(--hsub);text-transform:uppercase;margin-bottom:2px;">Com OS</div>
-                                    ${_listaHTML(_assistComOS, 'Nenhuma em curso.')}
-                                </div>
+                            ${_assistUrgentes ? `<div style="font-size:.76rem;color:var(--hr);margin:4px 0;"><i class="fas fa-triangle-exclamation"></i> ${_assistUrgentes} sem OS de prioridade alta/urgente</div>` : ''}
+                            <div style="margin-top:6px;">
+                                <div style="font-size:.66rem;font-weight:700;color:var(--hsub);text-transform:uppercase;margin-bottom:2px;">Sem OS — clica para criar a OS</div>
+                                ${_listaSemOSHtml}
                             </div>
                             <div style="font-size:.7rem;color:var(--hb);margin-top:8px;">Abrir Assist <i class="fas fa-arrow-right"></i></div>
-                        </a>`;
+                        </div>`;
                     })() : ''}
                     <div class="hdc-card">
                         <h4>Equipa Agora</h4>
@@ -17864,11 +17897,6 @@
                                 ${proximasManutencoes.map(({ c, prox, estado }) => `<tr onclick="abrirCardContratos()"><td>${(prox || '').split('-').reverse().slice(0, 2).join('/')}</td><td>${escapeHtmlSimples(obterNomeCliente(c.clienteId) || '—')}</td><td>${escapeHtmlSimples(c.numero || '—')}</td><td><span style="color:${estado.cor};font-weight:700;">${estado.label}</span></td></tr>`).join('')}
                             </tbody>
                         </table>` : `<div class="hdc-vazio">Sem contratos de manutenção ativos.</div>`}
-                    </div>
-                    <div class="hdc-card hdc-alertas">
-                        <h4>Alertas e Pendências</h4>
-                        <div id="hdcClimaAlertas"></div>
-                        ${alertasSrcHtml || '<div style="color:#16a34a;"><i class="fas fa-circle-check"></i> Sem pendências. Tudo em dia!</div>'}
                     </div>
                 </div>
 
