@@ -1908,8 +1908,12 @@
     <div id="secao-agenda-obras" class="section-container">
         <div class="section-header">
             <h2><i class="fas fa-calendar-week"></i> Agenda — Planeamento de Obras</h2>
-            <div style="display:flex;gap:8px;align-items:center;">
+            <div class="ag-header-controlos">
                 <div class="ag-vista-seletor" id="agVistaSeletor">
+                    <button type="button" class="ag-vista-btn" data-vista="dia" onclick="_escolherVistaAgendaObras('dia')" title="Vista Dia — só um dia, cartões completos">
+                        <span class="ag-vista-icon ag-vista-icon-dia"><span></span></span>
+                        <span class="ag-vista-txt">Dia</span>
+                    </button>
                     <button type="button" class="ag-vista-btn" data-vista="semana" onclick="_escolherVistaAgendaObras('semana')" title="Vista Semana — cartões detalhados, dia a dia">
                         <span class="ag-vista-icon"><span></span><span></span><span></span></span>
                         <span class="ag-vista-txt">Semana</span>
@@ -1923,10 +1927,12 @@
                         <span class="ag-vista-txt">Por Técnico</span>
                     </button>
                 </div>
-                <button class="btn btn-outline" onclick="agendaObrasSemana(-1)"><i class="fas fa-chevron-left"></i></button>
-                <strong id="agendaObrasLabel" style="min-width:170px;text-align:center;">—</strong>
-                <button class="btn btn-outline" onclick="agendaObrasSemana(1)"><i class="fas fa-chevron-right"></i></button>
-                <button class="btn btn-outline" onclick="agendaObrasSemana(0, true)" title="Hoje"><i class="fas fa-calendar-day"></i></button>
+                <div class="ag-data-nav">
+                    <button class="btn btn-outline" onclick="agendaObrasSemana(-1)"><i class="fas fa-chevron-left"></i></button>
+                    <strong id="agendaObrasLabel" style="min-width:170px;text-align:center;">—</strong>
+                    <button class="btn btn-outline" onclick="agendaObrasSemana(1)"><i class="fas fa-chevron-right"></i></button>
+                    <button class="btn btn-outline" onclick="agendaObrasSemana(0, true)" title="Hoje"><i class="fas fa-calendar-day"></i></button>
+                </div>
             </div>
         </div>
         <p style="color:#64748b;font-size:.85rem;margin:-4px 0 12px;">Arrasta uma OS para outro dia, ou usa os seletores. Clica no <strong>+</strong> de um dia para criar uma OS já com essa data.</p>

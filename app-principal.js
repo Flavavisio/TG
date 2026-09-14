@@ -17791,18 +17791,31 @@
 
                 <div class="hdc-row3">
                     ${(moduloCrmAtivo(admin) || moduloAssistAtivo(admin)) ? (() => {
-                        // "Aberta" e sem OS gerada ainda — as que realmente precisam de atenção. Uma
-                        // vez convertida em OS (osGeradaId preenchido) ou marcada como resolvida/fechada,
-                        // deixa de contar aqui.
-                        const _assistAbertas = (dados.assistencias || []).filter(a => a.adminId === adminId && !a.apagadoSuperAdmin && !a.osGeradaId && !['resolvida', 'fechada'].includes(a.estado || 'aberta'));
-                        const _assistUrgentes = _assistAbertas.filter(a => (a.prioridade || '').toLowerCase() === 'urgente' || (a.prioridade || '').toLowerCase() === 'alta').length;
+                        // Duas contagens separadas: assistências ainda sem OS (as que precisam de
+                        // ação — decidir se viram trabalho) e as que já foram convertidas em OS
+                        // mas essa OS ainda não está concluída (já em curso, só a acompanhar).
+                        // Em ambos os casos, exclui as já marcadas como resolvidas/fechadas.
+                        const _assistTodasAbertas = (dados.assistencias || []).filter(a => a.adminId === adminId && !a.apagadoSuperAdmin && !['resolvida', 'fechada'].includes(a.estado || 'aberta'));
+                        const _assistSemOS = _assistTodasAbertas.filter(a => !a.osGeradaId);
+                        const _assistComOS = _assistTodasAbertas.filter(a => a.osGeradaId);
+                        const _assistUrgentes = _assistSemOS.filter(a => (a.prioridade || '').toLowerCase() === 'urgente' || (a.prioridade || '').toLowerCase() === 'alta').length;
                         return `<a href="TOTALGEST_ASSIST.html" target="_blank" rel="noopener" onclick="return _abrirAssist(event)" class="hdc-card" style="display:block;text-decoration:none;color:inherit;cursor:pointer;transition:box-shadow .15s;" onmouseover="this.style.boxShadow='0 4px 14px rgba(0,0,0,.1)'" onmouseout="this.style.boxShadow=''">
                             <h4><i class="fas fa-headset"></i> Assistências</h4>
-                            <div style="display:flex;align-items:baseline;gap:8px;margin:6px 0 2px;">
-                                <span style="font-size:2rem;font-weight:800;color:${_assistAbertas.length ? 'var(--hr)' : 'var(--hg)'};">${_assistAbertas.length}</span>
-                                <span style="font-size:.8rem;color:var(--hsub);">${_assistAbertas.length === 1 ? 'aberta' : 'abertas'}</span>
+                            <div style="display:flex;gap:16px;margin:6px 0 2px;">
+                                <div>
+                                    <div style="display:flex;align-items:baseline;gap:6px;">
+                                        <span style="font-size:1.8rem;font-weight:800;color:${_assistSemOS.length ? 'var(--hr)' : 'var(--hg)'};">${_assistSemOS.length}</span>
+                                        <span style="font-size:.72rem;color:var(--hsub);">${_assistSemOS.length === 1 ? 'sem OS' : 'sem OS'}</span>
+                                    </div>
+                                </div>
+                                <div style="border-left:1px solid var(--hline);padding-left:16px;">
+                                    <div style="display:flex;align-items:baseline;gap:6px;">
+                                        <span style="font-size:1.8rem;font-weight:800;color:var(--htxt);">${_assistComOS.length}</span>
+                                        <span style="font-size:.72rem;color:var(--hsub);">com OS</span>
+                                    </div>
+                                </div>
                             </div>
-                            ${_assistUrgentes ? `<div style="font-size:.76rem;color:var(--hr);"><i class="fas fa-triangle-exclamation"></i> ${_assistUrgentes} de prioridade alta/urgente</div>` : `<div style="font-size:.76rem;color:var(--hsub);">${_assistAbertas.length ? 'Nenhuma urgente de momento.' : 'Tudo tratado — sem pendências.'}</div>`}
+                            ${_assistUrgentes ? `<div style="font-size:.76rem;color:var(--hr);"><i class="fas fa-triangle-exclamation"></i> ${_assistUrgentes} sem OS de prioridade alta/urgente</div>` : `<div style="font-size:.76rem;color:var(--hsub);">${_assistTodasAbertas.length ? 'Nenhuma urgente de momento.' : 'Tudo tratado — sem pendências.'}</div>`}
                             <div style="font-size:.7rem;color:var(--hb);margin-top:8px;">Abrir Assist <i class="fas fa-arrow-right"></i></div>
                         </a>`;
                     })() : ''}
