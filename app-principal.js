@@ -11182,7 +11182,7 @@
             const relatoriosLink = nRelatorios
                 ? `<a href="javascript:void(0)" onclick="event.stopPropagation();abrirModal('servico','${s.id}')" style="color:#0e7490;text-decoration:none;font-size:.72rem;font-weight:600;"><i class="fas fa-file-lines"></i> ${nRelatorios} relatório${nRelatorios === 1 ? '' : 's'}</a>`
                 : '';
-            return `<div class="agenda-os ag-est-${cls}${emConf ? ' conflito' : ''}${bloqueada ? ' bloqueada' : ''}" ${draggableAttr} onclick="abrirModal('servico','${s.id}')" style="cursor:pointer;">
+            return `<div class="agenda-os ag-est-${cls}${emConf ? ' conflito' : ''}${bloqueada ? ' bloqueada' : ''}" ${draggableAttr} onclick="_agendaClickOS('${s.id}')" style="cursor:pointer;">
                 <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap;">
                     <input type="time" value="${s.hora || ''}" onclick="event.stopPropagation();" onchange="event.stopPropagation();mudarHoraOS('${s.id}', this.value)" title="Mudar a hora" class="agenda-os-hora-input" ${bloqueada ? 'disabled' : ''}>
                     ${_duracaoBadge}
@@ -11254,6 +11254,19 @@
                 </div>
                 <div class="agenda-os-full-escondido" style="display:none;">${fullHtml}<div class="agenda-os-recolher" onclick="_agendaAlternarMini(this)"><i class="fas fa-chevron-up"></i> Recolher</div></div>
             </div>`;
+        }
+        // Clicar numa OS na Agenda de Obras pergunta sempre o que fazer — "Editar" abre o modal
+        // completo de edição (comportamento de sempre), "Ver resumo" abre a vista de leitura
+        // (abrirVerOS), mais rápida para só espreitar o que já foi feito sem risco de mexer em
+        // nada por engano.
+        async function _agendaClickOS(id) {
+            const escolha = await tgEscolher('O que queres fazer com esta OS?', [
+                { rotulo: '✏️ Editar dados', valor: 'editar' },
+                { rotulo: '👁️ Ver resumo', valor: 'resumo' },
+            ]);
+            if (!escolha) return; // cancelou — não faz nada
+            if (escolha === 'editar') abrirModal('servico', id);
+            else abrirVerOS(id);
         }
         function _agendaAlternarMini(el) {
             const wrap = el.closest('.agenda-os-mini-wrap');
@@ -11416,7 +11429,7 @@
                 const tipo = _tipoOSResumo(s);
                 const coordsChip = _osCoordenadasExatas(s);
                 const climaSpanChip = coordsChip ? ` <span id="clima-${s.id}" class="ag-clima"></span>` : '';
-                return `<div class="agenda-gantt-chip ag-est-${cls}${emConf ? ' conflito' : ''}${bloqueada ? ' bloqueada' : ''}" ${draggableAttr} onclick="abrirModal('servico','${s.id}')" title="${s.hora || '--:--'} ${cliente} — ${tipo}${emConf ? ' — sobreposição' : ''}">
+                return `<div class="agenda-gantt-chip ag-est-${cls}${emConf ? ' conflito' : ''}${bloqueada ? ' bloqueada' : ''}" ${draggableAttr} onclick="_agendaClickOS('${s.id}')" title="${s.hora || '--:--'} ${cliente} — ${tipo}${emConf ? ' — sobreposição' : ''}">
                     ${bloqueada ? '<i class="fas fa-lock"></i> ' : ''}${emConf ? '<i class="fas fa-triangle-exclamation"></i> ' : ''}<span style="font-weight:700;">${s.hora || '--:--'}</span> ${cliente} <span class="gantt-chip-tipo">(${tipo})</span>${climaSpanChip}
                 </div>`;
             };
@@ -17659,7 +17672,7 @@
                 #secao-dashboard-central .hdc-kpi .delta{ font-size:.68rem; font-weight:700; }
                 #secao-dashboard-central .hdc-kpi .delta.up{ color:var(--hg); } #secao-dashboard-central .hdc-kpi .delta.down{ color:var(--hr); }
                 #secao-dashboard-central .hdc-row4{ display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr; gap:12px; margin-bottom:12px; }
-                #secao-dashboard-central .hdc-row3{ display:grid; grid-template-columns:1fr 1.15fr 1fr 1fr; gap:12px; margin-bottom:12px; }
+                #secao-dashboard-central .hdc-row3{ display:grid; grid-template-columns:2fr 1.1fr 1fr 1fr; gap:12px; margin-bottom:12px; }
                 #secao-dashboard-central .hdc-row4b{ display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:12px; }
                 #secao-dashboard-central .hdc-bars{ display:flex; align-items:flex-end; gap:8px; height:110px; }
                 #secao-dashboard-central .hdc-bars .bcol{ flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; justify-content:flex-end; height:100%; }
@@ -17799,23 +17812,41 @@
                         const _assistSemOS = _assistTodasAbertas.filter(a => !a.osGeradaId);
                         const _assistComOS = _assistTodasAbertas.filter(a => a.osGeradaId);
                         const _assistUrgentes = _assistSemOS.filter(a => (a.prioridade || '').toLowerCase() === 'urgente' || (a.prioridade || '').toLowerCase() === 'alta').length;
+                        const _LIMITE_LISTA = 4;
+                        const _linhaAssist = (a) => {
+                            const nomeCli = a.clienteId ? _nomeClienteOS(a.clienteId) : (a.nomeCliente || 'Sem cliente');
+                            return `<div style="font-size:.72rem;color:var(--htxt);padding:3px 0;border-bottom:1px dashed var(--hline);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtmlSimples(a.assunto || nomeCli)}</div>`;
+                        };
+                        const _listaHTML = (lista, vazioTxt) => !lista.length
+                            ? `<div style="font-size:.7rem;color:var(--hsub);padding:4px 0;">${vazioTxt}</div>`
+                            : lista.slice(0, _LIMITE_LISTA).map(_linhaAssist).join('') + (lista.length > _LIMITE_LISTA ? `<div style="font-size:.68rem;color:var(--hb);padding:3px 0;">+ ${lista.length - _LIMITE_LISTA} mais</div>` : '');
                         return `<a href="TOTALGEST_ASSIST.html" target="_blank" rel="noopener" onclick="return _abrirAssist(event)" class="hdc-card" style="display:block;text-decoration:none;color:inherit;cursor:pointer;transition:box-shadow .15s;" onmouseover="this.style.boxShadow='0 4px 14px rgba(0,0,0,.1)'" onmouseout="this.style.boxShadow=''">
                             <h4><i class="fas fa-headset"></i> Assistências</h4>
                             <div style="display:flex;gap:16px;margin:6px 0 2px;">
                                 <div>
                                     <div style="display:flex;align-items:baseline;gap:6px;">
-                                        <span style="font-size:1.8rem;font-weight:800;color:${_assistSemOS.length ? 'var(--hr)' : 'var(--hg)'};">${_assistSemOS.length}</span>
-                                        <span style="font-size:.72rem;color:var(--hsub);">${_assistSemOS.length === 1 ? 'sem OS' : 'sem OS'}</span>
+                                        <span style="font-size:1.8rem;font-weight:800;color:var(--hg);">${_assistSemOS.length}</span>
+                                        <span style="font-size:.72rem;color:var(--hsub);">sem OS</span>
                                     </div>
                                 </div>
                                 <div style="border-left:1px solid var(--hline);padding-left:16px;">
                                     <div style="display:flex;align-items:baseline;gap:6px;">
-                                        <span style="font-size:1.8rem;font-weight:800;color:var(--htxt);">${_assistComOS.length}</span>
+                                        <span style="font-size:1.8rem;font-weight:800;color:var(--hg);">${_assistComOS.length}</span>
                                         <span style="font-size:.72rem;color:var(--hsub);">com OS</span>
                                     </div>
                                 </div>
                             </div>
-                            ${_assistUrgentes ? `<div style="font-size:.76rem;color:var(--hr);"><i class="fas fa-triangle-exclamation"></i> ${_assistUrgentes} sem OS de prioridade alta/urgente</div>` : `<div style="font-size:.76rem;color:var(--hsub);">${_assistTodasAbertas.length ? 'Nenhuma urgente de momento.' : 'Tudo tratado — sem pendências.'}</div>`}
+                            ${_assistUrgentes ? `<div style="font-size:.76rem;color:var(--hr);margin-bottom:4px;"><i class="fas fa-triangle-exclamation"></i> ${_assistUrgentes} sem OS de prioridade alta/urgente</div>` : ''}
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px;">
+                                <div>
+                                    <div style="font-size:.66rem;font-weight:700;color:var(--hsub);text-transform:uppercase;margin-bottom:2px;">Sem OS</div>
+                                    ${_listaHTML(_assistSemOS, 'Nenhuma pendente.')}
+                                </div>
+                                <div>
+                                    <div style="font-size:.66rem;font-weight:700;color:var(--hsub);text-transform:uppercase;margin-bottom:2px;">Com OS</div>
+                                    ${_listaHTML(_assistComOS, 'Nenhuma em curso.')}
+                                </div>
+                            </div>
                             <div style="font-size:.7rem;color:var(--hb);margin-top:8px;">Abrir Assist <i class="fas fa-arrow-right"></i></div>
                         </a>`;
                     })() : ''}
