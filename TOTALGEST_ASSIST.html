@@ -793,7 +793,14 @@
         function clienteBuscaInput(inputId, hiddenId, callback) {
             const input = document.getElementById(inputId);
             if (!input) return;
-            document.getElementById(hiddenId).value = ''; // só fica válido de novo ao escolher da lista
+            // Só limpa a escolha anterior se o texto do campo mudou mesmo desde a última seleção
+            // — sem isto, um simples focus/refocus no campo (sem editar nada) apagava o cliente
+            // já escolhido, e a pessoa só descobria ao tentar gravar, mesmo continuando a ver o
+            // nome certo, já selecionado, no campo.
+            if (input.value !== input.dataset.selecionadoLabel) {
+                document.getElementById(hiddenId).value = '';
+                delete input.dataset.selecionadoLabel;
+            }
             const q = input.value.trim().toLowerCase();
             const ddId = inputId + '_dd';
             let dd = document.getElementById(ddId);
@@ -829,6 +836,7 @@
                 el.onmousedown = (ev) => {
                     ev.preventDefault(); // evita perder o foco/blur antes do click registar
                     input.value = el.dataset.label;
+                    input.dataset.selecionadoLabel = el.dataset.label;
                     document.getElementById(hiddenId).value = mapa[el.dataset.label] || '';
                     dd.style.display = 'none';
                     if (typeof callback === 'function') callback();

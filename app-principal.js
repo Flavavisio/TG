@@ -2033,7 +2033,14 @@
         function clienteBuscaInput(inputId, hiddenId, callback) {
             const input = document.getElementById(inputId);
             if (!input) return;
-            document.getElementById(hiddenId).value = ''; // só fica válido de novo ao escolher da lista
+            // Só limpa a escolha anterior se o texto do campo mudou mesmo desde a última seleção
+            // — sem isto, um simples focus/refocus no campo (sem editar nada) apagava o cliente
+            // já escolhido, e a pessoa só descobria ao tentar gravar ("selecione um cliente"),
+            // mesmo continuando a ver o nome certo, já selecionado, no campo.
+            if (input.value !== input.dataset.selecionadoLabel) {
+                document.getElementById(hiddenId).value = '';
+                delete input.dataset.selecionadoLabel;
+            }
             const q = input.value.trim().toLowerCase();
             const ddId = inputId + '_dd';
             let dd = document.getElementById(ddId);
@@ -2063,6 +2070,7 @@
                 el.onmousedown = (ev) => {
                     ev.preventDefault(); // evita perder o foco/blur antes do click registar
                     input.value = el.dataset.label;
+                    input.dataset.selecionadoLabel = el.dataset.label;
                     document.getElementById(hiddenId).value = mapa[el.dataset.label] || '';
                     dd.style.display = 'none';
                     if (typeof callback === 'function') callback();
@@ -9175,8 +9183,15 @@
 
         function adicionarEquipContrato(localIdOverride) {
             const adminId = usuarioLogado?.adminId || usuarioLogado?.id;
+            // "Local" tem sempre a opção "Sede" (usa a morada do próprio cliente, sem um Local
+            // separado) — o valor dela é "", por ser assim que já distinguimos "Sede" de um
+            // Local específico no resto do contrato. Isso não significa "nada escolhido": o que
+            // realmente falta, para o equipamento não ficar órfão, é o CLIENTE — a Sede já dá
+            // essa morada. Antes isto verificava o Local em vez do Cliente, e bloqueava sempre
+            // que alguém escolhia Sede (a opção mais comum), mesmo com tudo bem preenchido.
+            const clienteId = document.getElementById('ct_cliente').value;
+            if (!clienteId) { alert('Escolhe primeiro o Cliente do contrato — sem cliente, o equipamento fica sem Cliente/Local associados (a ficha do QR code não os consegue mostrar).'); return; }
             const localId = localIdOverride || document.getElementById('ct_local').value;
-            if (!localId) { alert('Escolhe primeiro o Local do contrato — sem local, o equipamento fica sem Cliente/Local associados (a ficha do QR code não os consegue mostrar).'); return; }
             const val = document.getElementById('ct_equip_add').value;
             let equipId;
             if (val === '__novo__') {
