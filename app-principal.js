@@ -9147,7 +9147,16 @@
             }
             const form = document.getElementById('modalGenericoForm');
             form.onsubmit = (ev) => ev.preventDefault();
-            document.getElementById('modalGenericoAcoes').innerHTML = '<button type="button" class="btn" style="background:#e9edf2;" onclick="_fecharModalGenerico()">Fechar</button>';
+            // IMPORTANTE: não substituir modalGenericoAcoes por inteiro — isso apaga o botão
+            // "Guardar" do DOM, e como este modal é partilhado por muitos ecrãs (ex.: Plano de
+            // Materiais), o próximo a usá-lo ficava sem conseguir repor o botão (só encontrava
+            // "Fechar", porque o Guardar deixara de existir). Em vez disso, escondemos só o botão
+            // Guardar e trocamos o texto do Cancelar — o botão continua no DOM, pronto a ser
+            // reposto por _fecharModalGenerico() como já acontece nos outros ecrãs só de leitura.
+            const _btnCancelarEquip = document.querySelector('#modalGenericoOverlay .modal-actions button[type="button"]');
+            const _btnGuardarEquip = document.querySelector('#modalGenericoOverlay .modal-actions .btn-success');
+            if (_btnCancelarEquip) _btnCancelarEquip.textContent = 'Fechar';
+            if (_btnGuardarEquip) _btnGuardarEquip.style.display = 'none';
             document.getElementById('modalGenericoOverlay').classList.add('open');
         }
         // Abre uma folha simples, pronta a imprimir, com o QR do equipamento — cola-se
@@ -28723,6 +28732,8 @@ window._relPrefill = function(msg){
             document.getElementById('modalGenericoOverlay').classList.remove('open', 'modal-veros');
             const _acoes = document.getElementById('modalGenericoAcoes');
             if (_acoes) _acoes.style.display = ''; // repõe o rodapé Cancelar/Guardar, para não ficar escondido nos outros usos deste modal
+            const _btnCancelar = document.querySelector('#modalGenericoOverlay .modal-actions button[type="button"]');
+            if (_btnCancelar) _btnCancelar.textContent = 'Cancelar'; // alguns ecrãs só de leitura trocam isto para "Fechar"
             const _bg = document.querySelector('#modalGenericoOverlay .modal-actions .btn-success');
             if (_bg) { _bg.style.display = ''; _bg.innerHTML = '<i class="fas fa-save"></i> Guardar'; }
             const _modalEl = document.querySelector('#modalGenericoOverlay .modal');
