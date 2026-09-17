@@ -2411,22 +2411,40 @@
             return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
         }
         function _verificarPontoEsquecido() {
-            if (!dados.ponto || !dados.ponto.length) return false;
             const agora = Date.now();
-            let alterouAlgum = false, afetouAtual = false;
             const LIMITE_HORAS_ESQUECIMENTO = 12; // fecho automático 12h após a entrada, por pedido
-            dados.ponto.forEach(p => {
-                if (p.entrada && !p.saida && !p.saidaAutomatica) {
-                    const dt = new Date((p.data || getDataHoje()) + 'T' + p.entrada + ':00');
-                    if (!isNaN(dt.getTime()) && (agora - dt.getTime()) >= LIMITE_HORAS_ESQUECIMENTO * 60 * 60 * 1000) {
-                        const dtSaida = new Date(dt.getTime() + LIMITE_HORAS_ESQUECIMENTO * 60 * 60 * 1000);
-                        p.saida = dtSaida.toTimeString().slice(0, 5);
-                        p.saidaAutomatica = true;
-                        alterouAlgum = true;
-                        if (usuarioLogado && p.funcionarioId === usuarioLogado.id) afetouAtual = true;
+            let alterouAlgum = false, afetouAtual = false;
+            if (dados.ponto && dados.ponto.length) {
+                dados.ponto.forEach(p => {
+                    if (p.entrada && !p.saida && !p.saidaAutomatica) {
+                        const dt = new Date((p.data || getDataHoje()) + 'T' + p.entrada + ':00');
+                        if (!isNaN(dt.getTime()) && (agora - dt.getTime()) >= LIMITE_HORAS_ESQUECIMENTO * 60 * 60 * 1000) {
+                            const dtSaida = new Date(dt.getTime() + LIMITE_HORAS_ESQUECIMENTO * 60 * 60 * 1000);
+                            p.saida = dtSaida.toTimeString().slice(0, 5);
+                            p.saidaAutomatica = true;
+                            alterouAlgum = true;
+                            if (usuarioLogado && p.funcionarioId === usuarioLogado.id) afetouAtual = true;
+                        }
                     }
-                }
-            });
+                });
+            }
+            // Mesma regra para as entradas de "Obras de Longa Duração" — antes só o ponto geral
+            // fechava sozinho ao fim de 12h; esta coleção ficava aberta para sempre, e a pessoa
+            // ficava "presa" nessa obra sem conseguir entrar noutra, mesmo já lá não estando.
+            if (dados.obraPontoLonga && dados.obraPontoLonga.length) {
+                dados.obraPontoLonga.forEach(p => {
+                    if (p.entrada && !p.saida && !p.saidaAutomatica) {
+                        const dt = new Date((p.data || getDataHoje()) + 'T' + p.entrada + ':00');
+                        if (!isNaN(dt.getTime()) && (agora - dt.getTime()) >= LIMITE_HORAS_ESQUECIMENTO * 60 * 60 * 1000) {
+                            const dtSaida = new Date(dt.getTime() + LIMITE_HORAS_ESQUECIMENTO * 60 * 60 * 1000);
+                            p.saida = dtSaida.toTimeString().slice(0, 5);
+                            p.saidaAutomatica = true;
+                            alterouAlgum = true;
+                            if (usuarioLogado && p.funcionarioId === usuarioLogado.id) afetouAtual = true;
+                        }
+                    }
+                });
+            }
             if (alterouAlgum) {
                 guardarDados(dados);
                 if (afetouAtual) alert(`⚠️ Esquecimento de picagem de saída — já passaram ${LIMITE_HORAS_ESQUECIMENTO} horas desde a tua entrada, por isso o sistema registou a saída automaticamente. Verifica o teu registo de ponto.`);
@@ -13564,10 +13582,15 @@
         }
         function _ehPerfilMobile() {
             if (!usuarioLogado) return false;
-            // Layout tipo app (menu inferior, "O Meu Dia", botão Voltar nas secções) só faz
-            // sentido em ecrã pequeno — para todos os perfis, incluindo funcionário/encarregado/
-            // vendedor. No PC, mesmo estes veem o painel de secretária completo, como o admin.
-            if (['funcionario', 'encarregado', 'vendedor', 'admin', 'subadmin', 'vigilante', 'supervisor_vigilantes'].includes(usuarioLogado.role)) return _dispositivoEhMobile();
+            // Admin/sub-admin: o layout tipo app só faz sentido em ecrã pequeno — no PC continuam
+            // a ver o painel de secretária completo.
+            if (usuarioLogado.role === 'admin' || usuarioLogado.role === 'subadmin') return _dispositivoEhMobile();
+            // Funcionário, encarregado, vendedor, vigilante — usam sempre o layout tipo app
+            // ("O Meu Dia", menu inferior/lateral simples), no PC ou no telemóvel. Não faz
+            // sentido dar-lhes o painel de secretária completo num ecrã grande e o layout
+            // simples num pequeno — a app deve parecer e funcionar da mesma forma nos dois,
+            // só ajustando o essencial (largura, colunas) ao espaço disponível.
+            if (['funcionario', 'encarregado', 'vendedor', 'vigilante', 'supervisor_vigilantes'].includes(usuarioLogado.role)) return true;
             return false;
         }
         function _montarMenuInferiorMobile() {
@@ -13756,7 +13779,12 @@
                 .sort((a, b) => (a.hora || '99:99').localeCompare(b.hora || '99:99')); // sem hora fica sempre no fim
 
             // Obras ativas — mesma regra: admin/sub-admin têm acesso a todas, mesmo sem estarem alocados
-            const minhasObras = (dados.obras || []).filter(o => o.adminId === adminId && o.estado !== 'concluida'
+            // Mesmo já concluída (marcada por outra pessoa entretanto), a obra continua a
+            // aparecer para quem ainda tenha uma entrada de ponto aberta lá — senão fica sem
+            // sítio nenhum para dar saída, preso ("Tens de dar saída por lá primeiro" sem
+            // conseguir sequer chegar ao botão).
+            const _obraTemPontoAbertoMeu = obraId => (dados.obraPontoLonga || []).some(p => p.obraId === obraId && p.funcionarioId === meuId && p.data === hoje && p.entrada && !p.saida);
+            const minhasObras = (dados.obras || []).filter(o => o.adminId === adminId && (o.estado !== 'concluida' || _obraTemPontoAbertoMeu(o.id))
                 && (_vejoTudo || (((o.responsaveisIds && o.responsaveisIds.length) ? o.responsaveisIds : [o.responsavelId].filter(Boolean)).includes(meuId))));
             const _botaoMapa = (urlInfo, servicoId) => urlInfo ? `<a href="${urlInfo.url}" target="_blank" rel="noopener" onclick="event.stopPropagation();${servicoId ? `_registarKmViagemOS('${servicoId}');` : ''}" class="tgm-btn-mapa" title="${urlInfo.exato ? 'Navegar (Google Maps)' : 'Navegar por morada (Google Maps)'}"><i class="fas fa-diamond-turn-right"></i></a>${urlInfo?.wazeUrl ? `<a href="${urlInfo.wazeUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation();${servicoId ? `_registarKmViagemOS('${servicoId}');` : ''}" class="tgm-btn-mapa" title="Navegar no Waze"><i class="fas fa-w" style="font-family:sans-serif;font-style:normal;font-weight:800;">W</i></a>` : ''}` : '';
 
