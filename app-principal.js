@@ -665,6 +665,24 @@
                 return { tenantId: perfil.admin_id, superAdmin: false };
             } catch (e) { return { tenantId: null, superAdmin: false }; }
         }
+        // Sem isto, o Supabase corta sempre em 1000 linhas por pedido (limite do PostgREST) —
+        // para a maior parte das empresas isso nunca se nota, mas em contas com tabelas grandes
+        // (ex.: mais de 1000 clientes) fazia com que só os primeiros 1000 chegassem à app; os
+        // restantes nunca apareciam em lado nenhum, por mais bem feita que fosse a pesquisa.
+        // Usada tanto no carregamento inicial como ao recarregar só uma tabela específica.
+        async function _buscarPaginadoGenerico(query, limitePorPagina) {
+            const LIMITE = limitePorPagina || 1000;
+            let todos = [];
+            let offset = 0;
+            while (true) {
+                const { data, error } = await query.range(offset, offset + LIMITE - 1);
+                if (error) return { data: todos, error };
+                todos = todos.concat(data || []);
+                if (!data || data.length < LIMITE) break;
+                offset += LIMITE;
+            }
+            return { data: todos, error: null };
+        }
         async function carregarDados(tenantIdParam, superAdminParam, clienteIdParam) {
             await _syncChain; // espera que qualquer gravação pendente termine antes de recarregar,
                                // para nunca apagar alterações locais ainda não sincronizadas
@@ -737,7 +755,7 @@
                         else if (t === 'referencias') q = q.eq('admin_referenciador_id', tenantId); // esta tabela não tem coluna admin_id
                         else q = q.eq('admin_id', tenantId);
                     }
-                    return q;
+                    return _buscarPaginadoGenerico(q);
                 }));
             } catch (e) {
                 // falhou a ligação a meio (ex: ficou offline agora) — usa a cópia local se existir
@@ -10801,7 +10819,7 @@
             } else {
                 q = q.eq('admin_id', aid);
             }
-            const { data, error } = await q;
+            const { data, error } = await _buscarPaginadoGenerico(q);
             if (error) { console.warn('carregarTabelaEspecifica (' + col + '):', error); return; }
             dados[col] = (data || []).map(M[col].from);
             const m = new Map();
