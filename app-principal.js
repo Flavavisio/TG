@@ -5050,12 +5050,12 @@
                 lista = [];
             }
             const totalGeral = lista.length;
-            lista = _aplicarFiltroOrdenacao('clientes', lista, ['nome', 'numeroCliente', 'telefone', 'endereco', 'email'], {
+            lista = _aplicarFiltroOrdenacao('clientes', lista, ['nome', 'numeroCliente', 'telefone', 'endereco', 'email', 'nif'], {
                 nome: (a, b) => (a.nome || '').localeCompare(b.nome || ''),
                 numeroCliente: (a, b) => (a.numeroCliente || '').localeCompare(b.numeroCliente || '', undefined, { numeric: true })
             });
             const tb = document.getElementById('clientesToolbar');
-            if (tb) tb.innerHTML = totalGeral ? _toolbarHtml('clientes', 'Pesquisar por nome, telefone, email…', lista.length, totalGeral) : '';
+            if (tb) tb.innerHTML = totalGeral ? _toolbarHtml('clientes', 'Pesquisar por nome, telefone, email, NIF…', lista.length, totalGeral) : '';
             if (lista.length === 0) {
                 tbody.innerHTML = '';
                 empty.style.display = totalGeral ? 'none' : 'block';
@@ -25073,7 +25073,10 @@ async function salvarAdmin(e) {
                         ? (dados.clientes || []).find(c => c.adminId === obj.adminId && c.nif === obj.nif && c.id !== idEditando)
                         : null;
                     if (_outroComMesmoNif) {
-                        alert(`Já existe um cliente com este NIF: "${_outroComMesmoNif.nome}". Cada cliente precisa de um NIF diferente — é o que identifica o login no Portal.`);
+                        if (confirm(`Já existe um cliente com este NIF: "${_outroComMesmoNif.nome}". Cada cliente precisa de um NIF diferente — é o que identifica o login no Portal.\n\nQueres abrir esse cliente agora, para veres/editares?`)) {
+                            fecharModal();
+                            setTimeout(() => abrirModal('cliente', _outroComMesmoNif.id), 100);
+                        }
                         return;
                     }
                 }
