@@ -253,8 +253,8 @@
         const M = {
             administradores: {
                 tabela: 'administradores',
-                from: r => ({ id: r.id, nome: r.nome, email: r.email, empresa: r.empresa || '', nif: r.nif || null, logo: r.logo || null, licencaFeedback: r.licenca_feedback || null, contratosPlano: r.contratos_plano || null, contratosExpiracao: isoToMs(r.contratos_expiracao), frotaPlano: r.frota_plano || null, frotaExpiracao: isoToMs(r.frota_expiracao), armazemPlano: r.armazem_plano || null, armazemExpiracao: isoToMs(r.armazem_expiracao), portalPlano: r.portal_plano || null, portalExpiracao: isoToMs(r.portal_expiracao), crmPlano: r.crm_plano || null, crmExpiracao: isoToMs(r.crm_expiracao), assistPlano: r.assist_plano || null, assistExpiracao: isoToMs(r.assist_expiracao), erpPlano: r.erp_plano || null, erpExpiracao: isoToMs(r.erp_expiracao), notificacoesPlano: r.notificacoes_plano || null, notificacoesExpiracao: isoToMs(r.notificacoes_expiracao), dadosBancarios: r.dados_bancarios || null, integracaoFaturacao: r.integracao_faturacao || null, ativo: r.ativo, mudarSenha: r.mudar_senha === true, ultimoLogin: isoToMs(r.ultimo_login), ultimaAtividade: isoToMs(r.ultima_atividade), mostrarEstadoOnline: r.mostrar_estado_online === true, layout: r.layout || null, tiposEquipamento: r.tipos_equipamento || [], logo: r.logo, notificarAprovacao: r.notificar_aprovacao === true, numeroRegistoPrevio: r.numero_registo_previo || null, dataRegistoPrevio: r.data_registo_previo || null, numeroAnepc: r.numero_anepc || null, dataAnepc: r.data_anepc || null, anepcValidade: r.anepc_validade || null, registoPrevioValidade: r.registo_previo_validade || null, corCorporativa: r.cor_corporativa || null, favoritos: Array.isArray(r.favoritos) ? r.favoritos : [], ivaPeriodicidade: r.iva_periodicidade || 'mensal', irsPeriodicidade: r.irs_periodicidade || 'semestral', painelTvAtivo: r.painel_tv_ativo === true, descricoesRapidasOS: Array.isArray(r.descricoes_rapidas_os) ? r.descricoes_rapidas_os : ['Instalação', 'Manutenção', 'Visita', 'Formação'], horaEntradaHabitual: r.hora_entrada_habitual || '09:00', toleranciaAtrasoMin: r.tolerancia_atraso_min != null ? r.tolerancia_atraso_min : 15, certificadoraLogo: r.certificadora_logo || null, ehDistribuidor: r.eh_distribuidor === true, distribuidorDesconto: r.distribuidor_desconto != null ? Number(r.distribuidor_desconto) : null, distribuidorId: r.distribuidor_id || null, precoDistribuidorCobrado: r.preco_distribuidor_cobrado != null ? Number(r.preco_distribuidor_cobrado) : null, distribuidorPagamentoPrazo: isoToMs(r.distribuidor_pagamento_prazo), precoFundador: r.preco_fundador === true, obrasAvancadoAtivo: r.obras_avancado_ativo === true, expressAtivo: r.express_ativo === true, obrasChecklistItens: Array.isArray(r.obras_checklist_itens) ? r.obras_checklist_itens : [], checklistEntradaItens: Array.isArray(r.checklist_entrada_itens) ? r.checklist_entrada_itens : [], osModoWizard: r.os_modo_wizard === true, contratoModoWizard: r.contrato_modo_wizard === true, kmPontoGeralAtivo: r.km_ponto_geral_ativo === true, kmPorOsAtivo: r.km_por_os_ativo === true, segurancaAtivo: r.seguranca_ativo === true, segurosAtivo: r.seguros_ativo === true, shstAtivo: r.shst_ativo === true, areasNegocio: Array.isArray(r.areas_negocio) ? r.areas_negocio : null, onboardingComoTrabalha: Array.isArray(r.onboarding_como_trabalha) ? r.onboarding_como_trabalha : [], modulosAtivos: Array.isArray(r.modulos_ativos) ? r.modulos_ativos : null, onboardingAtividadeConcluido: r.onboarding_atividade_concluido === true, lembretePagamentoEm: isoToMs(r.lembrete_pagamento_em), concelho: r.concelho || null, contratosDemoDias: r.contratos_demo_dias || null, frotaDemoDias: r.frota_demo_dias || null, armazemDemoDias: r.armazem_demo_dias || null, crmDemoDias: r.crm_demo_dias || null, erpDemoDias: r.erp_demo_dias || null, rondasPlano: r.rondas_plano || null, rondasExpiracao: isoToMs(r.rondas_expiracao), rondasDemoDias: r.rondas_demo_dias || null, usoSecoes: r.uso_secoes ? (typeof r.uso_secoes === 'string' ? JSON.parse(r.uso_secoes) : r.uso_secoes) : {}, usoSecoesUltima: isoToMs(r.uso_secoes_ultima), ultimaSincronizacaoMoloniArtigos: isoToMs(r.ultima_sincronizacao_moloni_artigos), licencaFaseAvisada: r.licenca_fase_avisada || null, dataCriacao: isoToMs(r.data_criacao) }),
-                to:   o => ({ id: o.id, nome: o.nome, email: o.email, senha: o.senha, empresa: o.empresa || null, nif: o.nif || null, logo: o.logo || null, licenca_feedback: o.licencaFeedback || null, contratos_plano: o.contratosPlano || null, contratos_expiracao: msToISO(o.contratosExpiracao), frota_plano: o.frotaPlano || null, frota_expiracao: msToISO(o.frotaExpiracao), armazem_plano: o.armazemPlano || null, armazem_expiracao: msToISO(o.armazemExpiracao), portal_plano: o.portalPlano || null, portal_expiracao: msToISO(o.portalExpiracao), crm_plano: o.crmPlano || null, crm_expiracao: msToISO(o.crmExpiracao), assist_plano: o.assistPlano || null, assist_expiracao: msToISO(o.assistExpiracao), erp_plano: o.erpPlano || null, erp_expiracao: msToISO(o.erpExpiracao), notificacoes_plano: o.notificacoesPlano || null, notificacoes_expiracao: msToISO(o.notificacoesExpiracao), dados_bancarios: o.dadosBancarios || null, integracao_faturacao: o.integracaoFaturacao || null, ativo: o.ativo !== false, mudar_senha: o.mudarSenha === true, ultimo_login: o.ultimoLogin ? msToISO(o.ultimoLogin) : null, ultima_atividade: o.ultimaAtividade ? msToISO(o.ultimaAtividade) : null, mostrar_estado_online: o.mostrarEstadoOnline === true, layout: o.layout || null, tipos_equipamento: o.tiposEquipamento || [], logo: o.logo || null, notificar_aprovacao: o.notificarAprovacao === true, numero_registo_previo: o.numeroRegistoPrevio || null, data_registo_previo: o.dataRegistoPrevio || null, numero_anepc: o.numeroAnepc || null, data_anepc: o.dataAnepc || null, anepc_validade: o.anepcValidade || null, registo_previo_validade: o.registoPrevioValidade || null, cor_corporativa: o.corCorporativa || null, favoritos: o.favoritos || [], iva_periodicidade: o.ivaPeriodicidade || 'mensal', irs_periodicidade: o.irsPeriodicidade || 'semestral', painel_tv_ativo: o.painelTvAtivo === true, descricoes_rapidas_os: o.descricoesRapidasOS || null, hora_entrada_habitual: o.horaEntradaHabitual || '09:00', tolerancia_atraso_min: o.toleranciaAtrasoMin != null ? o.toleranciaAtrasoMin : 15, certificadora_logo: o.certificadoraLogo || null, eh_distribuidor: o.ehDistribuidor === true, distribuidor_desconto: o.distribuidorDesconto ?? null, distribuidor_id: o.distribuidorId || null, preco_distribuidor_cobrado: o.precoDistribuidorCobrado ?? null, distribuidor_pagamento_prazo: o.distribuidorPagamentoPrazo ? msToISO(o.distribuidorPagamentoPrazo) : null, preco_fundador: o.precoFundador === true, obras_avancado_ativo: o.obrasAvancadoAtivo === true, express_ativo: o.expressAtivo === true, obras_checklist_itens: o.obrasChecklistItens || [], checklist_entrada_itens: o.checklistEntradaItens || [], os_modo_wizard: o.osModoWizard === true, contrato_modo_wizard: o.contratoModoWizard === true, km_ponto_geral_ativo: o.kmPontoGeralAtivo === true, km_por_os_ativo: o.kmPorOsAtivo === true, seguranca_ativo: o.segurancaAtivo === true, seguros_ativo: o.segurosAtivo === true, shst_ativo: o.shstAtivo === true, areas_negocio: o.areasNegocio || null, onboarding_como_trabalha: o.onboardingComoTrabalha || [], modulos_ativos: o.modulosAtivos || null, onboarding_atividade_concluido: o.onboardingAtividadeConcluido === true, lembrete_pagamento_em: o.lembretePagamentoEm ? msToISO(o.lembretePagamentoEm) : null, concelho: o.concelho || null, contratos_demo_dias: o.contratosDemoDias || null, frota_demo_dias: o.frotaDemoDias || null, armazem_demo_dias: o.armazemDemoDias || null, crm_demo_dias: o.crmDemoDias || null, erp_demo_dias: o.erpDemoDias || null, rondas_plano: o.rondasPlano || null, rondas_expiracao: msToISO(o.rondasExpiracao), rondas_demo_dias: o.rondasDemoDias || null, uso_secoes: JSON.stringify(o.usoSecoes || {}), uso_secoes_ultima: o.usoSecoesUltima ? msToISO(o.usoSecoesUltima) : null, ultima_sincronizacao_moloni_artigos: o.ultimaSincronizacaoMoloniArtigos ? msToISO(o.ultimaSincronizacaoMoloniArtigos) : null, licenca_fase_avisada: o.licencaFaseAvisada || null, data_criacao: msToISO(o.dataCriacao) })
+                from: r => ({ id: r.id, nome: r.nome, email: r.email, empresa: r.empresa || '', nif: r.nif || null, logo: r.logo || null, licencaFeedback: r.licenca_feedback || null, contratosPlano: r.contratos_plano || null, contratosExpiracao: isoToMs(r.contratos_expiracao), frotaPlano: r.frota_plano || null, frotaExpiracao: isoToMs(r.frota_expiracao), armazemPlano: r.armazem_plano || null, armazemExpiracao: isoToMs(r.armazem_expiracao), portalPlano: r.portal_plano || null, portalExpiracao: isoToMs(r.portal_expiracao), crmPlano: r.crm_plano || null, crmExpiracao: isoToMs(r.crm_expiracao), assistPlano: r.assist_plano || null, assistExpiracao: isoToMs(r.assist_expiracao), erpPlano: r.erp_plano || null, erpExpiracao: isoToMs(r.erp_expiracao), notificacoesPlano: r.notificacoes_plano || null, notificacoesExpiracao: isoToMs(r.notificacoes_expiracao), dadosBancarios: r.dados_bancarios || null, integracaoFaturacao: r.integracao_faturacao || null, ativo: r.ativo, mudarSenha: r.mudar_senha === true, ultimoLogin: isoToMs(r.ultimo_login), ultimaAtividade: isoToMs(r.ultima_atividade), mostrarEstadoOnline: r.mostrar_estado_online === true, layout: r.layout || null, tiposEquipamento: r.tipos_equipamento || [], logo: r.logo, notificarAprovacao: r.notificar_aprovacao === true, numeroRegistoPrevio: r.numero_registo_previo || null, dataRegistoPrevio: r.data_registo_previo || null, numeroAnepc: r.numero_anepc || null, dataAnepc: r.data_anepc || null, anepcValidade: r.anepc_validade || null, registoPrevioValidade: r.registo_previo_validade || null, corCorporativa: r.cor_corporativa || null, favoritos: Array.isArray(r.favoritos) ? r.favoritos : [], ivaPeriodicidade: r.iva_periodicidade || 'mensal', irsPeriodicidade: r.irs_periodicidade || 'semestral', painelTvAtivo: r.painel_tv_ativo === true, descricoesRapidasOS: Array.isArray(r.descricoes_rapidas_os) ? r.descricoes_rapidas_os : ['Instalação', 'Manutenção', 'Visita', 'Formação'], horaEntradaHabitual: r.hora_entrada_habitual || '09:00', toleranciaAtrasoMin: r.tolerancia_atraso_min != null ? r.tolerancia_atraso_min : 15, certificadoraLogo: r.certificadora_logo || null, ehDistribuidor: r.eh_distribuidor === true, distribuidorDesconto: r.distribuidor_desconto != null ? Number(r.distribuidor_desconto) : null, distribuidorId: r.distribuidor_id || null, precoDistribuidorCobrado: r.preco_distribuidor_cobrado != null ? Number(r.preco_distribuidor_cobrado) : null, distribuidorPagamentoPrazo: isoToMs(r.distribuidor_pagamento_prazo), precoFundador: r.preco_fundador === true, obrasAvancadoAtivo: r.obras_avancado_ativo === true, expressAtivo: r.express_ativo === true, obrasChecklistItens: Array.isArray(r.obras_checklist_itens) ? r.obras_checklist_itens : [], checklistEntradaItens: Array.isArray(r.checklist_entrada_itens) ? r.checklist_entrada_itens : [], osModoWizard: r.os_modo_wizard === true, contratoModoWizard: r.contrato_modo_wizard === true, kmPontoGeralAtivo: r.km_ponto_geral_ativo === true, kmPorOsAtivo: r.km_por_os_ativo === true, segurancaAtivo: r.seguranca_ativo === true, segurosAtivo: r.seguros_ativo === true, shstAtivo: r.shst_ativo === true, materiaisEntregaAtivo: r.materiais_entrega_ativo === true, areasNegocio: Array.isArray(r.areas_negocio) ? r.areas_negocio : null, onboardingComoTrabalha: Array.isArray(r.onboarding_como_trabalha) ? r.onboarding_como_trabalha : [], modulosAtivos: Array.isArray(r.modulos_ativos) ? r.modulos_ativos : null, onboardingAtividadeConcluido: r.onboarding_atividade_concluido === true, lembretePagamentoEm: isoToMs(r.lembrete_pagamento_em), concelho: r.concelho || null, contratosDemoDias: r.contratos_demo_dias || null, frotaDemoDias: r.frota_demo_dias || null, armazemDemoDias: r.armazem_demo_dias || null, crmDemoDias: r.crm_demo_dias || null, erpDemoDias: r.erp_demo_dias || null, rondasPlano: r.rondas_plano || null, rondasExpiracao: isoToMs(r.rondas_expiracao), rondasDemoDias: r.rondas_demo_dias || null, usoSecoes: r.uso_secoes ? (typeof r.uso_secoes === 'string' ? JSON.parse(r.uso_secoes) : r.uso_secoes) : {}, usoSecoesUltima: isoToMs(r.uso_secoes_ultima), ultimaSincronizacaoMoloniArtigos: isoToMs(r.ultima_sincronizacao_moloni_artigos), licencaFaseAvisada: r.licenca_fase_avisada || null, dataCriacao: isoToMs(r.data_criacao) }),
+                to:   o => ({ id: o.id, nome: o.nome, email: o.email, senha: o.senha, empresa: o.empresa || null, nif: o.nif || null, logo: o.logo || null, licenca_feedback: o.licencaFeedback || null, contratos_plano: o.contratosPlano || null, contratos_expiracao: msToISO(o.contratosExpiracao), frota_plano: o.frotaPlano || null, frota_expiracao: msToISO(o.frotaExpiracao), armazem_plano: o.armazemPlano || null, armazem_expiracao: msToISO(o.armazemExpiracao), portal_plano: o.portalPlano || null, portal_expiracao: msToISO(o.portalExpiracao), crm_plano: o.crmPlano || null, crm_expiracao: msToISO(o.crmExpiracao), assist_plano: o.assistPlano || null, assist_expiracao: msToISO(o.assistExpiracao), erp_plano: o.erpPlano || null, erp_expiracao: msToISO(o.erpExpiracao), notificacoes_plano: o.notificacoesPlano || null, notificacoes_expiracao: msToISO(o.notificacoesExpiracao), dados_bancarios: o.dadosBancarios || null, integracao_faturacao: o.integracaoFaturacao || null, ativo: o.ativo !== false, mudar_senha: o.mudarSenha === true, ultimo_login: o.ultimoLogin ? msToISO(o.ultimoLogin) : null, ultima_atividade: o.ultimaAtividade ? msToISO(o.ultimaAtividade) : null, mostrar_estado_online: o.mostrarEstadoOnline === true, layout: o.layout || null, tipos_equipamento: o.tiposEquipamento || [], logo: o.logo || null, notificar_aprovacao: o.notificarAprovacao === true, numero_registo_previo: o.numeroRegistoPrevio || null, data_registo_previo: o.dataRegistoPrevio || null, numero_anepc: o.numeroAnepc || null, data_anepc: o.dataAnepc || null, anepc_validade: o.anepcValidade || null, registo_previo_validade: o.registoPrevioValidade || null, cor_corporativa: o.corCorporativa || null, favoritos: o.favoritos || [], iva_periodicidade: o.ivaPeriodicidade || 'mensal', irs_periodicidade: o.irsPeriodicidade || 'semestral', painel_tv_ativo: o.painelTvAtivo === true, descricoes_rapidas_os: o.descricoesRapidasOS || null, hora_entrada_habitual: o.horaEntradaHabitual || '09:00', tolerancia_atraso_min: o.toleranciaAtrasoMin != null ? o.toleranciaAtrasoMin : 15, certificadora_logo: o.certificadoraLogo || null, eh_distribuidor: o.ehDistribuidor === true, distribuidor_desconto: o.distribuidorDesconto ?? null, distribuidor_id: o.distribuidorId || null, preco_distribuidor_cobrado: o.precoDistribuidorCobrado ?? null, distribuidor_pagamento_prazo: o.distribuidorPagamentoPrazo ? msToISO(o.distribuidorPagamentoPrazo) : null, preco_fundador: o.precoFundador === true, obras_avancado_ativo: o.obrasAvancadoAtivo === true, express_ativo: o.expressAtivo === true, obras_checklist_itens: o.obrasChecklistItens || [], checklist_entrada_itens: o.checklistEntradaItens || [], os_modo_wizard: o.osModoWizard === true, contrato_modo_wizard: o.contratoModoWizard === true, km_ponto_geral_ativo: o.kmPontoGeralAtivo === true, km_por_os_ativo: o.kmPorOsAtivo === true, seguranca_ativo: o.segurancaAtivo === true, seguros_ativo: o.segurosAtivo === true, shst_ativo: o.shstAtivo === true, materiais_entrega_ativo: o.materiaisEntregaAtivo === true, areas_negocio: o.areasNegocio || null, onboarding_como_trabalha: o.onboardingComoTrabalha || [], modulos_ativos: o.modulosAtivos || null, onboarding_atividade_concluido: o.onboardingAtividadeConcluido === true, lembrete_pagamento_em: o.lembretePagamentoEm ? msToISO(o.lembretePagamentoEm) : null, concelho: o.concelho || null, contratos_demo_dias: o.contratosDemoDias || null, frota_demo_dias: o.frotaDemoDias || null, armazem_demo_dias: o.armazemDemoDias || null, crm_demo_dias: o.crmDemoDias || null, erp_demo_dias: o.erpDemoDias || null, rondas_plano: o.rondasPlano || null, rondas_expiracao: msToISO(o.rondasExpiracao), rondas_demo_dias: o.rondasDemoDias || null, uso_secoes: JSON.stringify(o.usoSecoes || {}), uso_secoes_ultima: o.usoSecoesUltima ? msToISO(o.usoSecoesUltima) : null, ultima_sincronizacao_moloni_artigos: o.ultimaSincronizacaoMoloniArtigos ? msToISO(o.ultimaSincronizacaoMoloniArtigos) : null, licenca_fase_avisada: o.licencaFaseAvisada || null, data_criacao: msToISO(o.dataCriacao) })
             },
             funcionarios: {
                 tabela: 'funcionarios',
@@ -446,6 +446,17 @@
                 from: r => ({ id: r.id, adminId: r.admin_id, devolucaoId: r.devolucao_id, artigoId: r.artigo_id, quantidadeDeclarada: Number(r.quantidade_declarada) || 0, quantidadeConfirmada: r.quantidade_confirmada != null ? Number(r.quantidade_confirmada) : null, series: r.series ? (typeof r.series === 'string' ? JSON.parse(r.series) : r.series) : [] }),
                 to:   o => ({ id: o.id, admin_id: o.adminId, devolucao_id: o.devolucaoId, artigo_id: o.artigoId, quantidade_declarada: Number(o.quantidadeDeclarada) || 0, quantidade_confirmada: o.quantidadeConfirmada != null ? Number(o.quantidadeConfirmada) : null, series: JSON.stringify(o.series || []) })
             },
+            // Documentos de entrega/devolução de material aos funcionários (fardas, ferramentas,
+            // EPI's, etc.) — "Opcionais Extra" → Materiais Entregues. Um registo por documento
+            // (tipo='entrega' ou 'devolucao'). Na devolução, entregaOrigemId aponta para o
+            // documento de entrega em que se baseia, e cada item de "itens" ganha um campo
+            // "recebido" (bool) preenchido nesse momento — a lista de itens em si é copiada da
+            // entrega original, não voltada a escrever à mão.
+            materiaisEntrega: {
+                tabela: 'materiais_entrega',
+                from: r => ({ id: r.id, adminId: r.admin_id, funcionarioId: r.funcionario_id, tipo: r.tipo, entregaOrigemId: r.entrega_origem_id || null, itens: r.itens ? (typeof r.itens === 'string' ? JSON.parse(r.itens) : r.itens) : [], data: r.data, hora: r.hora || '', nomeTecnico: r.nome_tecnico || '', assinaturaTecnico: r.assinatura_tecnico || null, nomeResponsavel: r.nome_responsavel || '', assinaturaResponsavel: r.assinatura_responsavel || null, dataCriacao: isoToMs(r.data_criacao) }),
+                to:   o => ({ id: o.id, admin_id: o.adminId, funcionario_id: o.funcionarioId, tipo: o.tipo, entrega_origem_id: o.entregaOrigemId || null, itens: JSON.stringify(o.itens || []), data: nn(o.data), hora: o.hora || '', nome_tecnico: o.nomeTecnico || '', assinatura_tecnico: o.assinaturaTecnico || null, nome_responsavel: o.nomeResponsavel || '', assinatura_responsavel: o.assinaturaResponsavel || null, data_criacao: msToISO(o.dataCriacao) })
+            },
             movimentosStock: {
                 tabela: 'movimentos_stock',
                 from: r => ({ id: r.id, adminId: r.admin_id, artigoId: r.artigo_id, obraId: r.obra_id, armazemId: r.armazem_id || null, armazemDestinoId: r.armazem_destino_id || null, funcionarioId: r.funcionario_id || null, tipo: r.tipo, quantidade: Number(r.quantidade) || 0, origemTipo: r.origem_tipo, origemId: r.origem_id, nota: r.nota, data: r.data, dataCriacao: isoToMs(r.data_criacao) }),
@@ -539,7 +550,7 @@
         };
 
         // ordem segura de FKs para upsert; deletes fazem-se na ordem inversa
-        const ORDEM = ['administradores','veiculos','funcionarios','encarregados','clientes','locais','equipamentos','servicos','folhasObra','requisicoes','ponto','pedidos','pedidosRenovacao','ajudas','notificacoes','contratos','registosManutencao','veiculoDocumentos','veiculoIntervencoes','veiculoSinistros','fornecedores','obras','artigos','armazens','encomendas','encomendaItens','movimentosStock','obraMateriais','obraDocumentos','obraPastasDocumentos','obraPontoLonga','autosMedicao','categorias','unidadesArtigo','auditoria','historicoLicencas','alertasGeofence','tiposTrabalhoCustom','tiposFaltaCustom','configSeriesRelatorio','relatoriosEspecialidade','despesasMensais','creditosBancarios','leads','oportunidades','propostas','atividadesComerciais','assistencias','garantias','referencias','ferramentas','levantamentosFerramentas','artigoNumerosSerie','devolucoesObra','devolucaoObraItens'];
+        const ORDEM = ['administradores','veiculos','funcionarios','encarregados','clientes','locais','equipamentos','servicos','folhasObra','requisicoes','ponto','pedidos','pedidosRenovacao','ajudas','notificacoes','contratos','registosManutencao','veiculoDocumentos','veiculoIntervencoes','veiculoSinistros','fornecedores','obras','artigos','armazens','encomendas','encomendaItens','movimentosStock','obraMateriais','obraDocumentos','obraPastasDocumentos','obraPontoLonga','autosMedicao','categorias','unidadesArtigo','auditoria','historicoLicencas','alertasGeofence','tiposTrabalhoCustom','tiposFaltaCustom','configSeriesRelatorio','relatoriosEspecialidade','despesasMensais','creditosBancarios','leads','oportunidades','propostas','atividadesComerciais','assistencias','garantias','referencias','ferramentas','levantamentosFerramentas','artigoNumerosSerie','devolucoesObra','devolucaoObraItens','materiaisEntrega'];
 
         const licToRow = (adminId, l) => ({ admin_id: adminId, codigo: l.codigo, plano: l.plano, data_inicio: msToISO(l.dataInicio), data_expiracao: msToISO(l.dataExpiracao), dias: l.dias, max_funcionarios: l.maxFuncionarios, ativa: l.ativa !== false, aguarda_pagamento: l.aguardaPagamento === true });
         const licFromRow = (r) => ({ codigo: r.codigo, plano: r.plano, dataInicio: isoToMs(r.data_inicio), dataExpiracao: isoToMs(r.data_expiracao), dias: r.dias, maxFuncionarios: r.max_funcionarios, ativa: r.ativa, aguardaPagamento: r.aguarda_pagamento === true });
@@ -4802,6 +4813,7 @@
                                     <button class="btn btn-sm" style="background:${f.suspenso ? '#16a34a' : '#b45309'};color:#fff;" onclick="toggleSuspensaoPessoa('${f._tipo === 'encarregado' ? 'encarregado' : 'funcionario'}','${f.id}')" title="${f.suspenso ? 'Reativar' : 'Suspender'}"><i class="fas ${f.suspenso ? 'fa-rotate-left' : 'fa-user-slash'}"></i></button>
                                     <button class="btn btn-sm" style="background:#6d28d9;color:#fff;" onclick="definirPin('${f._tipo === 'encarregado' ? 'encarregado' : 'funcionario'}','${f.id}')" title="Definir PIN do Modo Quiosque"><i class="fas fa-hashtag"></i></button>
                                     <button class="btn btn-sm" style="background:#0f6b5c;color:#fff;" onclick="repararContaAcesso('${f._tipo === 'encarregado' ? 'encarregado' : 'funcionario'}','${f.id}')" title="Criar/reparar conta de acesso (login)"><i class="fas fa-key"></i></button>
+                                    ${moduloMateriaisEntregaAtivo(adminAtual()) ? `<button class="btn btn-sm" style="background:#b45309;color:#fff;" onclick="abrirMateriaisEntrega('${f.id}')" title="Materiais entregues/devolvidos"><i class="fas fa-people-carry-box"></i></button>` : ''}
                                     ${f._tipo === 'encarregado'
                                         ? `<button class="btn btn-sm btn-warning" onclick="abrirModalEditarEncarregado('${f.id}')"><i class="fas fa-edit"></i></button>
                                            <button class="btn btn-sm btn-danger" onclick="excluirEncarregado('${f.id}')"><i class="fas fa-trash"></i></button>`
@@ -7581,6 +7593,10 @@
         function moduloErpAtivo(admin) {
             if (!admin) return false;
             return !!admin.erpPlano && admin.erpExpiracao && admin.erpExpiracao > Date.now();
+        }
+        // "Opcionais Extra" → controlo de materiais entregues/devolvidos aos funcionários.
+        function moduloMateriaisEntregaAtivo(admin) {
+            return !!admin?.materiaisEntregaAtivo;
         }
         function moduloCrmAtivo(admin) {
             if (!admin) return false;
@@ -24726,6 +24742,309 @@ async function salvarAdmin(e) {
         }
 
         // =============================================================
+        //  ASSINATURA GENÉRICA (por id) — para ecrãs com mais que uma
+        //  assinatura no mesmo modal (ex.: Materiais Entregues: técnico +
+        //  quem entrega/recebe). Mesma técnica do inicializarAssinatura,
+        //  mas parametrizada por id em vez de fixa em "fo_assinatura_canvas".
+        // =============================================================
+        let _assinaturasGenericas = {}; // id -> { ctx, desenhou }
+        function _assinaturaGenericaAjustarTamanho(id) {
+            const canvas = document.getElementById(id);
+            if (!canvas) return;
+            const ratio = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            const larg = rect.width || canvas.parentElement?.clientWidth || 300;
+            canvas.width = larg * ratio;
+            canvas.height = 140 * ratio;
+            const ctx = canvas.getContext('2d');
+            ctx.scale(ratio, ratio);
+            ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.strokeStyle = '#111';
+            _assinaturasGenericas[id] = _assinaturasGenericas[id] || {};
+            _assinaturasGenericas[id].ctx = ctx;
+        }
+        function inicializarAssinaturaGenerica(id) {
+            let canvas = document.getElementById(id);
+            if (!canvas) return;
+            const clone = canvas.cloneNode(false);
+            canvas.parentNode.replaceChild(clone, canvas);
+            canvas = clone;
+            _assinaturasGenericas[id] = { desenhou: false };
+            _assinaturaGenericaAjustarTamanho(id);
+            let desenhando = false, ult = null;
+            const pos = e => ({ x: e.offsetX, y: e.offsetY });
+            const start = e => { desenhando = true; ult = pos(e); e.preventDefault(); };
+            const move = e => {
+                const st = _assinaturasGenericas[id];
+                if (!desenhando || !st?.ctx) return;
+                const p = pos(e);
+                st.ctx.beginPath(); st.ctx.moveTo(ult.x, ult.y); st.ctx.lineTo(p.x, p.y); st.ctx.stroke();
+                ult = p; st.desenhou = true; e.preventDefault();
+            };
+            const end = () => { desenhando = false; };
+            canvas.addEventListener('pointerdown', start);
+            canvas.addEventListener('pointermove', move);
+            canvas.addEventListener('pointerup', end);
+            canvas.addEventListener('pointercancel', end);
+            canvas.addEventListener('pointerleave', end);
+        }
+        function limparAssinaturaGenerica(id) {
+            const canvas = document.getElementById(id);
+            const st = _assinaturasGenericas[id];
+            if (canvas && st?.ctx) st.ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (st) st.desenhou = false;
+        }
+        function capturarAssinaturaGenerica(id) {
+            const canvas = document.getElementById(id);
+            const st = _assinaturasGenericas[id];
+            if (!canvas || !st?.desenhou) return '';
+            try { return canvas.toDataURL('image/png'); } catch (e) { return ''; }
+        }
+
+        // =============================================================
+        //  MATERIAIS ENTREGUES / DEVOLVIDOS — "Opcionais Extra"
+        // =============================================================
+        function _meBlocoAssinatura(id, titulo) {
+            return `<div class="form-group ff-span2" style="margin-top:6px;">
+                <label>${titulo}</label>
+                <canvas id="${id}" style="width:100%;height:140px;touch-action:none;display:block;border:1px dashed #cbd5e1;border-radius:8px;background:#fff;"></canvas>
+                <button type="button" class="btn btn-sm btn-outline" style="margin-top:4px;" onclick="limparAssinaturaGenerica('${id}')">Limpar assinatura</button>
+            </div>`;
+        }
+        function abrirMateriaisEntrega(funcionarioId) {
+            const admin = adminAtual();
+            if (!moduloMateriaisEntregaAtivo(admin)) {
+                alert('O controlo de materiais entregues não está ativo. Liga-o em Perfil → Opcionais Extra.');
+                return;
+            }
+            tgEscolher('O que queres fazer?', [
+                { rotulo: '📦 Documento de Entrega de Material', valor: 'entrega' },
+                { rotulo: '📥 Documento de Devolução de Material', valor: 'devolucao' },
+            ]).then(escolha => {
+                if (escolha === 'entrega') _abrirEntregaMaterial(funcionarioId);
+                else if (escolha === 'devolucao') _abrirEscolherEntregaParaDevolucao(funcionarioId);
+            });
+        }
+        function _mePessoas() {
+            const adminId = _tenantId ? _tenantId() : (usuarioLogado?.adminId || usuarioLogado?.id);
+            return [...(dados.funcionarios || []), ...(dados.encarregados || [])].filter(p => p.adminId === adminId && p.ativo !== false);
+        }
+        function _meNomePessoa(id) {
+            return _mePessoas().find(p => p.id === id)?.nome || 'Pessoa removida';
+        }
+        function _meLinhaItem(nome, qtd, extra) {
+            return `<div class="me-item-row" style="display:flex;gap:8px;margin-bottom:6px;align-items:center;">
+                <input type="text" class="me-item-nome" placeholder="Ex: Farda tamanho M" value="${escapeHtmlSimples(nome || '')}" style="flex:1;" />
+                <input type="number" class="me-item-qtd" min="1" value="${qtd || 1}" style="width:70px;" />
+                ${extra || ''}
+                <button type="button" class="btn btn-sm btn-danger" onclick="this.closest('.me-item-row').remove()" title="Remover"><i class="fas fa-trash"></i></button>
+            </div>`;
+        }
+        function _meAddItem() {
+            document.getElementById('me_itens_lista').insertAdjacentHTML('beforeend', _meLinhaItem('', 1));
+        }
+        function _abrirEntregaMaterial(funcionarioIdPre) {
+            let overlay = document.getElementById('meModalOverlay');
+            if (!overlay) { overlay = document.createElement('div'); overlay.id = 'meModalOverlay'; overlay.className = 'modal-overlay'; document.body.appendChild(overlay); }
+            const hoje = getDataHoje();
+            const agora = new Date().toTimeString().slice(0, 5);
+            overlay.innerHTML = `
+                <div class="modal" style="max-width:640px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;">
+                        <h3><i class="fas fa-people-carry-box"></i> Documento de Entrega de Material</h3>
+                        <button class="close-modal" onclick="document.getElementById('meModalOverlay').classList.remove('open')">&times;</button>
+                    </div>
+                    <div class="form-group ff-span2"><label>Funcionário</label>
+                        <select id="me_funcionario" ${funcionarioIdPre ? 'disabled' : ''}>${_mePessoas().map(p => `<option value="${p.id}" ${p.id === funcionarioIdPre ? 'selected' : ''}>${escapeHtmlSimples(p.nome)}</option>`).join('')}</select>
+                        ${funcionarioIdPre ? `<input type="hidden" id="me_funcionario_fixo" value="${funcionarioIdPre}" />` : ''}
+                    </div>
+                    <div style="display:flex;gap:10px;">
+                        <div class="form-group" style="flex:1;"><label>Data</label><input type="date" id="me_data" value="${hoje}" /></div>
+                        <div class="form-group" style="flex:1;"><label>Hora</label><input type="time" id="me_hora" value="${agora}" /></div>
+                    </div>
+                    <div class="form-group ff-span2">
+                        <label>Material entregue</label>
+                        <div id="me_itens_lista">${_meLinhaItem('', 1)}</div>
+                        <button type="button" class="btn btn-sm btn-outline" onclick="_meAddItem()"><i class="fas fa-plus"></i> Adicionar material</button>
+                    </div>
+                    <div class="form-group ff-span2"><label>Nome do técnico (quem recebe o material)</label><input type="text" id="me_nome_tecnico" placeholder="Nome completo" /></div>
+                    ${_meBlocoAssinatura('me_sign_tecnico', 'Assinatura do técnico')}
+                    <div class="form-group ff-span2" style="margin-top:10px;"><label>Nome de quem entrega (pela empresa)</label><input type="text" id="me_nome_entrega" placeholder="Nome completo" /></div>
+                    ${_meBlocoAssinatura('me_sign_entrega', 'Assinatura de quem entrega')}
+                    <button type="button" class="btn btn-primary" style="width:100%;margin-top:16px;" onclick="_meGuardarEntrega()"><i class="fas fa-file-signature"></i> Gerar Documento</button>
+                </div>
+            `;
+            overlay.classList.add('open');
+            setTimeout(() => { inicializarAssinaturaGenerica('me_sign_tecnico'); inicializarAssinaturaGenerica('me_sign_entrega'); }, 50);
+        }
+        function _meColherItens() {
+            return [...document.querySelectorAll('#me_itens_lista .me-item-row')].map(row => ({
+                nome: row.querySelector('.me-item-nome').value.trim(),
+                qtd: parseInt(row.querySelector('.me-item-qtd').value, 10) || 1,
+            })).filter(i => i.nome);
+        }
+        async function _meGuardarEntrega() {
+            const funcionarioId = document.getElementById('me_funcionario').value;
+            if (!funcionarioId) { alert('Escolhe o funcionário.'); return; }
+            const itens = _meColherItens();
+            if (!itens.length) { alert('Adiciona pelo menos um material.'); return; }
+            const nomeTecnico = document.getElementById('me_nome_tecnico').value.trim();
+            const nomeEntrega = document.getElementById('me_nome_entrega').value.trim();
+            if (!nomeTecnico || !nomeEntrega) { alert('Preenche os nomes de quem recebe e de quem entrega.'); return; }
+            const assinaturaTecnico = capturarAssinaturaGenerica('me_sign_tecnico');
+            const assinaturaEntrega = capturarAssinaturaGenerica('me_sign_entrega');
+            if (!assinaturaTecnico || !assinaturaEntrega) { alert('Faltam as duas assinaturas.'); return; }
+            const adminId = _tenantId ? _tenantId() : (usuarioLogado?.adminId || usuarioLogado?.id);
+            const registo = {
+                id: gerarId(), adminId, funcionarioId, tipo: 'entrega', entregaOrigemId: null, itens,
+                data: document.getElementById('me_data').value, hora: document.getElementById('me_hora').value,
+                nomeTecnico, assinaturaTecnico, nomeResponsavel: nomeEntrega, assinaturaResponsavel: assinaturaEntrega,
+                dataCriacao: Date.now(),
+            };
+            dados.materiaisEntrega = dados.materiaisEntrega || [];
+            dados.materiaisEntrega.push(registo);
+            guardarDados(dados);
+            document.getElementById('meModalOverlay').classList.remove('open');
+            _meImprimirDocumento(registo);
+        }
+        // Escolher a que entrega a devolução se refere — só mostra entregas que ainda não têm
+        // devolução associada (para não se repetir uma devolução já feita por engano).
+        function _abrirEscolherEntregaParaDevolucao(funcionarioIdFiltro) {
+            const adminId = _tenantId ? _tenantId() : (usuarioLogado?.adminId || usuarioLogado?.id);
+            const entregas = (dados.materiaisEntrega || [])
+                .filter(m => m.adminId === adminId && m.tipo === 'entrega')
+                .filter(m => !funcionarioIdFiltro || m.funcionarioId === funcionarioIdFiltro)
+                .filter(m => !(dados.materiaisEntrega || []).some(d => d.tipo === 'devolucao' && d.entregaOrigemId === m.id))
+                .sort((a, b) => (b.dataCriacao || 0) - (a.dataCriacao || 0));
+            if (!entregas.length) { alert(funcionarioIdFiltro ? 'Este funcionário não tem nenhum documento de entrega por devolver.' : 'Não há nenhum documento de entrega por devolver.'); return; }
+            tgEscolher('A que documento de entrega se refere esta devolução?', entregas.map(m => ({
+                rotulo: `${_meNomePessoa(m.funcionarioId)} — ${(m.data || '').split('-').reverse().join('/')} (${m.itens.length} item${m.itens.length === 1 ? '' : 's'})`,
+                valor: m.id,
+            }))).then(id => { if (id) _abrirDevolucaoMaterial(id); });
+        }
+        function _abrirDevolucaoMaterial(entregaId) {
+            const entrega = (dados.materiaisEntrega || []).find(m => m.id === entregaId);
+            if (!entrega) return;
+            let overlay = document.getElementById('meModalOverlay');
+            if (!overlay) { overlay = document.createElement('div'); overlay.id = 'meModalOverlay'; overlay.className = 'modal-overlay'; document.body.appendChild(overlay); }
+            const hoje = getDataHoje();
+            const agora = new Date().toTimeString().slice(0, 5);
+            overlay.innerHTML = `
+                <div class="modal" style="max-width:640px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;">
+                        <h3><i class="fas fa-rotate-left"></i> Documento de Devolução de Material</h3>
+                        <button class="close-modal" onclick="document.getElementById('meModalOverlay').classList.remove('open')">&times;</button>
+                    </div>
+                    <p class="help-text">Baseado na entrega de <b>${escapeHtmlSimples(_meNomePessoa(entrega.funcionarioId))}</b>, em ${(entrega.data || '').split('-').reverse().join('/')}.</p>
+                    <div style="display:flex;gap:10px;">
+                        <div class="form-group" style="flex:1;"><label>Data</label><input type="date" id="me_data" value="${hoje}" /></div>
+                        <div class="form-group" style="flex:1;"><label>Hora</label><input type="time" id="me_hora" value="${agora}" /></div>
+                    </div>
+                    <div class="form-group ff-span2">
+                        <label>Material — marca o que foi mesmo devolvido/recebido pela empresa</label>
+                        <div id="me_devol_itens">
+                            ${entrega.itens.map((it, i) => `<div class="me-devol-row" style="display:flex;gap:8px;align-items:center;margin-bottom:6px;padding:6px 8px;background:#f8fafc;border-radius:6px;">
+                                <input type="checkbox" class="me-devol-check" data-idx="${i}" checked style="width:auto;margin:0;" />
+                                <span style="flex:1;">${escapeHtmlSimples(it.nome)}</span>
+                                <span style="color:#64748b;font-size:.85rem;">Entregue: ${it.qtd}</span>
+                                <input type="number" class="me-devol-qtd" data-idx="${i}" min="0" value="${it.qtd}" style="width:70px;" />
+                            </div>`).join('')}
+                        </div>
+                    </div>
+                    <div class="form-group ff-span2"><label>Nome do técnico (quem devolve o material)</label><input type="text" id="me_nome_tecnico" value="${escapeHtmlSimples(entrega.nomeTecnico || '')}" placeholder="Nome completo" /></div>
+                    ${_meBlocoAssinatura('me_sign_tecnico', 'Assinatura do técnico')}
+                    <div class="form-group ff-span2" style="margin-top:10px;"><label>Nome de quem recebe (pela empresa)</label><input type="text" id="me_nome_entrega" placeholder="Nome completo" /></div>
+                    ${_meBlocoAssinatura('me_sign_entrega', 'Assinatura de quem recebe')}
+                    <button type="button" class="btn btn-primary" style="width:100%;margin-top:16px;" onclick="_meGuardarDevolucao('${entregaId}')"><i class="fas fa-file-signature"></i> Gerar Documento</button>
+                </div>
+            `;
+            overlay.classList.add('open');
+            setTimeout(() => { inicializarAssinaturaGenerica('me_sign_tecnico'); inicializarAssinaturaGenerica('me_sign_entrega'); }, 50);
+        }
+        async function _meGuardarDevolucao(entregaId) {
+            const entrega = (dados.materiaisEntrega || []).find(m => m.id === entregaId);
+            if (!entrega) return;
+            const nomeTecnico = document.getElementById('me_nome_tecnico').value.trim();
+            const nomeRecebe = document.getElementById('me_nome_entrega').value.trim();
+            if (!nomeTecnico || !nomeRecebe) { alert('Preenche os nomes de quem devolve e de quem recebe.'); return; }
+            const assinaturaTecnico = capturarAssinaturaGenerica('me_sign_tecnico');
+            const assinaturaRecebe = capturarAssinaturaGenerica('me_sign_entrega');
+            if (!assinaturaTecnico || !assinaturaRecebe) { alert('Faltam as duas assinaturas.'); return; }
+            const itens = entrega.itens.map((it, i) => {
+                const chk = document.querySelector(`.me-devol-check[data-idx="${i}"]`);
+                const qtdEl = document.querySelector(`.me-devol-qtd[data-idx="${i}"]`);
+                return { nome: it.nome, qtd: it.qtd, recebido: !!chk?.checked, qtdRecebida: parseInt(qtdEl?.value, 10) || 0 };
+            });
+            const registo = {
+                id: gerarId(), adminId: entrega.adminId, funcionarioId: entrega.funcionarioId, tipo: 'devolucao', entregaOrigemId: entregaId, itens,
+                data: document.getElementById('me_data').value, hora: document.getElementById('me_hora').value,
+                nomeTecnico, assinaturaTecnico, nomeResponsavel: nomeRecebe, assinaturaResponsavel: assinaturaRecebe,
+                dataCriacao: Date.now(),
+            };
+            dados.materiaisEntrega = dados.materiaisEntrega || [];
+            dados.materiaisEntrega.push(registo);
+            guardarDados(dados);
+            document.getElementById('meModalOverlay').classList.remove('open');
+            _meImprimirDocumento(registo, entrega);
+        }
+        // Documento final, pronto a imprimir/guardar em PDF — logótipo e NIF da empresa, nome do
+        // funcionário, lista de material com um ✓ à frente, data/hora, e as duas assinaturas.
+        function _meImprimirDocumento(registo, entregaOrigem) {
+            const admin = adminAtual();
+            const ehDevolucao = registo.tipo === 'devolucao';
+            const titulo = ehDevolucao ? 'Documento de Devolução de Material' : 'Documento de Entrega de Material';
+            const dataFmt = (registo.data || '').split('-').reverse().join('/');
+            const linhasItens = registo.itens.map(it => ehDevolucao
+                ? `<tr><td>${it.recebido ? '✓' : '✗'}</td><td>${escapeHtmlSimples(it.nome)}</td><td>${it.qtd}</td><td>${it.qtdRecebida}</td></tr>`
+                : `<tr><td>✓</td><td>${escapeHtmlSimples(it.nome)}</td><td>${it.qtd}</td></tr>`
+            ).join('');
+            const w = window.open('', '_blank');
+            w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${titulo}</title>
+                <style>
+                    body{font-family:Arial,sans-serif;color:#1e293b;padding:32px;max-width:760px;margin:0 auto;}
+                    .cab{display:flex;align-items:center;gap:16px;border-bottom:2px solid #152a52;padding-bottom:16px;margin-bottom:20px;}
+                    .cab img{max-height:60px;max-width:180px;object-fit:contain;}
+                    .cab .info{font-size:.85rem;color:#475569;}
+                    h1{font-size:1.3rem;margin:0 0 4px;color:#152a52;}
+                    table{width:100%;border-collapse:collapse;margin:16px 0;}
+                    th,td{border:1px solid #cbd5e1;padding:8px 10px;text-align:left;font-size:.9rem;}
+                    th{background:#f1f5f9;}
+                    .sign-bloco{display:flex;gap:24px;margin-top:40px;}
+                    .sign-col{flex:1;text-align:center;}
+                    .sign-col img{max-width:100%;height:100px;object-fit:contain;border-bottom:1px solid #94a3b8;}
+                    .sign-col .nome{margin-top:6px;font-weight:600;}
+                    .rodape{margin-top:30px;font-size:.8rem;color:#64748b;}
+                    @media print{.no-print{display:none;}}
+                </style></head><body>
+                <div class="cab">
+                    ${admin?.logo ? `<img src="${admin.logo}" />` : ''}
+                    <div class="info"><b>${escapeHtmlSimples(admin?.empresa || admin?.nome || '')}</b><br>NIF: ${escapeHtmlSimples(admin?.nif || '—')}</div>
+                </div>
+                <h1>${titulo}</h1>
+                <p>Funcionário: <b>${escapeHtmlSimples(_meNomePessoa(registo.funcionarioId))}</b></p>
+                ${ehDevolucao && entregaOrigem ? `<p style="color:#64748b;font-size:.85rem;">Referente à entrega de ${(entregaOrigem.data || '').split('-').reverse().join('/')}</p>` : ''}
+                <table>
+                    <thead><tr><th></th><th>Material</th><th>Qtd. ${ehDevolucao ? 'entregue' : ''}</th>${ehDevolucao ? '<th>Qtd. recebida</th>' : ''}</tr></thead>
+                    <tbody>${linhasItens}</tbody>
+                </table>
+                <div class="sign-bloco">
+                    <div class="sign-col">
+                        ${registo.assinaturaTecnico ? `<img src="${registo.assinaturaTecnico}" />` : ''}
+                        <div class="nome">${escapeHtmlSimples(registo.nomeTecnico)}</div>
+                        <div style="font-size:.8rem;color:#64748b;">Técnico</div>
+                    </div>
+                    <div class="sign-col">
+                        ${registo.assinaturaResponsavel ? `<img src="${registo.assinaturaResponsavel}" />` : ''}
+                        <div class="nome">${escapeHtmlSimples(registo.nomeResponsavel)}</div>
+                        <div style="font-size:.8rem;color:#64748b;">${ehDevolucao ? 'Recebeu pela empresa' : 'Entregou pela empresa'}</div>
+                    </div>
+                </div>
+                <p class="rodape">Documento gerado em ${dataFmt} às ${escapeHtmlSimples(registo.hora || '')}.</p>
+                <button class="no-print" onclick="window.print()" style="margin-top:20px;padding:10px 20px;background:#152a52;color:#fff;border:none;border-radius:8px;cursor:pointer;">Imprimir / Guardar PDF</button>
+                </body></html>`);
+            w.document.close();
+        }
+
+        // =============================================================
         //  FUNÇÕES PARA CLIENTE RÁPIDO NA OS (ENCARREGADO)
         // =============================================================
         let _ncTargetSelect = 's_cliente';
@@ -32281,7 +32600,7 @@ window._relPrefill = function(msg){
                         </div>
 
                         <div class="ff-secao ff-tint-doc">
-                            <div class="ff-secao-head"><i class="fas fa-sliders"></i> Áreas de Atuação</div>
+                            <div class="ff-secao-head"><i class="fas fa-sliders"></i> Opcionais Extra</div>
                             <div class="ff-secao-body">
                                 <div class="form-group ff-span2">
                                     <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
@@ -32303,6 +32622,13 @@ window._relPrefill = function(msg){
                                         Quer ativar Saúde, Higiene e Segurança no Trabalho (SHST)?
                                     </label>
                                     <div class="help-text">Se sim, a ficha de cada funcionário passa a controlar a validade da consulta de medicina do trabalho — anual a partir dos 50 anos, de 2 em 2 anos antes disso — com aviso automático quando faltarem 30 dias.</div>
+                                </div>
+                                <div class="form-group ff-span2">
+                                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                                        <input type="checkbox" id="perf_materiais_entrega_ativo" ${admin?.materiaisEntregaAtivo ? 'checked' : ''} style="width:auto;margin:0;" />
+                                        Quer controlar materiais/equipamento entregues aos funcionários (fardas, ferramentas, EPI's, etc.)?
+                                    </label>
+                                    <div class="help-text">Se sim, aparece um botão em Equipa → Funcionários para gerar documentos de entrega e de devolução de material, com lista de itens, data/hora e assinatura de quem entrega e de quem recebe.</div>
                                 </div>
                             </div>
                         </div>
@@ -32648,6 +32974,7 @@ window._relPrefill = function(msg){
                     admin.segurancaAtivo = document.getElementById('perf_seguranca_ativo')?.checked || false;
                     admin.segurosAtivo = document.getElementById('perf_seguros_ativo')?.checked || false;
                     admin.shstAtivo = document.getElementById('perf_shst_ativo')?.checked || false;
+                    admin.materiaisEntregaAtivo = document.getElementById('perf_materiais_entrega_ativo')?.checked || false;
                     if (senha) admin.senha = senha;
                     if (logoData !== undefined) admin.logo = logoData;
                     if (window._perfCertificadoraLogoRemover) { admin.certificadoraLogo = null; window._perfCertificadoraLogoRemover = false; }
