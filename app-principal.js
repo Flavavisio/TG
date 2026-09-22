@@ -23948,9 +23948,8 @@ async function salvarAdmin(e) {
                                     <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
                                         <input type="text" id="s_novo_tipo_input" placeholder="Novo tipo de trabalho..." style="max-width:220px;" />
                                         <button type="button" class="btn btn-sm btn-outline" onclick="_sAdicionarTipoTrabalho()"><i class="fas fa-plus"></i> Adicionar</button>
-                                        <button type="button" class="btn btn-sm" style="background:#eef2ff;color:#3730a3;" onclick="abrirGestaoRelatoriosPersonalizados()"><i class="fas fa-clipboard-list"></i> Relatórios personalizados por tipo</button>
                                     </div>
-                                    <div class="help-text">Os tipos REX, RBI, RSI, RCM, RIE, RCP, CCTV e Intrusão geram automaticamente um relatório de especialidade a preencher quando a OS for concluída.</div>
+                                    <div class="help-text">Os tipos REX, RBI, RSI, RCM, RIE, RCP, CCTV e Intrusão geram automaticamente um relatório de especialidade a preencher quando a OS for concluída. Para os outros tipos, desenha o relatório em Obras e Serviços → Relatórios Personalizados.</div>
                                 </div>
                             </div>
                         </div>
@@ -26704,6 +26703,10 @@ async function salvarAdmin(e) {
             { valor: 'numero', label: 'Número', icon: 'fa-hashtag' },
             { valor: 'checkbox', label: 'Sim / Não', icon: 'fa-toggle-on' },
             { valor: 'checklist', label: 'Passo do checklist (obrigatório)', icon: 'fa-list-check' },
+            { valor: 'lista', label: 'Lista de escolha', icon: 'fa-caret-down' },
+            { valor: 'data', label: 'Data', icon: 'fa-calendar-day' },
+            { valor: 'hora', label: 'Hora', icon: 'fa-clock' },
+            { valor: 'titulo', label: 'Título de secção', icon: 'fa-heading' },
         ];
         // Relatório de Km Percorridos (estimados) — só admin/subadmin. Junta os registos de
         // dados.kmViagens (capturados ao tocar em "Navegar" nas OS) por técnico, com total do
@@ -26820,60 +26823,131 @@ async function salvarAdmin(e) {
             `;
         }
         function abrirGestaoRelatoriosPersonalizados() {
-            const tid = _tenantId();
-            const tipos = (dados.tiposTrabalhoCustom || []).filter(t => t.adminId === tid);
             document.getElementById('modalGenericoTitulo').innerHTML = '<i class="fas fa-clipboard-list"></i> Relatórios personalizados por tipo de trabalho';
             const _modalEl = document.querySelector('#modalGenericoOverlay .modal');
-            if (_modalEl) { _modalEl.dataset.maxWidthOriginal = _modalEl.style.maxWidth || ''; _modalEl.style.maxWidth = '920px'; }
-            document.getElementById('modalGenericoCampos').innerHTML = `
-                <div class="rp-editor-scroll">
-                    <p class="help-text" style="margin-bottom:12px;">Escolhe um tipo de trabalho criado por ti para desenhares o formulário que aparece quando um técnico fecha uma OS desse tipo. Os tipos base (REX, RBI, etc.) já têm o relatório de especialidade próprio e não aparecem aqui.</p>
-                    ${tipos.length ? `
-                        <div class="form-group">
-                            <label>Tipo de trabalho</label>
-                            <select id="rp_tipo_select" onchange="_rpRenderCampos(this.value)">
-                                <option value="">— Escolhe —</option>
-                                ${tipos.map(t => `<option value="${t.codigo}">${escapeHtmlSimples(t.nome)}${(t.campos || []).length ? ` (${t.campos.length} campo${t.campos.length === 1 ? '' : 's'})` : ' — Crie o seu relatório'}</option>`).join('')}
-                            </select>
-                        </div>
-                        <div id="rp_campos_area"></div>
-                    ` : `<p class="help-text">Ainda não criaste nenhum tipo de trabalho próprio. Cria um primeiro no campo "Novo tipo de trabalho" ao editar uma OS.</p>`}
-                </div>
-            `;
+            if (_modalEl) {
+                _modalEl.dataset.maxWidthOriginal = _modalEl.style.maxWidth || '';
+                _modalEl.style.maxWidth = '920px';
+                _modalEl.style.width = '48vw';
+                _modalEl.style.minWidth = '480px';
+                _modalEl.style.height = '90vh';
+                _modalEl.style.maxHeight = '90vh';
+                _modalEl.style.display = 'flex';
+                _modalEl.style.flexDirection = 'column';
+            }
+            document.getElementById('rpPreviewFlutuante')?.classList.remove('open'); // só aparece ao "Personalizar" um tipo
+            const _formRp = document.getElementById('modalGenericoForm');
+            if (_formRp) { _formRp.style.flex = '1'; _formRp.style.minHeight = '0'; _formRp.style.display = 'flex'; _formRp.style.flexDirection = 'column'; }
+            const _camposRp = document.getElementById('modalGenericoCampos');
+            if (_camposRp) { _camposRp.style.flex = '1'; _camposRp.style.minHeight = '0'; _camposRp.style.overflow = 'hidden'; }
+            _rpRenderListaTipos();
             document.getElementById('modalGenericoForm').onsubmit = ev => { ev.preventDefault(); _fecharModalGenerico(); };
             const _bgRp = document.querySelector('#modalGenericoOverlay .modal-actions .btn-success'); if (_bgRp) { _bgRp.style.display = ''; _bgRp.innerHTML = '<i class="fas fa-check"></i> Finalizar'; }
             document.getElementById('modalGenericoOverlay').classList.add('open', 'modal-veros');
         }
+        // Lista de tipos de trabalho próprios (criados pelo admin), com as três ações por
+        // linha: Personalizar (desenhar os campos do relatório), Editar (mudar o nome) e Apagar.
+        function _rpRenderListaTipos() {
+            document.getElementById('rpPreviewFlutuante')?.classList.remove('open');
+            const tid = _tenantId();
+            const tipos = (dados.tiposTrabalhoCustom || []).filter(t => t.adminId === tid);
+            document.getElementById('modalGenericoCampos').innerHTML = `
+                <div class="rp-editor-scroll" style="height:100%;overflow-y:auto;display:flex;flex-direction:column;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+                        <p class="help-text" style="margin:0;">Tipos de trabalho criados por ti. Os tipos base (REX, RBI, etc.) já têm o relatório de especialidade próprio e não aparecem aqui.</p>
+                        <button type="button" class="btn btn-sm btn-primary" style="flex-shrink:0;" onclick="_rpNovoTipo()"><i class="fas fa-plus"></i> Novo</button>
+                    </div>
+                    ${tipos.length ? `
+                        <div class="table-wrapper">
+                            <table style="width:100%;">
+                                <thead><tr><th>Nome</th><th>Campos</th><th style="text-align:right;">Ações</th></tr></thead>
+                                <tbody>
+                                    ${tipos.map(t => `<tr id="rp_linha_${t.codigo}">
+                                        <td>${escapeHtmlSimples(t.nome)}</td>
+                                        <td>${(t.campos || []).length ? `${t.campos.length} campo${t.campos.length === 1 ? '' : 's'}` : '<span style="color:#b45309;font-weight:600;">Crie o seu relatório</span>'}</td>
+                                        <td style="text-align:right;white-space:nowrap;">
+                                            <button type="button" class="btn btn-sm" style="background:#eef2ff;color:#3730a3;" onclick="_rpRenderCampos('${t.codigo}')" title="Personalizar campos"><i class="fas fa-pen-to-square"></i> Personalizar</button>
+                                            <button type="button" class="btn btn-sm btn-outline" onclick="_rpEditarNome('${t.codigo}')" title="Editar nome"><i class="fas fa-i-cursor"></i> Editar</button>
+                                            <button type="button" class="btn btn-sm btn-danger" onclick="_rpApagarTipo('${t.codigo}')" title="Apagar"><i class="fas fa-trash"></i> Apagar</button>
+                                        </td>
+                                    </tr>`).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="rp_campos_area"></div>
+                    ` : `<p class="help-text">Ainda não criaste nenhum tipo de trabalho próprio — clica em "+ Novo" para criares o primeiro.</p>`}
+                </div>
+            `;
+        }
+        // Criar um novo tipo de trabalho próprio diretamente daqui — a mesma coisa que já dava
+        // para fazer ao editar uma OS (campo "Novo tipo de trabalho"), sem precisar de lá ir.
+        function _rpNovoTipo() {
+            const nome = (prompt('Nome do novo tipo de trabalho:') || '').trim();
+            if (!nome) return;
+            const tid = _tenantId();
+            const codigo = 'CUSTOM_' + nome.toUpperCase().replace(/[^A-Z0-9]+/g, '_').slice(0, 30) + '_' + Date.now().toString(36);
+            dados.tiposTrabalhoCustom = dados.tiposTrabalhoCustom || [];
+            dados.tiposTrabalhoCustom.push({ id: gerarId(), adminId: tid, codigo, nome, criadoEm: Date.now() });
+            guardarDados(dados);
+            _rpRenderListaTipos();
+            _rpRenderCampos(codigo); // já entra a personalizar, para não ser preciso outro clique
+        }
+        async function _rpEditarNome(codigo) {
+            const tid = _tenantId();
+            const tipo = (dados.tiposTrabalhoCustom || []).find(t => t.codigo === codigo && t.adminId === tid);
+            if (!tipo) return;
+            const novoNome = prompt('Novo nome para este tipo de trabalho:', tipo.nome);
+            if (novoNome === null) return; // cancelou
+            const nomeLimpo = novoNome.trim();
+            if (!nomeLimpo) { alert('O nome não pode ficar vazio.'); return; }
+            tipo.nome = nomeLimpo;
+            guardarDados(dados);
+            _rpRenderListaTipos();
+        }
+        async function _rpApagarTipo(codigo) {
+            const tid = _tenantId();
+            const tipo = (dados.tiposTrabalhoCustom || []).find(t => t.codigo === codigo && t.adminId === tid);
+            if (!tipo) return;
+            const emUso = (dados.servicos || []).filter(s => (s.tiposTrabalho || []).includes(codigo)).length;
+            const aviso = emUso
+                ? `"${tipo.nome}" está a ser usado em ${emUso} Ordem${emUso === 1 ? '' : 's'} de Serviço. Apagá-lo não muda essas OS já criadas, mas deixa de poder ser escolhido em OS novas, e perdes o relatório personalizado desenhado para ele.\n\nTens a certeza que queres apagar?`
+                : `Vais apagar "${tipo.nome}" e o relatório personalizado desenhado para ele. Não é possível desfazer.\n\nTens a certeza?`;
+            if (!confirm(aviso)) return;
+            dados.tiposTrabalhoCustom = (dados.tiposTrabalhoCustom || []).filter(t => t.codigo !== codigo);
+            guardarDados(dados);
+            _rpRenderListaTipos();
+        }
         function _rpRenderCampos(codigo) {
             const area = document.getElementById('rp_campos_area');
             if (!area) return;
-            if (!codigo) { area.innerHTML = ''; return; }
+            if (!codigo) { area.innerHTML = ''; document.getElementById('rpPreviewFlutuante')?.classList.remove('open'); return; }
             const tid = _tenantId();
             const tipo = (dados.tiposTrabalhoCustom || []).find(t => t.codigo === codigo && t.adminId === tid);
             if (!tipo) return;
             tipo.campos = tipo.campos || [];
             area.innerHTML = `
-                <div style="border-top:1px solid #e2e8f0;padding-top:12px;margin-top:8px;display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start;">
-                    <div style="flex:1 1 320px;min-width:280px;">
-                        <div id="rp_lista_campos" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;"></div>
-                        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-                            <input type="text" id="rp_novo_campo_label" placeholder="Ex: Central testada?" style="flex:1;min-width:160px;" />
-                            <select id="rp_novo_campo_tipo" style="width:150px;">
-                                ${CAMPO_TIPOS.map(c => `<option value="${c.valor}">${c.label}</option>`).join('')}
-                            </select>
-                            <button type="button" class="btn btn-sm btn-outline" onclick="_rpAdicionarCampo('${codigo}')"><i class="fas fa-plus"></i> Adicionar campo</button>
-                        </div>
-                    </div>
-                    <div style="flex:1 1 300px;min-width:260px;max-width:380px;">
-                        <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.4px;color:var(--muted,#64748b);font-weight:700;margin-bottom:6px;">
-                            <i class="fas fa-eye"></i> Pré-visualização (o que o técnico vai ver)
-                        </div>
-                        <div style="border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;background:#f8fafc;">
-                            <iframe id="rp_preview_iframe" style="width:100%;height:62vh;min-height:420px;border:none;background:#fff;"></iframe>
-                        </div>
+                <div style="border-top:1px solid #e2e8f0;padding-top:12px;margin-top:8px;flex:1;display:flex;flex-direction:column;min-height:0;">
+                    <a href="#" onclick="_rpRenderListaTipos();return false;" style="font-size:.82rem;display:inline-flex;align-items:center;gap:4px;margin-bottom:10px;flex-shrink:0;"><i class="fas fa-arrow-left"></i> Voltar à lista</a>
+                    <p class="help-text" style="margin:0 0 10px;flex-shrink:0;"><i class="fas fa-arrows-up-down"></i> Arrasta os campos pela pega (⋮⋮) para os reordenar — o painel de pré-visualização ao lado atualiza logo. Usa "½" para pores dois campos lado a lado na mesma linha.</p>
+                    <div id="rp_lista_campos" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px;overflow-y:auto;flex:1;min-height:0;"></div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;flex-shrink:0;">
+                        <input type="text" id="rp_novo_campo_label" placeholder="Ex: Central testada?" style="flex:1;min-width:160px;" />
+                        <select id="rp_novo_campo_tipo" style="width:150px;">
+                            ${CAMPO_TIPOS.map(c => `<option value="${c.valor}">${c.label}</option>`).join('')}
+                        </select>
+                        <label style="display:flex;align-items:center;gap:5px;font-size:.82rem;white-space:nowrap;" title="O campo fica só com metade da largura, para partilhar a linha com outro campo de meia largura logo a seguir">
+                            <input type="checkbox" id="rp_novo_campo_metade" style="width:auto;margin:0;" /> Meia largura
+                        </label>
+                        <select id="rp_novo_campo_tamanho" style="width:120px;" title="Tamanho da letra deste campo">
+                            <option value="pequeno">Letra pequena</option>
+                            <option value="normal" selected>Letra normal</option>
+                            <option value="grande">Letra grande</option>
+                        </select>
+                        <button type="button" class="btn btn-sm btn-outline" onclick="_rpAdicionarCampo('${codigo}')"><i class="fas fa-plus"></i> Adicionar campo</button>
                     </div>
                 </div>
             `;
+            document.getElementById('rpPreviewFlutuante')?.classList.add('open');
             _rpAtualizarLista(tipo);
             _rpAtualizarPreview(tipo);
         }
@@ -26887,28 +26961,93 @@ async function salvarAdmin(e) {
             if (!iframe) return;
             try {
                 const html = _gerarTemplateRelatorioCustom(tipo);
+                iframe.onload = () => {
+                    const admin = adminAtual();
+                    if (!admin) return;
+                    iframe.contentWindow.postMessage({
+                        type: 'init',
+                        empresaNome: admin.empresa || admin.nome || '',
+                        logoBase64: admin.logo || '',
+                        corCorporativa: admin.corCorporativa || '',
+                        anepcNumero: admin.numeroAnepc || '',
+                        registoPrevioNumero: admin.numeroRegistoPrevio || '',
+                        certificadoraLogo: admin.certificadoraLogo || '',
+                        cliente: 'Cliente de exemplo',
+                        morada: 'Morada de exemplo, nº 1',
+                        numero: 'PRÉ-VISUALIZAÇÃO',
+                        data: getDataHoje(),
+                    }, '*');
+                };
                 iframe.srcdoc = html;
             } catch (e) {
                 iframe.srcdoc = '<p style="font-family:sans-serif;color:#94a3b8;padding:16px;font-size:.85rem;">Adiciona um campo para veres aqui a pré-visualização.</p>';
             }
         }
+        // Estado do arrastar (drag-and-drop) da lista de campos — guarda de que campo se partiu
+        // o arrasto, para saber o que mover quando se largar sobre outra linha.
+        let _rpDragIndice = null;
+        function _rpDragStart(ev, indice) {
+            _rpDragIndice = indice;
+            ev.dataTransfer.effectAllowed = 'move';
+            try { ev.dataTransfer.setData('text/plain', String(indice)); } catch (e) {}
+        }
+        function _rpDragOver(ev) {
+            ev.preventDefault();
+            ev.currentTarget.classList.add('rp-drag-over');
+        }
+        async function _rpDrop(ev, codigo, indiceAlvo) {
+            ev.preventDefault();
+            ev.currentTarget.classList.remove('rp-drag-over');
+            const origem = _rpDragIndice;
+            _rpDragIndice = null;
+            if (origem === null || origem === indiceAlvo) return;
+            const tid = _tenantId();
+            const tipo = (dados.tiposTrabalhoCustom || []).find(t => t.codigo === codigo && t.adminId === tid);
+            if (!tipo || !tipo.campos) return;
+            const [movido] = tipo.campos.splice(origem, 1);
+            tipo.campos.splice(indiceAlvo, 0, movido);
+            try { await guardarDados(dados, ['tiposTrabalhoCustom']); } catch (e) { alert('⚠️ Ficou no ecrã, mas ainda não foi possível confirmar no servidor.'); }
+            _rpAtualizarLista(tipo);
+            _rpAtualizarPreview(tipo);
+        }
+        const RP_TAMANHOS = { pequeno: 'Pequena', normal: 'Normal', grande: 'Grande' };
         function _rpAtualizarLista(tipo) {
             const lista = document.getElementById('rp_lista_campos');
             if (!lista) return;
             lista.innerHTML = (tipo.campos || []).length ? tipo.campos.map((c, i) => {
                 const info = CAMPO_TIPOS.find(t => t.valor === c.tipo) || CAMPO_TIPOS[0];
-                const ehPrimeiro = i === 0, ehUltimo = i === tipo.campos.length - 1;
-                return `<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#f8fafc;border-radius:8px;">
-                    <div style="display:flex;flex-direction:column;gap:2px;">
-                        <button type="button" class="btn btn-sm" style="padding:2px 7px;background:${ehPrimeiro ? '#e2e8f0' : '#eef2ff'};color:${ehPrimeiro ? '#94a3b8' : '#3730a3'};" ${ehPrimeiro ? 'disabled' : ''} onclick="_rpMoverCampo('${tipo.codigo}', ${i}, -1)" title="Mover para cima"><i class="fas fa-chevron-up"></i></button>
-                        <button type="button" class="btn btn-sm" style="padding:2px 7px;background:${ehUltimo ? '#e2e8f0' : '#eef2ff'};color:${ehUltimo ? '#94a3b8' : '#3730a3'};" ${ehUltimo ? 'disabled' : ''} onclick="_rpMoverCampo('${tipo.codigo}', ${i}, 1)" title="Mover para baixo"><i class="fas fa-chevron-down"></i></button>
-                    </div>
+                const ehMetade = c.largura === 'metade';
+                const tamanhoAtual = c.tamanho || 'normal';
+                return `<div class="rp-campo-linha" draggable="true" ondragstart="_rpDragStart(event, ${i})" ondragover="_rpDragOver(event)" ondragleave="this.classList.remove('rp-drag-over')" ondrop="_rpDrop(event, '${tipo.codigo}', ${i})" style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:#f8fafc;border-radius:8px;border:2px solid transparent;">
+                    <i class="fas fa-grip-vertical" style="color:#cbd5e1;cursor:grab;" title="Arrasta para reordenar"></i>
                     <i class="fas ${info.icon}" style="color:#64748b;width:18px;"></i>
                     <span style="flex:1;">${escapeHtmlSimples(c.label)}</span>
                     <span class="help-text">${info.label}</span>
+                    <select onchange="_rpAlterarTamanho('${tipo.codigo}', ${i}, this.value)" title="Tamanho da letra" style="font-size:.78rem;padding:3px 4px;">
+                        ${Object.entries(RP_TAMANHOS).map(([v, l]) => `<option value="${v}" ${tamanhoAtual === v ? 'selected' : ''}>${l}</option>`).join('')}
+                    </select>
+                    ${c.tipo !== 'titulo' ? `<button type="button" class="btn btn-sm" style="background:${ehMetade ? '#dcfce7' : '#eef2ff'};color:${ehMetade ? '#166534' : '#3730a3'};min-width:38px;" onclick="_rpAlternarLargura('${tipo.codigo}', ${i})" title="${ehMetade ? 'Meia largura — clica para pôr a largura toda' : 'Largura toda — clica para meia largura (lado a lado)'}">${ehMetade ? '½' : '1/1'}</button>` : ''}
                     <button type="button" class="btn btn-sm" style="background:#fee2e2;color:#991b1b;" onclick="_rpRemoverCampo('${tipo.codigo}', ${i})"><i class="fas fa-trash"></i></button>
                 </div>`;
             }).join('') : '<p class="help-text">Ainda sem campos — adiciona o primeiro abaixo.</p>';
+        }
+        async function _rpAlterarTamanho(codigo, indice, tamanho) {
+            const tid = _tenantId();
+            const tipo = (dados.tiposTrabalhoCustom || []).find(t => t.codigo === codigo && t.adminId === tid);
+            if (!tipo || !tipo.campos?.[indice]) return;
+            tipo.campos[indice].tamanho = tamanho;
+            try { await guardarDados(dados, ['tiposTrabalhoCustom']); } catch (e) { alert('⚠️ Ficou no ecrã, mas ainda não foi possível confirmar no servidor.'); }
+            _rpAtualizarPreview(tipo);
+        }
+        async function _rpAlternarLargura(codigo, indice) {
+            const tid = _tenantId();
+            const tipo = (dados.tiposTrabalhoCustom || []).find(t => t.codigo === codigo && t.adminId === tid);
+            if (!tipo || !tipo.campos?.[indice]) return;
+            const c = tipo.campos[indice];
+            c.largura = c.largura === 'metade' ? 'completo' : 'metade';
+            try { await guardarDados(dados, ['tiposTrabalhoCustom']); } catch (e) { alert('⚠️ Ficou no ecrã, mas ainda não foi possível confirmar no servidor.'); }
+            _rpAtualizarLista(tipo);
+            _rpAtualizarPreview(tipo);
         }
         async function _rpMoverCampo(codigo, indice, direcao) {
             const tid = _tenantId();
@@ -26924,14 +27063,27 @@ async function salvarAdmin(e) {
         async function _rpAdicionarCampo(codigo) {
             const label = document.getElementById('rp_novo_campo_label').value.trim();
             const tipoCampo = document.getElementById('rp_novo_campo_tipo').value;
-            if (!label) { alert('Escreve o nome do campo.'); return; }
+            if (!label) { alert('Escreve o nome do campo (ou, para um Título de secção, o texto do título).'); return; }
+            let opcoes = null;
+            if (tipoCampo === 'lista') {
+                const opcoesTxto = prompt('Escreve as opções da lista, separadas por vírgula (ex: Bom, Razoável, Mau):');
+                if (opcoesTxto === null) return; // cancelou
+                opcoes = opcoesTxto.split(',').map(o => o.trim()).filter(Boolean);
+                if (!opcoes.length) { alert('Tens de escrever pelo menos uma opção.'); return; }
+            }
             const tid = _tenantId();
             const tipo = (dados.tiposTrabalhoCustom || []).find(t => t.codigo === codigo && t.adminId === tid);
             if (!tipo) return;
             tipo.campos = tipo.campos || [];
-            tipo.campos.push({ id: gerarId(), label, tipo: tipoCampo });
+            const metade = document.getElementById('rp_novo_campo_metade')?.checked && tipoCampo !== 'titulo';
+            const tamanho = document.getElementById('rp_novo_campo_tamanho')?.value || 'normal';
+            const novoCampo = { id: gerarId(), label, tipo: tipoCampo, largura: metade ? 'metade' : 'completo', tamanho };
+            if (opcoes) novoCampo.opcoes = opcoes;
+            tipo.campos.push(novoCampo);
             try { await guardarDados(dados, ['tiposTrabalhoCustom']); } catch (e) { alert('⚠️ Ficou no ecrã, mas ainda não foi possível confirmar no servidor.'); }
             document.getElementById('rp_novo_campo_label').value = '';
+            const _chkMetade = document.getElementById('rp_novo_campo_metade'); if (_chkMetade) _chkMetade.checked = false;
+            const _selTamanho = document.getElementById('rp_novo_campo_tamanho'); if (_selTamanho) _selTamanho.value = 'normal';
             _rpAtualizarLista(tipo);
             _rpAtualizarPreview(tipo);
             const sel = document.getElementById('rp_tipo_select');
@@ -26967,23 +27119,54 @@ async function salvarAdmin(e) {
         // (REX, RBI, etc.), para que todo o resto do fluxo — guardar rascunho, concluir,
         // reaproveitar valores do relatório anterior, storage — funcione sem alterações.
         function _gerarTemplateRelatorioCustom(tipoDef) {
-            const campoHtml = c => {
+            const campoHtml = (c, fsz) => {
+                fsz = fsz || '.9rem';
                 const idAttr = `id="${c.id}"`;
-                if (c.tipo === 'textarea') return `<textarea ${idAttr} style="width:100%;min-height:70px;font-family:inherit;font-size:.9rem;padding:8px;border:1px solid var(--line);border-radius:6px;"></textarea>`;
-                if (c.tipo === 'numero') return `<input type="number" step="0.01" ${idAttr} style="width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:6px;font-family:inherit;font-size:.9rem;">`;
-                if (c.tipo === 'checkbox') return `<div class="campo-sim-nao" data-simnao="${c.id}">
+                if (c.tipo === 'textarea') return `<textarea ${idAttr} style="width:100%;min-height:70px;font-family:inherit;font-size:${fsz};padding:8px;border:1px solid var(--line);border-radius:6px;"></textarea>`;
+                if (c.tipo === 'numero') return `<input type="number" step="0.01" ${idAttr} style="width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:6px;font-family:inherit;font-size:${fsz};">`;
+                if (c.tipo === 'data') return `<input type="date" ${idAttr} style="width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:6px;font-family:inherit;font-size:${fsz};">`;
+                if (c.tipo === 'hora') return `<input type="time" ${idAttr} style="width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:6px;font-family:inherit;font-size:${fsz};">`;
+                if (c.tipo === 'lista') return `<select ${idAttr} style="width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:6px;font-family:inherit;font-size:${fsz};background:#fff;">
+                    <option value="">— Escolhe —</option>
+                    ${(c.opcoes || []).map(o => `<option value="${escapeHtmlSimples(o)}">${escapeHtmlSimples(o)}</option>`).join('')}
+                </select>`;
+                if (c.tipo === 'checkbox') return `<div class="campo-sim-nao" data-simnao="${c.id}" style="font-size:${fsz};">
                     <input type="hidden" ${idAttr} value="">
-                    <button type="button" class="btn-simnao" data-val="sim" onclick="_relSimNao('${c.id}','sim')">Sim</button>
-                    <button type="button" class="btn-simnao" data-val="nao" onclick="_relSimNao('${c.id}','nao')">Não</button>
+                    <button type="button" class="btn-simnao" data-val="sim" onclick="_relSimNao('${c.id}','sim')" style="font-size:${fsz};">Sim</button>
+                    <button type="button" class="btn-simnao" data-val="nao" onclick="_relSimNao('${c.id}','nao')" style="font-size:${fsz};">Não</button>
                 </div>`;
-                if (c.tipo === 'checklist') return `<label style="display:flex;align-items:center;gap:8px;font-size:.88rem;"><input type="checkbox" ${idAttr} style="width:18px;height:18px;"> Verificado / concluído</label>`;
-                return `<input type="text" ${idAttr} style="width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:6px;font-family:inherit;font-size:.9rem;">`;
+                if (c.tipo === 'checklist') return `<label style="display:flex;align-items:center;gap:8px;font-size:${fsz};"><input type="checkbox" ${idAttr} style="width:18px;height:18px;"> Verificado / concluído</label>`;
+                return `<input type="text" ${idAttr} style="width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:6px;font-family:inherit;font-size:${fsz};">`;
             };
-            const camposHtml = (tipoDef.campos || []).map(c => `
-                <div class="field-row">
-                    <label>${escapeHtmlSimples(c.label)}</label>
-                    ${campoHtml(c)}
-                </div>`).join('');
+            // "Título de secção" não é um campo a preencher — é só um separador visual entre
+            // grupos de campos. Campos marcados como "metade" juntam-se em pares na mesma
+            // linha (lado a lado); um campo "completo" ou "titulo" fecha sempre o par pendente
+            // primeiro (nunca fica um campo perdido a meio de outra linha).
+            let camposHtml = '';
+            let _pendente = null;
+            const _RP_TAM_TITULO = { pequeno: '.88rem', normal: '1rem', grande: '1.3rem' };
+            const _RP_TAM_LABEL = { pequeno: '.64rem', normal: '.72rem', grande: '.82rem' };
+            const _RP_TAM_CAMPO = { pequeno: '.8rem', normal: '.9rem', grande: '1.08rem' };
+            const _flush = () => { if (_pendente) { camposHtml += `<div class="field-row" style="display:flex;gap:14px;">${_pendente}<div style="flex:1;"></div></div>`; _pendente = null; } };
+            (tipoDef.campos || []).forEach(c => {
+                const tam = c.tamanho || 'normal';
+                if (c.tipo === 'titulo') {
+                    _flush();
+                    camposHtml += `<div class="field-row" style="margin:18px 0 10px;padding-top:10px;border-top:1px solid var(--line);">
+                        <h3 style="margin:0;font-size:${_RP_TAM_TITULO[tam]};color:var(--accent);text-transform:none;letter-spacing:0;">${escapeHtmlSimples(c.label)}</h3>
+                    </div>`;
+                    return;
+                }
+                const campoBloco = `<div style="flex:1;min-width:0;"><label style="font-size:${_RP_TAM_LABEL[tam]};">${escapeHtmlSimples(c.label)}</label>${campoHtml(c, _RP_TAM_CAMPO[tam])}</div>`;
+                if (c.largura === 'metade') {
+                    if (_pendente) { camposHtml += `<div class="field-row" style="display:flex;gap:14px;">${_pendente}${campoBloco}</div>`; _pendente = null; }
+                    else { _pendente = campoBloco; }
+                } else {
+                    _flush();
+                    camposHtml += `<div class="field-row">${campoBloco}</div>`;
+                }
+            });
+            _flush();
             return `<!DOCTYPE html>
 <html lang="pt-PT">
 <head>
@@ -27033,6 +27216,8 @@ async function salvarAdmin(e) {
   <header class="top">
     <div class="brand">
       <div class="empresa-nome" id="empresaNomeTxt"></div>
+      <div id="anepcRpLinha" style="display:none;font-size:.68rem;color:var(--muted);margin-top:3px;line-height:1.5;"></div>
+      <img id="certLogoImg" style="display:none;max-height:34px;max-width:120px;margin-top:6px;object-fit:contain;" />
     </div>
     <div class="meta">
       <div>Nº <input type="text" class="docNo"></div>
@@ -27101,6 +27286,17 @@ window._relPrefill = function(msg){
           document.documentElement.style.setProperty('--accent-soft', soft);
         }
       }
+      // ANEPC / registo prévio — só aparecem se a empresa os tiver mesmo preenchidos (ativados em
+      // "Opcionais Extra" → área de segurança). Sem isso, a linha e o logótipo ficam escondidos.
+      const linhaAnepcRp = document.getElementById('anepcRpLinha');
+      if (linhaAnepcRp) {
+        const partes = [];
+        if (msg.registoPrevioNumero) partes.push('Registo Prévio nº ' + msg.registoPrevioNumero);
+        if (msg.anepcNumero) partes.push('ANEPC nº ' + msg.anepcNumero);
+        if (partes.length) { linhaAnepcRp.textContent = partes.join(' · '); linhaAnepcRp.style.display = ''; }
+      }
+      const certLogoImg = document.getElementById('certLogoImg');
+      if (certLogoImg && msg.certificadoraLogo) { certLogoImg.src = msg.certificadoraLogo; certLogoImg.style.display = ''; }
     } catch(e){ console.error('branding relatório custom:', e); }
   }
   window._relAplicarBranding = _relAplicarBranding;
@@ -27192,6 +27388,7 @@ window._relPrefill = function(msg){
   document.getElementById('_relBtnRascunho').addEventListener('click', function(){
     document.querySelectorAll('input, select, textarea').forEach(el=>{
       if (el.type === 'checkbox' || el.type === 'radio') { if (el.checked) el.setAttribute('checked','checked'); else el.removeAttribute('checked'); }
+      else if (el.tagName === 'SELECT') { [...el.options].forEach(o=>o.removeAttribute('selected')); if (el.selectedOptions[0]) el.selectedOptions[0].setAttribute('selected','selected'); }
       else if (el.tagName === 'TEXTAREA') { el.textContent = el.value; }
       else { el.setAttribute('value', el.value); }
     });
@@ -27213,6 +27410,7 @@ window._relPrefill = function(msg){
     }
     document.querySelectorAll('input, select, textarea').forEach(el=>{
       if (el.type === 'checkbox' || el.type === 'radio') { if (el.checked) el.setAttribute('checked','checked'); else el.removeAttribute('checked'); }
+      else if (el.tagName === 'SELECT') { [...el.options].forEach(o=>o.removeAttribute('selected')); if (el.selectedOptions[0]) el.selectedOptions[0].setAttribute('selected','selected'); }
       else if (el.tagName === 'TEXTAREA') { el.textContent = el.value; }
       else { el.setAttribute('value', el.value); }
     });
@@ -29311,6 +29509,7 @@ window._relPrefill = function(msg){
 
         function _fecharModalGenerico() {
             document.getElementById('modalGenericoOverlay').classList.remove('open', 'modal-veros');
+            document.getElementById('rpPreviewFlutuante')?.classList.remove('open');
             const _acoes = document.getElementById('modalGenericoAcoes');
             if (_acoes) _acoes.style.display = ''; // repõe o rodapé Cancelar/Guardar, para não ficar escondido nos outros usos deste modal
             const _btnCancelar = document.querySelector('#modalGenericoOverlay .modal-actions button[type="button"]');
@@ -29318,7 +29517,22 @@ window._relPrefill = function(msg){
             const _bg = document.querySelector('#modalGenericoOverlay .modal-actions .btn-success');
             if (_bg) { _bg.style.display = ''; _bg.innerHTML = '<i class="fas fa-save"></i> Guardar'; }
             const _modalEl = document.querySelector('#modalGenericoOverlay .modal');
-            if (_modalEl) _modalEl.style.maxWidth = ''; // repõe a largura padrão do CSS (720px) — os ecrãs "Ver OS"/"Ver Obra" tinham um valor fixo próprio
+            if (_modalEl) {
+                // repõe tudo ao padrão do CSS — o ecrã de Relatórios Personalizados usa um
+                // modal maior e em coluna flex, os outros usos deste modal genérico não devem
+                // herdar isso.
+                _modalEl.style.maxWidth = '';
+                _modalEl.style.width = '';
+                _modalEl.style.minWidth = '';
+                _modalEl.style.height = '';
+                _modalEl.style.maxHeight = '';
+                _modalEl.style.display = '';
+                _modalEl.style.flexDirection = '';
+            }
+            const _formRp = document.getElementById('modalGenericoForm');
+            if (_formRp) { _formRp.style.flex = ''; _formRp.style.minHeight = ''; _formRp.style.display = ''; _formRp.style.flexDirection = ''; }
+            const _camposRp = document.getElementById('modalGenericoCampos');
+            if (_camposRp) { _camposRp.style.flex = ''; _camposRp.style.minHeight = ''; _camposRp.style.overflow = ''; }
         }
         // ---- Arrastar para confirmar (picagem de entrada) ----
         let _peSlideDragging = false, _peSlideConfirmed = false, _peSlideStartX = 0, _peSlideMax = 0;
@@ -30953,7 +31167,7 @@ window._relPrefill = function(msg){
                         const ic = c.querySelector('.icon i')?.className || 'fas fa-circle';
                         const nome = c.querySelector('.info h3')?.textContent?.trim() || sec;
                         const href = sec === 'crm' ? 'TOTALGEST_CRM.html' : (sec === 'assistencias' ? 'TOTALGEST_ASSIST.html' : (sec === 'rondas' ? 'TOTALGEST_RONDAS.html' : null));
-                        const onclickAttr = sec === 'crm' ? 'return _abrirCRM(event)' : (sec === 'assistencias' ? 'return _abrirAssist(event)' : (sec === 'rondas' ? 'return _abrirRondas(event)' : `abrirSecao('${sec}')`));
+                        const onclickAttr = sec === 'crm' ? 'return _abrirCRM(event)' : (sec === 'assistencias' ? 'return _abrirAssist(event)' : (sec === 'rondas' ? 'return _abrirRondas(event)' : (sec === 'relatorios-personalizados' ? 'abrirGestaoRelatoriosPersonalizados()' : `abrirSecao('${sec}')`)));
                         const atributosExtra = href ? `href="${href}" target="_blank" rel="noopener"` : '';
                         html += `<a class="tg-nav-item" data-secao="${sec}" ${atributosExtra} onclick="${onclickAttr}"><i class="${ic}"></i><span>${nome}</span></a>`;
                     });
@@ -30974,7 +31188,7 @@ window._relPrefill = function(msg){
                         // lateral tem de ser um <a href> a sério, tal como o card correspondente
                         // no ecrã principal, e não um simples onclick sem destino nenhum.
                         const href = sec === 'crm' ? 'TOTALGEST_CRM.html' : (sec === 'assistencias' ? 'TOTALGEST_ASSIST.html' : (sec === 'rondas' ? 'TOTALGEST_RONDAS.html' : null));
-                        const onclickAttr = sec === 'crm' ? 'return _abrirCRM(event)' : (sec === 'assistencias' ? 'return _abrirAssist(event)' : (sec === 'rondas' ? 'return _abrirRondas(event)' : `abrirSecao('${sec}')`));
+                        const onclickAttr = sec === 'crm' ? 'return _abrirCRM(event)' : (sec === 'assistencias' ? 'return _abrirAssist(event)' : (sec === 'rondas' ? 'return _abrirRondas(event)' : (sec === 'relatorios-personalizados' ? 'abrirGestaoRelatoriosPersonalizados()' : `abrirSecao('${sec}')`)));
                         const atributosExtra = href ? `href="${href}" target="_blank" rel="noopener"` : '';
                         html += `<a class="tg-nav-item" data-secao="${sec}" ${atributosExtra} onclick="${onclickAttr}"><i class="${ic}"></i><span>${nome}</span></a>`;
                     });
