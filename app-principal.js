@@ -21673,6 +21673,19 @@ async function salvarAdmin(e) {
                 { n: conversoesTotal, l: 'Conversões' },
                 { n: taxaConversao + '%', l: 'Taxa de conversão' },
             ];
+            // Duração e scroll só existem para visitas de quem já tem o ficheiro atualizado — as
+            // mais antigas ficam sem isto (fica de fora da média, não conta como "0 segundos").
+            const comDuracao = visitas.filter(v => v.duracao_segundos != null);
+            if (comDuracao.length) {
+                const duracaoMediaSeg = Math.round(comDuracao.reduce((s, v) => s + v.duracao_segundos, 0) / comDuracao.length);
+                const min = Math.floor(duracaoMediaSeg / 60), seg = duracaoMediaSeg % 60;
+                cards.push({ n: `${min}m ${seg}s`, l: 'Duração média' });
+            }
+            const comScroll = visitas.filter(v => v.scroll_maximo_pct != null);
+            if (comScroll.length) {
+                const scrollMedio = Math.round(comScroll.reduce((s, v) => s + v.scroll_maximo_pct, 0) / comScroll.length);
+                cards.push({ n: scrollMedio + '%', l: 'Scroll médio da página' });
+            }
             document.getElementById('an_resumo').innerHTML = cards.map(c => `
                 <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px;text-align:center;">
                     <div style="font-size:1.5rem;font-weight:800;color:#152a52;">${c.n}</div>

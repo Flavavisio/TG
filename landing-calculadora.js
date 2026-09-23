@@ -164,9 +164,87 @@ function _tcwCalcularResultado() {
         <a class="btn btn-orange" href="#" style="width:100%;justify-content:center;margin-top:16px;" onclick="_tgRegistarEvento('clique_cta','wizard_calc');fecharWizardCalc();abrirModalSignup();return false;">Começar 14 dias grátis <span style="margin-left:4px;">→</span></a>
     `;
 }
-function abrirModalSignup() {
+// Planos e add-ons mostrados no checkout — os preços têm de bater sempre certo com os cartões
+// da página e com os add-ons lá em baixo (PRECO_CRM_MENSAL etc., em app-principal.js); como esta
+// página não carrega app-principal.js, os valores ficam também aqui, à mão.
+const SU_PLANOS = {
+    '5': { nome: '5 funcionários', valor: 29.99 },
+    '10': { nome: '10 funcionários', valor: 34.99 },
+    '25': { nome: '25 funcionários', valor: 49.99 },
+    '50': { nome: '50 funcionários', valor: 89.99 },
+    '100': { nome: '100 funcionários', valor: 179.90 },
+};
+const SU_ADDONS = [
+    { key: 'frota', label: 'Frota', valor: 9.99 },
+    { key: 'contratos', label: 'Contratos de Manutenção', valor: 14.99 },
+    { key: 'armazem', label: 'Armazém / Stock', valor: 9.99 },
+    { key: 'crm', label: 'CRM Comercial', valor: 9.99 },
+    { key: 'assist', label: 'Total Gest Assist', valor: 9.99 },
+];
+function _suFormatarEuro(v) { return v.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'; }
+let _suPlanoSelecionado = null;
+function abrirModalSignup(planoChave) {
+    _suPlanoSelecionado = planoChave && SU_PLANOS[planoChave] ? planoChave : null;
+    const resumo = document.getElementById('su_plano_resumo');
+    const wrapColab = document.getElementById('su_colaboradores_wrap');
+    const inputColab = document.getElementById('su_colaboradores');
+    if (_suPlanoSelecionado) {
+        const p = SU_PLANOS[_suPlanoSelecionado];
+        document.getElementById('su_plano_nome').textContent = p.nome;
+        resumo.style.display = 'flex';
+        // O plano já diz quantos colaboradores é — o campo de texto livre fica escondido, e
+        // continua preenchido por trás com o mesmo valor, para não faltar nada ao validar/enviar.
+        inputColab.value = p.nome;
+        wrapColab.style.display = 'none';
+        inputColab.required = false;
+    } else {
+        resumo.style.display = 'none';
+        wrapColab.style.display = '';
+        inputColab.required = true;
+        inputColab.value = '';
+    }
+    const lista = document.getElementById('su_addons_lista');
+    document.getElementById('su_addons_label').innerHTML = _suPlanoSelecionado
+        ? 'Quer já juntar algum add-on? <span style="font-weight:400;color:#5a6781;">(soma ao valor mensal acima — dá sempre para adicionar mais tarde)</span>'
+        : 'Quer testar também algum destes add-ons? <span style="font-weight:400;color:#5a6781;">(incluídos sem custo durante os 14 dias — decide só no fim se quer manter)</span>';
+    // Com um plano escolhido (veio de um cartão de preço) é uma compra a sério — mostra o preço
+    // real de cada add-on, e cada vez que se marca/desmarca soma logo ao total ali em cima. Sem
+    // plano (veio do CTA genérico "14 dias grátis"), é só para experimentar — mostra "Grátis no
+    // teste" em vez de preço, porque durante o trial fica tudo incluído sem custo nenhum.
+    lista.innerHTML = SU_ADDONS.map(a => `
+        <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;font-weight:400;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;cursor:pointer;">
+            <input type="checkbox" value="${a.key}" style="width:auto;margin:0;" onchange="_suAtualizarTotal()" />
+            <span style="flex:1;">${a.label}</span>
+            <span style="${_suPlanoSelecionado ? 'color:#5a6781;' : 'color:#16a34a;font-weight:600;'}font-size:.72rem;white-space:nowrap;">${_suPlanoSelecionado ? '+ ' + _suFormatarEuro(a.valor) + '/mês' : 'Grátis no teste'}</span>
+        </label>
+    `).join('');
+    _suAtualizarTotal();
     document.getElementById('tg-signup-overlay').classList.add('open');
     document.body.style.overflow = 'hidden';
+}
+// Recalcula e mostra o preço total (plano + add-ons marcados) — só quando há um plano escolhido
+// a sério (veio de um cartão de preço). No CTA genérico do trial não há total nenhum a mostrar,
+// está tudo grátis durante o teste.
+function _suAtualizarTotal() {
+    const preco = document.getElementById('su_plano_preco');
+    const detalhe = document.getElementById('su_plano_detalhe');
+    if (!_suPlanoSelecionado) { preco.textContent = ''; detalhe.textContent = ''; return; }
+    const base = SU_PLANOS[_suPlanoSelecionado].valor;
+    const marcados = [...document.querySelectorAll('#su_addons_lista input:checked')].map(v => SU_ADDONS.find(a => a.key === v.value));
+    const totalAddons = marcados.reduce((s, a) => s + a.valor, 0);
+    preco.textContent = _suFormatarEuro(base + totalAddons) + '/mês';
+    detalhe.textContent = marcados.length ? `${_suFormatarEuro(base)} plano + ${marcados.length} add-on${marcados.length > 1 ? 's' : ''}` : '';
+}
+// "mudar" no resumo do plano — volta ao campo de texto livre, para quem afinal quer escrever um
+// número diferente do cartão em que clicou (ex.: "6-8", não bate certo com nenhum dos 5 planos).
+function _suMudarPlano() {
+    _suPlanoSelecionado = null;
+    document.getElementById('su_plano_resumo').style.display = 'none';
+    document.getElementById('su_colaboradores_wrap').style.display = '';
+    const inputColab = document.getElementById('su_colaboradores');
+    inputColab.required = true;
+    inputColab.value = '';
+    inputColab.focus();
 }
 function fecharModalSignup() {
     document.getElementById('tg-signup-overlay').classList.remove('open');
@@ -203,6 +281,7 @@ function _suValidarSenha() {
 async function submeterSignup(e) {
     e.preventDefault();
     const btn = document.getElementById('su_btn');
+    const addonsEscolhidos = [...document.querySelectorAll('#su_addons_lista input:checked')].map(c => c.value);
     const dadosPedido = {
         empresa: document.getElementById('su_empresa').value.trim(),
         nome: document.getElementById('su_nome').value.trim(),
@@ -210,7 +289,9 @@ async function submeterSignup(e) {
         telefone: document.getElementById('su_telefone').value.trim(),
         colaboradores: document.getElementById('su_colaboradores').value.trim() || null,
         nif: document.getElementById('su_nif').value.trim() || null,
-        senha: document.getElementById('su_senha').value
+        senha: document.getElementById('su_senha').value,
+        plano: _suPlanoSelecionado || null,
+        addons: addonsEscolhidos,
     };
     const senha2 = document.getElementById('su_senha2').value;
     if (!dadosPedido.empresa || !dadosPedido.nome || !dadosPedido.email || !dadosPedido.telefone || !dadosPedido.colaboradores || !dadosPedido.nif) {
@@ -318,6 +399,40 @@ function _tgIdentificarVisitante(nome, email) {
         supa.functions.invoke('registar-visita', { body: { acao: 'identificar', sessaoId: _tgSessaoId(), visitaId: _tgVisitaId, nome: nome || null, email: email || null } }).catch(() => {});
     } catch (e) { /* silencioso */ }
 }
+// Duração da visita e profundidade de scroll — o que interessa aqui não é a cada X segundos, é
+// o valor MÁXIMO ao longo de toda a visita (scroll pode subir e descer; duração só cresce).
+// Manda pelo sendBeacon ao sair, porque nessa altura a página pode fechar a qualquer instante —
+// um fetch normal arriscava-se a nunca chegar a partir.
+let _tgInicioVisita = Date.now();
+let _tgScrollMaximo = 0;
+function _tgAtualizarScrollMaximo() {
+    const doc = document.documentElement;
+    const alturaTotal = doc.scrollHeight - doc.clientHeight;
+    if (alturaTotal <= 0) { _tgScrollMaximo = 100; return; }
+    const pct = Math.round(Math.min(100, (window.scrollY / alturaTotal) * 100));
+    if (pct > _tgScrollMaximo) _tgScrollMaximo = pct;
+}
+function _tgEnviarDuracaoFinal() {
+    try {
+        if (!_tgVisitaId) return; // visita nem chegou a ficar registada, nada a atualizar
+        const duracaoSegundos = Math.round((Date.now() - _tgInicioVisita) / 1000);
+        const payload = JSON.stringify({ acao: 'duracao', sessaoId: _tgSessaoId(), visitaId: _tgVisitaId, duracaoSegundos, scrollMaximoPct: _tgScrollMaximo });
+        const url = `${SUPABASE_URL}/functions/v1/registar-visita`;
+        // Nota: usa fetch(keepalive) em vez de sendBeacon — o sendBeacon não deixa mandar
+        // cabeçalhos, e esta função (como todas as outras chamadas à Supabase) precisa da apikey
+        // para aceitar o pedido. O keepalive garante o mesmo comportamento essencial do beacon:
+        // o pedido continua a ser enviado mesmo que a página feche logo a seguir.
+        fetch(url, {
+            method: 'POST',
+            keepalive: true,
+            headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY },
+            body: payload,
+        }).catch(() => {});
+    } catch (e) { /* silencioso */ }
+}
+window.addEventListener('scroll', _tgAtualizarScrollMaximo, { passive: true });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') _tgEnviarDuracaoFinal(); });
+window.addEventListener('pagehide', _tgEnviarDuracaoFinal);
 if (document.getElementById('tg-landing')) {
     // O elemento "tg-landing" existe sempre no HTML (só fica escondido por CSS depois do login),
     // por isso não chega para saber se é mesmo um visitante novo — confirma com a sessão real do
