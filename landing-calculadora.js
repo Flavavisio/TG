@@ -500,13 +500,13 @@ const PACK_FUNCS = [
         ['GPS nas picagens', 0,1,1,1],
         ['Férias e faltas', 0,1,1,1],
         ['Portal do Cliente', 0,1,1,1],
-        ['Assistências', 0,1,1,1],
         ['Contratos de manutenção', 0,1,1,1],
+        ['Frota', 0,1,1,1],
         ['Relatórios de especialidade', 0,'REX, RBI, RSI, RCM, RIE, RCP, CCTV, Intrusão','REX, RBI, RSI, RCM, RIE, RCP, CCTV, Intrusão','REX, RBI, RSI, RCM, RIE, RCP, CCTV, Intrusão'],
         ['Mapa da Equipa', 0,1,1,1],
         ['Painel TV', 0,1,1,1],
     ]},
-    { grupo: 'Operação (obras, stock, frota)', linhas: [
+    { grupo: 'Operação (obras, stock, assistências)', linhas: [
         ['Folha de Obra — Custos Internos', 0,0,1,1],
         ['Custos de mão de obra', 0,0,1,1],
         ['Custos dos materiais', 0,0,1,1],
@@ -518,7 +518,7 @@ const PACK_FUNCS = [
         ['Encomendas', 0,0,1,1],
         ['Fornecedores', 0,0,1,1],
         ['Ferramentas / QR', 0,0,1,1],
-        ['Frota', 0,0,1,1],
+        ['Assistências', 0,0,1,1],
         ['Financeiro / Despesas', 0,0,1,1],
     ]},
     { grupo: 'Topo de gama', linhas: [
