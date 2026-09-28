@@ -5429,9 +5429,14 @@
                     <i class="fas fa-headset" style="color:#94a3b8;width:18px;"></i>
                     <div style="flex:1;min-width:0;">
                         <div style="font-size:.86rem;font-weight:600;text-align:left;">${a.numero ? '#' + escapeHtmlSimples(a.numero) + ' — ' : ''}${escapeHtmlSimples(a.assunto || 'Pedido de assistência')}</div>
-                        <div style="font-size:.76rem;color:#64748b;text-align:left;">${a.dataCriacao ? new Date(a.dataCriacao).toLocaleDateString('pt-PT') : '—'} · <span style="color:${prio.cor};font-weight:600;">${prio.label}</span> · ${a.atribuidoId ? escapeHtmlSimples(obterNomeFuncionario(a.atribuidoId) || 'Atribuída') : 'Por atribuir'}${a.osGeradaId ? ' · OS já criada' : ''}</div>
+                        <div style="font-size:.76rem;color:#64748b;text-align:left;">${a.dataCriacao ? new Date(a.dataCriacao).toLocaleDateString('pt-PT') : '—'} · <span style="color:${prio.cor};font-weight:600;">${prio.label}</span> · ${a.atribuidoId ? escapeHtmlSimples(obterNomeFuncionario(a.atribuidoId) || 'Atribuída') : 'Por atribuir'}</div>
                     </div>
-                    <span style="font-size:.7rem;font-weight:600;padding:3px 9px;border-radius:6px;background:${corFundo};color:${corTexto};white-space:nowrap;">${estadoLabel[a.estado] || 'Aberta'}</span>
+                    <div style="text-align:right;">
+                        <span style="font-size:.7rem;font-weight:600;padding:3px 9px;border-radius:6px;background:${corFundo};color:${corTexto};white-space:nowrap;">${estadoLabel[a.estado] || 'Aberta'}</span>
+                        <div style="font-size:.68rem;margin-top:3px;font-weight:600;color:${a.osGeradaId ? '#166534' : '#dc2626'};white-space:nowrap;">${a.osGeradaId ? '✓ OS atribuída' : 'Falta agendar data de OS'}</div>
+                    </div>
+                    ${a.estado === 'aberta' ? `<button class="btn btn-sm btn-warning" onclick="event.stopPropagation();_wsAssistNovoForm('${clienteId}','${a.id}')" title="Editar pedido"><i class="fas fa-edit"></i></button>` : ''}
+                    <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();_wsAssistApagar('${clienteId}','${a.id}')" title="Apagar pedido"><i class="fas fa-trash"></i></button>
                 </div>`;
             }).join('');
             return cabecalho + `
@@ -5447,46 +5452,62 @@
         }
         // Criar uma assistência sem sair do workspace — fica logo válida "por atribuir" (sem
         // técnico definido ainda), tal como já é possível fazer no Total Gest Assist.
-        function _wsAssistNovoForm(clienteId) {
+        function _wsAssistNovoForm(clienteId, assistId) {
             const area = document.getElementById('wsAssistFormArea');
             if (!area) return;
-            if (area.dataset.aberto === '1') { area.innerHTML = ''; area.dataset.aberto = ''; return; }
+            const editando = !!assistId;
+            const a = editando ? (dados.assistencias || []).find(x => x.id === assistId) : null;
+            if (!editando && area.dataset.aberto === '1') { area.innerHTML = ''; area.dataset.aberto = ''; return; }
             area.dataset.aberto = '1';
             const ASSIST_PRIORIDADES = { baixa: 'Baixa', normal: 'Normal', alta: 'Alta', urgente: 'Urgente' };
             area.innerHTML = `
                 <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px 18px;margin-bottom:14px;">
-                    <div class="form-group"><label>Assunto</label><input type="text" id="wsa_assunto" placeholder="Ex: Alarme a disparar sem motivo" /></div>
-                    <div class="form-group"><label>Descrição (opcional)</label><textarea id="wsa_descricao" rows="2" placeholder="Mais detalhes sobre o pedido..."></textarea></div>
+                    <div class="form-group"><label>Assunto</label><input type="text" id="wsa_assunto" placeholder="Ex: Alarme a disparar sem motivo" value="${escapeHtmlSimples(a?.assunto || '')}" /></div>
+                    <div class="form-group"><label>Descrição (opcional)</label><textarea id="wsa_descricao" rows="2" placeholder="Mais detalhes sobre o pedido...">${escapeHtmlSimples(a?.descricao || '')}</textarea></div>
                     <div style="display:flex;gap:10px;">
                         <div class="form-group" style="flex:1;"><label>Prioridade</label>
-                            <select id="wsa_prioridade">${Object.entries(ASSIST_PRIORIDADES).map(([k, l]) => `<option value="${k}" ${k === 'normal' ? 'selected' : ''}>${l}</option>`).join('')}</select>
+                            <select id="wsa_prioridade">${Object.entries(ASSIST_PRIORIDADES).map(([k, l]) => `<option value="${k}" ${(a?.prioridade || 'normal') === k ? 'selected' : ''}>${l}</option>`).join('')}</select>
                         </div>
                         <div class="form-group" style="flex:1;"><label>Atribuir a</label>
-                            <select id="wsa_atribuido"><option value="">— Por atribuir —</option>${_mePessoas().map(p => `<option value="${p.id}">${escapeHtmlSimples(p.nome)}</option>`).join('')}</select>
+                            <select id="wsa_atribuido"><option value="">— Por atribuir —</option>${_mePessoas().map(p => `<option value="${p.id}" ${a?.atribuidoId === p.id ? 'selected' : ''}>${escapeHtmlSimples(p.nome)}</option>`).join('')}</select>
                         </div>
                     </div>
                     <div style="display:flex;gap:8px;margin-top:6px;">
-                        <button type="button" class="btn btn-sm btn-primary" onclick="_wsAssistGuardar('${clienteId}')"><i class="fas fa-check"></i> Criar assistência</button>
+                        <button type="button" class="btn btn-sm btn-primary" onclick="_wsAssistGuardar('${clienteId}', ${editando ? `'${assistId}'` : 'null'})"><i class="fas fa-check"></i> ${editando ? 'Guardar alterações' : 'Criar assistência'}</button>
                         <button type="button" class="btn btn-sm btn-outline" onclick="_wsAssistNovoForm('${clienteId}')">Cancelar</button>
                     </div>
                 </div>
             `;
         }
-        async function _wsAssistGuardar(clienteId) {
+        async function _wsAssistGuardar(clienteId, assistId) {
             const assunto = document.getElementById('wsa_assunto')?.value.trim();
             if (!assunto) { alert('Escreve o assunto do pedido.'); return; }
-            const tid = _tenantId();
-            const registo = {
-                id: gerarId(), adminId: tid, numero: _wsGerarNumeroAssistencia(), clienteId,
-                assunto, descricao: document.getElementById('wsa_descricao')?.value.trim() || null,
-                prioridade: document.getElementById('wsa_prioridade')?.value || 'normal',
-                estado: 'aberta',
-                atribuidoId: document.getElementById('wsa_atribuido')?.value || null, // fica por atribuir se não se escolher ninguém
-                criadoPor: usuarioLogado?.id || null, osGeradaId: null, notas: [],
-                dataCriacao: Date.now(), dataModificacao: Date.now(),
-            };
-            dados.assistencias = dados.assistencias || [];
-            dados.assistencias.push(registo);
+            const prioridade = document.getElementById('wsa_prioridade')?.value || 'normal';
+            const descricao = document.getElementById('wsa_descricao')?.value.trim() || null;
+            const atribuidoId = document.getElementById('wsa_atribuido')?.value || null;
+            if (assistId) {
+                const a = (dados.assistencias || []).find(x => x.id === assistId);
+                if (!a) return;
+                a.assunto = assunto; a.descricao = descricao; a.prioridade = prioridade; a.atribuidoId = atribuidoId;
+                a.dataModificacao = Date.now();
+            } else {
+                const tid = _tenantId();
+                dados.assistencias = dados.assistencias || [];
+                dados.assistencias.push({
+                    id: gerarId(), adminId: tid, numero: _wsGerarNumeroAssistencia(), clienteId,
+                    assunto, descricao, prioridade, estado: 'aberta',
+                    atribuidoId, // fica por atribuir se não se escolher ninguém
+                    criadoPor: usuarioLogado?.id || null, osGeradaId: null, notas: [],
+                    dataCriacao: Date.now(), dataModificacao: Date.now(),
+                });
+            }
+            try { await guardarDados(dados, ['assistencias']); } catch (e) { alert('⚠️ Ficou no ecrã, mas ainda não foi possível confirmar no servidor.'); }
+            const conteudo = document.getElementById('wsClienteConteudo');
+            if (conteudo) conteudo.innerHTML = _wsAssistenciasHtml(clienteId);
+        }
+        async function _wsAssistApagar(clienteId, assistId) {
+            if (!confirm('Tem a certeza que pretende excluir este pedido de assistência? Não é possível desfazer.')) return;
+            dados.assistencias = (dados.assistencias || []).filter(a => a.id !== assistId);
             try { await guardarDados(dados, ['assistencias']); } catch (e) { alert('⚠️ Ficou no ecrã, mas ainda não foi possível confirmar no servidor.'); }
             const conteudo = document.getElementById('wsClienteConteudo');
             if (conteudo) conteudo.innerHTML = _wsAssistenciasHtml(clienteId);
@@ -5630,6 +5651,7 @@
                     </div>
                     <span style="font-size:.7rem;font-weight:600;padding:3px 9px;border-radius:6px;background:${corFundo};color:${corTexto};white-space:nowrap;text-transform:capitalize;">${escapeHtmlSimples(s.status || 'pendente')}</span>
                     <button class="btn btn-sm btn-warning" onclick="event.stopPropagation();_wsSairPara('${clienteId}');abrirModal('servico','${s.id}')" title="Editar OS"><i class="fas fa-edit"></i></button>
+                    <button class="btn btn-sm btn-danger" onclick="event.stopPropagation();_wsApagarOS('${clienteId}','${s.id}')" title="Apagar OS"><i class="fas fa-trash"></i></button>
                 </div>`;
             }).join('');
             return `
@@ -5640,6 +5662,15 @@
                 <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:6px 18px;">${linhas}</div>
                 ${_wsOsBotaoCarregarMais(clienteId, desde)}
             `;
+        }
+        // Reaproveita a mesma excluirEntidade da lista principal (já limpa folhas de obra,
+        // relatórios e picagens associados) e só depois atualiza a lista aqui no workspace.
+        async function _wsApagarOS(clienteId, osId) {
+            await excluirEntidade('servico', osId);
+            const conteudo = document.getElementById('wsClienteConteudo');
+            if (conteudo && document.getElementById('wsClienteOverlay')?.classList.contains('open')) {
+                conteudo.innerHTML = await _wsOsHtml(clienteId);
+            }
         }
         function _wsOsBotaoCarregarMais(clienteId, desdeAtual) {
             return `<div style="text-align:center;margin-top:14px;">
@@ -27192,7 +27223,12 @@ async function salvarAdmin(e) {
                 alert('Funcionários só podem excluir Ordens de Serviço, Folhas de Obra e Requisições.');
                 return;
             }
-            if (!confirm(`Tem certeza que pretende excluir este ${entidade}?`)) return;
+            if (entidade === 'servico') {
+                const _folhasLigadas = (dados.folhasObra || []).filter(f => f.servicoId === id).length;
+                const _relLigados = (dados.relatoriosEspecialidade || []).filter(r => r.servicoId === id).length;
+                const _extra = [_folhasLigadas ? `${_folhasLigadas} folha(s) de obra` : '', _relLigados ? `${_relLigados} relatório(s)` : ''].filter(Boolean).join(' e ');
+                if (!confirm(`Tem a certeza que pretende excluir esta Ordem de Serviço?${_extra ? `\n\nIsto vai apagar também ${_extra} associados a ela. Não é possível desfazer.` : ' Não é possível desfazer.'}`)) return;
+            } else if (!confirm(`Tem certeza que pretende excluir este ${entidade}?`)) return;
             if (entidade === 'cliente') {
                 const contratosLigados = (dados.contratos || []).filter(c => c.clienteId === id);
                 if (contratosLigados.length) {
@@ -27214,6 +27250,17 @@ async function salvarAdmin(e) {
             else if (entidade === 'servico') dados.servicos = novaLista;
             else if (entidade === 'folha') dados.folhasObra = novaLista;
             else if (entidade === 'requisicao') dados.requisicoes = novaLista;
+            // Apagar uma OS não apagava o que estava associado a ela — ficavam folhas de obra,
+            // relatórios de especialidade e picagens de ponto "presos" a uma OS que já não existe.
+            // Limpa tudo aqui, de uma vez, para isto valer em qualquer sítio que chame excluirEntidade.
+            if (entidade === 'servico') {
+                dados.folhasObra = (dados.folhasObra || []).filter(f => f.servicoId !== id);
+                dados.relatoriosEspecialidade = (dados.relatoriosEspecialidade || []).filter(r => r.servicoId !== id);
+                dados.ponto = (dados.ponto || []).filter(p => p.servicoId !== id);
+                // Uma assistência que gerou esta OS não se apaga — só deixa de estar ligada, para
+                // poder gerar outra OS de novo, se for preciso.
+                (dados.assistencias || []).forEach(a => { if (a.osGeradaId === id) a.osGeradaId = null; });
+            }
             guardarDados(dados);
             registarAuditoria('eliminar', entidade, id, '');
             renderizarTudo();
