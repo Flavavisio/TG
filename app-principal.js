@@ -5629,6 +5629,7 @@
                         <div style="font-size:.76rem;color:#64748b;text-align:left;">${(s.data || '').split('-').reverse().join('/')} · ${escapeHtmlSimples(nomeLocal(s.localId))} · ${escapeHtmlSimples(obterNomeFuncionario(s.funcionarioId) || 'Sem técnico')}</div>
                     </div>
                     <span style="font-size:.7rem;font-weight:600;padding:3px 9px;border-radius:6px;background:${corFundo};color:${corTexto};white-space:nowrap;text-transform:capitalize;">${escapeHtmlSimples(s.status || 'pendente')}</span>
+                    <button class="btn btn-sm btn-warning" onclick="event.stopPropagation();_wsSairPara('${clienteId}');abrirModal('servico','${s.id}')" title="Editar OS"><i class="fas fa-edit"></i></button>
                 </div>`;
             }).join('');
             return `
