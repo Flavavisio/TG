@@ -490,7 +490,7 @@ const PACK_FUNCS = [
         ['Folha de Obra / Intervenção', 1,1,1,1],
         ['PDF Folha de Obra — Cliente', 1,1,1,1],
         ['Manutenções', 1,1,1,1],
-        ['Agenda de OS', 1,1,1,1],
+        ['Agenda de Obras (calendário de OS)', 1,1,1,1],
         ['Funcionários', 1,1,1,1],
         ['Calendário da equipa', 1,1,1,1],
         ['Relatórios personalizados', '5 modelos','15 modelos','40 modelos','Ilimitados'],
