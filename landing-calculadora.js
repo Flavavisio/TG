@@ -164,87 +164,121 @@ function _tcwCalcularResultado() {
         <a class="btn btn-orange" href="#" style="width:100%;justify-content:center;margin-top:16px;" onclick="_tgRegistarEvento('clique_cta','wizard_calc');fecharWizardCalc();abrirModalSignup();return false;">Começar 14 dias grátis <span style="margin-left:4px;">→</span></a>
     `;
 }
-// Planos e add-ons mostrados no checkout — os preços têm de bater sempre certo com os cartões
-// da página e com os add-ons lá em baixo (PRECO_CRM_MENSAL etc., em app-principal.js); como esta
-// página não carrega app-principal.js, os valores ficam também aqui, à mão.
-const SU_PLANOS = {
-    '5': { nome: '5 funcionários', valor: 29.99 },
-    '10': { nome: '10 funcionários', valor: 34.99 },
-    '25': { nome: '25 funcionários', valor: 49.99 },
-    '50': { nome: '50 funcionários', valor: 89.99 },
-    '100': { nome: '100 funcionários', valor: 179.90 },
+// Packs e escalões mostrados no checkout — os preços têm de bater sempre certo com os cartões
+// da página (PACK_PRECOS_SITE). Como esta página não carrega app-principal.js, ficam também aqui.
+const SU_PACKS = {
+    express: { nome: 'Express' },
+    expert:  { nome: 'Expert' },
+    pro:     { nome: 'Pro' },
+    supreme: { nome: 'Supreme' },
 };
-const SU_ADDONS = [
-    { key: 'frota', label: 'Frota', valor: 9.99 },
-    { key: 'contratos', label: 'Contratos de Manutenção', valor: 14.99 },
-    { key: 'armazem', label: 'Armazém / Stock', valor: 9.99 },
-    { key: 'crm', label: 'CRM Comercial', valor: 9.99 },
-    { key: 'assist', label: 'Total Gest Assist', valor: 9.99 },
+// Escalões-base de funcionários (o preço vem de PACK_PRECOS_SITE, por pack). A partir daqui,
+// em qualquer um destes, dá para juntar blocos de +5 funcionários a 5€/mês cada — não é preciso
+// escolher "mais de 50" à parte, os blocos somam-se ao escalão escolhido, até um total de 100.
+const SU_ESCALOES = [
+    { key: '5', label: 'Até 5 funcionários' },
+    { key: '10', label: 'Até 10 funcionários' },
+    { key: '25', label: 'Até 25 funcionários' },
+    { key: '50', label: 'Até 50 funcionários' },
 ];
+const SU_PRECO_BLOCO_5 = 5;
+const SU_MAX_FUNCIONARIOS = 100;
 function _suFormatarEuro(v) { return v.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'; }
-let _suPlanoSelecionado = null;
-function abrirModalSignup(planoChave) {
-    _suPlanoSelecionado = planoChave && SU_PLANOS[planoChave] ? planoChave : null;
+let _suPackSelecionado = null;
+let _suEscalaoSelecionado = '5';
+let _suBlocosExtra = 0;
+function abrirModalSignup(packChave) {
+    _suPackSelecionado = packChave && SU_PACKS[packChave] ? packChave : null;
+    _suEscalaoSelecionado = (typeof _packEscalaoAtual !== 'undefined' && _packEscalaoAtual && _packEscalaoAtual !== '50+') ? _packEscalaoAtual : '5';
+    _suBlocosExtra = 0;
     const resumo = document.getElementById('su_plano_resumo');
     const wrapColab = document.getElementById('su_colaboradores_wrap');
     const inputColab = document.getElementById('su_colaboradores');
-    if (_suPlanoSelecionado) {
-        const p = SU_PLANOS[_suPlanoSelecionado];
-        document.getElementById('su_plano_nome').textContent = p.nome;
+    const blocoPack = document.getElementById('su_pack_bloco');
+    const titulo = document.getElementById('su_titulo');
+    const subtitulo = document.getElementById('su_subtitulo');
+    if (_suPackSelecionado) {
+        // Escolheu um pack de propósito, a partir da tabela de preços — isto já não é uma pessoa
+        // curiosa a "só experimentar", é alguém a decidir-se por um plano. O texto deixa de falar
+        // em "teste" para não parecer que está só a pedir uma demo.
+        if (titulo) titulo.textContent = 'Ativar o Pack ' + SU_PACKS[_suPackSelecionado].nome;
+        if (subtitulo) subtitulo.textContent = 'Preencha os dados abaixo para ativarmos a sua conta. Fica com 14 dias grátis já com este plano, antes de qualquer pagamento.';
+        document.getElementById('su_plano_nome').textContent = 'Pack ' + SU_PACKS[_suPackSelecionado].nome;
         resumo.style.display = 'flex';
-        // O plano já diz quantos colaboradores é — o campo de texto livre fica escondido, e
-        // continua preenchido por trás com o mesmo valor, para não faltar nada ao validar/enviar.
-        inputColab.value = p.nome;
         wrapColab.style.display = 'none';
         inputColab.required = false;
+        if (blocoPack) blocoPack.style.display = '';
+        _suRenderEscaloes();
     } else {
+        // Veio do CTA genérico "14 dias grátis" — sem pack ainda, pede só o nº de colaboradores.
+        if (titulo) titulo.textContent = 'Comece agora o seu teste gratuito';
+        if (subtitulo) subtitulo.textContent = 'Preencha os dados abaixo — a conta fica pronta assim que confirmar o email.';
         resumo.style.display = 'none';
         wrapColab.style.display = '';
         inputColab.required = true;
         inputColab.value = '';
+        if (blocoPack) blocoPack.style.display = 'none';
     }
-    const lista = document.getElementById('su_addons_lista');
-    document.getElementById('su_addons_label').innerHTML = _suPlanoSelecionado
-        ? 'Quer já juntar algum add-on? <span style="font-weight:400;color:#5a6781;">(soma ao valor mensal acima — dá sempre para adicionar mais tarde)</span>'
-        : 'Quer testar também algum destes add-ons? <span style="font-weight:400;color:#5a6781;">(incluídos sem custo durante os 14 dias — decide só no fim se quer manter)</span>';
-    // Com um plano escolhido (veio de um cartão de preço) é uma compra a sério — mostra o preço
-    // real de cada add-on, e cada vez que se marca/desmarca soma logo ao total ali em cima. Sem
-    // plano (veio do CTA genérico "14 dias grátis"), é só para experimentar — mostra "Grátis no
-    // teste" em vez de preço, porque durante o trial fica tudo incluído sem custo nenhum.
-    lista.innerHTML = SU_ADDONS.map(a => `
-        <label style="display:flex;align-items:center;gap:8px;font-size:.82rem;font-weight:400;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;cursor:pointer;">
-            <input type="checkbox" value="${a.key}" style="width:auto;margin:0;" onchange="_suAtualizarTotal()" />
-            <span style="flex:1;">${a.label}</span>
-            <span style="${_suPlanoSelecionado ? 'color:#5a6781;' : 'color:#16a34a;font-weight:600;'}font-size:.72rem;white-space:nowrap;">${_suPlanoSelecionado ? '+ ' + _suFormatarEuro(a.valor) + '/mês' : 'Grátis no teste'}</span>
-        </label>
-    `).join('');
     _suAtualizarTotal();
     document.getElementById('tg-signup-overlay').classList.add('open');
     document.body.style.overflow = 'hidden';
 }
-// Recalcula e mostra o preço total (plano + add-ons marcados) — só quando há um plano escolhido
-// a sério (veio de um cartão de preço). No CTA genérico do trial não há total nenhum a mostrar,
-// está tudo grátis durante o teste.
+function _suRenderEscaloes() {
+    const cont = document.getElementById('su_escalao_botoes');
+    if (!cont) return;
+    cont.innerHTML = SU_ESCALOES.map(e => `
+        <button type="button" class="su-escalao-btn ${e.key === _suEscalaoSelecionado ? 'active' : ''}" onclick="_suMudarEscalao('${e.key}')">${e.label}</button>
+    `).join('');
+    // Os blocos de +5 aparecem sempre, seja qual for o escalão-base escolhido — servem para
+    // qualquer pack e qualquer escalão, até ao máximo de 100 funcionários no total.
+    const wrapBlocos = document.getElementById('su_blocos_wrap');
+    if (wrapBlocos) wrapBlocos.style.display = '';
+    document.getElementById('su_blocos_num').textContent = _suBlocosExtra;
+    document.getElementById('su_blocos_pessoas').textContent = Number(_suEscalaoSelecionado) + _suBlocosExtra * 5;
+    const inputColab = document.getElementById('su_colaboradores');
+    if (inputColab) inputColab.value = SU_ESCALOES.find(e => e.key === _suEscalaoSelecionado)?.label || '';
+}
+function _suMudarEscalao(escalao) {
+    _suEscalaoSelecionado = escalao;
+    // Ao mudar de escalão-base, os blocos que já tinha ficam — só se ajustam para baixo se, com
+    // o novo escalão, ultrapassarem os 100 no total.
+    const maxBlocos = Math.floor((SU_MAX_FUNCIONARIOS - Number(escalao)) / 5);
+    if (_suBlocosExtra > maxBlocos) _suBlocosExtra = maxBlocos;
+    _suRenderEscaloes();
+    _suAtualizarTotal();
+}
+function _suMudarBlocos(delta) {
+    const maxBlocos = Math.floor((SU_MAX_FUNCIONARIOS - Number(_suEscalaoSelecionado)) / 5);
+    _suBlocosExtra = Math.max(0, Math.min(maxBlocos, _suBlocosExtra + delta));
+    document.getElementById('su_blocos_num').textContent = _suBlocosExtra;
+    document.getElementById('su_blocos_pessoas').textContent = Number(_suEscalaoSelecionado) + _suBlocosExtra * 5;
+    _suAtualizarTotal();
+}
+// Recalcula e mostra o preço total (pack do escalão-base + blocos de +5). Só quando há um pack
+// escolhido — no CTA genérico do trial não há total a mostrar, está tudo grátis no teste.
+function _suPrecoAtual() {
+    if (!_suPackSelecionado) return null;
+    const precos = PACK_PRECOS_SITE[_suPackSelecionado];
+    return (precos[_suEscalaoSelecionado] || precos[5]) + _suBlocosExtra * SU_PRECO_BLOCO_5;
+}
 function _suAtualizarTotal() {
     const preco = document.getElementById('su_plano_preco');
     const detalhe = document.getElementById('su_plano_detalhe');
-    if (!_suPlanoSelecionado) { preco.textContent = ''; detalhe.textContent = ''; return; }
-    const base = SU_PLANOS[_suPlanoSelecionado].valor;
-    const marcados = [...document.querySelectorAll('#su_addons_lista input:checked')].map(v => SU_ADDONS.find(a => a.key === v.value));
-    const totalAddons = marcados.reduce((s, a) => s + a.valor, 0);
-    preco.textContent = _suFormatarEuro(base + totalAddons) + '/mês';
-    detalhe.textContent = marcados.length ? `${_suFormatarEuro(base)} plano + ${marcados.length} add-on${marcados.length > 1 ? 's' : ''}` : '';
+    if (!preco) return;
+    if (!_suPackSelecionado) { preco.textContent = ''; if (detalhe) detalhe.textContent = ''; return; }
+    const total = _suPrecoAtual();
+    preco.textContent = _suFormatarEuro(total) + '/mês';
+    if (detalhe) {
+        const totalFunc = Number(_suEscalaoSelecionado) + _suBlocosExtra * 5;
+        detalhe.textContent = _suBlocosExtra
+            ? `${totalFunc} funcionários (${SU_ESCALOES.find(e => e.key === _suEscalaoSelecionado)?.label} + ${_suBlocosExtra} bloco${_suBlocosExtra === 1 ? '' : 's'} de +5)`
+            : SU_ESCALOES.find(e => e.key === _suEscalaoSelecionado)?.label || '';
+    }
 }
-// "mudar" no resumo do plano — volta ao campo de texto livre, para quem afinal quer escrever um
-// número diferente do cartão em que clicou (ex.: "6-8", não bate certo com nenhum dos 5 planos).
+// "mudar" no resumo — deixa escolher outro pack sem fechar o modal.
 function _suMudarPlano() {
-    _suPlanoSelecionado = null;
-    document.getElementById('su_plano_resumo').style.display = 'none';
-    document.getElementById('su_colaboradores_wrap').style.display = '';
-    const inputColab = document.getElementById('su_colaboradores');
-    inputColab.required = true;
-    inputColab.value = '';
-    inputColab.focus();
+    fecharModalSignup();
+    document.getElementById('preco')?.scrollIntoView({ behavior: 'smooth' });
 }
 function fecharModalSignup() {
     document.getElementById('tg-signup-overlay').classList.remove('open');
@@ -281,7 +315,6 @@ function _suValidarSenha() {
 async function submeterSignup(e) {
     e.preventDefault();
     const btn = document.getElementById('su_btn');
-    const addonsEscolhidos = [...document.querySelectorAll('#su_addons_lista input:checked')].map(c => c.value);
     const dadosPedido = {
         empresa: document.getElementById('su_empresa').value.trim(),
         nome: document.getElementById('su_nome').value.trim(),
@@ -290,8 +323,12 @@ async function submeterSignup(e) {
         colaboradores: document.getElementById('su_colaboradores').value.trim() || null,
         nif: document.getElementById('su_nif').value.trim() || null,
         senha: document.getElementById('su_senha').value,
-        plano: _suPlanoSelecionado || null,
-        addons: addonsEscolhidos,
+        // Modelo de packs: manda o pack escolhido, o escalão e (se for 50+) os blocos de +5.
+        // "plano" fica com o nome do pack, para a Edge Function/super admin saberem o que ativar.
+        plano: _suPackSelecionado || null,
+        escalao: _suPackSelecionado ? _suEscalaoSelecionado : null,
+        blocosExtra: _suPackSelecionado ? _suBlocosExtra : 0,
+        addons: [],
     };
     const senha2 = document.getElementById('su_senha2').value;
     if (!dadosPedido.empresa || !dadosPedido.nome || !dadosPedido.email || !dadosPedido.telefone || !dadosPedido.colaboradores || !dadosPedido.nif) {
@@ -433,10 +470,126 @@ function _tgEnviarDuracaoFinal() {
 window.addEventListener('scroll', _tgAtualizarScrollMaximo, { passive: true });
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') _tgEnviarDuracaoFinal(); });
 window.addEventListener('pagehide', _tgEnviarDuracaoFinal);
+
+// ===================== PACKS (Fase 2 — site) =====================
+// Preços por escalão de funcionários (c/ IVA). Acima de 50, blocos de +5 a 5€/mês.
+const PACK_PRECOS_SITE = {
+    express: { 5: 42.49, 10: 47.49, 25: 62.49, 50: 102.49 },
+    expert:  { 5: 52.49, 10: 57.49, 25: 72.49, 50: 112.49 },
+    pro:     { 5: 72.49, 10: 77.49, 25: 92.49, 50: 132.49 },
+    supreme: { 5: 102.49, 10: 107.49, 25: 122.49, 50: 162.49 },
+};
+// Detalhe de cada pack — o que ganhas ao subir de nível fica agrupado, para o cliente perceber
+// logo "o que é que este pack me traz a mais". Cumulativo: cada um inclui tudo o do anterior.
+// Mapa completo de funcionalidades por pack (igual ao Excel). Agrupado por área para se ler bem.
+// ✓ = incluído nesse pack. A ordem segue a lógica cumulativa Express → Expert → Pro → Supreme.
+const PACK_FUNCS = [
+    { grupo: 'Base', linhas: [
+        ['Clientes e locais', 1,1,1,1],
+        ['Ordens de Serviço', 1,1,1,1],
+        ['Folha de Obra / Intervenção', 1,1,1,1],
+        ['PDF Folha de Obra — Cliente', 1,1,1,1],
+        ['Manutenções', 1,1,1,1],
+        ['Agenda de OS', 1,1,1,1],
+        ['Funcionários', 1,1,1,1],
+        ['Calendário da equipa', 1,1,1,1],
+        ['Relatórios personalizados', '5 modelos','15 modelos','40 modelos','Ilimitados'],
+    ]},
+    { grupo: 'Equipa no terreno', linhas: [
+        ['Ponto / Assiduidade', 0,1,1,1],
+        ['GPS nas picagens', 0,1,1,1],
+        ['Férias e faltas', 0,1,1,1],
+        ['Portal do Cliente', 0,1,1,1],
+        ['Assistências', 0,1,1,1],
+        ['Contratos de manutenção', 0,1,1,1],
+        ['Relatórios de especialidade', 0,'REX, RBI, RSI, RCM, RIE, RCP, CCTV, Intrusão','REX, RBI, RSI, RCM, RIE, RCP, CCTV, Intrusão','REX, RBI, RSI, RCM, RIE, RCP, CCTV, Intrusão'],
+        ['Mapa da Equipa', 0,1,1,1],
+        ['Painel TV', 0,1,1,1],
+    ]},
+    { grupo: 'Operação (obras, stock, frota)', linhas: [
+        ['Folha de Obra — Custos Internos', 0,0,1,1],
+        ['Custos de mão de obra', 0,0,1,1],
+        ['Custos dos materiais', 0,0,1,1],
+        ['Obras', 0,0,1,1],
+        ['Picagem entrada/saída em obra', 0,0,1,1],
+        ['Stock / Artigos', 0,0,1,1],
+        ['Armazéns', 0,0,1,1],
+        ['Requisições', 0,0,1,1],
+        ['Encomendas', 0,0,1,1],
+        ['Fornecedores', 0,0,1,1],
+        ['Ferramentas / QR', 0,0,1,1],
+        ['Frota', 0,0,1,1],
+        ['Financeiro / Despesas', 0,0,1,1],
+    ]},
+    { grupo: 'Topo de gama', linhas: [
+        ['CRM Comercial', 0,0,0,1],
+        ['Dashboard Analítico', 0,0,0,1],
+        ['Geofence / histórico GPS', 0,0,0,1],
+        ['Integração ERP', 0,0,0,1],
+        ['Rondas / Vigilância', 0,0,0,1],
+        ['Auditoria avançada', 0,0,0,1],
+    ]},
+];
+const PACK_LIMITES_TXT = { express: 'Até 5 modelos de relatório personalizado', expert: 'Até 15 modelos', pro: 'Até 40 modelos', supreme: 'Modelos ilimitados' };
+const PACK_NOMES = { express: 'Express', expert: 'Expert', pro: 'Pro', supreme: 'Supreme' };
+const PACK_IDX = { express: 1, expert: 2, pro: 3, supreme: 4 };
+let _packEscalaoAtual = '5';
+function _packFmtEuro(v) { return v.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'; }
+function _packMudarEscalao(escalao) {
+    _packEscalaoAtual = escalao;
+    document.querySelectorAll('.pack-escalao-btn').forEach(b => b.classList.toggle('active', b.dataset.escalao === escalao));
+    document.querySelectorAll('#packGrid .plan').forEach(card => {
+        const pack = card.dataset.pack;
+        const amt = card.querySelector('.amt');
+        amt.textContent = _packFmtEuro(PACK_PRECOS_SITE[pack][escalao]);
+    });
+}
+// Detalhe do pack: tabela comparativa completa (como no Excel), com a coluna do pack escolhido
+// realçada. Assim vê-se não só o que este pack tem, mas como se compara com os outros.
+function _packVerDetalhes(pack) {
+    const alvo = document.getElementById('packDetalhesInline');
+    if (!alvo || !PACK_NOMES[pack]) return;
+    if (alvo.dataset.packAberto === pack) { alvo.innerHTML = ''; alvo.dataset.packAberto = ''; return; }
+    alvo.dataset.packAberto = pack;
+    const escolhido = PACK_IDX[pack];
+    const cabecalho = ['express','expert','pro','supreme'].map(p =>
+        `<th class="${p === pack ? 'pack-col-destaque' : ''}">${PACK_NOMES[p]}</th>`).join('');
+    const corpo = PACK_FUNCS.map(g => `
+        <tr class="pack-grupo-linha"><td colspan="5">${g.grupo}</td></tr>
+        ${g.linhas.map(l => `
+            <tr>
+                <td class="pack-func-nome">${l[0]}</td>
+                ${[1,2,3,4].map(i => {
+                    const v = l[i];
+                    // Valor pode ser 1 (✓), 0 (—) ou texto (ex.: limite de relatórios por pack).
+                    const conteudo = (typeof v === 'string')
+                        ? `<span class="pack-valor-txt">${v}</span>`
+                        : (v ? '<span class="pack-sim">✓</span>' : '<span class="pack-nao">—</span>');
+                    return `<td class="pack-cel ${i === escolhido ? 'pack-col-destaque' : ''}">${conteudo}</td>`;
+                }).join('')}
+            </tr>
+        `).join('')}
+    `).join('');
+    alvo.innerHTML = `
+        <div class="pack-detalhe-caixa">
+            <button class="pack-detalhe-fechar" onclick="_packVerDetalhes('${pack}')" aria-label="Fechar">&times;</button>
+            <h3>Todas as funcionalidades — em destaque: Pack ${PACK_NOMES[pack]}</h3>
+            <p class="pack-detalhe-resumo">${PACK_LIMITES_TXT[pack]}. Cada pack inclui tudo o do nível anterior.</p>
+            <div class="pack-tabela-scroll">
+                <table class="pack-tabela-funcs">
+                    <thead><tr><th>Funcionalidade</th>${cabecalho}</tr></thead>
+                    <tbody>${corpo}</tbody>
+                </table>
+            </div>
+            <a class="btn btn-orange" href="#" onclick="_tgRegistarEvento('clique_cta','pack_${pack}_detalhe');abrirModalSignup('${pack}');return false;" style="margin-top:14px;display:inline-block;">Começar com o ${PACK_NOMES[pack]} →</a>
+        </div>
+    `;
+    alvo.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
 if (document.getElementById('tg-landing')) {
     // O elemento "tg-landing" existe sempre no HTML (só fica escondido por CSS depois do login),
     // por isso não chega para saber se é mesmo um visitante novo — confirma com a sessão real do
     // Supabase antes de contar a visita, para não contar utilizadores já autenticados a recarregar a página.
     supa.auth.getSession().then(({ data }) => { if (!data.session) _tgRegistarVisita(); }).catch(() => {});
 }
-(function(){var grp=document.getElementById('tg-billing');if(grp){grp.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;grp.querySelectorAll('button').forEach(function(x){x.classList.remove('on');});b.classList.add('on');var mode=b.dataset.mode;document.querySelectorAll('#tg-landing [data-m][data-a]').forEach(function(el){var v=mode==='anual'?el.dataset.a:el.dataset.m;el.textContent=(v&&v.length)?v:'\u00A0';});});}var ano=document.getElementById('tg-ano');if(ano)ano.textContent=new Date().getFullYear();atualizarLanding();})();
+(function(){var ano=document.getElementById('tg-ano');if(ano)ano.textContent=new Date().getFullYear();if(typeof _packMudarEscalao==='function'&&document.getElementById('packGrid')){_packMudarEscalao('5');}atualizarLanding();})();
