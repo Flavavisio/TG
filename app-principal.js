@@ -3994,7 +3994,10 @@
                             <td>
                                 <div class="acoes">
                                     ${pendentePagamento ? `<button class="btn btn-sm btn-success" onclick="ativarLicenca('${admin.id}')" title="Confirmar pagamento e ativar"><i class="fas fa-circle-check"></i> Ativar</button>` : ''}
-                                    ${admin.licenca ? `<button class="btn btn-sm" style="background:#f59e0b;color:#fff;" onclick="lembrarPagamentoLicenca('${admin.id}')" title="Enviar lembrete de pagamento (prazo de 48h)"><i class="fas fa-bell"></i> Lembrar</button>` : ''}
+                                    ${admin.lembretePagamentoEm ? `
+                                        <span class="lembrete-contador" data-lembrete-em="${admin.lembretePagamentoEm}" style="display:inline-flex;align-items:center;gap:6px;background:#fef3c7;color:#92400e;font-size:.78rem;font-weight:700;padding:5px 10px;border-radius:6px;" title="Tempo até a conta ser desativada automaticamente, se o pagamento não for confirmado"><i class="fas fa-hourglass-half"></i> —</span>
+                                        <button class="btn btn-sm btn-outline" onclick="cancelarLembretePagamento('${admin.id}')" title="Cancelar o prazo — a conta deixa de ser desativada automaticamente"><i class="fas fa-xmark"></i></button>
+                                    ` : (admin.licenca ? `<button class="btn btn-sm" style="background:#f59e0b;color:#fff;" onclick="lembrarPagamentoLicenca('${admin.id}')" title="Enviar lembrete de pagamento (prazo de 48h)"><i class="fas fa-bell"></i> Lembrar</button>` : '')}
                                     ${admin.licenca ? `<button class="btn btn-sm btn-renovar" onclick="renovarLicenca('${admin.id}')" title="Renovar +${admin.licenca?.dias || PLANOS[admin.licenca?.plano]?.dias || 30} dias"><i class="fas fa-sync-alt"></i> Renovar</button>` : ''}
                                     ${admin.ativo ? `<button class="btn btn-sm btn-desativar" onclick="desativarAdmin('${admin.id}')"><i class="fas fa-toggle-off"></i></button>` :
                                     `<button class="btn btn-sm btn-reativar" onclick="reativarAdmin('${admin.id}')"><i class="fas fa-toggle-on"></i></button>`}
@@ -4005,6 +4008,7 @@
                         </tr>
                     `;
             }).join('');
+            _atualizarContadoresLembrete();
         }
 
         function renderizarLicencas() {
@@ -22860,6 +22864,36 @@ async function salvarAdmin(e) {
                 alert('⚠️ Não foi possível enviar: ' + (e.message || e.erro || 'erro desconhecido'));
             }
         }
+        // Cancela o prazo das 48h sem confirmar pagamento — para quando o Super Admin decide,
+        // por qualquer motivo, não avançar com a desativação automática (ex.: falou com o
+        // cliente e ficou combinado outro prazo). Diferente de "Ativar"/"Renovar": não marca
+        // nada como pago, só desarma o relógio.
+        async function cancelarLembretePagamento(adminId) {
+            const admin = dados.administradores?.find(a => a.id === adminId);
+            if (!admin) return;
+            if (!confirm(`Cancelar o prazo de 48h de ${admin.nome}? A conta deixa de ser desativada automaticamente — o "Lembrar" fica disponível outra vez, se precisares.`)) return;
+            admin.lembretePagamentoEm = null;
+            guardarDados(dados);
+            renderizarTudo();
+        }
+        // Atualiza o texto de todos os contadores visíveis (chamado a cada renderização da
+        // tabela e depois de x em x tempo, para não ficar parado enquanto o ecrã está aberto).
+        function _atualizarContadoresLembrete() {
+            document.querySelectorAll('.lembrete-contador[data-lembrete-em]').forEach(el => {
+                const enviadoEm = parseInt(el.dataset.lembreteEm, 10);
+                if (!enviadoEm) return;
+                const restanteMs = (enviadoEm + 48 * 60 * 60 * 1000) - Date.now();
+                if (restanteMs <= 0) {
+                    el.innerHTML = '<i class="fas fa-hourglass-end"></i> A aguardar a próxima verificação…';
+                    el.style.background = '#fee2e2'; el.style.color = '#991b1b';
+                    return;
+                }
+                const h = Math.floor(restanteMs / 3600000);
+                const m = Math.floor((restanteMs % 3600000) / 60000);
+                el.innerHTML = `<i class="fas fa-hourglass-half"></i> ${h}h ${String(m).padStart(2, '0')}min restantes`;
+            });
+        }
+        if (typeof window !== 'undefined') { setInterval(_atualizarContadoresLembrete, 30000); }
         async function lembrarPagamentoLicenca(adminId) {
             const admin = dados.administradores?.find(a => a.id === adminId);
             if (!admin || !admin.licenca) return;
@@ -22920,6 +22954,9 @@ async function salvarAdmin(e) {
             admin.licenca.ativa = true;
             admin.licenca.aguardaPagamento = !pagamentoConfirmado;
             admin.notificarAprovacao = true;
+            // Confirmar o pagamento cancela qualquer prazo de 48h que estivesse a contar — senão
+            // a conta seria desativada mais tarde pela Edge Function mesmo já estando paga.
+            if (pagamentoConfirmado) admin.lembretePagamentoEm = null;
             registarHistoricoLicenca(admin.id, 'ativacao', (PLANOS[admin.licenca.plano]?.label || admin.licenca.plano) + (distribuidor ? ' (via distribuidor ' + distribuidor.nome + ')' : ''), valorACobrar);
             guardarDados(dados);
             renderizarTudo();
@@ -23017,6 +23054,10 @@ async function salvarAdmin(e) {
             const novaExpiracao = baseDate + (plano.dias * 24 * 60 * 60 * 1000);
             admin.licenca.dataExpiracao = novaExpiracao;
             admin.licenca.dataInicio = now;
+            admin.licenca.ativa = true;
+            admin.licenca.aguardaPagamento = false;
+            // Renovar é a confirmação de pagamento por outra via — cancela o prazo de 48h.
+            admin.lembretePagamentoEm = null;
             _reiniciarAvisoLicencaExpirar(admin.id);
             guardarDados(dados);
             renderizarTudo();
@@ -24401,6 +24442,9 @@ async function salvarAdmin(e) {
                 return null;
             }
             admin.notificarAprovacao = true;
+            // Aprovar qualquer pedido é uma confirmação de pagamento — cancela o prazo de 48h do
+            // botão "Lembrar", se estivesse a contar.
+            admin.lembretePagamentoEm = null;
             // Helper partilhado: se o que está a ser renovado ainda não expirou, a nova validade
             // soma-se ao que falta (não recomeça do zero a partir de "agora"). Mesma lógica já usada
             // em renovarLicenca() (renovação manual do Super Admin) — faltava aqui na aprovação de
