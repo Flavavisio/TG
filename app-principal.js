@@ -20405,6 +20405,22 @@
                 return;
             }
 
+            // Super Admin: não gere a sua própria empresa dentro desta app — gere a plataforma
+            // (contas, licenças, pagamentos). Nada do menu operacional de um tenant (Clientes,
+            // OS, Obras, Frota, Armazém, Financeiro, Relatórios Personalizados, etc.) faz
+            // sentido para ele. Antes, cada cartão desses só ficava escondido se alguém tivesse
+            // pensado nisso ao escrevê-lo — vários (Relatórios Personalizados, Levantamento e
+            // Devolução de Ferramentas, entre outros) nunca tinham essa regra e ficavam visíveis
+            // por omissão. Agora é ao contrário: só entra o que estiver nesta lista; tudo o resto
+            // fica escondido de raiz, mesmo que apareçam cartões novos no futuro.
+            if (isSuperAdmin) {
+                const permitidosSuperAdmin = ['superadmin', 'analytics', 'licencas', 'licencas-vencer', 'pedidos-renovacao', 'licencas-distribuidor', 'historico-licencas', 'uso-cards', 'auditoria', 'ajuda-peticoes', 'online-admins'];
+                cards.forEach(card => {
+                    card.classList.toggle('hidden-card', !permitidosSuperAdmin.includes(card.dataset.card));
+                });
+                return;
+            }
+
             cards.forEach(card => {
                 const cardName = card.dataset.card;
 
@@ -22600,6 +22616,16 @@ async function salvarAdmin(e) {
             if (comScroll.length) {
                 const scrollMedio = Math.round(comScroll.reduce((s, v) => s + v.scroll_maximo_pct, 0) / comScroll.length);
                 cards.push({ n: scrollMedio + '%', l: 'Scroll médio da página' });
+            }
+            // Taxa de rejeição: visita curta (menos de 15s) E que quase não desceu a página
+            // (menos de 25% de scroll) — as duas condições juntas, para não confundir alguém
+            // que leu tudo rápido (scroll alto, tempo curto) com quem saiu logo sem interesse.
+            // Só entra em conta quem já tem os dois valores gravados.
+            const comAmbos = visitas.filter(v => v.duracao_segundos != null && v.scroll_maximo_pct != null);
+            if (comAmbos.length) {
+                const rejeicoes = comAmbos.filter(v => v.duracao_segundos < 15 && v.scroll_maximo_pct < 25).length;
+                const taxaRejeicao = Math.round((rejeicoes / comAmbos.length) * 100);
+                cards.push({ n: taxaRejeicao + '%', l: 'Taxa de rejeição' });
             }
             document.getElementById('an_resumo').innerHTML = cards.map(c => `
                 <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px;text-align:center;">
