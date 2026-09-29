@@ -5190,8 +5190,8 @@
         //  Financeiro) mostram uma mensagem simples por agora — ficam para as
         //  próximas fases, sem quebrar nada do que já existe nesses menus.
         // =====================================================================
-        const WS_CLIENTE_ABAS = ['resumo', 'locais', 'os', 'obras', 'assistencias', 'contratos', 'equipamentos', 'financeiro'];
-        const WS_CLIENTE_ABAS_LABEL = { resumo: 'Resumo', locais: 'Locais', os: 'Ordens de Serviço', obras: 'Obras', assistencias: 'Assistências', contratos: 'Contratos', equipamentos: 'Equipamentos', financeiro: 'Financeiro' };
+        const WS_CLIENTE_ABAS = ['resumo', 'locais', 'os', 'obras', 'assistencias', 'contratos', 'relatorios', 'equipamentos', 'financeiro'];
+        const WS_CLIENTE_ABAS_LABEL = { resumo: 'Resumo', locais: 'Locais', os: 'Ordens de Serviço', obras: 'Obras', assistencias: 'Assistências', contratos: 'Contratos', relatorios: 'Relatórios', equipamentos: 'Equipamentos', financeiro: 'Financeiro' };
         function abrirWorkspaceCliente(clienteId) {
             const cliente = dados.clientes?.find(c => c.id === clienteId);
             if (!cliente) return;
@@ -5238,6 +5238,7 @@
                 if (a === 'assistencias') return moduloAssistAtivo(admin);
                 if (a === 'contratos' || a === 'equipamentos') return moduloContratosAtivo(admin);
                 if (a === 'obras') return moduloArmazemAtivo(admin);
+                if (a === 'relatorios') return admin?.segurancaAtivo === true;
                 return true;
             });
             if (!abasVisiveis.includes(aba)) aba = 'resumo'; // a aba pedida já não está disponível
@@ -5285,6 +5286,7 @@
             else if (aba === 'os') conteudo.innerHTML = await _wsOsHtml(clienteId);
             else if (aba === 'obras') conteudo.innerHTML = _wsObrasHtml(clienteId);
             else if (aba === 'contratos') conteudo.innerHTML = _wsContratosHtml(clienteId);
+            else if (aba === 'relatorios') conteudo.innerHTML = _wsRelatoriosHtml(clienteId);
             else if (aba === 'assistencias') conteudo.innerHTML = _wsAssistenciasHtml(clienteId);
             else if (aba === 'equipamentos') conteudo.innerHTML = _wsEquipamentosHtml(clienteId);
             else if (aba === 'financeiro') conteudo.innerHTML = await _wsFinanceiroHtml(clienteId);
@@ -5586,6 +5588,32 @@
                 busca.dataset.selecionadoLabel = label;
                 if (typeof onClienteObraChange === 'function') onClienteObraChange();
             }, 150);
+        }
+        // Relatórios de especialidade do cliente (REX, RBI, etc.), com os locais — inclui
+        // rascunhos, com um aviso próprio, tal como o Historico/Auditoria já fazia. Cada linha
+        // tem os dois botões que pediste: ver o relatório em si, e ver a OS de onde saiu.
+        function _wsRelatoriosHtml(clienteId) {
+            const locaisCliente = (dados.locais || []).filter(l => l.clienteId === clienteId);
+            const nomeLocal = localId => localId ? (locaisCliente.find(l => l.id === localId)?.nome || 'Local') : 'Sede';
+            const nomesRelatorio = { REX: 'Extintores', RBI: 'Bocas de Incêndio', RSI: 'Central de Incêndio', RCM: 'Central de Monóxido', RIE: 'Iluminação de Emergência', RCP: 'Portas Corta-Fogo', RCCTV: 'Videovigilância', RIN: 'Deteção de Intrusão', RDI: 'Declaração de Instalação' };
+            const relCliente = (dados.relatoriosEspecialidade || []).filter(r => r.clienteId === clienteId).sort((a, b) => (b.data || '').localeCompare(a.data || ''));
+            const cabecalho = `
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                    <div class="help-text" style="margin:0;">Relatórios de especialidade deste cliente, incluindo rascunhos. Para preencher um relatório, abra a OS correspondente.</div>
+                    <button class="btn btn-sm btn-primary" onclick="_wsSairPara('${clienteId}');abrirSecao('servicos')" title="Ir a Ordens de Serviço"><i class="fas fa-clipboard-list"></i> Abrir serviços</button>
+                </div>`;
+            if (!relCliente.length) return cabecalho + `<p class="help-text">Este cliente ainda não tem nenhum relatório de especialidade.</p>`;
+            const linhas = relCliente.map(r => `
+                <div style="display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid #f1f5f9;">
+                    <i class="fas fa-file-shield" style="color:#94a3b8;width:18px;"></i>
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-size:.86rem;font-weight:600;text-align:left;">${escapeHtmlSimples(nomesRelatorio[r.tipo] || r.tipo)} · ${escapeHtmlSimples(r.numeroDocumento || '—')}${r.rascunho ? ' <span style="font-size:.68rem;font-weight:600;color:#92400e;background:#fef3c7;padding:2px 7px;border-radius:5px;">Rascunho</span>' : ''}</div>
+                        <div style="font-size:.76rem;color:#64748b;text-align:left;">${(r.data || '').split('-').reverse().join('/')} · ${escapeHtmlSimples(nomeLocal(r.localId))}</div>
+                    </div>
+                    <button class="btn btn-sm btn-outline" onclick="_verRelatorioEspecialidadeSnapshot('${r.id}', false)"><i class="fas fa-file-lines"></i> Ver relatório</button>
+                    ${r.servicoId ? `<button class="btn btn-sm btn-outline" onclick="_wsSairPara('${clienteId}');abrirVerOS('${r.servicoId}')"><i class="fas fa-clipboard-list"></i> Ver OS</button>` : ''}
+                </div>`).join('');
+            return cabecalho + `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:0 18px;">${linhas}</div>`;
         }
         function _wsContratosHtml(clienteId) {
             const contratosCliente = (dados.contratos || []).filter(c => c.clienteId === clienteId).sort((a, b) => (a.validadeContrato || '9999').localeCompare(b.validadeContrato || '9999'));
