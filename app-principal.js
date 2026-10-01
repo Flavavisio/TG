@@ -6652,7 +6652,7 @@
                 y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y) + 10;
             }
 
-            doc.save(`relatorio_${paraCliente ? 'cliente' : 'interno'}_OS_${(os.numeroRegisto || os.id)}_${_hoje10()}.pdf`);
+            _tgGuardarPdf(doc, `relatorio_${paraCliente ? 'cliente' : 'interno'}_OS_${(os.numeroRegisto || os.id)}_${_hoje10()}.pdf`);
         }
         // Pequeno popup para escolher qual dos dois relatórios gerar da OS — o interno (com
         // valores/margens) ou o do cliente (sem nenhum valor) — mesmo padrão já usado nas Obras.
@@ -7539,6 +7539,92 @@
             document.getElementById('modalFolhaOverlay').classList.remove('open');
         }
 
+        // ===== PDF no telemóvel: nunca sair da app =====
+        // Problema: doc.save() num telemóvel — sobretudo num iPhone com a app instalada — abre o
+        // PDF NO LUGAR da app, sem barra do browser nem botão de voltar; a única saída era fechar
+        // a app. Aqui o PDF abre dentro de uma camada da própria app (a app nunca é substituída),
+        // com um botão "Voltar" bem à vista, e o botão/gesto de voltar do telemóvel também a fecha.
+        // No computador nada muda: continua a descarregar o ficheiro como sempre.
+        function _tgEhTelemovel() {
+            const ua = navigator.userAgent || '';
+            return /Android|iPhone|iPad|iPod/i.test(ua) || (navigator.maxTouchPoints > 1 && /Macintosh/i.test(ua));
+        }
+        function _tgGuardarPdf(doc, nome) {
+            if (!_tgEhTelemovel()) { doc.save(nome); return; }
+            try {
+                _tgMostrarPdfNoTelemovel(doc.output('blob'), nome);
+            } catch (e) {
+                console.warn('Visualizador de PDF falhou — a descarregar normalmente:', e);
+                doc.save(nome);
+            }
+        }
+        let _tgPdfViewer = null;
+        function _tgMostrarPdfNoTelemovel(blob, nome) {
+            if (_tgPdfViewer) _tgPdfViewer.fechar(false);
+            const ua = navigator.userAgent || '';
+            const ehAndroid = /Android/i.test(ua);
+            const ehIOS = /iPhone|iPad|iPod/i.test(ua) || (navigator.maxTouchPoints > 1 && /Macintosh/i.test(ua));
+            const url = URL.createObjectURL(blob);
+            const ficheiro = new File([blob], nome, { type: 'application/pdf' });
+            const podePartilhar = !!(navigator.canShare && navigator.canShare({ files: [ficheiro] }));
+            // O Android não mostra PDFs dentro de uma página (só o iPhone/iPad o faz), por isso aí
+            // a camada mostra uma mensagem e os botões em vez de uma pré-visualização em branco.
+            const botaoCss = 'flex:1;min-height:48px;border:none;border-radius:10px;font-weight:700;font-size:.95rem;cursor:pointer;';
+            const el = document.createElement('div');
+            el.id = 'tgPdfViewer';
+            el.style.cssText = 'position:fixed;inset:0;z-index:700000;background:#f1f5f9;display:flex;flex-direction:column;';
+            el.innerHTML = `
+                <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;padding-top:max(10px,env(safe-area-inset-top));background:#152a52;color:#fff;flex-shrink:0;">
+                    <button type="button" data-acao="voltar" style="min-height:44px;padding:0 16px;border:none;border-radius:10px;background:#fff;color:#152a52;font-weight:700;font-size:.95rem;cursor:pointer;flex-shrink:0;">← Voltar</button>
+                    <div style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.85rem;font-weight:600;">${escapeHtmlSimples(nome)}</div>
+                </div>
+                <div style="flex:1;min-height:0;">
+                    ${ehAndroid
+                        ? `<div style="padding:40px 24px;text-align:center;color:#334155;"><div style="font-size:2.6rem;color:#dc2626;"><i class="fas fa-file-pdf"></i></div><div style="font-weight:700;font-size:1.05rem;margin:12px 0 6px;">PDF pronto</div><div style="font-size:.88rem;color:#64748b;">O Android não mostra PDFs dentro da app. Usa os botões em baixo.</div></div>`
+                        : `<iframe src="${url}" title="${escapeHtmlSimples(nome)}" style="width:100%;height:100%;border:0;background:#fff;"></iframe>`}
+                </div>
+                <div style="display:flex;gap:10px;padding:10px 12px;padding-bottom:max(10px,env(safe-area-inset-bottom));background:#fff;border-top:1px solid #e2e8f0;flex-shrink:0;">
+                    ${podePartilhar ? `<button type="button" data-acao="partilhar" style="${botaoCss}background:#f4520e;color:#fff;"><i class="fas fa-share-nodes"></i> Partilhar / Guardar</button>` : ''}
+                    ${(ehAndroid || !podePartilhar) ? `<button type="button" data-acao="descarregar" style="${botaoCss}background:#152a52;color:#fff;"><i class="fas fa-download"></i> Descarregar</button>` : ''}
+                </div>`;
+            const descarregar = () => {
+                const a = document.createElement('a');
+                a.href = url; a.download = nome;
+                document.body.appendChild(a); a.click(); a.remove();
+            };
+            const partilhar = async () => {
+                try {
+                    await navigator.share({ files: [ficheiro], title: nome });
+                } catch (e) {
+                    if (e && e.name === 'AbortError') return; // a pessoa fechou a folha de partilha — normal
+                    // Num iPhone, descarregar por link pode voltar a tirar a pessoa da app — por isso aí só se avisa.
+                    if (ehIOS) alert('Não foi possível partilhar este PDF neste dispositivo.'); else descarregar();
+                }
+            };
+            const aoVoltarDoTelemovel = () => viewer.fechar(false); // gesto/botão "atrás" do telemóvel
+            const viewer = {
+                fechar(porBotao) {
+                    window.removeEventListener('popstate', aoVoltarDoTelemovel);
+                    el.remove();
+                    try { URL.revokeObjectURL(url); } catch (e) {}
+                    if (_tgPdfViewer === viewer) _tgPdfViewer = null;
+                    // Se foi o botão que fechou, desfaz a entrada de histórico que abrimos (senão o
+                    // "atrás" do telemóvel ficava com um passo a mais).
+                    if (porBotao && history.state && history.state.tgPdf) history.back();
+                }
+            };
+            el.addEventListener('click', ev => {
+                const acao = ev.target.closest('button[data-acao]')?.dataset.acao;
+                if (acao === 'voltar') viewer.fechar(true);
+                else if (acao === 'partilhar') partilhar();
+                else if (acao === 'descarregar') descarregar();
+            });
+            document.body.appendChild(el);
+            history.pushState({ tgPdf: true }, '');
+            window.addEventListener('popstate', aoVoltarDoTelemovel);
+            _tgPdfViewer = viewer;
+        }
+        // ===== fim PDF no telemóvel =====
         function gerarPDFFolhaAtual(tipo) {
             if (folhaAtualId) gerarPDFFolha(folhaAtualId, tipo);
         }
@@ -7782,7 +7868,7 @@
                 if (ultAtual) doc.text('Última atualização: ' + ultAtual, 15, 289);
                 doc.text('Gerado por ' + (emp.nome || 'Totalgest') + ' em ' + new Date().toLocaleDateString('pt-PT'), 195, 289, { align: 'right' });
                 const sufixo = tipo === 'empresa' ? '_interno' : '_cliente';
-                doc.save('folha_' + (obraNome || 'obra').replace(/[^a-z0-9]/gi, '_').slice(0, 40) + sufixo + '.pdf');
+                _tgGuardarPdf(doc, 'folha_' + (obraNome || 'obra').replace(/[^a-z0-9]/gi, '_').slice(0, 40) + sufixo + '.pdf');
             };
             if (emp.logo) {
                 const img = new Image();
@@ -10751,7 +10837,7 @@
                 doc.setFontSize(8); doc.setTextColor(150);
                 doc.text('Documento para efeitos de certificação/seguro.', 15, 291);
                 _pdfRodape(doc, _corRel);
-                doc.save(`relatorio_${(cli.nome || 'cliente').replace(/[^a-z0-9]/gi, '_').slice(0, 30)}_${ano}.pdf`);
+                _tgGuardarPdf(doc, `relatorio_${(cli.nome || 'cliente').replace(/[^a-z0-9]/gi, '_').slice(0, 30)}_${ano}.pdf`);
             };
             if (emp.logo) {
                 const img = new Image();
@@ -10872,7 +10958,7 @@
                     });
                 }
                 _pdfRodape(doc, _corRel);
-                doc.save(`${tipoRelatorio}_${(labelCategoria || 'todas').replace(/[^a-z0-9]/gi, '_').slice(0, 24)}_${ano}.pdf`);
+                _tgGuardarPdf(doc, `${tipoRelatorio}_${(labelCategoria || 'todas').replace(/[^a-z0-9]/gi, '_').slice(0, 24)}_${ano}.pdf`);
             };
             corpo(20);
         }
@@ -12917,7 +13003,7 @@
                 }
             });
             _pdfRodape(doc, _corRel);
-            doc.save(`assiduidade_${ini}_a_${fim}.pdf`);
+            _tgGuardarPdf(doc, `assiduidade_${ini}_a_${fim}.pdf`);
         }
         function assExcel(relatorios, ini, fim, extras, avancado) {
             if (typeof XLSX === 'undefined') { alert('Biblioteca de Excel não carregada. Verifique a ligação à internet.'); return; }
@@ -13057,7 +13143,7 @@
                 margin: { bottom: 16 }
             });
             _pdfRodape(doc, _corRel);
-            doc.save(`relatorio_os_${new Date().toISOString().slice(0, 10)}.pdf`);
+            _tgGuardarPdf(doc, `relatorio_os_${new Date().toISOString().slice(0, 10)}.pdf`);
         }
         function rosExcel(rows, periodo, resumo) {
             if (typeof XLSX === 'undefined') { alert('Biblioteca de Excel não carregada.'); return; }
@@ -13970,7 +14056,7 @@
         function gerarNotaEncomenda(encId) {
             const e = dados.encomendas?.find(x => x.id === encId); if (!e) return;
             const doc = _montarPdfNotaEncomenda(encId); if (!doc) return;
-            doc.save((e.numero || 'nota_encomenda') + '.pdf');
+            _tgGuardarPdf(doc, (e.numero || 'nota_encomenda') + '.pdf');
         }
         // Não envia nada pelo nosso servidor — descarrega o PDF e abre o programa de email do
         // próprio computador (Outlook, Mail, Gmail no browser, etc.) já com o destinatário e
@@ -13983,7 +14069,7 @@
             if (!fornecedor?.email) { alert('Este fornecedor não tem email registado.'); return; }
             const doc = _montarPdfNotaEncomenda(encId); if (!doc) return;
             const nomeFicheiro = (e.numero || 'nota_encomenda') + '.pdf';
-            doc.save(nomeFicheiro);
+            _tgGuardarPdf(doc, nomeFicheiro);
             const assunto = encodeURIComponent('Nota de Encomenda ' + (e.numero || ''));
             const corpo = encodeURIComponent('Boa tarde,\n\nSegue em anexo a Nota de Encomenda ' + (e.numero || '') + '.\n\n(O ficheiro "' + nomeFicheiro + '" foi descarregado agora — anexe-o antes de enviar.)\n\nCom os melhores cumprimentos,');
             alert('📄 PDF descarregado ("' + nomeFicheiro + '"). Vais agora abrir o teu programa de email — não te esqueças de anexar esse ficheiro antes de enviar.');
@@ -14266,7 +14352,7 @@
                 y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y) + 10;
             }
 
-            doc.save(`relatorio_${paraCliente ? 'cliente' : 'interno'}_obra_${(obra.nome || 'obra').replace(/[^a-z0-9]+/gi, '_')}_${_hoje10()}.pdf`);
+            _tgGuardarPdf(doc, `relatorio_${paraCliente ? 'cliente' : 'interno'}_obra_${(obra.nome || 'obra').replace(/[^a-z0-9]+/gi, '_')}_${_hoje10()}.pdf`);
         }
         let _picandoEntradaObraLonga = false;
         async function obraLongaPicarEntrada(obraId) {
@@ -15992,7 +16078,7 @@
             doc.text('TOTAL: ' + _finEur(a.valorTotal), 140, y, { align: 'right' });
             doc.setFont(undefined, 'normal');
 
-            doc.save(`auto-medicao-${a.numero}-${obra.nome.replace(/[^a-z0-9]+/gi, '-')}.pdf`);
+            _tgGuardarPdf(doc, `auto-medicao-${a.numero}-${obra.nome.replace(/[^a-z0-9]+/gi, '-')}.pdf`);
         }
         function verDetalheAutoMedicao(autoId) {
             const a = (dados.autosMedicao || []).find(x => x.id === autoId); if (!a) return;
@@ -17983,7 +18069,7 @@
                 body: arts.map(a => { const st = stockAtualArtigo(a.id); const falta = a.stockMinimo != null && st <= a.stockMinimo; return [a.nome, a.referencia || '-', a.unidade || 'un', String(st), a.stockMinimo != null ? String(a.stockMinimo) : '-', falta ? 'Repor' : 'OK']; }),
                 startY, styles: { fontSize: 9, cellPadding: 2 }, headStyles: { fillColor: _corRel }
             });
-            doc.save(`stock_${_hoje10()}.pdf`);
+            _tgGuardarPdf(doc, `stock_${_hoje10()}.pdf`);
         }
 
         function relMovimentosPDF() {
@@ -17998,7 +18084,7 @@
                 body: movs.map(m => [m.data || '-', _nomeArtigoStock(m.artigoId), tipoLabel[m.tipo] || m.tipo, String(m.quantidade), m.obraId ? _nomeObraStock(m.obraId) : '-', m.origemTipo || '-']),
                 startY, styles: { fontSize: 8, cellPadding: 2 }, headStyles: { fillColor: _corRel }
             });
-            doc.save(`movimentos_${_hoje10()}.pdf`);
+            _tgGuardarPdf(doc, `movimentos_${_hoje10()}.pdf`);
         }
         function relMovimentosExcel() {
             if (typeof XLSX === 'undefined') { alert('Biblioteca de Excel não carregada.'); return; }
@@ -18027,7 +18113,7 @@
             const obras = obraId ? [dados.obras.find(o => o.id === obraId)].filter(Boolean) : (dados.obras || []).filter(o => o.adminId === adminId);
             let startY = _pdfArmHeader(doc, 'Materiais por Obra — Previsto vs Consumido');
             const _corRel = _hexParaRgb(dados.administradores?.find(a => a.id === adminId)?.corCorporativa);
-            if (!obras.length) { doc.text('Sem obras.', 14, startY); doc.save(`materiais_obra_${_hoje10()}.pdf`); return; }
+            if (!obras.length) { doc.text('Sem obras.', 14, startY); _tgGuardarPdf(doc, `materiais_obra_${_hoje10()}.pdf`); return; }
             obras.forEach((o, idx) => {
                 const rows = _obraMatRows(o.id);
                 if (startY > 180) { doc.addPage(); startY = 20; }
@@ -18040,7 +18126,7 @@
                 });
                 startY = (doc.lastAutoTable ? doc.lastAutoTable.finalY : startY) + 12;
             });
-            doc.save(`materiais_obra_${_hoje10()}.pdf`);
+            _tgGuardarPdf(doc, `materiais_obra_${_hoje10()}.pdf`);
         }
         function relObraExcel(obraId) {
             if (typeof XLSX === 'undefined') { alert('Biblioteca de Excel não carregada.'); return; }
@@ -18132,7 +18218,7 @@
             const porCli = {}; concl.forEach(s => { const n = obterNomeCliente(s.clienteId) || '-'; porCli[n] = (porCli[n] || 0) + (Number(s.valor) || 0); });
             const rows = Object.entries(porCli).filter(([k, v]) => v > 0).sort((a, b) => b[1] - a[1]).map(([n, v]) => [n, eur(v)]);
             if (rows.length) doc.autoTable({ startY: doc.lastAutoTable.finalY + 8, head: [['Cliente', 'Faturado']], body: rows, styles: { fontSize: 10 } });
-            doc.save('financeiro_' + _hoje10() + '.pdf');
+            _tgGuardarPdf(doc, 'financeiro_' + _hoje10() + '.pdf');
         }
 
         // ===== Despesas da Empresa =====
@@ -18365,7 +18451,7 @@
             doc.autoTable({ startY: y, head: [['Categoria', ...nomesMeses, 'Total']], body, styles: { fontSize: 7 }, headStyles: { fillColor: [220, 38, 38] } });
             const totaisMes = [1,2,3,4,5,6,7,8,9,10,11,12].map(m => _despesasTotalMes(_despesasAno, m));
             doc.autoTable({ startY: doc.lastAutoTable.finalY + 8, head: [['Total Geral por Mês', ...nomesMeses, 'Ano']], body: [['EUR', ...totaisMes.map(v => v.toFixed(0)), totaisMes.reduce((a,b)=>a+b,0).toFixed(2)]], styles: { fontSize: 8 }, headStyles: { fillColor: [21, 42, 82] } });
-            doc.save('despesas_' + _despesasAno + '_' + _hoje10() + '.pdf');
+            _tgGuardarPdf(doc, 'despesas_' + _despesasAno + '_' + _hoje10() + '.pdf');
         }
 
         // ===== Dashboard Analítico =====
@@ -19196,7 +19282,7 @@
             doc.autoTable({ startY: y, head: [['Empresa', 'Admin', 'Plano', 'Func', 'Enc', 'Contr', 'Frota', 'Arm', 'CRM+Assist', 'ERP', 'Receita']], body: rows, styles: { fontSize: 7 }, headStyles: { fillColor: _corRel }, margin: { bottom: 16 } });
             doc.autoTable({ startY: doc.lastAutoTable.finalY + 8, head: [['Receita por modulo', 'Valor']], body: [['Licencas base', eur(recBase)], ['Contratos', eur(recContr)], ['Frota', eur(recFrota)], ['Armazem', eur(recArm)], ['CRM + Assist', eur(recCrm)], ['ERP', eur(recErp)], ['TOTAL', eur(recTotal)]], styles: { fontSize: 9 }, headStyles: { fillColor: _corRel }, footStyles: { fontStyle: 'bold' }, margin: { bottom: 16 } });
             _pdfRodape(doc, _corRel);
-            doc.save('superadmin_' + new Date().toISOString().slice(0, 10) + '.pdf');
+            _tgGuardarPdf(doc, 'superadmin_' + new Date().toISOString().slice(0, 10) + '.pdf');
         }
 
         function toggleGuiaItem(btn) {
@@ -27501,6 +27587,72 @@ async function salvarAdmin(e) {
         // Seguro globalmente porque nenhum código depende do valor de retorno do alert() nativo (é sempre undefined).
         // Usa a fila acima, por isso vários alert() seguidos aparecem um de cada vez, nunca sobrepostos.
         window.alert = function (mensagem) { tgAlert(mensagem); };
+
+        // ===== ESC fecha o que estiver por cima =====
+        // Regra: o Esc só age sobre a camada MAIS À FRENTE (a de maior z-index; em empate, a
+        // que vem depois no HTML), e nunca em duas ao mesmo tempo:
+        //  • caixa de diálogo própria (tgAlert/tgConfirm/...): o Esc responde-lhe a ela — cancela
+        //    uma confirmação, dispensa um aviso — e nunca fecha o modal que está por baixo;
+        //  • ecrãs que não se dispensam (a carregar, aviso de sessão, tour, quiosque, painel TV,
+        //    gestão de licença do cliente, e os modais de notificação/cancelamento): o Esc ignora;
+        //  • modais normais (.modal-overlay.open): o Esc "clica" no botão de fechar do próprio
+        //    modal, em vez de o esconder à força — assim cada modal corre o seu fecho, incluindo
+        //    as confirmações que já tem (ex.: "Fechar sem gravar?" no relatório de especialidade).
+        // Dentro de um campo de texto, o 1.º Esc só tira o cursor do campo e o 2.º é que fecha —
+        // senão, quem carrega em Esc para dispensar a lista de sugestões de um campo perdia o
+        // formulário inteiro a meio.
+        (function () {
+            const BLOQUEIAM_O_ESC = ['tgCarregandoOverlay', 'avisoSessaoOverlay', 'tourOverlay', 'tgQuiosqueOverlay', 'tgPainelTVOverlay', 'renovClienteOverlay', 'modalNotifOverlay', 'modalNotifMassaOverlay', 'modalCancelamentoOverlay', 'modalClassifFaltaOverlay'];
+            const NAO_FECHAR_COM_ESC = ['modalFolhaObrigOverlay', 'onbOverlay', 'modalAvisoLicencaOverlay', 'modalSimNaoOverlay'];
+            const FECHOS_CONHECIDOS = /^_?fechar(Modal|Scanner|Veiculo|GerarOS|AlterarPlano|DetalheAddon|WizardCalc)/;
+            const visivel = el => !!el && el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden';
+            const ehCampoDeTexto = el => {
+                if (!el) return false;
+                if (el.isContentEditable) return true;
+                if (el.tagName === 'TEXTAREA' || el.tagName === 'SELECT') return true;
+                if (el.tagName === 'INPUT') return !['checkbox', 'radio', 'button', 'submit', 'reset', 'range', 'color', 'file', 'image'].includes((el.type || '').toLowerCase());
+                return false;
+            };
+            document.addEventListener('keydown', function (ev) {
+                if ((ev.key !== 'Escape' && ev.key !== 'Esc') || ev.repeat || ev.isComposing || ev.defaultPrevented) return;
+                const camadas = [];
+                const dlg = document.getElementById('tgAlertOverlay');
+                if (dlg && dlg.classList.contains('aberto') && visivel(dlg)) camadas.push({ el: dlg, tipo: 'dialogo' });
+                BLOQUEIAM_O_ESC.forEach(id => { const el = document.getElementById(id); if (visivel(el)) camadas.push({ el, tipo: 'bloqueio' }); });
+                document.querySelectorAll('.modal-overlay.open').forEach(el => { if (visivel(el)) camadas.push({ el, tipo: 'modal' }); });
+                if (!camadas.length) return;
+                const z = k => parseInt(getComputedStyle(k.el).zIndex, 10) || 0;
+                const topo = camadas.reduce((a, b) => (z(b) > z(a) || (z(b) === z(a) && (a.el.compareDocumentPosition(b.el) & Node.DOCUMENT_POSITION_FOLLOWING))) ? b : a);
+
+                if (topo.tipo === 'bloqueio') return;
+
+                if (topo.tipo === 'dialogo') {
+                    const cancelar = document.getElementById('tgAlertBtnCancelar');
+                    const ok = document.getElementById('tgAlertBtnOk');
+                    const escolhas = document.getElementById('tgAlertEscolhas');
+                    let alvo = null;
+                    if (visivel(cancelar)) alvo = cancelar;                      // confirmação ou pergunta → cancela
+                    else if (visivel(escolhas)) {                                // lista de opções → só se tiver "Cancelar"
+                        alvo = [...escolhas.querySelectorAll('button')].reverse().find(b => b.textContent.trim() === 'Cancelar') || null;
+                    } else if (visivel(ok)) alvo = ok;                           // aviso simples → dispensa
+                    if (alvo) { ev.preventDefault(); alvo.click(); }
+                    return;
+                }
+
+                const modal = topo.el;
+                if (NAO_FECHAR_COM_ESC.includes(modal.id)) return;
+                const foco = document.activeElement;
+                if (foco && modal.contains(foco) && ehCampoDeTexto(foco)) { ev.preventDefault(); foco.blur(); return; }
+                const botoes = [...modal.querySelectorAll('button')].filter(visivel);
+                // 1.ª escolha: o botão de fechar do próprio modal. 2.ª (só se não houver nenhum):
+                // um botão com o texto exato "Cancelar" — é o que têm os formulários simples
+                // (Permissões, Crédito, Painel TV...) e todos eles só fecham o modal.
+                const botao = botoes.find(b => b.classList.contains('close-modal') || b.title === 'Fechar' || FECHOS_CONHECIDOS.test(b.getAttribute('onclick') || ''))
+                           || botoes.find(b => b.textContent.trim() === 'Cancelar');
+                if (botao) { ev.preventDefault(); botao.click(); }
+            });
+        })();
+        // ===== fim ESC =====
         function perguntarSaidaObra(texto) {
             return new Promise(resolve => {
                 _modalSimNaoResolve = resolve;
