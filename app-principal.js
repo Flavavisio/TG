@@ -52,7 +52,11 @@
             if (guardado === '1') document.body.classList.add('tg-sidebar-collapsed');
         }
         const _NIVEIS_ZOOM = [100, 90, 80];
+        function _zoomAutomaticoMobile() {
+            return window.matchMedia('(max-width: 900px), (pointer: coarse)').matches;
+        }
         function alternarZoom() {
+            if (_zoomAutomaticoMobile()) { _aplicarZoom(100); return; }
             let atual = 100;
             try { atual = parseInt(localStorage.getItem('tg_zoom'), 10) || 100; } catch (e) {}
             const idxAtual = _NIVEIS_ZOOM.indexOf(atual);
@@ -61,6 +65,7 @@
             try { localStorage.setItem('tg_zoom', String(proximo)); } catch (e) {}
         }
         function _aplicarZoom(nivel) {
+            nivel = _zoomAutomaticoMobile() ? 100 : (_NIVEIS_ZOOM.includes(Number(nivel)) ? Number(nivel) : 100);
             document.documentElement.style.zoom = nivel + '%';
             const lbl = document.getElementById('labelZoom');
             if (lbl) lbl.textContent = nivel + '%';
@@ -75,8 +80,9 @@
         function _aplicarZoomGuardado() {
             let nivel = 100;
             try { nivel = parseInt(localStorage.getItem('tg_zoom'), 10) || 100; } catch (e) {}
-            if (nivel !== 100) _aplicarZoom(nivel);
+            _aplicarZoom(nivel);
         }
+        window.matchMedia('(max-width: 900px), (pointer: coarse)').addEventListener('change', _aplicarZoomGuardado);
         function _aplicarTemaGuardado() {
             let tema = null;
             try { tema = localStorage.getItem('tg_tema'); } catch (e) {}
@@ -298,8 +304,8 @@
             },
             assistencias: {
                 tabela: 'assistencias',
-                from: r => ({ id: r.id, adminId: r.admin_id, numero: r.numero, clienteId: r.cliente_id, assunto: r.assunto, descricao: r.descricao, prioridade: r.prioridade || 'normal', estado: r.estado || 'aberta', atribuidoId: r.atribuido_id || null, criadoPor: r.criado_por || null, osGeradaId: r.os_gerada_id || null, apagadoSuperAdmin: r.apagado_superadmin === true, dataCriacao: isoToMs(r.data_criacao), dataModificacao: isoToMs(r.data_modificacao) }),
-                to:   o => ({ id: o.id, admin_id: o.adminId, numero: o.numero || null, cliente_id: o.clienteId || null, assunto: o.assunto || null, descricao: o.descricao || null, prioridade: o.prioridade || 'normal', estado: o.estado || 'aberta', atribuido_id: o.atribuidoId || null, criado_por: o.criadoPor || null, os_gerada_id: o.osGeradaId || null, apagado_superadmin: o.apagadoSuperAdmin === true, data_criacao: msToISO(o.dataCriacao), data_modificacao: msToISO(o.dataModificacao) })
+                from: r => ({ id: r.id, adminId: r.admin_id, numero: r.numero, clienteId: r.cliente_id, localId: r.local_id || null, origem: r.origem || null, assunto: r.assunto, descricao: r.descricao, prioridade: r.prioridade || 'normal', estado: r.estado || 'aberta', atribuidoId: r.atribuido_id || null, criadoPor: r.criado_por || null, osGeradaId: r.os_gerada_id || null, apagadoSuperAdmin: r.apagado_superadmin === true, dataCriacao: isoToMs(r.data_criacao), dataModificacao: isoToMs(r.data_modificacao) }),
+                to:   o => ({ id: o.id, admin_id: o.adminId, numero: o.numero || null, cliente_id: o.clienteId || null, local_id: o.localId || null, origem: o.origem || null, assunto: o.assunto || null, descricao: o.descricao || null, prioridade: o.prioridade || 'normal', estado: o.estado || 'aberta', atribuido_id: o.atribuidoId || null, criado_por: o.criadoPor || null, os_gerada_id: o.osGeradaId || null, apagado_superadmin: o.apagadoSuperAdmin === true, data_criacao: msToISO(o.dataCriacao), data_modificacao: msToISO(o.dataModificacao) })
             },
             garantias: {
                 tabela: 'garantias',
@@ -736,7 +742,7 @@
             // Portal do cliente: só precisa de uma fração dos dados da empresa (as suas próprias
             // obras/contratos/OS/relatórios) — poupa bastante egress não pedir o resto (stock,
             // frota, funcionários, despesas, etc. que o portal nunca mostra).
-            const TABELAS_PORTAL_CLIENTE = new Set(['administradores', 'clientes', 'locais', 'contratos', 'servicos', 'folhas_obra', 'relatorios_especialidade', 'obras', 'notificacoes']);
+            const TABELAS_PORTAL_CLIENTE = new Set(['administradores', 'clientes', 'locais', 'contratos', 'servicos', 'folhas_obra', 'relatorios_especialidade', 'obras', 'notificacoes', 'assistencias']);
 
             let resultados;
             try {
@@ -753,7 +759,7 @@
                         // portal do cliente: restringe ainda mais, só ao que é dele
                         if (t === 'administradores') q = q.eq('id', tenantId);
                         else if (t === 'clientes') q = q.eq('id', clienteId);
-                        else if (t === 'locais' || t === 'contratos' || t === 'servicos' || t === 'obras' || t === 'relatorios_especialidade') q = q.eq('cliente_id', clienteId);
+                        else if (t === 'assistencias' || t === 'locais' || t === 'contratos' || t === 'servicos' || t === 'obras' || t === 'relatorios_especialidade') q = q.eq('cliente_id', clienteId);
                         else if (t === 'folhas_obra') q = q.eq('admin_id', tenantId); // esta tabela não tem coluna cliente_id
                         else if (tenantId) q = q.eq('admin_id', tenantId);
                     } else if (!ehSuperAdmin && tenantId && t !== 'encarregado_funcionarios') {
@@ -2182,7 +2188,7 @@
         function renderizarTudo() {
             if (_renderAgendado) return;
             _renderAgendado = true;
-            const _run = () => { _renderAgendado = false; _renderizarTudoAgora(); };
+            const _run = () => { _renderAgendado = false; try { _renderizarTudoAgora(); } finally { document.dispatchEvent(new Event('tg:interface-updated')); } };
             (typeof queueMicrotask === 'function') ? queueMicrotask(_run) : Promise.resolve().then(_run);
         }
         function _notificarPorFaseVencimento(chaveBase, itemId, diasRestantes, callback) {
@@ -5519,6 +5525,21 @@
             if (conteudo) conteudo.innerHTML = _wsAssistenciasHtml(clienteId);
         }
         // Mesma lógica de numeração já usada no Total Gest Assist (AST-<iniciais><mm><aa>-N).
+        function _assistResumoDados(a) {
+            const cliente = (dados.clientes || []).find(c => c.id === a.clienteId && c.adminId === a.adminId);
+            const os = (dados.servicos || []).find(s => s.id === a.osGeradaId && s.adminId === a.adminId);
+            const localId = a.localId || os?.localId;
+            const local = (dados.locais || []).find(l => l.id === localId && l.adminId === a.adminId && l.clienteId === a.clienteId);
+            const localTexto = String(a.descricao || '').match(/^Local:\s*(.+)$/m)?.[1];
+            return { cliente: cliente?.nome || a.nomeCliente || 'Sem cliente', local: local?.nome || localTexto || (localId ? (os?.morada || 'Instalação') : (a.clienteId ? 'Sede' : 'Local não indicado')), urgencia: ({baixa:'Baixa',normal:'Normal',alta:'Alta',urgente:'Urgente'})[a.prioridade] || 'Normal' };
+        }
+        function _assistResumoHtml(a) {
+            const d = _assistResumoDados(a);
+            return `<div style="white-space:normal;line-height:1.45;text-align:left;padding:4px 0;"><strong>${escapeHtmlSimples(a.assunto || a.numero || 'Assistência')}</strong><div style="font-size:.75rem;color:var(--hsub,#64748b);">${escapeHtmlSimples(d.cliente)}</div><div style="font-size:.72rem;">${escapeHtmlSimples(d.local)} · Urgência: <b>${escapeHtmlSimples(d.urgencia)}</b></div>${a.origem === 'portal' ? '<span style="display:inline-block;margin-top:4px;background:#e0f2fe;color:#075985;border-radius:6px;padding:2px 6px;font-size:.68rem;">Portal do Cliente</span>' : ''}</div>`;
+        }
+        function _assistPortalPorTratar(adminId) {
+            return (dados.assistencias || []).filter(a => a.adminId === adminId && a.origem === 'portal' && !a.apagadoSuperAdmin && (a.estado || 'aberta') === 'aberta' && !a.osGeradaId && !a.atribuidoId);
+        }
         function _wsGerarNumeroAssistencia() {
             const admin = dados.administradores?.find(a => a.id === _tenantId());
             const iniciais = _empresaIniciais(admin?.empresa || admin?.nome || '');
@@ -6049,6 +6070,7 @@
                                             if (_provVerOs === 'toconline') {
                                                 return `<button class="btn btn-sm" style="background:${s.faturaTOConlineId ? '#64748b' : '#0f766e'};color:#fff;" onclick="faturarOSViaTOConline('${s.id}')" title="${s.faturaTOConlineId ? 'Já faturado — clica para faturar de novo' : 'Faturar via TOConline'}"><i class="fas fa-file-invoice"></i> ${s.faturaTOConlineId ? 'Faturado' : 'Faturar'}</button>`;
                                             }
+                                            if (_provVerOs !== 'moloni') return '';
                                             return `<button class="btn btn-sm" style="background:${s.faturaMoloniId ? '#64748b' : '#7c3aed'};color:#fff;" onclick="faturarOSViaMoloni('${s.id}')" title="${s.faturaMoloniId ? 'Já faturado — clica para faturar de novo' : 'Faturar via Moloni'}"><i class="fas fa-file-invoice"></i> ${s.faturaMoloniId ? 'Faturado' : 'Faturar'}</button>`;
                                         })()}
                                         ${s.faturaMoloniUrl ? `<a href="${s.faturaMoloniUrl}" target="_blank" class="btn btn-sm btn-outline" title="Abrir o PDF da fatura na Moloni"><i class="fas fa-file-pdf"></i> Fatura</a>` : ''}
@@ -8982,15 +9004,18 @@
             const campos = document.getElementById('modalGenericoCampos'); if (!campos) return;
             const acoes = document.getElementById('modalGenericoAcoes');
             if (acoes) acoes.style.display = 'none'; // este ecrã não tem nada para "Guardar" — só Editar/Apagar
-            const nomes = { moloni: 'Moloni', toconline: 'TOConline' };
+            const nomes = { moloni: 'Moloni', toconline: 'TOConline', phc_go: 'PHC GO', phc_cs: 'PHC CS' };
+            const phc = ['phc_go', 'phc_cs'].includes(cfg.provider);
             const nomeProvider = nomes[cfg.provider] || cfg.provider;
             const ligadoToc = cfg.provider === 'toconline' && !!cfg.toconline?.accessToken;
             campos.innerHTML = `
+
                 <div style="text-align:center;padding:10px 0 4px;">
-                    <div style="font-size:2rem;color:#16a34a;margin-bottom:8px;"><i class="fas fa-circle-check"></i></div>
-                    <div style="font-weight:700;font-size:1.05rem;color:#152a52;">Software configurado: ${nomeProvider}</div>
+                    <div style="font-size:2rem;color:${phc ? '#92400e' : '#16a34a'};margin-bottom:8px;"><i class="fas ${phc ? 'fa-clock' : 'fa-circle-check'}"></i></div>
+                    <div style="font-weight:700;font-size:1.05rem;color:#152a52;">Software selecionado: ${nomeProvider}</div>
                     ${cfg.provider === 'toconline' ? `<div style="margin-top:6px;font-size:.85rem;color:${ligadoToc ? '#16a34a' : '#92400e'};">${ligadoToc ? '✅ Ligado à TOConline' : '⚠️ Ainda falta ligar (OAuth)'}</div>` : ''}
-                    ${cfg.simulacao !== false ? `<div style="margin-top:4px;font-size:.8rem;color:#92400e;">⚠️ Modo simulação ainda ativo — não emite faturas reais.</div>` : ''}
+                    ${phc ? `<div style="margin-top:8px;color:#92400e;">Ligação PHC por validar. Faturação e stock reais ainda indisponíveis.</div><button type="button" class="btn btn-outline" style="margin-top:12px;" onclick="TGPHC.open('${cfg.provider === 'phc_cs' ? 'cs' : 'go'}')">Preparar ligação ${nomeProvider}</button>` : ''}
+                    ${!phc && cfg.simulacao !== false ? `<div style="margin-top:4px;font-size:.8rem;color:#92400e;">⚠️ Modo simulação ainda ativo — não emite faturas reais.</div>` : ''}
                 </div>
                 <div style="display:flex;gap:8px;margin-top:16px;">
                     <button type="button" class="btn btn-outline" style="flex:1;" onclick="_fatMostrarWizardEscolha()"><i class="fas fa-pen"></i> Editar</button>
@@ -9000,8 +9025,8 @@
         }
         function _fatApagarConfig() {
             const admin = adminAtual(); if (!admin) return;
-            if (!confirm('Apagar a configuração de faturação? Todos os dados guardados (Client ID/Secret, ligação à TOConline, etc.) são removidos, e é preciso configurar tudo de novo depois.')) return;
-            admin.integracaoFaturacao = null;
+            if (!confirm('Apagar a configuração do fornecedor de faturação atual? Será necessário voltar a ligá-lo. Os rascunhos de preparação PHC são mantidos.')) return;
+            admin.integracaoFaturacao = admin.integracaoFaturacao?.phcDrafts ? { phcDrafts: admin.integracaoFaturacao.phcDrafts } : null;
             guardarDados(dados);
             document.getElementById('modalGenericoOverlay').classList.remove('open');
             alert('✅ Configuração de faturação apagada.');
@@ -9016,13 +9041,13 @@
             const acoes = document.getElementById('modalGenericoAcoes');
             if (acoes) acoes.style.display = ''; // repõe o rodapé Cancelar/Guardar, escondido no ecrã de resumo
             campos.innerHTML = `
-                <div class="form-group">
-                    <label>Qual o software de faturação que tens?</label>
-                    <div style="display:flex;gap:8px;">
-                        <button type="button" class="btn btn-sm ${provider === 'moloni' ? 'btn-primary' : 'btn-outline'}" onclick="_fatEscolherProvider('moloni')" style="flex:1;">Moloni</button>
-                        <button type="button" class="btn btn-sm ${provider === 'toconline' ? 'btn-primary' : 'btn-outline'}" onclick="_fatEscolherProvider('toconline')" style="flex:1;">TOConline</button>
+                <fieldset style="border:0;padding:0;margin:0 0 18px;">
+                    <legend style="font-weight:700;margin-bottom:10px;">Qual o software de faturação que tens?</legend>
+                    <p class="help-text">Seleciona apenas um software para esta empresa.</p>
+                    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;">
+                        ${[['moloni','Moloni'],['toconline','TOConline'],['phc_go','PHC GO'],['phc_cs','PHC CS']].map(([id,nome]) => `<label style="display:flex;align-items:center;gap:8px;padding:14px;border:1px solid #cbd5e1;border-radius:10px;cursor:pointer;"><input type="radio" name="fat_provider" value="${id}" ${provider === id ? 'checked' : ''} onchange="_fatEscolherProvider(this.value)" style="width:auto;margin:0;">${nome}</label>`).join('')}
                     </div>
-                </div>
+                </fieldset>
                 <div id="fatCamposProvider"></div>
             `;
             _fatRenderCamposProvider(provider, cfg);
@@ -9030,17 +9055,17 @@
         function _fatEscolherProvider(provider) {
             const admin = adminAtual(); if (!admin) return;
             const cfg = admin.integracaoFaturacao || {};
-            document.querySelectorAll('#modalGenericoCampos .form-group:first-child .btn').forEach(b => b.classList.remove('btn-primary'));
+            if (!['moloni','toconline','phc_go','phc_cs'].includes(provider)) return;
+            document.querySelectorAll('input[name="fat_provider"]').forEach(r => { r.checked = r.value === provider; });
             _fatRenderCamposProvider(provider, cfg);
-            document.querySelectorAll('#modalGenericoCampos .form-group:first-child .btn').forEach(b => {
-                const ativoMoloni = b.textContent.trim() === 'Moloni' && provider === 'moloni';
-                const ativoToc = b.textContent.trim() === 'TOConline' && provider === 'toconline';
-                b.classList.toggle('btn-primary', ativoMoloni || ativoToc);
-                b.classList.toggle('btn-outline', !(ativoMoloni || ativoToc));
-            });
         }
+
         function _fatRenderCamposProvider(provider, cfg) {
             const alvo = document.getElementById('fatCamposProvider'); if (!alvo) return;
+            if (['phc_go','phc_cs'].includes(provider)) {
+                alvo.innerHTML = `<div style="padding:14px;background:#fef3c7;color:#92400e;border-radius:10px;"><strong>${provider === 'phc_go' ? 'PHC GO' : 'PHC CS'} · ligação por validar</strong><p>Guarda a escolha para esta empresa. Depois poderás preparar os dados da ligação. A emissão de faturas e a sincronização de stock reais ainda não estão disponíveis.</p></div>`;
+                return;
+            }
             if (provider === 'toconline') {
                 const toc = cfg.toconline || {};
                 const ligado = !!toc.accessToken;
@@ -9081,7 +9106,15 @@
         function salvarConfigFaturacao(ligarDepois) {
             const admin = adminAtual();
             if (!admin) return;
-            const provider = document.getElementById('fat_toc_client_id') ? 'toconline' : 'moloni';
+            if (!['admin','subadmin'].includes(usuarioLogado?.role)) return;
+            const provider = document.querySelector('input[name="fat_provider"]:checked')?.value;
+            if (!['moloni','toconline','phc_go','phc_cs'].includes(provider)) { alert('Seleciona um software de faturação.'); return; }
+            if (['phc_go','phc_cs'].includes(provider)) {
+                admin.integracaoFaturacao = { provider, simulacao: true, phcDrafts: admin.integracaoFaturacao?.phcDrafts || {} };
+                guardarDados(dados);
+                _fatMostrarResumo(admin.integracaoFaturacao);
+                return;
+            }
             if (provider === 'toconline') {
                 const clientId = document.getElementById('fat_toc_client_id').value.trim();
                 const clientSecret = document.getElementById('fat_toc_client_secret').value.trim();
@@ -9089,6 +9122,7 @@
                 const anterior = admin.integracaoFaturacao?.toconline || {};
                 admin.integracaoFaturacao = {
                     provider: 'toconline',
+                    phcDrafts: admin.integracaoFaturacao?.phcDrafts || {},
                     simulacao: document.getElementById('fat_simulacao')?.checked !== false,
                     toconline: { ...anterior, clientId, clientSecret }
                 };
@@ -9102,6 +9136,7 @@
             if (!companyId) { alert('O ID da Empresa na Moloni é obrigatório.'); return; }
             admin.integracaoFaturacao = {
                 provider: 'moloni',
+                phcDrafts: admin.integracaoFaturacao?.phcDrafts || {},
                 simulacao: document.getElementById('fat_simulacao').checked,
                 moloni: {
                     clientId: document.getElementById('fat_client_id').value.trim(),
@@ -13316,6 +13351,8 @@
             const osPend = (dados.servicos || []).filter(s => s.adminId === adminId && (s.status || 'pendente') === 'pendente').length;
             if (osPend) alertas.push({ tipo: 'info', titulo: `${osPend} ${osPend === 1 ? 'ordem de serviço pendente' : 'ordens de serviço pendentes'}`, sub: 'Atribua ou inicie as ordens para manter o fluxo.', acao: "abrirSecao('agenda-obras')" });
 
+            const assistPortal = moduloAssistAtivo(dados.administradores?.find(a => a.id === adminId)) ? _assistPortalPorTratar(adminId) : [];
+            if (assistPortal.length) alertas.push({tipo:'warning',titulo: `${assistPortal.length} assistência(s) do Portal do Cliente por tratar`,sub:assistPortal.slice(0,3).map(a => {const d=_assistResumoDados(a);return `${d.cliente} · ${d.local} · ${d.urgencia}`;}).join(' | '),acao:'_abrirAssistGeral()'});
             const assistPend = (dados.servicos || []).filter(s => s.adminId === adminId && s.status === 'por aprovar').length;
             if (assistPend) alertas.push({ tipo: 'warning', titulo: `${assistPend} ${assistPend === 1 ? 'pedido de assistência por aprovar' : 'pedidos de assistência por aprovar'}`, sub: 'Pedidos enviados pelos clientes no Portal. Aprove ou rejeite.', acao: "abrirSecao('servicos')" });
 
@@ -19042,19 +19079,20 @@
                         // disparar também o clique do cartão (que abre o Assist normal por baixo).
                         const _linhaSemOS = (a) => {
                             const nomeCli = a.clienteId ? _nomeClienteOS(a.clienteId) : (a.nomeCliente || 'Sem cliente');
-                            return `<a href="TOTALGEST_ASSIST.html?criarOS=${a.id}" target="_blank" rel="noopener" onclick="event.stopPropagation();return _abrirAssist(event);" style="display:block;font-size:.72rem;color:var(--htxt);text-decoration:none;padding:3px 0;border-bottom:1px dashed var(--hline);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="Criar OS a partir desta assistência">${escapeHtmlSimples(a.assunto || nomeCli)}</a>`;
+                            return `<a href="TOTALGEST_ASSIST.html?criarOS=${a.id}" target="_blank" rel="noopener" onclick="event.stopPropagation();return _abrirAssist(event);" style="display:block;font-size:.72rem;color:var(--htxt);text-decoration:none;padding:3px 0;border-bottom:1px dashed var(--hline);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="Criar OS a partir desta assistência">${_assistResumoHtml(a)}</a>`;
                         };
                         const _linhaComOS = (a) => {
                             const nomeCli = a.clienteId ? _nomeClienteOS(a.clienteId) : (a.nomeCliente || 'Sem cliente');
-                            return `<div onclick="event.stopPropagation();abrirVerOS('${a.osGeradaId}')" style="font-size:.72rem;color:var(--htxt);cursor:pointer;padding:3px 0;border-bottom:1px dashed var(--hline);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="Ver resumo da OS desta assistência">${escapeHtmlSimples(a.assunto || nomeCli)}</div>`;
+                            return `<div onclick="event.stopPropagation();abrirVerOS('${a.osGeradaId}')" style="font-size:.72rem;color:var(--htxt);cursor:pointer;padding:3px 0;border-bottom:1px dashed var(--hline);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="Ver resumo da OS desta assistência">${_assistResumoHtml(a)}</div>`;
                         };
                         const _lista = (arr, fn, vazioTxt) => !arr.length
                             ? `<div style="font-size:.72rem;color:var(--hsub);padding:4px 0;">${vazioTxt}</div>`
                             : arr.slice(0, _LIMITE_LISTA).map(fn).join('') + (arr.length > _LIMITE_LISTA ? `<div style="font-size:.68rem;color:var(--hb);padding:3px 0;">+ ${arr.length - _LIMITE_LISTA} mais</div>` : '');
                         return `<div class="hdc-card" onclick="_abrirAssistGeral()" style="cursor:pointer;transition:box-shadow .15s;" onmouseover="this.style.boxShadow='0 4px 14px rgba(0,0,0,.1)'" onmouseout="this.style.boxShadow=''">
                             <h4><i class="fas fa-headset"></i> Assistências</h4>
-                            <div style="display:flex;gap:16px;font-size:.72rem;color:var(--hsub);margin:6px 0 2px;">
-                                <span>Criadas: <b class="hdc-num-animado" data-final="${_assistTodas.length}" style="color:var(--htxt);">0</b></span>
+                            <div style="display:flex;flex-wrap:wrap;gap:12px;font-size:.72rem;color:var(--hsub);margin:6px 0 2px;">
+                                <span>Total de assistências: <b class="hdc-num-animado" data-final="${_assistTodas.length}" style="color:var(--htxt);">0</b></span>
+                                <span>Por realizar: <b class="hdc-num-animado" data-final="${_assistTodasAbertas.length}" style="color:var(--htxt);">0</b></span>
                                 <span>Concluídas: <b class="hdc-num-animado" data-final="${_assistConcluidas.length}" style="color:var(--hg);">0</b></span>
                             </div>
                             ${_assistUrgentes ? `<div style="font-size:.76rem;color:var(--hr);margin:4px 0;"><i class="fas fa-triangle-exclamation"></i> ${_assistUrgentes} sem OS de prioridade alta/urgente</div>` : ''}
@@ -19321,9 +19359,23 @@
         function _portalBadgeOS(st) {
             const m = { 'pendente': ['#92400e', '#fef3c7'], 'em andamento': ['#1e40af', '#dbeafe'], 'concluído': ['#166534', '#dcfce7'], 'concluido': ['#166534', '#dcfce7'], 'por aprovar': ['#92400e', '#fde68a'], 'recusado': ['#991b1b', '#fee2e2'] };
             const c = m[st] || ['#475569', '#e2e8f0'];
-            return `<span style="background:${c[1]};color:${c[0]};padding:2px 10px;border-radius:999px;font-size:.74rem;font-weight:600;">${st || '—'}</span>`;
+            return `<span style="background:${c[1]};color:${c[0]};padding:2px 10px;border-radius:999px;font-size:.74rem;font-weight:600;">${escapeHtmlSimples(st || '—')}</span>`;
+        }
+        let _portalRenderSeq = 0;
+        function _portalFolhaVisivel(f, cli) {
+            if (!f || !cli || (f.adminId && f.adminId !== cli.adminId)) return false;
+            const sv = (dados.servicos || []).find(s => s.id === f.servicoId && s.adminId === cli.adminId && s.clienteId === cli.id);
+            const obra = (dados.obras || []).find(o => o.id === (f.obraId || sv?.obraId) && o.adminId === cli.adminId && o.clienteId === cli.id);
+            if (obra?.longaDuracao) return f.folhaFinal === true;
+            return !!sv || (dados.contratos || []).some(c => c.id === f.contratoId && c.adminId === cli.adminId && c.clienteId === cli.id);
+        }
+        function _portalUrlDocumento(raw) {
+            try { const u = new URL(raw); return u.protocol === 'https:' && !u.username && !u.password ? escapeHtmlSimples(u.href) : ''; } catch { return ''; }
         }
         async function renderizarPortalCliente() {
+            if (usuarioLogado?.role !== 'cliente') return;
+            const requestSeq = ++_portalRenderSeq;
+            const portalKey = [usuarioLogado.id, usuarioLogado.adminId, usuarioLogado.clienteId].join(':');
             const cont = document.getElementById('portal-cliente'); if (!cont) return;
             // Reforço: sempre que o portal do cliente é desenhado, garante que o painel
             // interno da empresa (cardsGrid) e os grupos "sistema" ficam mesmo escondidos —
@@ -19332,35 +19384,29 @@
             document.body.classList.add('is-cliente-portal'); // reforço extra em CSS — ver regra "!important" abaixo
             document.querySelectorAll('.grupo-cards[data-grupo="sistema"]').forEach(el => { el.style.display = 'none'; });
             cont.style.display = 'block';
-            const cli = (dados.clientes || []).find(c => c.id === usuarioLogado.clienteId);
+            const cli = (dados.clientes || []).find(c => c.id === usuarioLogado?.clienteId && c.adminId === usuarioLogado?.adminId);
             if (!cli) { cont.innerHTML = '<div class="section-container active"><p>Cliente não encontrado.</p></div>'; return; }
             await garantirServicosCarregados(_dataCorteMeses(12));
             await garantirFolhasCarregadas(_dataCorteMeses(12));
+            if (requestSeq !== _portalRenderSeq || usuarioLogado?.role !== 'cliente' || portalKey !== [usuarioLogado.id, usuarioLogado.adminId, usuarioLogado.clienteId].join(':')) return;
             const adminCli = (dados.administradores || []).find(a => a.id === cli.adminId);
+            const assistAtivo = moduloAssistAtivo(adminCli);
+            const pedidosAssist = (dados.assistencias || []).filter(a => a.adminId === cli.adminId && a.clienteId === cli.id && a.origem === 'portal').sort((a,b) => (b.dataCriacao || 0) - (a.dataCriacao || 0));
             const empresa = adminCli ? (adminCli.empresa || adminCli.nome) : 'Empresa';
             const oss = (dados.servicos || []).filter(s => s.adminId === cli.adminId && s.clienteId === cli.id).sort((a, b) => (b.data || '').localeCompare(a.data || ''));
             const contratos = (dados.contratos || []).filter(c => c.adminId === cli.adminId && c.clienteId === cli.id);
-            const folhas = (dados.folhasObra || []).filter(f => {
-                const sv = (dados.servicos || []).find(s => s.id === f.servicoId);
-                const obraLigadaId = f.obraId || sv?.obraId || null;
-                const obraLigada = obraLigadaId ? (dados.obras || []).find(o => o.id === obraLigadaId) : null;
-                // Obras de longa duração podem gerar muitas folhas internas (uma por sessão de
-                // trabalho) — o cliente só deve ver UMA: a folha final, assinada remotamente,
-                // criada quando o funcionário responsável marca "Sim, terminei a obra".
-                if (obraLigada && obraLigada.longaDuracao) return obraLigada.clienteId === cli.id && f.folhaFinal === true;
-                return (sv && sv.clienteId === cli.id) || (f.contratoId && contratos.some(c => c.id === f.contratoId));
-            }).sort((a, b) => (b.data || '').localeCompare(a.data || ''));
-
-            const faturasCliente = (dados.servicos || [])
-                .filter(s => s.clienteId === cli.id && s.faturaMoloniId)
-                .sort((a, b) => (b.data || '').localeCompare(a.data || ''));
+            const folhas = (dados.folhasObra || []).filter(f => _portalFolhaVisivel(f, cli)).sort((a,b) => (b.data || '').localeCompare(a.data || ''));
+            const faturasCliente = oss.flatMap(s => [
+                { provider: 'Moloni', id: s.faturaMoloniId, url: s.faturaMoloniUrl, receipt: s.reciboMoloniUrl },
+                { provider: 'TOConline', id: s.faturaTOConlineId, url: s.faturaTOConlineUrl, receipt: null }
+            ].filter(f => f.id).map(f => ({...s, _portalFatura: f})));
 
             // Intervenções agendadas nos próximos 10 dias (todas, não só a mais próxima;
             // cada uma deixa de aparecer sozinha assim que o seu dia passar)
             const _hojeStr = getDataHoje();
-            const _daqui10dias = (() => { const d = new Date(); d.setDate(d.getDate() + 10); return d.toISOString().slice(0, 10); })();
+            const _daqui10dias = (() => { const d = new Date(); d.setDate(d.getDate() + 10); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); })();
             const proximasInts = oss
-                .filter(s => !['concluído', 'concluido', 'por aprovar', 'recusado'].includes(s.status) && s.data && s.data >= _hojeStr && s.data <= _daqui10dias)
+                .filter(s => !['concluído', 'concluido', 'por aprovar', 'recusado', 'cancelado'].includes(s.status) && s.data && s.data >= _hojeStr && s.data <= _daqui10dias)
                 .sort((a, b) => (a.data + (a.hora || '')).localeCompare(b.data + (b.hora || '')));
             let bannerProxima = '';
             if (proximasInts.length) {
@@ -19369,14 +19415,14 @@
                     const nomeLocal = int.localId ? ((dados.locais || []).find(l => l.id === int.localId)?.nome || 'Instalação') : 'Sede';
                     return `<div style="background:#ecfdf5;border:1px solid #6ee7b7;color:#065f46;border-radius:12px;padding:12px 18px;margin-bottom:8px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
                         <i class="fas fa-calendar-check" style="font-size:1.2rem;"></i>
-                        <div><strong>Próxima intervenção agendada:</strong> ${dataFmt}${int.hora ? ' às ' + int.hora : ' (hora a confirmar)'} — Local: ${nomeLocal}</div>
+                        <div><strong>Próxima intervenção agendada:</strong> ${dataFmt}${int.hora ? ' às ' + int.hora : ' (hora a confirmar)'} — Local: ${escapeHtmlSimples(nomeLocal)}</div>
                     </div>`;
                 }).join('') + '<div style="margin-bottom:10px;"></div>';
             }
 
             let h = '';
             const notifsCliente = (dados.notificacoes || [])
-                .filter(n => n.destinatarioId === cli.id && !n.lida)
+                .filter(n => n.destinatarioId === cli.id && (!n.adminId || n.adminId === cli.adminId) && !n.lida)
                 .sort((a, b) => (b.dataCriacao || 0) - (a.dataCriacao || 0));
             if (notifsCliente.length) {
                 h += notifsCliente.map(n => `
@@ -19390,10 +19436,10 @@
                         <button type="button" onclick="_marcarNotifPessoalLida('${n.id}'); renderizarPortalCliente();" title="Marcar como lida" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:16px;padding:2px 4px;flex-shrink:0;"><i class="fas fa-xmark"></i></button>
                     </div>`).join('');
             }
-            h += `<div style="background:linear-gradient(135deg,#0b3b5c,#1a5f7a);color:#fff;border-radius:16px;padding:20px 24px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
-                <div><div style="font-size:.85rem;opacity:.85;">Área de Cliente · ${empresa}</div><div style="font-size:1.3rem;font-weight:800;">Olá, ${cli.nome}</div></div>
+            h += `<div data-portal-hero style="background:linear-gradient(135deg,#0b3b5c,#1a5f7a);color:#fff;border-radius:16px;padding:20px 24px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+                <div><div style="font-size:.85rem;opacity:.85;">Área de Cliente · ${escapeHtmlSimples(empresa)}</div><div style="font-size:1.3rem;font-weight:800;">Olá, ${escapeHtmlSimples(cli.nome)}</div></div>
                 <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                    <button class="btn" style="background:#fff;color:#0b3b5c;font-weight:700;" onclick="portalPedirAssistencia()"><i class="fas fa-headset"></i> Pedir assistência</button>
+                    ${assistAtivo ? `<button class="btn" style="background:#fff;color:#0b3b5c;font-weight:700;" onclick="portalPedirAssistencia()"><i class="fas fa-headset"></i> Pedir assistência</button>` : ''}
                     <button class="btn" style="background:rgba(255,255,255,.15);color:#fff;font-weight:700;" onclick="abrirHistoricoPedidosAssistencia('${cli.id}')"><i class="fas fa-clock-rotate-left"></i> Histórico de pedidos</button>
                 </div>
             </div>${bannerProxima}`;
@@ -19426,7 +19472,7 @@
                 hContratos = `<div class="table-wrapper"><table><thead><tr><th>Contrato</th><th>Tipo</th><th>Periodicidade</th><th>Próxima intervenção</th></tr></thead><tbody>`;
                 contratos.forEach(c => {
                     const prox = c.proximaManutencao ? new Date(c.proximaManutencao).toLocaleDateString('pt-PT') : '—';
-                    hContratos += `<tr><td>${c.numero || c.marca || '—'}</td><td>${c.tipo || c.tipoIntervencao || '—'}</td><td>${c.periodicidade || '—'}</td><td>${prox}</td></tr>`;
+                    hContratos += `<tr><td>${escapeHtmlSimples(c.numero || c.marca || '—')}</td><td>${escapeHtmlSimples(c.tipo || c.tipoIntervencao || '—')}</td><td>${escapeHtmlSimples(c.periodicidade || '—')}</td><td>${prox}</td></tr>`;
                 });
                 hContratos += `</tbody></table></div>`;
             }
@@ -19487,14 +19533,16 @@
             if (!faturasCliente.length) {
                 hFaturas = `<p style="color:#64748b;">Ainda não há faturas emitidas.</p>`;
             } else {
-                hFaturas = `<div class="table-wrapper"><table><thead><tr><th>Data</th><th>OS</th><th>Valor</th><th>Fatura</th><th>Recibo</th></tr></thead><tbody>`;
+                hFaturas = `<div class="table-wrapper"><table><thead><tr><th>Data</th><th>OS</th><th>Valor da OS</th><th>Fatura</th><th>Recibo</th></tr></thead><tbody>`;
                 faturasCliente.forEach(s => {
-                    const linkFatura = s.faturaMoloniUrl
-                        ? `<a href="${s.faturaMoloniUrl}" target="_blank" class="btn btn-sm" style="background:#7c3aed;color:#fff;"><i class="fas fa-file-pdf"></i> Ver</a>`
+                    const invoiceUrl = _portalUrlDocumento(s._portalFatura.url);
+                    const receiptUrl = _portalUrlDocumento(s._portalFatura.receipt);
+                    const linkFatura = invoiceUrl
+                        ? `<a href="${invoiceUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-sm" style="background:#7c3aed;color:#fff;">Ver · ${s._portalFatura.provider}</a>`
+                        : `<span style="color:#64748b;">${s._portalFatura.provider} · documento emitido, link indisponível</span>`;
+                    const linkRecibo = receiptUrl
+                        ? `<a href="${receiptUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-sm" style="background:#16a34a;color:#fff;">Ver recibo</a>`
                         : `<span style="color:#94a3b8;">—</span>`;
-                    const linkRecibo = s.reciboMoloniUrl
-                        ? `<a href="${s.reciboMoloniUrl}" target="_blank" class="btn btn-sm" style="background:#16a34a;color:#fff;"><i class="fas fa-receipt"></i> Ver</a>`
-                        : (s.pago === true ? `<span style="color:#94a3b8;">A processar…</span>` : `<span style="color:#94a3b8;">—</span>`);
                     hFaturas += `<tr><td>${s.data || '—'}</td><td>${s.numeroRegisto ? 'OS ' + s.numeroRegisto : '—'}</td><td>${s.valor != null ? _finEur(s.valor) : '—'}</td><td>${linkFatura}</td><td>${linkRecibo}</td></tr>`;
                 });
                 hFaturas += `</tbody></table></div>`;
@@ -19502,14 +19550,22 @@
             h += _portalAccordion('faturas', 'fa-file-invoice-dollar', `Faturas (${faturasCliente.length})`, hFaturas, false);
 
             cont.innerHTML = h;
+            window.TGPortal?.mount({key: portalKey, nome: cli.nome, empresa,
+                upcoming: proximasInts.length,
+                openServices: oss.filter(s => !['concluído','concluido','cancelado','recusado','por aprovar'].includes(s.status)).length,
+                signatures: folhas.filter(f => !(f.assinatura || f.assinaturaPath)).length,
+                assistAtivo,
+                pendingRequests: pedidosAssist.filter(a => a.estado === 'aberta').length,
+                requests: pedidosAssist.map(a => ({numero:a.numero, data:new Date(a.dataCriacao).toLocaleDateString('sv-SE'),descricao:a.descricao,status:({aberta:'Aberto',andamento:'Em atendimento',em_tratamento:'Em tratamento',resolvida:'Resolvida',fechada:'Fechada'})[a.estado] || a.estado}))
+            });
         }
 
         function _portalAccordion(id, icone, titulo, innerHtml, abertoDefault) {
-            return `<div class="report-card" style="padding:0;overflow:hidden;">
-                <div style="cursor:pointer;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;" onclick="_portalToggleAccordion('${id}')">
-                    <h4 style="margin:0;"><i class="fas ${icone}"></i> ${titulo}</h4>
+            return `<div class="report-card" data-portal-section="${id}" style="padding:0;overflow:hidden;">
+                <button type="button" aria-expanded="${!!abertoDefault}" aria-controls="portal-acc-${id}" style="width:100%;background:none;border:0;color:inherit;text-align:left;cursor:pointer;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;" onclick="_portalToggleAccordion('${id}')">
+                    <span style="font-weight:700;"><i class="fas ${icone}"></i> ${titulo}</span>
                     <i class="fas fa-chevron-down" id="portal-acc-icone-${id}" style="transition:.2s;${abertoDefault ? 'transform:rotate(180deg);' : ''}"></i>
-                </div>
+                </button>
                 <div id="portal-acc-${id}" style="display:${abertoDefault ? 'block' : 'none'};padding:0 20px 18px;">${innerHtml}</div>
             </div>`;
         }
@@ -19519,11 +19575,15 @@
             if (!conteudo) return;
             const abrir = conteudo.style.display === 'none';
             conteudo.style.display = abrir ? 'block' : 'none';
+            document.querySelector('[aria-controls="portal-acc-' + id + '"]')?.setAttribute('aria-expanded', String(abrir));
             if (icone) icone.style.transform = abrir ? 'rotate(180deg)' : '';
         }
 
         let _portalSigCtx = null, _portalSigDraw = false, _portalSigFolha = null, _portalSigVazia = true;
         function portalAbrirAssinatura(folhaId) {
+            const cli = (dados.clientes || []).find(c => c.id === usuarioLogado?.clienteId && c.adminId === usuarioLogado?.adminId);
+            const folha = (dados.folhasObra || []).find(f => f.id === folhaId);
+            if (usuarioLogado?.role !== 'cliente' || !_portalFolhaVisivel(folha, cli)) { alert('Documento indisponível para este cliente.'); return; }
             _portalSigFolha = folhaId; _portalSigVazia = true;
             let ov = document.getElementById('portalSigOverlay');
             if (!ov) {
@@ -19561,6 +19621,8 @@
             if (_portalSigVazia) { alert('Por favor assine antes de confirmar.'); return; }
             const cv = document.getElementById('portalSigCanvas');
             const folha = (dados.folhasObra || []).find(f => f.id === _portalSigFolha);
+            const cli = (dados.clientes || []).find(c => c.id === usuarioLogado?.clienteId && c.adminId === usuarioLogado?.adminId);
+            if (usuarioLogado?.role !== 'cliente' || !_portalFolhaVisivel(folha, cli)) { portalFecharAssinatura(); alert('Documento indisponível para este cliente.'); return; }
             if (folha && cv) {
                 const base64 = cv.toDataURL('image/png');
                 const ok = await _uploadImagemStorage(`${folha.adminId}/folhas/${folha.id}.png`, base64);
@@ -19580,38 +19642,90 @@
             alert('✅ Folha assinada. Obrigado!');
         }
 
+        function _portalAssistCliente() {
+            if (usuarioLogado?.role !== 'cliente') return null;
+            return (dados.clientes || []).find(c => c.id === usuarioLogado.clienteId && c.adminId === usuarioLogado.adminId) || null;
+        }
+        function _portalAssistPermitido(cli) {
+            return !!cli && moduloAssistAtivo((dados.administradores || []).find(a => a.id === cli.adminId));
+        }
+        function _portalAssistLocais(cli) {
+            const instalacoes = (dados.locais || []).filter(l => l.clienteId === cli.id && l.adminId === cli.adminId);
+            const sede = { id: '__sede_cliente__', sedeCliente: true, nome: 'Sede', morada: cli.morada || '', numeroPorta: cli.numeroPorta || '', codigoPostal: cli.codigoPostal || '', cidade: cli.cidade || '', freguesia: cli.freguesia || '' };
+            return [sede, ...instalacoes];
+        }
         function portalPedirAssistencia() {
+            const cli = _portalAssistCliente(); if (!_portalAssistPermitido(cli)) { alert('O módulo de Assistências não está ativo nesta empresa.'); return; }
             let ov = document.getElementById('portalAjudaOverlay');
+            if (ov?.dataset.enviando === '1') return;
             if (!ov) {
-                ov = document.createElement('div');
-                ov.id = 'portalAjudaOverlay';
-                ov.className = 'modal-overlay';
-                ov.innerHTML = `<div class="modal" style="max-width:460px;">
-                    <div style="display:flex; align-items:center; justify-content:space-between;">
-                        <h3><i class="fas fa-headset"></i> Pedir assistência</h3>
-                        <button class="close-modal" onclick="portalFecharAjuda()">&times;</button>
-                    </div>
-                    <div class="form-group"><label>Descreva o que precisa *</label><textarea id="portalAjudaDesc" rows="4" placeholder="Ex.: o sensor da porta da loja deixou de funcionar."></textarea></div>
-                    <button class="btn btn-primary" style="width:100%;" onclick="portalEnviarAssistencia()"><i class="fas fa-paper-plane"></i> Enviar pedido</button>
-                </div>`;
+                ov = document.createElement('div'); ov.id = 'portalAjudaOverlay'; ov.className = 'modal-overlay';
                 document.body.appendChild(ov);
             }
-            const ta = document.getElementById('portalAjudaDesc'); if (ta) ta.value = '';
+            const locais = _portalAssistLocais(cli);
+            delete ov.dataset.pedidoId;
+            ov.dataset.cliente = cli.id; ov.dataset.admin = cli.adminId;
+            ov.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="portalAjudaTitulo" style="max-width:540px;max-height:90vh;overflow-y:auto;">
+                <div style="display:flex;align-items:center;justify-content:space-between;">
+                    <h3 id="portalAjudaTitulo"><i class="fas fa-headset"></i> Pedir assistência</h3>
+                    <button type="button" class="close-modal" aria-label="Fechar" onclick="portalFecharAjuda()">&times;</button>
+                </div>
+                <p style="color:#64748b;">Indique onde precisa de assistência e o que aconteceu.</p>
+                <form onsubmit="event.preventDefault();portalEnviarAssistencia();">
+                    <div class="form-group"><label for="portalAjudaLocal">Local *</label>
+                        <select id="portalAjudaLocal" required ${locais.length === 1 ? 'disabled' : ''}>
+                            ${locais.length !== 1 ? '<option value="">Selecione o local</option>' : ''}
+                            ${locais.map(l => `<option value="${escapeHtmlSimples(l.id)}">${escapeHtmlSimples(l.nome || 'Local')} — ${escapeHtmlSimples(l.morada || l.cidade || 'Morada não indicada')}</option>`).join('')}
+                        </select>
+                        <small style="color:#64748b;">${locais.length === 1 ? 'O seu único local foi selecionado automaticamente.' : locais.length ? 'Escolha o local onde ocorre o problema.' : 'Ainda não tem locais registados. Contacte a empresa para adicionar o local.'}</small>
+                    </div>
+                    <div class="form-group"><label for="portalAjudaUrgencia">Urgência *</label>
+                        <select id="portalAjudaUrgencia" required><option value="">Selecione a urgência</option><option value="baixa">Baixa — pode aguardar</option><option value="normal">Normal — necessita de assistência</option><option value="alta">Alta — afeta o funcionamento</option><option value="urgente">Urgente — serviço parado</option></select>
+                    </div>
+                    <div class="form-group"><label for="portalAjudaDesc">Qual é o problema? *</label><textarea id="portalAjudaDesc" rows="4" maxlength="4000" required placeholder="Descreva o equipamento afetado, o que acontece e desde quando. Ex.: o sensor da porta deixou de funcionar esta manhã."></textarea></div>
+                    <p id="portalAjudaEstado" role="status" aria-live="polite"></p>
+                    <button id="portalAjudaEnviar" type="submit" class="btn btn-primary" style="width:100%;" ${!locais.length ? 'disabled' : ''}><i class="fas fa-paper-plane"></i> Enviar pedido</button>
+                </form>
+            </div>`;
             ov.classList.add('open');
         }
-        function portalFecharAjuda() { const ov = document.getElementById('portalAjudaOverlay'); if (ov) ov.classList.remove('open'); }
-        function portalEnviarAssistencia() {
+        function portalFecharAjuda() {
+            const ov = document.getElementById('portalAjudaOverlay');
+            if (ov && ov.dataset.enviando !== '1') { ov.classList.remove('open'); ov.replaceChildren(); }
+        }
+        async function portalEnviarAssistencia() {
+            const cli = _portalAssistCliente(), ov = document.getElementById('portalAjudaOverlay');
+            if (!cli || !ov || ov.dataset.enviando === '1') return;
+            if (!_portalAssistPermitido(cli)) { alert('O módulo de Assistências não está ativo nesta empresa.'); return; }
+            if (ov.dataset.cliente !== cli.id || ov.dataset.admin !== cli.adminId) { portalFecharAjuda(); return; }
+            const local = _portalAssistLocais(cli).find(l => l.id === document.getElementById('portalAjudaLocal')?.value);
+            const urgencia = document.getElementById('portalAjudaUrgencia')?.value;
+            const prioridades = { baixa: 'Baixa', normal: 'Normal', alta: 'Alta', urgente: 'Urgente' };
             const desc = (document.getElementById('portalAjudaDesc')?.value || '').trim();
-            if (!desc) { alert('Por favor descreva o que precisa.'); return; }
-            const cli = (dados.clientes || []).find(c => c.id === usuarioLogado.clienteId);
-            if (!cli) return;
-            dados.servicos = dados.servicos || [];
-            dados.servicos.push({ id: gerarId(), adminId: cli.adminId, clienteId: cli.id, descricao: '[Pedido do cliente] ' + desc, data: getDataHoje(), hora: '', status: 'por aprovar', origem: 'portal' });
-            guardarDados(dados);
-            _notificarAdminESubadmin(cli.adminId, '🆘 Novo pedido de assistência', 'Cliente ' + _clienteLabel(cli) + ' enviou um novo pedido pelo Portal.', "abrirSecao('servicos')");
-            portalFecharAjuda();
-            renderizarPortalCliente();
-            alert('✅ Pedido enviado à empresa. Entraremos em contacto.');
+            if (!local) { alert('Selecione um local válido.'); return; }
+            if (!Object.prototype.hasOwnProperty.call(prioridades, urgencia)) { alert('Indique a urgência do pedido.'); return; }
+            if (!desc || desc.length > 4000) { alert('Descreva o problema (até 4000 caracteres).'); return; }
+            const btn = document.getElementById('portalAjudaEnviar'), estado = document.getElementById('portalAjudaEstado');
+            ov.dataset.enviando = '1'; btn.disabled = true; estado.textContent = 'A enviar o pedido…';
+            ov.dataset.pedidoId = ov.dataset.pedidoId || gerarId();
+            try {
+                const { data: gravado, error } = await supa.rpc('portal_criar_assistencia', { p_id: ov.dataset.pedidoId, p_local_id: local.sedeCliente ? null : local.id, p_prioridade: urgencia, p_problema: desc });
+                if (error || !gravado?.id) throw new Error(error?.message || 'Sem confirmação do servidor');
+                if (_portalAssistCliente()?.id !== cli.id || _portalAssistCliente()?.adminId !== cli.adminId) { ov.dataset.enviando = ''; portalFecharAjuda(); return; }
+                const pedido = M.assistencias.from(gravado);
+                dados.assistencias = dados.assistencias || [];
+                const indice = dados.assistencias.findIndex(a => a.id === pedido.id);
+                if (indice < 0) dados.assistencias.push(pedido); else dados.assistencias[indice] = pedido;
+                if (!_snap.assistencias) _snap.assistencias = new Map();
+                _snap.assistencias.set(pedido.id, JSON.stringify(M.assistencias.to(pedido)));
+                ov.dataset.enviando = ''; delete ov.dataset.pedidoId; portalFecharAjuda();
+                if (_portalAssistCliente()?.id === cli.id && _portalAssistCliente()?.adminId === cli.adminId) {
+                    renderizarPortalCliente();
+                    alert('✅ Assistência ' + pedido.numero + ' criada em Aberto. A empresa irá tratar do pedido.');
+                }
+            } catch (err) {
+                estado.textContent = 'Não foi possível enviar: ' + (err.message || 'verifique a ligação') + '. Pode tentar novamente sem duplicar o pedido.';
+            } finally { ov.dataset.enviando = ''; btn.disabled = false; }
         }
 
         function renderizarAuditoria() {
@@ -20195,6 +20309,8 @@
             }
             if (u.role !== 'admin' && u.role !== 'subadmin' && u.role !== 'encarregado') return [];
             const aid = (u.role === 'admin' || u.role === 'subadmin') ? (u.role === 'admin' ? u.id : u.adminId) : u.adminId;
+            const portalPend = moduloAssistAtivo(dados.administradores?.find(a => a.id === aid)) ? _assistPortalPorTratar(aid).length : 0;
+            if (portalPend) itens.push({icon:'fa-headset',titulo:`${portalPend} assistência(s) do Portal do Cliente`,sub:'Novos pedidos por tratar',secao:'assist-portal',count:portalPend});
             const assist = (dados.servicos || []).filter(s => s.adminId === aid && s.status === 'por aprovar').length;
             if (assist) itens.push({ icon: 'fa-headset', titulo: `${assist} ${assist === 1 ? 'pedido de assistência' : 'pedidos de assistência'}`, sub: 'Do Portal do Cliente — aprovar/rejeitar', secao: 'servicos', count: assist });
             const reqs = (dados.requisicoes || []).filter(r => r.adminId === aid && (r.status || 'pendente') === 'pendente').length;
@@ -20337,6 +20453,7 @@
             }
         }
         function sinoIr(secao) {
+            if (secao === 'assist-portal') { const dd = document.getElementById('sinoDropdown'); if (dd) dd.style.display = 'none'; _abrirAssistGeral(); return; }
             const dd = document.getElementById('sinoDropdown'); if (dd) dd.style.display = 'none';
             abrirSecao(secao);
         }
@@ -25149,7 +25266,7 @@ async function salvarAdmin(e) {
                                 <div class="form-group ff-span2">
                                     <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
                                         <input type="checkbox" id="c_portal_ativo" ${item && item.portalAtivo ? 'checked' : ''} style="width:auto;margin:0;" />
-                                        Ativar o Portal do Cliente para este cliente (entra com o email acima)
+                                        Ativar o Portal do Cliente para este cliente (entra com o NIF e a senha do portal)
                                     </label>
                                 </div>
                                 <div class="form-group ff-span2">
@@ -26575,9 +26692,10 @@ async function salvarAdmin(e) {
         }
         async function _salvarFormularioInterno(e) {
             const ent = entidadeAtual;
+            const idRegistoEmEdicao = idEditando; // Preservar antes de fecharModal limpar o estado global.
             if (!ent) return;
             let obj = {};
-            const isEdit = !!idEditando;
+            const isEdit = !!idRegistoEmEdicao;
 
             // Validação de formato — telefone (indicativo + 9 dígitos) e código postal (0000-000),
             // em qualquer um dos campos que existir no formulário atual.
@@ -26603,8 +26721,8 @@ async function salvarAdmin(e) {
                 // aviso claro.
                 const _emailNovoFunc = (document.getElementById('f_email')?.value || '').trim().toLowerCase();
                 if (_emailNovoFunc) {
-                    const _emailJaUsado = (dados.funcionarios || []).some(f => f.id !== idEditando && (f.email || '').trim().toLowerCase() === _emailNovoFunc)
-                        || (dados.encarregados || []).some(e => e.id !== idEditando && (e.email || '').trim().toLowerCase() === _emailNovoFunc);
+                    const _emailJaUsado = (dados.funcionarios || []).some(f => f.id !== idRegistoEmEdicao && (f.email || '').trim().toLowerCase() === _emailNovoFunc)
+                        || (dados.encarregados || []).some(e => e.id !== idRegistoEmEdicao && (e.email || '').trim().toLowerCase() === _emailNovoFunc);
                     if (_emailJaUsado) {
                         mostrarErro(`Já existe uma conta com o email "${_emailNovoFunc}". Usa outro email para este funcionário.`);
                         return;
@@ -26709,16 +26827,16 @@ async function salvarAdmin(e) {
                 if (podeAssinarEl) obj.podeAssinarRelatorios = podeAssinarEl.checked;
                 const dfEl = document.getElementById('f_dias_ferias');
                 if (dfEl && dfEl.value !== '') obj.diasFerias = parseInt(dfEl.value) || 0;
-                else if (isEdit) { const _ex = dados.funcionarios?.find(x => x.id === idEditando); if (_ex && _ex.diasFerias != null) obj.diasFerias = _ex.diasFerias; }
+                else if (isEdit) { const _ex = dados.funcionarios?.find(x => x.id === idRegistoEmEdicao); if (_ex && _ex.diasFerias != null) obj.diasFerias = _ex.diasFerias; }
                 if (obj.veiculoId) {
-                    const ocupado = veiculoJaAtribuido(obj.veiculoId, 'func', isEdit ? idEditando : null);
+                    const ocupado = veiculoJaAtribuido(obj.veiculoId, 'func', isEdit ? idRegistoEmEdicao : null);
                     if (ocupado) { alert('Esse carro já está atribuído a ' + ocupado + '. Um carro só pode ser atribuído a uma pessoa.'); return; }
                 }
                 if (!obj.nome || !obj.cargo || !obj.email || (!isEdit && !obj.senha) || !obj.morada || !obj.codigoPostal || !document.getElementById('f_horas').value) {
                     alert('Preencha os campos obrigatórios: Nome, Cargo, Email, Senha, Morada, Código Postal e Horas Semanais.');
                     return;
                 }
-                if (await emailJaRegistado(obj.email, isEdit ? idEditando : null)) {
+                if (await emailJaRegistado(obj.email, isEdit ? idRegistoEmEdicao : null)) {
                     alert('Já existe um utilizador com este email (' + obj.email + '). Use um email diferente.');
                     return;
                 }
@@ -26761,7 +26879,7 @@ async function salvarAdmin(e) {
                 const _NIF_CONSUMIDOR_FINAL = '999999990';
                 {
                     const _outroComMesmoNif = obj.nif !== _NIF_CONSUMIDOR_FINAL
-                        ? (dados.clientes || []).find(c => c.adminId === obj.adminId && c.nif === obj.nif && c.id !== idEditando)
+                        ? (dados.clientes || []).find(c => c.adminId === obj.adminId && c.nif === obj.nif && c.id !== idRegistoEmEdicao)
                         : null;
                     if (_outroComMesmoNif) {
                         if (confirm(`Já existe um cliente com este NIF: "${_outroComMesmoNif.nome}". Cada cliente precisa de um NIF diferente — é o que identifica o login no Portal.\n\nQueres abrir esse cliente agora, para veres/editares?`)) {
@@ -26824,7 +26942,7 @@ async function salvarAdmin(e) {
                     const funcObj = dados.funcionarios?.find(f => f.id === usuarioLogado.id);
                     if (funcObj) adminId = funcObj.adminId;
                 }
-                const _osExist = isEdit ? (dados.servicos || []).find(x => x.id === idEditando) : null;
+                const _osExist = isEdit ? (dados.servicos || []).find(x => x.id === idRegistoEmEdicao) : null;
                 let _sLocalIdResolvido = document.getElementById('s_local') ? document.getElementById('s_local').value : (_osExist ? _osExist.localId : null);
                 if (_sLocalIdResolvido === '__novo__') {
                     const nomeNovoLocal = (document.getElementById('s_local_nome')?.value || '').trim();
@@ -26886,7 +27004,7 @@ async function salvarAdmin(e) {
                     tiposTrabalho: _sTiposTrabalhoSelecionados(),
                     adminId: adminId
                 };
-                obj._eraAprovacaoAssistencia = !!(_aprovandoAssistenciaId && idEditando === _aprovandoAssistenciaId && (obj.status === 'por aprovar' || !obj.status));
+                obj._eraAprovacaoAssistencia = !!(_aprovandoAssistenciaId && idRegistoEmEdicao === _aprovandoAssistenciaId && (obj.status === 'por aprovar' || !obj.status));
                 if (obj._eraAprovacaoAssistencia) { obj.status = 'pendente'; }
                 if (_bloquearSeAusenteEmOS([...(obj.funcionariosIds || []), obj.funcionarioId].filter(Boolean), obj.data)) return;
                 if (!obj.clienteId) { alert('Selecione um cliente.'); return; }
@@ -26895,7 +27013,7 @@ async function salvarAdmin(e) {
                 // relatórios iguais (ex.: duas RIE do mesmo edifício no mesmo dia).
                 if (!isEdit && obj.localId && obj.data && (obj.tiposTrabalho || []).length) {
                     const outrasNoMesmoDia = (dados.servicos || []).filter(s =>
-                        s.id !== idEditando && s.clienteId === obj.clienteId && s.localId === obj.localId && s.data === obj.data
+                        s.id !== idRegistoEmEdicao && s.clienteId === obj.clienteId && s.localId === obj.localId && s.data === obj.data
                     );
                     const tiposRepetidos = obj.tiposTrabalho.filter(t => outrasNoMesmoDia.some(s => (s.tiposTrabalho || []).includes(t)));
                     if (tiposRepetidos.length) {
@@ -26910,7 +27028,7 @@ async function salvarAdmin(e) {
                     const inicioNova = _horaMin(obj.hora);
                     const fimNova = inicioNova + (parseInt(obj.duracao, 10) || 60);
                     const outras = (dados.servicos || []).filter(s =>
-                        s.id !== idEditando && s.funcionarioId === obj.funcionarioId && s.data === obj.data && s.hora
+                        s.id !== idRegistoEmEdicao && s.funcionarioId === obj.funcionarioId && s.data === obj.data && s.hora
                     );
                     const emConflito = outras.find(s => {
                         const ini2 = _horaMin(s.hora);
@@ -26982,7 +27100,7 @@ async function salvarAdmin(e) {
                 }
 
                 const _foAssinaturaBase64 = capturarAssinatura() || null;
-                const _foFolhaId = idEditando || gerarId();
+                const _foFolhaId = idRegistoEmEdicao || gerarId();
                 let _foAssinaturaPath = null;
                 if (_foAssinaturaBase64) {
                     const ok = await _uploadImagemStorage(`${_foAdminId}/folhas/${_foFolhaId}.png`, _foAssinaturaBase64);
@@ -27099,7 +27217,7 @@ async function salvarAdmin(e) {
                     reader.readAsDataURL(fileInput.files[0]);
                     return;
                 } else {
-                    const reqAtual = dados.requisicoes?.find(x => x.id === idEditando);
+                    const reqAtual = dados.requisicoes?.find(x => x.id === idRegistoEmEdicao);
                     obj.anexo = reqAtual && reqAtual.anexo ? reqAtual.anexo : null;
                     finalizarRequisicao(obj);
                     return;
@@ -27107,7 +27225,7 @@ async function salvarAdmin(e) {
                 function finalizarRequisicao(objFinal) {
                     let lista = dados.requisicoes || [];
                     if (isEdit) {
-                        const idx = lista.findIndex(i => i.id === idEditando);
+                        const idx = lista.findIndex(i => i.id === idRegistoEmEdicao);
                         if (idx !== -1) lista[idx] = { ...lista[idx], ...objFinal };
                     } else {
                         objFinal.id = gerarId();
@@ -27137,7 +27255,7 @@ async function salvarAdmin(e) {
                 const _arRefNova = document.getElementById('ar_ref').value.trim();
                 if (_arRefNova) {
                     const _arRefDuplicada = (dados.artigos || []).some(a =>
-                        a.adminId === _arAdminId && a.id !== idEditando &&
+                        a.adminId === _arAdminId && a.id !== idRegistoEmEdicao &&
                         (a.referencia || '').trim().toLowerCase() === _arRefNova.toLowerCase()
                     );
                     if (_arRefDuplicada) {
@@ -27169,8 +27287,8 @@ async function salvarAdmin(e) {
                 }
                 const novoEstado = document.getElementById('ob_estado').value;
                 let estadoAnterior = null;
-                if (isEdit) { const ex = dados.obras?.find(o => o.id === idEditando); estadoAnterior = ex ? ex.estado : null; }
-                const obraId = idEditando;
+                if (isEdit) { const ex = dados.obras?.find(o => o.id === idRegistoEmEdicao); estadoAnterior = ex ? ex.estado : null; }
+                const obraId = idRegistoEmEdicao;
                 const _obClienteId = document.getElementById('ob_cliente').value || null;
                 const _obCliente = _obClienteId ? dados.clientes?.find(c => c.id === _obClienteId) : null;
                 const _obAdminId = (usuarioLogado.role === 'admin' ? usuarioLogado.id : usuarioLogado.adminId);
@@ -27224,7 +27342,7 @@ async function salvarAdmin(e) {
             let _servicoAntigo = null;
             let _funcAntesDeEditar = null;
             if (isEdit) {
-                const idx = lista.findIndex(i => i.id === idEditando);
+                const idx = lista.findIndex(i => i.id === idRegistoEmEdicao);
                 if (idx !== -1) {
                     if (ent === 'servico') _servicoAntigo = { ...lista[idx] };
                     if (ent === 'funcionario') _funcAntesDeEditar = { ...lista[idx] };
@@ -27282,7 +27400,7 @@ async function salvarAdmin(e) {
             }
             else if (ent === 'folha') dados.folhasObra = lista;
             if (ent === 'folha') {
-                const folhaId = isEdit ? idEditando : obj.id;
+                const folhaId = isEdit ? idRegistoEmEdicao : obj.id;
                 _aplicarConsumoFolha(folhaId, obj.obraId || null, _folhaConsumoPendente);
                 _folhaConsumoPendente = [];
                 if (!isEdit && obj.servicoId) {
@@ -27343,7 +27461,7 @@ async function salvarAdmin(e) {
             } catch (err) {
                 alert(`⚠️ Ficou no ecrã, mas ainda não foi possível confirmar a gravação no servidor (${err && err.message ? err.message : err}).\n\nVerifica a ligação à internet — se o erro persistir, este registo pode desaparecer ao recarregar a página. Tenta guardar de novo.`);
             }
-            registarAuditoria(isEdit ? 'editar' : 'criar', ent, isEdit ? idEditando : obj.id, (obj.nome || obj.descricao || obj.numero || obj.obraDescricao || ''));
+            registarAuditoria(isEdit ? 'editar' : 'criar', ent, isEdit ? idRegistoEmEdicao : obj.id, (obj.nome || obj.descricao || obj.numero || obj.obraDescricao || ''));
             if (ent === 'servico' && _novaOSObraId) window._osObraCriadaComSucesso = true;
             fecharModal();
             renderizarTudo();
@@ -27356,7 +27474,7 @@ async function salvarAdmin(e) {
                     return;
                 }
                 const _papelConta = obj.role === 'subadmin' ? 'subadmin' : (obj.role === 'vigilante' || obj.role === 'supervisor_vigilantes') ? obj.role : 'funcionario';
-                criarUtilizadorAuth(obj.email, obj.senha, _papelConta, obj.adminId, (isEdit ? idEditando : obj.id), obj.nome).then(r => {
+                criarUtilizadorAuth(obj.email, obj.senha, _papelConta, obj.adminId, (isEdit ? idRegistoEmEdicao : obj.id), obj.nome).then(r => {
                     if (!r.ok) alert('✅ Funcionário guardado.\n⚠️ A conta de login não foi criada/atualizada automaticamente: ' + r.erro + '\n\nSe o email já tiver sido usado antes (ex.: um funcionário apagado há mais tempo), a conta pode ter ficado "presa" de uma eliminação antiga que falhou. Contacta o suporte técnico para a removerem de vez, ou tenta apagar este registo e voltar a criar (a partir de agora, a app avisa logo se uma eliminação de conta falhar).');
                 });
             }
@@ -27368,9 +27486,12 @@ async function salvarAdmin(e) {
                     return;
                 }
                 const _emailContaCliente = _emailFantasmaCliente(obj.nif, obj.adminId);
-                criarUtilizadorAuth(_emailContaCliente, obj.senha, 'cliente', obj.adminId, (isEdit ? idEditando : obj.id), obj.nome).then(r => {
-                    if (!r.ok) alert('✅ Cliente criado.\n⚠️ A conta do portal não foi criada automaticamente: ' + r.erro + '\n\nSe o NIF já tiver sido usado antes (ex.: um cliente apagado há mais tempo), a conta pode ter ficado "presa" de uma eliminação antiga que falhou. Contacta o suporte técnico para a removerem de vez, ou tenta apagar este registo e voltar a criar (a partir de agora, a app avisa logo se uma eliminação de conta falhar).');
-                });
+                const resultadoPortal = await criarUtilizadorAuth(_emailContaCliente, obj.senha, 'cliente', obj.adminId, (isEdit ? idRegistoEmEdicao : obj.id), obj.nome);
+                if (!resultadoPortal.ok) {
+                    alert('⚠️ Cliente guardado, mas não foi possível ativar ou atualizar o acesso ao portal: ' + resultadoPortal.erro + '\n\nNão apagues o cliente. Volta a editar a ficha, define a senha do portal e clica em Atualizar para tentar novamente.');
+                } else {
+                    alert('✅ Acesso ao portal atualizado. O cliente entra com o NIF e a senha definida.');
+                }
             }
         }
         // Os clientes entram no Portal com o NIF, não com email (a maioria não tem email
@@ -29129,9 +29250,9 @@ window._relPrefill = function(msg){
         }
 
         function abrirHistoricoPedidosAssistencia(clienteId) {
-            const pedidos = (dados.servicos || [])
-                .filter(s => s.clienteId === clienteId && s.origem === 'portal')
-                .sort((a, b) => (b.data || '').localeCompare(a.data || ''));
+            const cli = dados.clientes?.find(c => c.id === clienteId);
+            if (!cli || (usuarioLogado?.role === 'cliente' && (usuarioLogado.clienteId !== cli.id || usuarioLogado.adminId !== cli.adminId))) return;
+            const pedidos = (dados.assistencias || []).filter(a => a.adminId === cli.adminId && a.clienteId === clienteId && a.origem === 'portal').sort((a,b) => (b.dataCriacao || 0) - (a.dataCriacao || 0)).map(a => ({...a,data:new Date(a.dataCriacao).toLocaleDateString('sv-SE')}));
 
             let overlay = document.getElementById('overlayHistPedidos');
             if (!overlay) {
@@ -29142,16 +29263,14 @@ window._relPrefill = function(msg){
             }
             const linhas = pedidos.length ? pedidos.map(p => {
                 let estadoTxt, estadoCor, estadoFundo;
-                if (p.status === 'por aprovar') { estadoTxt = 'Por aprovar'; estadoCor = '#92400e'; estadoFundo = '#fde68a'; }
-                else if (p.status === 'recusado') { estadoTxt = 'Recusado'; estadoCor = '#991b1b'; estadoFundo = '#fee2e2'; }
-                else { estadoTxt = 'Aprovado'; estadoCor = '#166534'; estadoFundo = '#dcfce7'; }
+                estadoTxt = ({aberta:'Aberto',andamento:'Em atendimento',em_tratamento:'Em tratamento',resolvida:'Resolvida',fechada:'Fechada'})[p.estado] || p.estado; estadoCor='#1e40af'; estadoFundo='#dbeafe';
                 const desc = (p.descricao || '').replace(/^\[Pedido do cliente\]\s*/, '');
                 return `<div style="border:1px solid #e6eaf2;border-radius:10px;padding:12px 14px;margin-bottom:8px;">
                     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
                         <span style="font-size:.82rem;color:#5a6781;">${new Date(p.data + 'T00:00:00').toLocaleDateString('pt-PT')}</span>
                         <span style="background:${estadoFundo};color:${estadoCor};font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:999px;">${estadoTxt}</span>
                     </div>
-                    <div style="margin-top:6px;font-size:.9rem;color:#152a52;">${desc || 'Sem descrição'}</div>
+                    <div style="margin-top:6px;font-size:.9rem;color:#152a52;">${escapeHtmlSimples(p.numero || '')} · ${escapeHtmlSimples(desc || 'Sem descrição')}</div>
                 </div>`;
             }).join('') : '<p style="color:#94a3b8;">Ainda não fez nenhum pedido de assistência.</p>';
 
@@ -29329,12 +29448,13 @@ window._relPrefill = function(msg){
         function _gerarHTMLIntervencoesPorLocal(clienteId, comoCliente, desdeStr, containerId) {
             const cli = dados.clientes?.find(c => c.id === clienteId);
             if (!cli) return '<p style="color:#64748b;">Cliente não encontrado.</p>';
+            if (comoCliente && (usuarioLogado?.role !== 'cliente' || usuarioLogado.clienteId !== cli.id || usuarioLogado.adminId !== cli.adminId)) return '';
             const desde = desdeStr || _dataCorteMeses(12); // último ano por defeito
-            const oss = (dados.servicos || []).filter(s => s.clienteId === clienteId && (s.status !== 'concluído' || (s.data || '') >= desde));
-            const folhas = (dados.folhasObra || []).filter(f => oss.some(s => s.id === f.servicoId) && f.descricao);
+            const oss = (dados.servicos || []).filter(s => s.adminId === cli.adminId && s.clienteId === clienteId && (s.status !== 'concluído' || (s.data || '') >= desde));
+            const folhas = (dados.folhasObra || []).filter(f => oss.some(s => s.id === f.servicoId) && (!comoCliente || _portalFolhaVisivel(f, cli)));
             const locaisCliente = (dados.locais || []).filter(l => l.adminId === cli.adminId && l.clienteId === clienteId);
             const nomesRelatorio = { REX: 'Extintores', RBI: 'Bocas de Incêndio', RSI: 'Central de Incêndio (SADI)', RCM: 'Central de Monóxido', RIE: 'Iluminação de Emergência', RCP: 'Portas Corta-Fogo', RCCTV: 'Videovigilância (CCTV)', RIN: 'Deteção de Intrusão / Alarme', RDI: 'Declaração de Instalação' };
-            const grupos = [{ id: '', nome: 'Sede' }, ...locaisCliente.map(l => ({ id: l.id, nome: l.nome }))];
+            const grupos = [{ ...cli, id: '', nome: 'Sede' }, ...locaisCliente];
 
             let h = '';
             let algumaIntervencao = false;
@@ -29345,14 +29465,15 @@ window._relPrefill = function(msg){
                 // consegue editá-lo ou sequer confirmar que ficou bem gravado.
                 algumaIntervencao = true;
                 const podeGerirLocal = !comoCliente && grupo.id && (usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin');
-                h += `<div style="margin-top:14px;">
+                const morada = [grupo.morada, grupo.numeroPorta, grupo.codigoPostal, grupo.cidade, grupo.freguesia].filter(Boolean).join(', ');
+                h += `${comoCliente ? '<details style="margin-top:14px;border:1px solid #dbe3ed;border-radius:12px;padding:14px;"><summary style="cursor:pointer;">' : '<div style="margin-top:14px;">' }
                     <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #e2e8f0;padding-bottom:4px;margin-bottom:8px;">
-                        <div style="font-weight:700;font-size:.92rem;color:#0b3b5c;"><i class="fas fa-map-marker-alt"></i> ${grupo.nome}</div>
+                        <div style="font-weight:700;font-size:.92rem;color:#0b3b5c;"><i class="fas fa-map-marker-alt"></i> ${escapeHtmlSimples(grupo.nome || 'Instalação')}<div style="font-size:.82rem;font-weight:400;color:#64748b;margin-top:5px;">${escapeHtmlSimples(morada || 'Morada não indicada')}</div>${comoCliente ? '<small>Ver histórico e relatórios</small>' : ''}</div>
                         ${podeGerirLocal ? `<div style="display:flex;gap:6px;">
                             <button class="btn btn-sm" style="background:#0f766e;color:#fff;" onclick="abrirModalEditarLocalCliente('${grupo.id}','${clienteId}')" title="Editar morada desta instalação"><i class="fas fa-pen"></i></button>
                             <button class="btn btn-sm btn-danger" onclick="eliminarLocalCliente('${grupo.id}','${clienteId}')" title="Eliminar esta instalação"><i class="fas fa-trash"></i></button>
                         </div>` : ''}
-                    </div>`;
+                    </div>${comoCliente ? '</summary>' : ''}`;
                 if (!ossGrupo.length) {
                     h += `<p style="color:#94a3b8;font-size:.82rem;margin:4px 0 0;">Ainda não há intervenções registadas nesta instalação.</p>`;
                 }
@@ -29367,26 +29488,20 @@ window._relPrefill = function(msg){
                             <div style="font-size:.78rem;color:#64748b;">${(s.status || 'pendente')}</div>
                         </div>
                         <div style="display:flex;gap:6px;flex-wrap:wrap;">`;
-                    if (especialidades.length) {
-                        especialidades.forEach(tipo => {
-                            const rel = (dados.relatoriosEspecialidade || []).find(r => r.servicoId === s.id && r.tipo === tipo);
-                            if (rel) {
-                                h += `<button class="btn btn-sm" style="background:#0f6b5c;color:#fff;" onclick="_verRelatorioEspecialidadeSnapshot('${rel.id}', ${comoCliente === true})"><i class="fas fa-file-arrow-down"></i> ${nomesRelatorio[tipo] || tipo}</button>`;
-                            } else {
-                                h += `<span style="font-size:.72rem;color:#94a3b8;"><i class="fas fa-hourglass-half"></i> ${nomesRelatorio[tipo] || tipo} pendente</span>`;
-                            }
-                        });
-                    } else {
-                        const folha = folhas.find(f => f.servicoId === s.id);
-                        if (folha) {
-                            h += `<button class="btn btn-sm" style="background:#0ea5e9;color:#fff;" onclick="abrirFolhaDetalhe('${folha.id}')"><i class="fas fa-clipboard-check"></i> Folha de obra</button>`;
-                        } else {
-                            h += `<span style="font-size:.72rem;color:#94a3b8;">Sem folha de obra ainda</span>`;
-                        }
-                    }
+                    const relatorios = (dados.relatoriosEspecialidade || []).filter(r => r.servicoId === s.id && (!r.adminId || r.adminId === cli.adminId) && (!r.clienteId || r.clienteId === cli.id) && (!comoCliente || !r.rascunho));
+                    relatorios.forEach(rel => {
+                        h += `<button class="btn btn-sm" style="background:#0f6b5c;color:#fff;" onclick="_verRelatorioEspecialidadeSnapshot('${escapeHtmlSimples(rel.id)}', false)"><i class="fas fa-file-arrow-down"></i> ${escapeHtmlSimples(nomesRelatorio[rel.tipo] || rel.tipo || 'Relatório')}</button>`;
+                    });
+                    folhas.filter(f => f.servicoId === s.id).forEach(folha => {
+                        h += `<button class="btn btn-sm" style="background:#0ea5e9;color:#fff;" onclick="abrirFolhaDetalhe('${escapeHtmlSimples(folha.id)}')"><i class="fas fa-clipboard-check"></i> Folha de obra</button>`;
+                    });
                     h += `</div></div>`;
                 });
-                h += `</div>`;
+                const relatoriosLocal = (dados.relatoriosEspecialidade || []).filter(r => !r.servicoId && r.adminId === cli.adminId && r.clienteId === cli.id && (r.localId || '') === grupo.id && (!comoCliente || !r.rascunho));
+                relatoriosLocal.forEach(r => {
+                    h += `<p><button class="btn btn-sm btn-outline" onclick="_verRelatorioEspecialidadeSnapshot('${escapeHtmlSimples(r.id)}', false)"><i class="fas fa-file-alt"></i> ${escapeHtmlSimples(nomesRelatorio[r.tipo] || r.tipo || 'Relatório')} · ${escapeHtmlSimples(r.data || '')}</button></p>`;
+                });
+                h += comoCliente ? '</details>' : '</div>';
             });
             if (!algumaIntervencao) h += '<p style="color:#64748b;margin-top:10px;">Ainda não há intervenções registadas.</p>';
 
@@ -34814,3 +34929,34 @@ window._relPrefill = function(msg){
 
 
     
+// Assistente TG: módulo isolado, carregado apenas nesta aplicação.
+(() => {
+    if (document.getElementById('tg-assistente-script')) return;
+    const script = document.createElement('script');
+    script.id = 'tg-assistente-script';
+    const base = new URL('.', document.currentScript.src);
+    script.src = new URL('tg-assistente.js?v=3.0.0-toto', base).href;
+    const engine = document.createElement('script');
+    engine.src = new URL('tg-smart-engine.js?v=2.0.0', base).href;
+    engine.onload = () => document.head.appendChild(script);
+    engine.onerror = () => document.head.appendChild(script);
+    document.head.appendChild(engine);
+})();
+
+// Preparação PHC por empresa: carrega apenas metadados e simulação local.
+(() => {
+    if (document.getElementById('tg-phc-script')) return;
+    const base = new URL('.', document.currentScript.src);
+    const core = document.createElement('script'); core.id = 'tg-phc-script';
+    core.src = new URL('phc-core.js?v=1', base).href;
+    core.onload = () => { const ui=document.createElement('script');ui.src=new URL('phc-integracao.js?v=1',base).href;document.head.appendChild(ui); };
+    document.head.appendChild(core);
+})();
+
+// Navegação própria do cliente final; mantém os fluxos de assistência e assinatura.
+(() => {
+    if (document.getElementById('tg-portal-ui-script')) return;
+    const script = document.createElement('script'); script.id = 'tg-portal-ui-script';
+    script.src = new URL('portal-cliente-ui.js?v=1', document.currentScript.src).href;
+    document.head.appendChild(script);
+})();
