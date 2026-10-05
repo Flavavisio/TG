@@ -99,7 +99,9 @@
         // porquê — foi isto que causou os erros estranhos ("Cannot read properties of null")
         // quando a sessão falhava a meio de uma ação.
         let _avisoSessaoMostrado = false;
+        let _logoutEmCurso = false;
         function _mostrarAvisoSessaoExpirada() {
+            if (_logoutEmCurso || _trocandoConta || !usuarioLogado) return;
             if (_avisoSessaoMostrado) return;
             _avisoSessaoMostrado = true;
             if (_dadosPollTimer) { clearInterval(_dadosPollTimer); _dadosPollTimer = null; }
@@ -118,10 +120,11 @@
         // a página em silêncio ou a rebentar com erros.
         const _fetchOriginalTG = window.fetch;
         window.fetch = function (...args) {
+            const contaPedido = usuarioLogado?.id;
             return _fetchOriginalTG.apply(this, args).then(res => {
                 try {
                     const url = String(args[0]?.url || args[0] || '');
-                    if (res.status === 401 && url.includes(SUPABASE_URL)) _mostrarAvisoSessaoExpirada();
+                    if (res.status === 401 && url.includes(SUPABASE_URL) && contaPedido && contaPedido === usuarioLogado?.id) _mostrarAvisoSessaoExpirada();
                 } catch (e) {}
                 return res;
             });
@@ -3705,7 +3708,7 @@
                 { card: 'clientes', label: 'Clientes' },
                 { card: 'servicos', label: 'Ordens de Serviço' },
                 { card: 'agenda-obras', label: 'Agenda de Obras' },
-                { card: 'relatorio-os', label: 'Relatório de OS' },
+                { card: 'relatorio-os', label: 'Relatórios' },
             ]},
             { grupo: 'Obras', cards: [
                 { card: 'obras-longa', label: 'Obras' },
@@ -4116,7 +4119,7 @@
             'alertas-geofence': 'Alertas de Localização', 'pedidos': 'Férias / Faltas', 'calendario-equipa': 'Calendário de Equipa',
             'mapa-equipa': 'Mapa da Equipa', 'servicos': 'Ordens de Serviço', 'obras-longa': 'Obras',
             'ferramentas': 'Equipamentos (QR)', 'levantamento-qr': 'Levantamento e Devolução de Ferramentas',
-            'folhas': 'Folhas de Obra', 'requisicoes': 'Requisições', 'relatorio-os': 'Relatório de OS',
+            'folhas': 'Folhas de Obra', 'requisicoes': 'Requisições', 'relatorio-os': 'Relatórios',
             'agenda-obras': 'Agenda de Obras', 'frota': 'Frota', 'artigos': 'Stock / Artigos', 'encomendas': 'Encomendas',
             'fornecedores': 'Fornecedores', 'clientes': 'Clientes', 'contratos': 'Contratos de Manutenção',
             'crm': 'CRM Comercial', 'assistencias': 'Assistências', 'reports': 'Reports', 'financeiro': 'Financeiro',
@@ -5196,8 +5199,8 @@
         //  Financeiro) mostram uma mensagem simples por agora — ficam para as
         //  próximas fases, sem quebrar nada do que já existe nesses menus.
         // =====================================================================
-        const WS_CLIENTE_ABAS = ['resumo', 'locais', 'os', 'obras', 'assistencias', 'contratos', 'relatorios', 'equipamentos', 'financeiro'];
-        const WS_CLIENTE_ABAS_LABEL = { resumo: 'Resumo', locais: 'Locais', os: 'Ordens de Serviço', obras: 'Obras', assistencias: 'Assistências', contratos: 'Contratos', relatorios: 'Relatórios', equipamentos: 'Equipamentos', financeiro: 'Financeiro' };
+        const WS_CLIENTE_ABAS = ['resumo', 'historico', 'locais', 'os', 'obras', 'assistencias', 'contratos', 'relatorios', 'equipamentos', 'financeiro'];
+        const WS_CLIENTE_ABAS_LABEL = { resumo: 'Resumo', historico: 'Histórico', locais: 'Locais', os: 'Ordens de Serviço', obras: 'Obras', assistencias: 'Assistências', contratos: 'Contratos', relatorios: 'Relatórios', equipamentos: 'Equipamentos', financeiro: 'Financeiro' };
         function abrirWorkspaceCliente(clienteId) {
             const cliente = dados.clientes?.find(c => c.id === clienteId);
             if (!cliente) return;
@@ -5274,7 +5277,7 @@
                             ${moduloAssistAtivo(admin) ? `<button class="btn btn-sm btn-outline" onclick="_wsMarcarAssistencia('${clienteId}')"><i class="fas fa-headset"></i> Marcar assistência</button>` : ''}
                             <button class="btn btn-sm btn-outline" onclick="_wsSairPara('${clienteId}');abrirModalNovoLocalCliente('${clienteId}')"><i class="fas fa-map-pin"></i> Novo local</button>
                             <button class="btn btn-sm btn-outline" onclick="_wsSairPara('${clienteId}');abrirModal('cliente','${clienteId}')"><i class="fas fa-edit"></i> Editar dados</button>
-                            <button class="btn btn-sm btn-outline" onclick="_wsSairPara('${clienteId}');abrirHistoricoCliente('${clienteId}')"><i class="fas fa-clock-rotate-left"></i> Histórico completo</button>
+                            <button class="btn btn-sm btn-outline" onclick="_wsClienteAba('${clienteId}','historico')"><i class="fas fa-clock-rotate-left"></i> Histórico completo</button>
                         </div>
                         <div style="padding:12px 22px 14px;display:flex;gap:8px;border-bottom:1px solid #e2e8f0;overflow-x:auto;flex-shrink:0;" id="wsClienteAbas"></div>
                         <div style="flex:1;overflow-y:auto;padding:18px 22px;" id="wsClienteConteudo"></div>
@@ -5288,6 +5291,7 @@
             if (barraAbas) barraAbas.innerHTML = abasVisiveis.map(a => `<button class="ws-cliente-aba-btn ${a === aba ? 'active' : ''}" onclick="_wsClienteAba('${clienteId}','${a}')">${WS_CLIENTE_ABAS_LABEL[a]}</button>`).join('');
             const conteudo = document.getElementById('wsClienteConteudo');
             if (aba === 'resumo') conteudo.innerHTML = await _wsResumoHtml(clienteId);
+            else if (aba === 'historico') await window.TGClientHistory.show(clienteId);
             else if (aba === 'locais') conteudo.innerHTML = _wsLocaisHtml(clienteId);
             else if (aba === 'os') conteudo.innerHTML = await _wsOsHtml(clienteId);
             else if (aba === 'obras') conteudo.innerHTML = _wsObrasHtml(clienteId);
@@ -5436,7 +5440,7 @@
                 // OS a partir dele, que é o próprio fluxo que já usas hoje.
                 const onclick = a.osGeradaId
                     ? `_wsSairPara('${clienteId}');abrirVerOS('${a.osGeradaId}')`
-                    : `window.open('TOTALGEST_ASSIST.html?criarOS=${a.id}', '_blank')`;
+                    : `_abrirAssist(null,'${a.id}')`;
                 return `<div style="display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid #f1f5f9;cursor:pointer;" onclick="${onclick}">
                     <i class="fas fa-headset" style="color:#94a3b8;width:18px;"></i>
                     <div style="flex:1;min-width:0;">
@@ -5550,7 +5554,7 @@
         }
         function _wsAssistBotaoAbrirApp() {
             return `<div style="text-align:center;margin-top:14px;">
-                <button class="btn btn-sm btn-outline" onclick="window.open('TOTALGEST_ASSIST.html', '_blank')"><i class="fas fa-external-link-alt"></i> Abrir Total Gest Assist</button>
+                <button class="btn btn-sm btn-outline" onclick="_abrirAssistGeral()"><i class="fas fa-headset"></i> Abrir Assistências</button>
             </div>`;
         }
         // Obras de Longa Duração — mesmo padrão dos outros separadores: lista, estado colorido,
@@ -8012,12 +8016,14 @@
         }
 
         function obterLayout() {
-            if (window.innerWidth <= 900) return 'cards';
-            if (!usuarioLogado) return 'sidebar';
-            if (usuarioLogado.role === 'superadmin') return obterConfig()?.layout || 'sidebar';
+            if (!usuarioLogado) return window.innerWidth <= 900 ? 'cards' : 'sidebar';
             const aid = usuarioLogado.role === 'admin' ? usuarioLogado.id : usuarioLogado.adminId;
             const a = (dados.administradores || []).find(x => x.id === aid);
-            return (a && a.layout) ? a.layout : 'sidebar';
+            const escolhido = usuarioLogado.role === 'superadmin' ? (obterConfig()?.layout || 'sidebar') : (a?.layout || 'sidebar');
+            // Foco and Nexus retain the employee's operational home and bottom navigation.
+            if (usuarioLogado.role === 'funcionario' && ['foco', 'aurora'].includes(escolhido)) return 'cards';
+            // Nexus keeps its adaptive shell on phones; existing layouts retain their behavior.
+            return window.innerWidth <= 900 && escolhido !== 'aurora' ? 'cards' : escolhido;
         }
         // "Total Gest Foco" usa a mesma estrutura de barra lateral que o layout "sidebar" —
         // só muda o que aparece dentro da navegação (grupos com painel, em vez da lista toda aberta).
@@ -8262,44 +8268,17 @@
         // bloco "Em breve" já visível ao cliente.
         // const PRECO_CRM_MENSAL = 34.99;  // valor a confirmar quando o addon avançar
         // const PRECO_CRM_ANUAL = +(34.99 * 12 * 0.9).toFixed(2);
-        // O cardCRM é agora um <a href="TOTALGEST_CRM.html"> real no HTML — isto é só o
-        // "porteiro": se o módulo não estiver ativo, cancela a navegação (preventDefault) e
-        // mostra o aviso. Se estiver ativo, devolve true e deixa o próprio clique no link (um
-        // gesto genuíno do utilizador) abrir o separador novo — sem passar por window.open()
-        // nem por cliques simulados via JS, que alguns browsers bloqueiam silenciosamente em
-        // páginas abertas como ficheiro local (file://).
+        // Open the purchased module within the app; the host checks license and role again.
         function _abrirCRM(ev) {
-            const admin = adminDoUtilizador();
-            if (!moduloCrmAtivo(admin)) {
-                if (ev) ev.preventDefault();
-                if (usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin') {
-                    alert('O CRM Comercial ainda não está ativo para a tua empresa.\n\nPodes ativá-lo em "Minha Licença" — Leads, Oportunidades, Propostas, Comissões e Dashboard Comercial.');
-                } else {
-                    alert('O CRM Comercial ainda não está ativo para a tua empresa.\n\nFala com o teu administrador para ativar este addon.');
-                }
-                return false;
-            }
-            return true;
+            if (ev) ev.preventDefault();
+            return window.TGModules.open('crm');
         }
-        // Total Gest Assist — add-on igual ao CRM, só abre para quem tiver o módulo ativo.
-        function _abrirAssist(ev) {
-            const admin = adminDoUtilizador();
-            if (!moduloAssistAtivo(admin)) {
-                if (ev) ev.preventDefault();
-                alert('O Total Gest Assist ainda não está ativo para a tua empresa.\n\nFala com o administrador para ativares este addon — Gestão de pedidos de assistência técnica, com criação direta de Ordens de Serviço.');
-                return false;
-            }
-            return true;
+        function _abrirAssist(ev, criarOSId) {
+            if (ev) ev.preventDefault();
+            return window.TGModules.open('assistencias', criarOSId);
         }
-        // Clique no resto do cartão "Assistências" do Dashboard (fora das linhas da lista, que
-        // já têm o seu próprio link para "criar OS") — abre o Assist normal, numa aba nova.
         function _abrirAssistGeral() {
-            const admin = adminDoUtilizador();
-            if (!moduloAssistAtivo(admin)) {
-                alert('O Total Gest Assist ainda não está ativo para a tua empresa.\n\nFala com o administrador para ativares este addon — Gestão de pedidos de assistência técnica, com criação direta de Ordens de Serviço.');
-                return;
-            }
-            window.open('TOTALGEST_ASSIST.html', '_blank');
+            return window.TGModules.open('assistencias');
         }
         // Rondas / Vigilância — ficheiro à parte (TOTALGEST_RONDAS.html), mesmo padrão do CRM/Assist.
         function _abrirRondas(ev) {
@@ -8630,14 +8609,10 @@
         }
         function moduloAssistAtivo(admin) {
             if (!admin) return false;
-            // O Assist vem sempre incluído na licença de CRM Comercial (mesma subscrição) —
-            // por isso conta logo como ativo sempre que o CRM estiver ativo, mesmo em contas
-            // que já tinham o CRM ativado antes desta junção (sem precisar de nenhuma migração
-            // de dados). O campo assistPlano isolado continua a funcionar à parte, para o caso
-            // raro de o Super Admin querer dar Assist sem CRM.
-            if (moduloCrmAtivo(admin)) return true;
+            // Assist and CRM have independent entitlements, including those granted by packs.
             return !!admin.assistPlano && admin.assistExpiracao && admin.assistExpiracao > Date.now();
         }
+
         // Fonte única de verdade para "que add-ons estão ativos e quanto custam" — usada em
         // qualquer sítio que precise do valor TOTAL da licença (tabela de administradores,
         // página de Licenças, lembrete de pagamento, etc.). Nunca calcular isto separadamente
@@ -11848,6 +11823,7 @@
         // mesmos filtros que carregarDados() já aplicava a essa tabela, para nunca trazer mais
         // (nem menos) dados do que traria um carregamento completo.
         async function carregarTabelaEspecifica(col) {
+            const actorAtLoad = JSON.stringify([usuarioLogado?.adminId || usuarioLogado?.id, usuarioLogado?.id]);
             if (col === 'administradores' || col === 'encarregados') {
                 // Estes dois têm dados adicionais embutidos (licença; funcionários do encarregado)
                 // vindos de outras tabelas — mais seguro recarregar tudo do que replicar essa lógica.
@@ -11878,6 +11854,7 @@
             }
             const { data, error } = await _buscarPaginadoGenerico(q);
             if (error) { console.warn('carregarTabelaEspecifica (' + col + '):', error); return; }
+            if (actorAtLoad !== JSON.stringify([usuarioLogado?.adminId || usuarioLogado?.id, usuarioLogado?.id])) return;
             dados[col] = (data || []).map(M[col].from);
             const m = new Map();
             for (const o of dados[col]) m.set(o.id, JSON.stringify(M[col].to(o)));
@@ -13128,34 +13105,7 @@
             document.getElementById('ros_estado').value = '__todos';
         }
         function gerarRelatorioOS(formato) {
-            const adminId = _tenantId();
-            const cli = document.getElementById('ros_cliente').value;
-            const func = document.getElementById('ros_func').value;
-            const estado = document.getElementById('ros_estado').value;
-            const ini = document.getElementById('ros_inicio').value;
-            const fim = document.getElementById('ros_fim').value;
-            if (ini && fim && ini > fim) { alert('A data de início não pode ser depois da data fim.'); return; }
-            let lista = (dados.servicos || []).filter(s => s.adminId === adminId);
-            if (cli !== '__todos') lista = lista.filter(s => s.clienteId === cli);
-            if (func !== '__todos') lista = lista.filter(s => s.funcionarioId === func);
-            if (estado !== '__todos') lista = lista.filter(s => (s.status || 'pendente') === estado);
-            if (ini) lista = lista.filter(s => s.data && s.data >= ini);
-            if (fim) lista = lista.filter(s => s.data && s.data <= fim);
-            lista.sort((a, b) => (a.data || '') < (b.data || '') ? 1 : -1);
-            if (!lista.length) { alert('Sem ordens de serviço para os filtros escolhidos.'); return; }
-            const rows = lista.map(s => ({
-                num: s.numeroRegisto || '—', data: s.data || '—', cliente: _nomeClienteOS(s.clienteId),
-                descricao: s.descricao || '—', responsavel: _nomePessoaOS(s.funcionarioId), estado: s.status || 'pendente'
-            }));
-            const resumo = {
-                total: rows.length,
-                pendentes: rows.filter(r => r.estado === 'pendente').length,
-                andamento: rows.filter(r => r.estado === 'em andamento').length,
-                concluidos: rows.filter(r => r.estado === 'concluído').length
-            };
-            const periodo = (ini || fim) ? `${ini || '...'} a ${fim || '...'}` : 'Todas as datas';
-            if (formato === 'pdf') rosPDF(rows, periodo, resumo, adminId);
-            else rosExcel(rows, periodo, resumo);
+            tgExportarRelatorio(formato, 'os');
         }
         function rosPDF(rows, periodo, resumo, adminId) {
             if (!window.jspdf || !window.jspdf.jsPDF) { alert('Biblioteca de PDF não carregada.'); return; }
@@ -14659,10 +14609,13 @@
         }
         function _ehPerfilMobile() {
             if (!usuarioLogado) return false;
+            if (usuarioLogado.role === 'funcionario') return true;
+            if (obterLayout() === 'aurora' && usuarioLogado.role !== 'cliente') return false;
             // Admin/sub-admin: o layout tipo app só faz sentido em ecrã pequeno — no PC continuam
             // a ver o painel de secretária completo.
             if (usuarioLogado.role === 'admin' || usuarioLogado.role === 'subadmin') return _dispositivoEhMobile();
-            // Funcionário, encarregado, vendedor, vigilante — usam sempre o layout tipo app
+            // Os restantes perfis operacionais usam o layout tipo app.
+            // Funcionários usam sempre o painel operacional através da exceção acima.
             // ("O Meu Dia", menu inferior/lateral simples), no PC ou no telemóvel. Não faz
             // sentido dar-lhes o painel de secretária completo num ecrã grande e o layout
             // simples num pequeno — a app deve parecer e funcionar da mesma forma nos dois,
@@ -14682,6 +14635,11 @@
                 return;
             }
             document.body.classList.add('tem-menu-inferior');
+            // Returning from a desktop/admin shell must put the daily panel back in the
+            // visible operational home, rather than leave it inside the hidden tgHome.
+            const dia = document.getElementById('omeudia');
+            const grid = document.getElementById('cardsGrid');
+            if (dia && grid && dia.parentElement?.id === 'homeAgendaWrap') grid.prepend(dia);
             if (grupos) grupos.style.display = 'none';
             nav.style.display = 'flex';
             const gruposVisiveis = [...document.querySelectorAll('.grupo-cards')].filter(g =>
@@ -19063,7 +19021,7 @@
                 </div>
 
                 <div class="hdc-row3">
-                    ${(moduloCrmAtivo(admin) || moduloAssistAtivo(admin)) ? (() => {
+                    ${moduloAssistAtivo(admin) ? (() => {
                         // Assistências ainda sem OS (precisam de decisão) vs. já convertidas em
                         // OS (em curso, só a acompanhar). Excluí sempre as já resolvidas/fechadas.
                         const _assistTodas = (dados.assistencias || []).filter(a => a.adminId === adminId && !a.apagadoSuperAdmin);
@@ -19079,7 +19037,7 @@
                         // disparar também o clique do cartão (que abre o Assist normal por baixo).
                         const _linhaSemOS = (a) => {
                             const nomeCli = a.clienteId ? _nomeClienteOS(a.clienteId) : (a.nomeCliente || 'Sem cliente');
-                            return `<a href="TOTALGEST_ASSIST.html?criarOS=${a.id}" target="_blank" rel="noopener" onclick="event.stopPropagation();return _abrirAssist(event);" style="display:block;font-size:.72rem;color:var(--htxt);text-decoration:none;padding:3px 0;border-bottom:1px dashed var(--hline);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="Criar OS a partir desta assistência">${_assistResumoHtml(a)}</a>`;
+                            return `<a href="#assistencias" onclick="event.stopPropagation();return _abrirAssist(event,'${a.id}');" style="display:block;font-size:.72rem;color:var(--htxt);text-decoration:none;padding:3px 0;border-bottom:1px dashed var(--hline);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="Criar OS a partir desta assistência">${_assistResumoHtml(a)}</a>`;
                         };
                         const _linhaComOS = (a) => {
                             const nomeCli = a.clienteId ? _nomeClienteOS(a.clienteId) : (a.nomeCliente || 'Sem cliente');
@@ -19332,7 +19290,7 @@
         }
         function renderizarGuia() {
             const cont = document.getElementById('guiaConteudo'); if (!cont) return;
-            const desc = {"funcionarios": "Esta secção é onde gere toda a equipa técnica da empresa. Pode criar novos funcionários e editar os existentes, definindo nome, telefone, email e senha de acesso à aplicação. É aqui que define o ordenado bruto e as horas semanais, dados que alimentam depois os relatórios de assiduidade e de custos. Pode associar um veículo da frota a cada funcionário — e só quem tiver veículo atribuído é que passa a ver o card da Frota. Cada funcionário criado fica habilitado a iniciar sessão com o seu email e senha. A partir desse momento pode ser escolhido como responsável de uma Ordem de Serviço. Pode ainda ligar ou desligar o registo de ponto com GPS pessoa a pessoa. Convém manter os dados atualizados para que os documentos saiam corretos. Ao eliminar um funcionário, retira-lhe o acesso à plataforma.","clientes": "Aqui mantém a base de dados de todos os clientes da empresa. Cada cliente pode ter nome, NIF, contactos, morada e vários locais associados. Estes dados são reutilizados em todo o sistema, evitando reescrever moradas e contactos a cada trabalho. Quando cria uma Ordem de Serviço, escolhe o cliente a partir desta lista. O mesmo acontece nas folhas de obra e nos contratos de manutenção. Ter os clientes bem preenchidos torna os relatórios e os PDFs muito mais completos e profissionais. Pode pesquisar, editar ou eliminar clientes a qualquer momento. É normalmente o primeiro passo antes de agendar qualquer serviço. Quanto melhor a ficha do cliente, menos tempo perde depois no terreno.","frota": "Esta área concentra a gestão de todos os veículos da empresa. Para cada viatura pode registar matrícula, documentos, datas de inspeção e de seguro, e o histórico de manutenções. Regista também sinistros e os respetivos detalhes para acompanhamento. O sistema calcula e avisa quando uma inspeção, seguro ou revisão está a aproximar-se ou já venceu. Pode atribuir cada veículo a um funcionário ou encarregado, que passa então a ver o card da Frota. Quem não tiver veículo atribuído não vê esta secção, mantendo o painel limpo. Os avisos ajudam a evitar multas e paragens inesperadas. É um add-on opcional da plataforma. Bem usada, reduz custos e prolonga a vida dos veículos.","servicos": "As Ordens de Serviço são o centro da operação diária. Aqui regista cada trabalho a realizar, com cliente, descrição, data, hora e duração prevista. Pode atribuir cada OS a um técnico responsável pela execução. O estado evolui de pendente para em andamento e, no fim, concluído, dando visibilidade do ponto de situação. As OS aparecem no calendário da Agenda de Obras, onde podem ser reorganizadas por arrastamento. Podem ser geradas automaticamente quando uma obra passa ao estado Ativa. Ao terminar, dão origem a uma folha de obra com materiais e assinatura do cliente. O sistema avisa o responsável caso tente aprovar férias a alguém com OS marcadas nesse período. É a partir destas ordens que se constroem os relatórios e os números do financeiro. Em resumo, é o registo central de tudo o que a equipa faz.","folhas": "As folhas de obra documentam o trabalho efetivamente realizado em cada Ordem de Serviço. Permitem descrever a intervenção, listar os materiais consumidos e registar observações. O cliente pode assinar diretamente no ecrã do dispositivo, ficando a assinatura guardada na folha. Servem como comprovativo do serviço prestado para o cliente e para a empresa. Os materiais consumidos abatem ao stock do armazém, mantendo as quantidades reais. Também alimentam o financeiro, ligando o trabalho aos respetivos custos. Pode anexar fotografias e gerar um documento para envio. Ficam associadas à OS e à obra correspondentes. É a peça que fecha o ciclo de cada serviço.","requisicoes": "As requisições servem para a equipa pedir material ao responsável de forma organizada. Um funcionário ou encarregado cria o pedido indicando os artigos e quantidades. O admin ou encarregado analisa e aprova ou rejeita cada requisição. Ao aprovar, o material é abatido ao stock automaticamente. Isto evita pedidos informais e mantém o controlo do que sai do armazém. Cada requisição tem um estado para se saber se está pendente ou já tratada. Ajuda a planear reposições quando o stock baixa. Mantém um histórico de quem pediu o quê e quando. É a ponte entre o terreno e o armazém.","relatorio-os": "Aqui gera relatórios detalhados das Ordens de Serviço. Pode filtrar por período, por cliente, por técnico ou por estado. O resultado é exportável em PDF e em Excel. Os PDFs ficam prontos para enviar ao cliente ou arquivar. Os ficheiros Excel permitem análises mais profundas e cruzamento de dados. É útil para prestação de contas e para fecho de mês. Dá uma visão consolidada do volume de trabalho realizado. Poupa tempo face à compilação manual de informação. É uma ferramenta de apoio à gestão e à faturação.","agenda-obras": "A Agenda de Obras é o calendário de planeamento das Ordens de Serviço. Pode ver o trabalho por semana ou por mês, conforme preferir. Cada OS aparece no respetivo dia e pode ser arrastada para outra data. Pode atribuir ou trocar o responsável diretamente a partir do cartão da OS. O sistema deteta e assinala conflitos quando a mesma pessoa fica com sobreposições. Há uma zona de OS por agendar, para arrastar para o calendário. Ajuda a distribuir a carga de trabalho de forma equilibrada. Dá uma visão imediata da semana à equipa de gestão. É a forma mais visual de organizar o terreno.","ponto": "Esta secção regista a assiduidade da equipa através da picagem de ponto. Cada pessoa pica a entrada e a saída a partir do seu dispositivo. Pode ativar a captura da localização GPS no momento da picagem, por pessoa. Os registos servem de base ao cálculo das horas trabalhadas. Ficam organizados por dia e por funcionário. Permitem detetar atrasos, faltas e horas extra. São depois usados na secção de Assiduidade. Garantem um registo objetivo e com data/hora. Reduzem erros e discussões sobre horários.","assiduidade": "A Assiduidade transforma os registos de ponto em relatórios úteis. Mostra as horas trabalhadas por funcionário e por período. Apresenta totais, faltas e desvios face ao previsto. Pode exportar em PDF e em Excel para processamento ou arquivo. Facilita o fecho mensal e o apoio ao processamento salarial. Dá uma visão clara da disponibilidade da equipa. Ajuda a identificar padrões de absentismo. Complementa os dados de ordenado definidos na ficha do funcionário. É um instrumento de gestão de pessoas.","pedidos": "Aqui são geridos os pedidos de férias e de faltas da equipa. O funcionário submete o pedido, podendo anexar um justificativo. O responsável vê os pedidos pendentes e aprova ou rejeita. Ao aprovar, o sistema avisa se a pessoa tiver Ordens de Serviço marcadas nesse período. Isto evita aprovar ausências que deixariam trabalhos sem técnico. Cada pedido tem um estado visível para ambas as partes. Mantém um histórico das ausências ao longo do tempo. Ajuda a planear a equipa com antecedência. É a forma formal de tratar férias e faltas.","encarregados": "Esta secção gere os encarregados e as equipas que cada um supervisiona. Os encarregados têm um nível de acesso intermédio, entre o admin e o funcionário. Podem aceder à agenda, às ordens de serviço e a relatórios, sem funções de administração da empresa. Pode definir os seus dados, contactos e veículo atribuído. Servem para descentralizar a coordenação no terreno. Cada encarregado acompanha o trabalho da sua equipa. Ajudam a aliviar a carga de gestão do administrador. Tal como os funcionários, podem ter registo de ponto e GPS. São peças-chave em empresas com várias frentes de obra.","contratos": "Os contratos de manutenção organizam as intervenções periódicas por cliente e equipamento. Para cada contrato define a periodicidade, o tipo de intervenção e os dados do equipamento. O sistema calcula automaticamente a data da próxima manutenção. Avisa quando há contratos vencidos ou prestes a vencer, com sinalização por cores. Isto evita falhar manutenções e perder credibilidade junto do cliente. Cada contrato fica ligado ao cliente e ao local respetivos. Ajuda a gerar receita recorrente e previsível. É um add-on opcional da plataforma. Bem usado, é uma fonte estável de trabalho planeado.","artigos": "Esta área é o catálogo de stock da empresa. Cada artigo pode ter marca, categoria, unidade, stock atual e stock mínimo. Pode ativar alertas para ser avisado quando um artigo fica em rutura. Os movimentos de entrada e saída mantêm as quantidades atualizadas. Pode importar e exportar o catálogo em CSV para tratar muitos artigos de uma vez. Os artigos são usados nas encomendas, requisições e planos de obra. Ajuda a saber sempre o que existe em armazém. Reduz compras desnecessárias e ruturas em obra. Faz parte do add-on Armazém.","encomendas": "Aqui regista as encomendas de material aos fornecedores. Cada encomenda pode ter vários itens com marca, categoria e quantidade. Pode associar a encomenda a uma obra específica. Na receção, dá entrada do material em stock de forma simples. Pode anexar a fatura do fornecedor à encomenda recebida. O sistema atualiza o stock automaticamente com o que chega. Mantém o histórico de compras e respetivos custos. Ajuda a planear reposições com base nas obras em curso. Integra-se com o financeiro pelo lado das compras. Faz parte do add-on Armazém.","fornecedores": "Esta secção mantém a lista de fornecedores da empresa. Para cada um pode guardar contactos e informação relevante. São usados na criação de encomendas de material. Ter os fornecedores organizados acelera o processo de compra. Evita procurar contactos dispersos por vários sítios. Pode editar ou remover fornecedores quando necessário. Complementa o catálogo de artigos e as encomendas. Ajuda a comparar e a escolher o fornecedor certo. Faz parte do add-on Armazém.","obras-longa": "O Planeamento de Obra acompanha cada obra do início ao fim. Cada obra tem um estado que evolui por Preparação, Ativa, Suspensa e Concluída. O card mostra contadores rápidos de quantas estão em cada estado. Quando uma obra passa a Ativa, pode gerar logo uma Ordem de Serviço. Cada obra tem um plano de materiais com quantidades previstas, recebidas e consumidas. Isto permite comparar o orçamentado com o realmente gasto. O sistema assinala obras com excedente de materiais. Liga-se às encomendas e ao stock do armazém. Dá uma visão clara do andamento e dos custos de cada obra. Faz parte do add-on Armazém.","financeiro": "O Financeiro dá a visão económica da operação. Mostra a faturação das Ordens de Serviço num período à escolha. Apresenta as compras de material e o resultado final. Inclui um gráfico de evolução mensal para perceber tendências. Tem detalhe por cliente, para saber quem gera mais valor. Pode filtrar por mês, ano ou todo o histórico. Permite exportar a informação em PDF. Junta num só sítio o que entra e o que sai. Ajuda a tomar decisões com base em números. Está incluído no add-on Armazém.","agenda": "A Agenda reúne as datas importantes que se aproximam. Inclui fim de licença, inspeções, manutenções e contratos a vencer. Funciona como um resumo de prazos a não falhar. Ajuda a antecipar renovações e intervenções. Evita surpresas de última hora. Dá uma visão rápida do que exige atenção em breve. Complementa os avisos espalhados pelos vários cards. É útil para o planeamento semanal. Mantém a gestão um passo à frente.","reports": "O painel de Reports concentra os indicadores de gestão da empresa. Resume a equipa, as ordens de serviço, os clientes e os custos. Dá uma visão geral do estado do negócio num relance. Ajuda a identificar pontos fortes e áreas a melhorar. Serve de apoio à tomada de decisão. Complementa os relatórios mais específicos das outras secções. É pensado para uma leitura rápida pelo administrador. Reúne num só ecrã o essencial. Poupa tempo na recolha de informação.","minha-licenca": "Aqui consulta o estado da sua licença e dos add-ons. Vê as datas de validade da licença base, da Frota, dos Contratos e do Armazém. Pode pedir a ativação ou a renovação, em plano mensal ou anual. O pedido segue para o Super Admin com as instruções de pagamento. Quando perto de expirar, surgem botões de renovação. Mantém a transparência sobre o que tem contratado. Evita interrupções por esquecimento de renovar. É o ponto único para gerir a sua subscrição. Garante que continua com acesso a tudo o que precisa.","ajuda-peticoes": "Este é o canal de suporte da plataforma. Permite enviar pedidos de ajuda ou reportar problemas ao administrador da plataforma. Pode acompanhar o estado e a resposta de cada pedido. Mantém um histórico das comunicações. Evita ter de recorrer a meios externos para pedir apoio. O cartão sinaliza quando há novidades por ler. É a forma mais rápida de obter assistência. Útil sempre que surge uma dúvida ou um imprevisto. Liga-o diretamente a quem gere a plataforma.","auditoria":"O Histórico/Auditoria regista quem fez o quê e quando dentro da empresa. Inclui criação, edição e eliminação de registos, aprovações de pedidos, assinaturas de folhas e início e fim de sessão. Cada entrada guarda a data e hora, o utilizador, o seu papel, a ação e a secção afetada. Pode filtrar por utilizador, ação ou secção para encontrar rapidamente o que procura. Os registos mais recentes aparecem primeiro. Pode exportar tudo em CSV para arquivo ou análise. É uma ferramenta de transparência e de segurança. Ajuda a esclarecer dúvidas e a investigar enganos sem acusações. Só o administrador (e o Super Admin) tem acesso a este histórico.","contactos": "Mostra a informação e os contactos da empresa. Fica visível no ecrã inicial, antes de iniciar sessão. Serve de cartão de visita digital da empresa. Ajuda quem chega a saber como contactar. Reúne os dados essenciais num só sítio. É simples e direto. Complementa a imagem profissional da plataforma."};
+            const desc = {"funcionarios": "Esta secção é onde gere toda a equipa técnica da empresa. Pode criar novos funcionários e editar os existentes, definindo nome, telefone, email e senha de acesso à aplicação. É aqui que define o ordenado bruto e as horas semanais, dados que alimentam depois os relatórios de assiduidade e de custos. Pode associar um veículo da frota a cada funcionário — e só quem tiver veículo atribuído é que passa a ver o card da Frota. Cada funcionário criado fica habilitado a iniciar sessão com o seu email e senha. A partir desse momento pode ser escolhido como responsável de uma Ordem de Serviço. Pode ainda ligar ou desligar o registo de ponto com GPS pessoa a pessoa. Convém manter os dados atualizados para que os documentos saiam corretos. Ao eliminar um funcionário, retira-lhe o acesso à plataforma.","clientes": "Aqui mantém a base de dados de todos os clientes da empresa. Cada cliente pode ter nome, NIF, contactos, morada e vários locais associados. Estes dados são reutilizados em todo o sistema, evitando reescrever moradas e contactos a cada trabalho. Quando cria uma Ordem de Serviço, escolhe o cliente a partir desta lista. O mesmo acontece nas folhas de obra e nos contratos de manutenção. Ter os clientes bem preenchidos torna os relatórios e os PDFs muito mais completos e profissionais. Pode pesquisar, editar ou eliminar clientes a qualquer momento. É normalmente o primeiro passo antes de agendar qualquer serviço. Quanto melhor a ficha do cliente, menos tempo perde depois no terreno.","frota": "Esta área concentra a gestão de todos os veículos da empresa. Para cada viatura pode registar matrícula, documentos, datas de inspeção e de seguro, e o histórico de manutenções. Regista também sinistros e os respetivos detalhes para acompanhamento. O sistema calcula e avisa quando uma inspeção, seguro ou revisão está a aproximar-se ou já venceu. Pode atribuir cada veículo a um funcionário ou encarregado, que passa então a ver o card da Frota. Quem não tiver veículo atribuído não vê esta secção, mantendo o painel limpo. Os avisos ajudam a evitar multas e paragens inesperadas. É um add-on opcional da plataforma. Bem usada, reduz custos e prolonga a vida dos veículos.","servicos": "As Ordens de Serviço são o centro da operação diária. Aqui regista cada trabalho a realizar, com cliente, descrição, data, hora e duração prevista. Pode atribuir cada OS a um técnico responsável pela execução. O estado evolui de pendente para em andamento e, no fim, concluído, dando visibilidade do ponto de situação. As OS aparecem no calendário da Agenda de Obras, onde podem ser reorganizadas por arrastamento. Podem ser geradas automaticamente quando uma obra passa ao estado Ativa. Ao terminar, dão origem a uma folha de obra com materiais e assinatura do cliente. O sistema avisa o responsável caso tente aprovar férias a alguém com OS marcadas nesse período. É a partir destas ordens que se constroem os relatórios e os números do financeiro. Em resumo, é o registo central de tudo o que a equipa faz.","folhas": "As folhas de obra documentam o trabalho efetivamente realizado em cada Ordem de Serviço. Permitem descrever a intervenção, listar os materiais consumidos e registar observações. O cliente pode assinar diretamente no ecrã do dispositivo, ficando a assinatura guardada na folha. Servem como comprovativo do serviço prestado para o cliente e para a empresa. Os materiais consumidos abatem ao stock do armazém, mantendo as quantidades reais. Também alimentam o financeiro, ligando o trabalho aos respetivos custos. Pode anexar fotografias e gerar um documento para envio. Ficam associadas à OS e à obra correspondentes. É a peça que fecha o ciclo de cada serviço.","requisicoes": "As requisições servem para a equipa pedir material ao responsável de forma organizada. Um funcionário ou encarregado cria o pedido indicando os artigos e quantidades. O admin ou encarregado analisa e aprova ou rejeita cada requisição. Ao aprovar, o material é abatido ao stock automaticamente. Isto evita pedidos informais e mantém o controlo do que sai do armazém. Cada requisição tem um estado para se saber se está pendente ou já tratada. Ajuda a planear reposições quando o stock baixa. Mantém um histórico de quem pediu o quê e quando. É a ponte entre o terreno e o armazém.","relatorio-os": "Consulte relatórios operacionais de ordens de serviço, assistências, clientes e locais, técnicos e equipas, obras, manutenções e stock. Cada opção respeita os módulos e acessos da empresa. Escolha os filtros, consulte a pré-visualização e exporte em PDF ou Excel. Os relatórios de especialidade mantêm-se nos trabalhos e clientes.","agenda-obras": "A Agenda de Obras é o calendário de planeamento das Ordens de Serviço. Pode ver o trabalho por semana ou por mês, conforme preferir. Cada OS aparece no respetivo dia e pode ser arrastada para outra data. Pode atribuir ou trocar o responsável diretamente a partir do cartão da OS. O sistema deteta e assinala conflitos quando a mesma pessoa fica com sobreposições. Há uma zona de OS por agendar, para arrastar para o calendário. Ajuda a distribuir a carga de trabalho de forma equilibrada. Dá uma visão imediata da semana à equipa de gestão. É a forma mais visual de organizar o terreno.","ponto": "Esta secção regista a assiduidade da equipa através da picagem de ponto. Cada pessoa pica a entrada e a saída a partir do seu dispositivo. Pode ativar a captura da localização GPS no momento da picagem, por pessoa. Os registos servem de base ao cálculo das horas trabalhadas. Ficam organizados por dia e por funcionário. Permitem detetar atrasos, faltas e horas extra. São depois usados na secção de Assiduidade. Garantem um registo objetivo e com data/hora. Reduzem erros e discussões sobre horários.","assiduidade": "A Assiduidade transforma os registos de ponto em relatórios úteis. Mostra as horas trabalhadas por funcionário e por período. Apresenta totais, faltas e desvios face ao previsto. Pode exportar em PDF e em Excel para processamento ou arquivo. Facilita o fecho mensal e o apoio ao processamento salarial. Dá uma visão clara da disponibilidade da equipa. Ajuda a identificar padrões de absentismo. Complementa os dados de ordenado definidos na ficha do funcionário. É um instrumento de gestão de pessoas.","pedidos": "Aqui são geridos os pedidos de férias e de faltas da equipa. O funcionário submete o pedido, podendo anexar um justificativo. O responsável vê os pedidos pendentes e aprova ou rejeita. Ao aprovar, o sistema avisa se a pessoa tiver Ordens de Serviço marcadas nesse período. Isto evita aprovar ausências que deixariam trabalhos sem técnico. Cada pedido tem um estado visível para ambas as partes. Mantém um histórico das ausências ao longo do tempo. Ajuda a planear a equipa com antecedência. É a forma formal de tratar férias e faltas.","encarregados": "Esta secção gere os encarregados e as equipas que cada um supervisiona. Os encarregados têm um nível de acesso intermédio, entre o admin e o funcionário. Podem aceder à agenda, às ordens de serviço e a relatórios, sem funções de administração da empresa. Pode definir os seus dados, contactos e veículo atribuído. Servem para descentralizar a coordenação no terreno. Cada encarregado acompanha o trabalho da sua equipa. Ajudam a aliviar a carga de gestão do administrador. Tal como os funcionários, podem ter registo de ponto e GPS. São peças-chave em empresas com várias frentes de obra.","contratos": "Os contratos de manutenção organizam as intervenções periódicas por cliente e equipamento. Para cada contrato define a periodicidade, o tipo de intervenção e os dados do equipamento. O sistema calcula automaticamente a data da próxima manutenção. Avisa quando há contratos vencidos ou prestes a vencer, com sinalização por cores. Isto evita falhar manutenções e perder credibilidade junto do cliente. Cada contrato fica ligado ao cliente e ao local respetivos. Ajuda a gerar receita recorrente e previsível. É um add-on opcional da plataforma. Bem usado, é uma fonte estável de trabalho planeado.","artigos": "Esta área é o catálogo de stock da empresa. Cada artigo pode ter marca, categoria, unidade, stock atual e stock mínimo. Pode ativar alertas para ser avisado quando um artigo fica em rutura. Os movimentos de entrada e saída mantêm as quantidades atualizadas. Pode importar e exportar o catálogo em CSV para tratar muitos artigos de uma vez. Os artigos são usados nas encomendas, requisições e planos de obra. Ajuda a saber sempre o que existe em armazém. Reduz compras desnecessárias e ruturas em obra. Faz parte do add-on Armazém.","encomendas": "Aqui regista as encomendas de material aos fornecedores. Cada encomenda pode ter vários itens com marca, categoria e quantidade. Pode associar a encomenda a uma obra específica. Na receção, dá entrada do material em stock de forma simples. Pode anexar a fatura do fornecedor à encomenda recebida. O sistema atualiza o stock automaticamente com o que chega. Mantém o histórico de compras e respetivos custos. Ajuda a planear reposições com base nas obras em curso. Integra-se com o financeiro pelo lado das compras. Faz parte do add-on Armazém.","fornecedores": "Esta secção mantém a lista de fornecedores da empresa. Para cada um pode guardar contactos e informação relevante. São usados na criação de encomendas de material. Ter os fornecedores organizados acelera o processo de compra. Evita procurar contactos dispersos por vários sítios. Pode editar ou remover fornecedores quando necessário. Complementa o catálogo de artigos e as encomendas. Ajuda a comparar e a escolher o fornecedor certo. Faz parte do add-on Armazém.","obras-longa": "O Planeamento de Obra acompanha cada obra do início ao fim. Cada obra tem um estado que evolui por Preparação, Ativa, Suspensa e Concluída. O card mostra contadores rápidos de quantas estão em cada estado. Quando uma obra passa a Ativa, pode gerar logo uma Ordem de Serviço. Cada obra tem um plano de materiais com quantidades previstas, recebidas e consumidas. Isto permite comparar o orçamentado com o realmente gasto. O sistema assinala obras com excedente de materiais. Liga-se às encomendas e ao stock do armazém. Dá uma visão clara do andamento e dos custos de cada obra. Faz parte do add-on Armazém.","financeiro": "O Financeiro dá a visão económica da operação. Mostra a faturação das Ordens de Serviço num período à escolha. Apresenta as compras de material e o resultado final. Inclui um gráfico de evolução mensal para perceber tendências. Tem detalhe por cliente, para saber quem gera mais valor. Pode filtrar por mês, ano ou todo o histórico. Permite exportar a informação em PDF. Junta num só sítio o que entra e o que sai. Ajuda a tomar decisões com base em números. Está incluído no add-on Armazém.","agenda": "A Agenda reúne as datas importantes que se aproximam. Inclui fim de licença, inspeções, manutenções e contratos a vencer. Funciona como um resumo de prazos a não falhar. Ajuda a antecipar renovações e intervenções. Evita surpresas de última hora. Dá uma visão rápida do que exige atenção em breve. Complementa os avisos espalhados pelos vários cards. É útil para o planeamento semanal. Mantém a gestão um passo à frente.","reports": "O painel de Reports concentra os indicadores de gestão da empresa. Resume a equipa, as ordens de serviço, os clientes e os custos. Dá uma visão geral do estado do negócio num relance. Ajuda a identificar pontos fortes e áreas a melhorar. Serve de apoio à tomada de decisão. Complementa os relatórios mais específicos das outras secções. É pensado para uma leitura rápida pelo administrador. Reúne num só ecrã o essencial. Poupa tempo na recolha de informação.","minha-licenca": "Aqui consulta o estado da sua licença e dos add-ons. Vê as datas de validade da licença base, da Frota, dos Contratos e do Armazém. Pode pedir a ativação ou a renovação, em plano mensal ou anual. O pedido segue para o Super Admin com as instruções de pagamento. Quando perto de expirar, surgem botões de renovação. Mantém a transparência sobre o que tem contratado. Evita interrupções por esquecimento de renovar. É o ponto único para gerir a sua subscrição. Garante que continua com acesso a tudo o que precisa.","ajuda-peticoes": "Este é o canal de suporte da plataforma. Permite enviar pedidos de ajuda ou reportar problemas ao administrador da plataforma. Pode acompanhar o estado e a resposta de cada pedido. Mantém um histórico das comunicações. Evita ter de recorrer a meios externos para pedir apoio. O cartão sinaliza quando há novidades por ler. É a forma mais rápida de obter assistência. Útil sempre que surge uma dúvida ou um imprevisto. Liga-o diretamente a quem gere a plataforma.","auditoria":"O Histórico/Auditoria regista quem fez o quê e quando dentro da empresa. Inclui criação, edição e eliminação de registos, aprovações de pedidos, assinaturas de folhas e início e fim de sessão. Cada entrada guarda a data e hora, o utilizador, o seu papel, a ação e a secção afetada. Pode filtrar por utilizador, ação ou secção para encontrar rapidamente o que procura. Os registos mais recentes aparecem primeiro. Pode exportar tudo em CSV para arquivo ou análise. É uma ferramenta de transparência e de segurança. Ajuda a esclarecer dúvidas e a investigar enganos sem acusações. Só o administrador (e o Super Admin) tem acesso a este histórico.","contactos": "Mostra a informação e os contactos da empresa. Fica visível no ecrã inicial, antes de iniciar sessão. Serve de cartão de visita digital da empresa. Ajuda quem chega a saber como contactar. Reúne os dados essenciais num só sítio. É simples e direto. Complementa a imagem profissional da plataforma."};
             const itens = [];
             document.querySelectorAll('#cardsGrid .card-principal').forEach(c => {
                 if (c.classList.contains('hidden-card')) return;
@@ -31975,7 +31933,15 @@ window._relPrefill = function(msg){
         }
 
         function fecharModalLogin() {
+            _prepararVistaAposLogin();
             document.getElementById('modalLoginOverlay').classList.remove('open');
+        }
+
+        function _prepararVistaAposLogin() {
+            // Release the login keyboard before its container becomes hidden on iOS.
+            const campo = document.activeElement;
+            if (campo?.matches('input, textarea') && campo.closest('#tg-entrar, #modalLoginOverlay')) campo.blur();
+            _aplicarZoomGuardado();
         }
 
         async function esqueciPassword() {
@@ -32124,6 +32090,7 @@ window._relPrefill = function(msg){
                 if (error || !perfil) return false;
                 const _okSes = construirUsuarioPorPerfil(perfil, user.email);
                 if (_okSes) {
+                    _prepararVistaAposLogin();
                     // O arranque da app (antes de se saber se há sessão) abre sempre a secção
                     // "Contactos" como página pública de visitante — se ficou lá aberta (porque
                     // a sessão só confirma depois), fecha-a agora que sabemos que há login.
@@ -32628,6 +32595,7 @@ window._relPrefill = function(msg){
         }
 
         async function logout() {
+            if (_logoutEmCurso) return;
             if (_contarAlteracoesPendentes() > 0) {
                 const espera = confirm('Ainda há alterações por confirmar no servidor. Queres esperar uns segundos para garantir que tudo fica gravado antes de sair?');
                 if (espera) {
@@ -32643,14 +32611,19 @@ window._relPrefill = function(msg){
                 }
             }
             registarAuditoria('logout', 'sessão', usuarioLogado?.id, usuarioLogado?.nome);
+            _logoutEmCurso = true;
+            const aviso = document.getElementById('avisoSessaoOverlay');
+            if (aviso) aviso.style.display = 'none';
             try { await supa.auth.signOut(); } catch (e) { console.warn('signOut:', e); }
             usuarioLogado = null;
             document.body.classList.remove('is-cliente-portal');
             _avisoRenovChecked = false;
             pararHeartbeat(); pararPollOnline(); pararPollEquipa(); pararPollMapa(); pararPollDadosGerais(); _heartbeatOn = false;
-            renderizarTudo();
-            abrirSecao('contactos');
-            alert('Sessão terminada.');
+            try { renderizarTudo(); }
+            finally {
+                _logoutEmCurso = false;
+                window.location.replace(new URL('login.html', window.location.href).href);
+            }
         }
 
         function funcFotoSelecionada(ev) {
@@ -32714,7 +32687,7 @@ window._relPrefill = function(msg){
                 _contextoAtual = '__inicio';
                 document.querySelectorAll('.section-container').forEach(el => el.classList.remove('active'));
             }
-            const layoutAtual = adminAtual()?.layout || 'sidebar';
+            const layoutAtual = obterLayout();
             let html = `<a class="tg-nav-item" data-secao="__inicio" onclick="irParaInicio()"><i class="fas fa-gauge-high"></i><span>Início</span></a>`;
             if (usuarioLogado.role === 'admin' || usuarioLogado.role === 'subadmin') {
                 html += `<a class="tg-nav-item" data-secao="dashboard-central" onclick="abrirSecao('dashboard-central')"><i class="fas fa-chart-line"></i><span>Dashboard Central</span></a>`;
@@ -32738,7 +32711,7 @@ window._relPrefill = function(msg){
                         const sec = c.getAttribute('data-card');
                         const ic = c.querySelector('.icon i')?.className || 'fas fa-circle';
                         const nome = c.querySelector('.info h3')?.textContent?.trim() || sec;
-                        const href = sec === 'crm' ? 'TOTALGEST_CRM.html' : (sec === 'assistencias' ? 'TOTALGEST_ASSIST.html' : (sec === 'rondas' ? 'TOTALGEST_RONDAS.html' : null));
+                        const href = sec === 'rondas' ? 'TOTALGEST_RONDAS.html' : null;
                         const onclickAttr = sec === 'crm' ? 'return _abrirCRM(event)' : (sec === 'assistencias' ? 'return _abrirAssist(event)' : (sec === 'rondas' ? 'return _abrirRondas(event)' : (sec === 'relatorios-personalizados' ? 'abrirGestaoRelatoriosPersonalizados()' : `abrirSecao('${sec}')`)));
                         const atributosExtra = href ? `href="${href}" target="_blank" rel="noopener"` : '';
                         html += `<a class="tg-nav-item" data-secao="${sec}" ${atributosExtra} onclick="${onclickAttr}"><i class="${ic}"></i><span>${nome}</span></a>`;
@@ -32756,11 +32729,8 @@ window._relPrefill = function(msg){
                         const sec = c.getAttribute('data-card');
                         const ic = c.querySelector('.icon i')?.className || 'fas fa-circle';
                         const nome = c.querySelector('.info h3')?.textContent?.trim() || sec;
-                        // CRM e Assistências abrem um ficheiro à parte (TOTALGEST_CRM.html /
-                        // TOTALGEST_ASSIST.html) num separador novo — por isso este item do menu
-                        // lateral tem de ser um <a href> a sério, tal como o card correspondente
-                        // no ecrã principal, e não um simples onclick sem destino nenhum.
-                        const href = sec === 'crm' ? 'TOTALGEST_CRM.html' : (sec === 'assistencias' ? 'TOTALGEST_ASSIST.html' : (sec === 'rondas' ? 'TOTALGEST_RONDAS.html' : null));
+                        // CRM and Assist open in the current application workspace.
+                        const href = sec === 'rondas' ? 'TOTALGEST_RONDAS.html' : null;
                         const onclickAttr = sec === 'crm' ? 'return _abrirCRM(event)' : (sec === 'assistencias' ? 'return _abrirAssist(event)' : (sec === 'rondas' ? 'return _abrirRondas(event)' : (sec === 'relatorios-personalizados' ? 'abrirGestaoRelatoriosPersonalizados()' : `abrirSecao('${sec}')`)));
                         const atributosExtra = href ? `href="${href}" target="_blank" rel="noopener"` : '';
                         html += `<a class="tg-nav-item" data-secao="${sec}" ${atributosExtra} onclick="${onclickAttr}"><i class="${ic}"></i><span>${nome}</span></a>`;
@@ -33926,6 +33896,7 @@ window._relPrefill = function(msg){
             else _voltarMeuDia();
         }
         function abrirSecao(nome) {
+            if (['crm', 'assistencias'].includes(nome) && !window.TGModules.prepare(nome)) return;
             if (nome === 'exportar-dados') { abrirModalExportarImportar(); return; }
             _registarUsoSecao(nome);
             if (usuarioLogado && usuarioLogado.role === 'cliente' && !_licencaValidaTenant()) {
@@ -34084,8 +34055,8 @@ window._relPrefill = function(msg){
                 renderizarAlertasGeofence();
             }
             if (nome === 'relatorio-os') {
-                if (usuarioLogado?.role !== 'admin' && usuarioLogado?.role !== 'subadmin' && usuarioLogado?.role !== 'encarregado') { alert('Apenas administrador ou encarregado acedem ao relatório de OS.'); return; }
-                prepararRelatorioOS();
+                if (usuarioLogado?.role !== 'admin' && usuarioLogado?.role !== 'subadmin' && usuarioLogado?.role !== 'encarregado') { alert('Apenas administrador ou encarregado acedem aos relatórios.'); return; }
+                prepararRelatoriosGestao();
             }
             if (nome === 'ferramentas') {
                 if (usuarioLogado?.role !== 'admin' && usuarioLogado?.role !== 'subadmin') { alert('Só o administrador/sub-admin gere os equipamentos. Vai a "Levantamento e Devolução de Ferramentas de Trabalho" para picar o QR Code.'); return; }
@@ -34229,7 +34200,7 @@ window._relPrefill = function(msg){
                                         <option value="sidebar" ${(obterConfig()?.layout || 'sidebar') === 'sidebar' ? 'selected' : ''}>Barra lateral (moderno)</option>
                                         <option value="cards" ${obterConfig()?.layout === 'cards' ? 'selected' : ''}>Clássico (cards no topo)</option>
                                         <option value="foco" ${obterConfig()?.layout === 'foco' ? 'selected' : ''}>Total Gest Foco (grupos + painel lateral)</option>
-                                        <option value="aurora" ${obterConfig()?.layout === 'aurora' ? 'selected' : ''}>Total Gest Aurora (visual moderno, escuro)</option>
+                                        <option value="aurora" ${obterConfig()?.layout === 'aurora' ? 'selected' : ''}>Total Gest Nexus (compacto, pesquisa rápida)</option>
                                     </select>
                                 </div>
                             </div>
@@ -34312,7 +34283,7 @@ window._relPrefill = function(msg){
                                         <option value="sidebar" ${(admin?.layout || 'sidebar') === 'sidebar' ? 'selected' : ''}>Barra lateral (moderno)</option>
                                         <option value="cards" ${admin?.layout === 'cards' ? 'selected' : ''}>Clássico (cards no topo)</option>
                                         <option value="foco" ${admin?.layout === 'foco' ? 'selected' : ''}>Total Gest Foco (grupos + painel lateral)</option>
-                                        <option value="aurora" ${admin?.layout === 'aurora' ? 'selected' : ''}>Total Gest Aurora (visual moderno, escuro)</option>
+                                        <option value="aurora" ${admin?.layout === 'aurora' ? 'selected' : ''}>Total Gest Nexus (compacto, pesquisa rápida)</option>
                                     </select>
                                 </div>
                             </div>
@@ -34362,7 +34333,7 @@ window._relPrefill = function(msg){
                                         <option value="sidebar" ${(admin?.layout || 'sidebar') === 'sidebar' ? 'selected' : ''}>Barra lateral (moderno)</option>
                                         <option value="cards" ${admin?.layout === 'cards' ? 'selected' : ''}>Clássico (cards no topo)</option>
                                         <option value="foco" ${admin?.layout === 'foco' ? 'selected' : ''}>Total Gest Foco (grupos + painel lateral)</option>
-                                        <option value="aurora" ${admin?.layout === 'aurora' ? 'selected' : ''}>Total Gest Aurora (visual moderno, escuro)</option>
+                                        <option value="aurora" ${admin?.layout === 'aurora' ? 'selected' : ''}>Total Gest Nexus (compacto, pesquisa rápida)</option>
                                     </select>
                                 </div>
                             </div>
@@ -34935,9 +34906,9 @@ window._relPrefill = function(msg){
     const script = document.createElement('script');
     script.id = 'tg-assistente-script';
     const base = new URL('.', document.currentScript.src);
-    script.src = new URL('tg-assistente.js?v=3.0.0-toto', base).href;
+    script.src = new URL('tg-assistente.js?v=4.0.0-teco', base).href;
     const engine = document.createElement('script');
-    engine.src = new URL('tg-smart-engine.js?v=2.0.0', base).href;
+    engine.src = new URL('tg-smart-engine.js?v=3.0.0-teco', base).href;
     engine.onload = () => document.head.appendChild(script);
     engine.onerror = () => document.head.appendChild(script);
     document.head.appendChild(engine);
