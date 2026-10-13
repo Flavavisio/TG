@@ -97,7 +97,7 @@ function _tgClienteSubabaPermitida(aba, admin) {
 function _tgClienteSubnav(clienteId, aba) {
     const principal = _tgClienteAbaPrincipal(aba);
     const opcoes = principal === 'os' ? [['os','Ordens de serviço'],['assistencias','Assistências'],['manutencoes','Manutenções']]
-        : principal === 'locais' ? [['locais','Locais'],['equipamentos','Equipamentos instalados']]
+        : principal === 'locais' ? [['locais','Instalações'],['equipamentos','Equipamentos instalados']]
         : principal === 'documentos' ? [['documentos','Especialidade'],['personalizados','Personalizados'],['anexos','Documentação'],['registos','Registos da empresa']] : [];
     return opcoes.filter(([a]) => _tgClienteSubabaPermitida(a, adminAtual())).map(([a, titulo]) => `<button type="button" class="tg-cliente-subaba ${a === aba ? 'active' : ''}" aria-pressed="${a === aba}" onclick="_wsClienteAba('${clienteId}','${a}')">${titulo}</button>`).join('');
 }
@@ -109,7 +109,7 @@ function _tgClienteManutencoes(clienteId) {
         const estado = estadoManutencao(proxima);
         const local = (dados.locais || []).find(l => l.id === c.localId && l.clienteId === clienteId);
         const historico = (dados.registosManutencao || []).filter(r => r.contratoId === c.id && r.dataRealizacao).sort((a,b) => b.dataRealizacao.localeCompare(a.dataRealizacao));
-        return `<article class="tg-doc-row"><div><strong>Contrato ${escapeHtmlSimples(c.numero || '—')} · ${escapeHtmlSimples(local?.nome || 'Sede')}</strong><p>Próxima: ${data(proxima)} · ${escapeHtmlSimples(estado.label)}</p><small>Última realizada: ${data(ultima?.dataRealizacao)}</small>${historico.length ? `<details><summary>${historico.length} manutenção(ões) realizada(s)</summary>${historico.map(r => `<p>${data(r.dataRealizacao)} — ${escapeHtmlSimples(r.observacoes || 'Intervenção registada')}</p>`).join('')}</details>` : ''}</div><button class="btn btn-outline" onclick="_wsSairPara('${clienteId}');abrirModalContrato('${c.id}')">Ver contrato</button></article>`;
+        return `<article class="tg-doc-row"><div><strong>Contrato ${escapeHtmlSimples(c.numero || '—')} · ${escapeHtmlSimples(_contratoInstalacoesLabel(c))}</strong><p>Próxima: ${data(proxima)} · ${escapeHtmlSimples(estado.label)}</p><small>Última realizada: ${data(ultima?.dataRealizacao)}</small>${historico.length ? `<details><summary>${historico.length} manutenção(ões) realizada(s)</summary>${historico.map(r => `<p>${data(r.dataRealizacao)} — ${escapeHtmlSimples(r.observacoes || 'Intervenção registada')}</p>`).join('')}</details>` : ''}</div><button class="btn btn-outline" onclick="_wsSairPara('${clienteId}');abrirModalContrato('${c.id}')">Ver contrato</button></article>`;
     }).join('') : '<p class="help-text">Sem contratos de manutenção associados.</p>');
 }
 async function _tgClienteDocumentos(clienteId, aba) {

@@ -277,8 +277,8 @@
             },
             clientes: {
                 tabela: 'clientes',
-                from: r => ({ id: r.id, nome: r.nome, numeroCliente: r.numero_cliente || null, telefone: r.telefone, endereco: r.endereco, morada: r.morada, numeroPorta: r.numero_porta || null, codigoPostal: r.codigo_postal, cidade: r.cidade, freguesia: r.freguesia, nif: r.nif, pessoaContacto: r.pessoa_contacto, email: r.email, portalAtivo: r.portal_ativo === true, adminId: r.admin_id, pinMapa: r.pin_mapa || null, moloniCustomerId: r.moloni_customer_id || null, toconlineCustomerId: r.toconline_customer_id || null }),
-                to:   o => ({ id: o.id, nome: o.nome, numero_cliente: o.numeroCliente || null, telefone: o.telefone || null, endereco: o.endereco || null, morada: o.morada || null, numero_porta: o.numeroPorta || null, codigo_postal: o.codigoPostal || null, cidade: o.cidade || null, freguesia: o.freguesia || null, nif: o.nif || null, pessoa_contacto: o.pessoaContacto || null, email: o.email || null, senha: o.senha || null, portal_ativo: o.portalAtivo === true, admin_id: o.adminId, pin_mapa: o.pinMapa || null, moloni_customer_id: o.moloniCustomerId || null, toconline_customer_id: o.toconlineCustomerId || null })
+                from: r => ({ id: r.id, nome: r.nome, numeroCliente: r.numero_cliente || null, telefone: r.telefone, endereco: r.endereco, morada: r.morada, numeroPorta: r.numero_porta || null, codigoPostal: r.codigo_postal, cidade: r.cidade, freguesia: r.freguesia, nif: r.nif, pessoaContacto: r.pessoa_contacto, email: r.email, portalAtivo: r.portal_ativo === true, adminId: r.admin_id, pinMapa: r.pin_mapa || null, moloniCustomerId: r.moloni_customer_id || null, toconlineCustomerId: r.toconline_customer_id || null, ...(r.passaporte_tecnico != null ? { passaporteTecnico: r.passaporte_tecnico } : {}) }),
+                to:   o => ({ id: o.id, nome: o.nome, numero_cliente: o.numeroCliente || null, telefone: o.telefone || null, endereco: o.endereco || null, morada: o.morada || null, numero_porta: o.numeroPorta || null, codigo_postal: o.codigoPostal || null, cidade: o.cidade || null, freguesia: o.freguesia || null, nif: o.nif || null, pessoa_contacto: o.pessoaContacto || null, email: o.email || null, senha: o.senha || null, portal_ativo: o.portalAtivo === true, admin_id: o.adminId, pin_mapa: o.pinMapa || null, moloni_customer_id: o.moloniCustomerId || null, toconline_customer_id: o.toconlineCustomerId || null, ...(o.passaporteTecnico !== undefined ? { passaporte_tecnico: o.passaporteTecnico } : {}) })
             },
             leads: {
                 tabela: 'leads',
@@ -302,8 +302,8 @@
             },
             servicos: {
                 tabela: 'servicos',
-                from: r => ({ id: r.id, numeroRegisto: r.numero_registo, clienteId: r.cliente_id, funcionarioId: r.funcionario_id, funcionariosIds: Array.isArray(r.funcionarios_ids) ? r.funcionarios_ids : [], relatorioResponsavelId: r.relatorio_responsavel_id || null, contratoId: r.contrato_id, obraId: r.obra_id, localId: r.local_id || null, assistenciaId: r.assistencia_id || null, valor: r.valor != null ? Number(r.valor) : null, duracao: r.duracao != null ? Number(r.duracao) : null, duracaoDias: r.duracao_dias != null ? Number(r.duracao_dias) : null, morada: r.morada || null, numeroPorta: r.numero_porta || null, codigoPostal: r.codigo_postal || null, cidade: r.cidade || null, freguesia: r.freguesia || null, data: r.data || '', hora: hhmm(r.hora) || '', descricao: r.descricao, observacoes: r.observacoes || null, checklist: r.checklist || {}, checklistEntrada: r.checklist_entrada || {}, status: r.status, origem: r.origem || null, tiposTrabalho: Array.isArray(r.tipos_trabalho) ? r.tipos_trabalho : [], adminId: r.admin_id, pagamentoLocal: r.pagamento_local === true, pago: r.pago == null ? null : (r.pago === true), faturaMoloniId: r.fatura_moloni_id || null, faturaMoloniUrl: r.fatura_moloni_url || null, reciboMoloniId: r.recibo_moloni_id || null, reciboMoloniUrl: r.recibo_moloni_url || null, guiaMoloniId: r.guia_moloni_id || null, guiaMoloniUrl: r.guia_moloni_url || null, notaCreditoMoloniId: r.nota_credito_moloni_id || null, notaCreditoMoloniUrl: r.nota_credito_moloni_url || null, faturaTOConlineId: r.fatura_toconline_id || null, faturaTOConlineUrl: r.fatura_toconline_url || null, fotos: Array.isArray(r.fotos) ? r.fotos : [] }),
-                to:   o => ({ id: o.id, numero_registo: o.numeroRegisto || null, cliente_id: o.clienteId || null, funcionario_id: o.funcionarioId || null, funcionarios_ids: o.funcionariosIds || [], relatorio_responsavel_id: o.relatorioResponsavelId || null, contrato_id: o.contratoId || null, obra_id: o.obraId || null, local_id: o.localId || null, assistencia_id: o.assistenciaId || null, valor: (o.valor === '' || o.valor == null) ? null : Number(o.valor), duracao: (o.duracao === '' || o.duracao == null) ? null : parseInt(o.duracao,10), duracao_dias: (o.duracaoDias === '' || o.duracaoDias == null) ? null : parseInt(o.duracaoDias,10), morada: o.morada || null, numero_porta: o.numeroPorta || null, codigo_postal: o.codigoPostal || null, cidade: o.cidade || null, freguesia: o.freguesia || null, data: nn(o.data), hora: nn(o.hora), descricao: o.descricao || null, observacoes: o.observacoes || null, checklist: o.checklist || {}, checklist_entrada: o.checklistEntrada || {}, status: o.status || 'pendente', origem: o.origem || null, tipos_trabalho: o.tiposTrabalho || [], admin_id: o.adminId, pagamento_local: o.pagamentoLocal === true, pago: o.pago === undefined ? null : o.pago, fatura_moloni_id: o.faturaMoloniId || null, fatura_moloni_url: o.faturaMoloniUrl || null, recibo_moloni_id: o.reciboMoloniId || null, recibo_moloni_url: o.reciboMoloniUrl || null, guia_moloni_id: o.guiaMoloniId || null, guia_moloni_url: o.guiaMoloniUrl || null, nota_credito_moloni_id: o.notaCreditoMoloniId || null, nota_credito_moloni_url: o.notaCreditoMoloniUrl || null, fatura_toconline_id: o.faturaTOConlineId || null, fatura_toconline_url: o.faturaTOConlineUrl || null, fotos: o.fotos || [] })
+                from: r => ({ id: r.id, numeroRegisto: r.numero_registo, clienteId: r.cliente_id, funcionarioId: r.funcionario_id, funcionariosIds: Array.isArray(r.funcionarios_ids) ? r.funcionarios_ids : [], relatorioResponsavelId: r.relatorio_responsavel_id || null, contratoId: r.contrato_id, obraId: r.obra_id, localId: r.local_id || null, assistenciaId: r.assistencia_id || null, valor: r.valor != null ? Number(r.valor) : null, duracao: r.duracao != null ? Number(r.duracao) : null, duracaoDias: r.duracao_dias != null ? Number(r.duracao_dias) : null, morada: r.morada || null, numeroPorta: r.numero_porta || null, codigoPostal: r.codigo_postal || null, cidade: r.cidade || null, freguesia: r.freguesia || null, data: r.data || '', hora: hhmm(r.hora) || '', descricao: r.descricao, observacoes: r.observacoes || null, checklist: r.checklist || {}, ...(r.plano_manutencao != null ? { planoManutencao: r.plano_manutencao } : {}), checklistEntrada: r.checklist_entrada || {}, status: r.status, origem: r.origem || null, tiposTrabalho: Array.isArray(r.tipos_trabalho) ? r.tipos_trabalho : [], adminId: r.admin_id, pagamentoLocal: r.pagamento_local === true, pago: r.pago == null ? null : (r.pago === true), faturaMoloniId: r.fatura_moloni_id || null, faturaMoloniUrl: r.fatura_moloni_url || null, reciboMoloniId: r.recibo_moloni_id || null, reciboMoloniUrl: r.recibo_moloni_url || null, guiaMoloniId: r.guia_moloni_id || null, guiaMoloniUrl: r.guia_moloni_url || null, notaCreditoMoloniId: r.nota_credito_moloni_id || null, notaCreditoMoloniUrl: r.nota_credito_moloni_url || null, faturaTOConlineId: r.fatura_toconline_id || null, faturaTOConlineUrl: r.fatura_toconline_url || null, fotos: Array.isArray(r.fotos) ? r.fotos : [], ...(r.passaporte_intervencao != null ? { passaporteIntervencao: r.passaporte_intervencao } : {}) }),
+                to:   o => ({ id: o.id, numero_registo: o.numeroRegisto || null, cliente_id: o.clienteId || null, funcionario_id: o.funcionarioId || null, funcionarios_ids: o.funcionariosIds || [], relatorio_responsavel_id: o.relatorioResponsavelId || null, contrato_id: o.contratoId || null, obra_id: o.obraId || null, local_id: o.localId || null, assistencia_id: o.assistenciaId || null, valor: (o.valor === '' || o.valor == null) ? null : Number(o.valor), duracao: (o.duracao === '' || o.duracao == null) ? null : parseInt(o.duracao,10), duracao_dias: (o.duracaoDias === '' || o.duracaoDias == null) ? null : parseInt(o.duracaoDias,10), morada: o.morada || null, numero_porta: o.numeroPorta || null, codigo_postal: o.codigoPostal || null, cidade: o.cidade || null, freguesia: o.freguesia || null, data: nn(o.data), hora: nn(o.hora), descricao: o.descricao || null, observacoes: o.observacoes || null, checklist: o.checklist || {}, ...(o.planoManutencao !== undefined ? { plano_manutencao: o.planoManutencao } : {}), checklist_entrada: o.checklistEntrada || {}, status: o.status || 'pendente', origem: o.origem || null, tipos_trabalho: o.tiposTrabalho || [], admin_id: o.adminId, pagamento_local: o.pagamentoLocal === true, pago: o.pago === undefined ? null : o.pago, fatura_moloni_id: o.faturaMoloniId || null, fatura_moloni_url: o.faturaMoloniUrl || null, recibo_moloni_id: o.reciboMoloniId || null, recibo_moloni_url: o.reciboMoloniUrl || null, guia_moloni_id: o.guiaMoloniId || null, guia_moloni_url: o.guiaMoloniUrl || null, nota_credito_moloni_id: o.notaCreditoMoloniId || null, nota_credito_moloni_url: o.notaCreditoMoloniUrl || null, fatura_toconline_id: o.faturaTOConlineId || null, fatura_toconline_url: o.faturaTOConlineUrl || null, fotos: o.fotos || [], ...(o.passaporteIntervencao !== undefined ? { passaporte_intervencao: o.passaporteIntervencao } : {}) })
             },
             assistencias: {
                 tabela: 'assistencias',
@@ -377,23 +377,23 @@
             },
             contratos: {
                 tabela: 'contratos',
-                from: r => ({ id: r.id, numero: r.numero, adminId: r.admin_id, clienteId: r.cliente_id, localId: r.local_id, equipamentoId: r.equipamento_id, equipamentosIds: Array.isArray(r.equipamentos_ids) ? r.equipamentos_ids : [], tipo: r.tipo, tiposTrabalho: Array.isArray(r.tipos_trabalho) ? r.tipos_trabalho : [], periodicidade: r.periodicidade, tipoIntervencao: r.tipo_intervencao, tecnicoId: r.tecnico_id, dataInicio: r.data_inicio, valor: r.valor, marca: r.marca, numeroSerie: r.numero_serie, proximaManutencao: r.proxima_manutencao, ultimaOSGeradaData: r.ultima_os_gerada_data || null, ultimaOSGeradaId: r.ultima_os_gerada_id || null, vigilanciaAtiva: r.vigilancia_ativa === true, valorMensalVigilancia: r.valor_mensal_vigilancia != null ? Number(r.valor_mensal_vigilancia) : null, ultimoMesFaturadoVigilancia: r.ultimo_mes_faturado_vigilancia || null, faturasVigilancia: Array.isArray(r.faturas_vigilancia) ? r.faturas_vigilancia : [], validadeContrato: r.validade_contrato || null, documentoUrl: r.documento_url || null, documentoNome: r.documento_nome || null, dataCriacao: isoToMs(r.data_criacao) }),
-                to:   o => ({ id: o.id, numero: o.numero, admin_id: o.adminId, cliente_id: o.clienteId, local_id: o.localId || null, equipamento_id: o.equipamentoId || null, equipamentos_ids: o.equipamentosIds || [], tipo: o.tipo, tipos_trabalho: o.tiposTrabalho || [], periodicidade: o.periodicidade || null, tipo_intervencao: o.tipoIntervencao || null, tecnico_id: o.tecnicoId || null, data_inicio: nn(o.dataInicio), valor: (o.valor === '' || o.valor == null) ? null : Number(o.valor), marca: o.marca || null, numero_serie: o.numeroSerie || null, proxima_manutencao: nn(o.proximaManutencao), ultima_os_gerada_data: o.ultimaOSGeradaData || null, ultima_os_gerada_id: o.ultimaOSGeradaId || null, vigilancia_ativa: o.vigilanciaAtiva === true, valor_mensal_vigilancia: o.valorMensalVigilancia ?? null, ultimo_mes_faturado_vigilancia: o.ultimoMesFaturadoVigilancia || null, faturas_vigilancia: o.faturasVigilancia || [], validade_contrato: o.validadeContrato || null, documento_url: o.documentoUrl || null, documento_nome: o.documentoNome || null, data_criacao: msToISO(o.dataCriacao) })
+                from: r => ({ id: r.id, numero: r.numero, adminId: r.admin_id, clienteId: r.cliente_id, localId: r.local_id, ...(r.gestao_manutencao != null ? { gestaoManutencao: r.gestao_manutencao } : {}), ...(Array.isArray(r.locais_ids) ? { locaisIds: r.locais_ids } : {}), equipamentoId: r.equipamento_id, equipamentosIds: Array.isArray(r.equipamentos_ids) ? r.equipamentos_ids : [], tipo: r.tipo, tiposTrabalho: Array.isArray(r.tipos_trabalho) ? r.tipos_trabalho : [], periodicidade: r.periodicidade, tipoIntervencao: r.tipo_intervencao, tecnicoId: r.tecnico_id, dataInicio: r.data_inicio, valor: r.valor, marca: r.marca, numeroSerie: r.numero_serie, proximaManutencao: r.proxima_manutencao, ultimaOSGeradaData: r.ultima_os_gerada_data || null, ultimaOSGeradaId: r.ultima_os_gerada_id || null, vigilanciaAtiva: r.vigilancia_ativa === true, valorMensalVigilancia: r.valor_mensal_vigilancia != null ? Number(r.valor_mensal_vigilancia) : null, ultimoMesFaturadoVigilancia: r.ultimo_mes_faturado_vigilancia || null, faturasVigilancia: Array.isArray(r.faturas_vigilancia) ? r.faturas_vigilancia : [], validadeContrato: r.validade_contrato || null, documentoUrl: r.documento_url || null, documentoNome: r.documento_nome || null, dataCriacao: isoToMs(r.data_criacao) }),
+                to:   o => ({ id: o.id, numero: o.numero, admin_id: o.adminId, cliente_id: o.clienteId, local_id: o.localId || null, ...(o.gestaoManutencao !== undefined ? { gestao_manutencao: o.gestaoManutencao } : {}), ...(Array.isArray(o.locaisIds) ? { locais_ids: o.locaisIds } : {}), equipamento_id: o.equipamentoId || null, equipamentos_ids: o.equipamentosIds || [], tipo: o.tipo, tipos_trabalho: o.tiposTrabalho || [], periodicidade: o.periodicidade || null, tipo_intervencao: o.tipoIntervencao || null, tecnico_id: o.tecnicoId || null, data_inicio: nn(o.dataInicio), valor: (o.valor === '' || o.valor == null) ? null : Number(o.valor), marca: o.marca || null, numero_serie: o.numeroSerie || null, proxima_manutencao: nn(o.proximaManutencao), ultima_os_gerada_data: o.ultimaOSGeradaData || null, ultima_os_gerada_id: o.ultimaOSGeradaId || null, vigilancia_ativa: o.vigilanciaAtiva === true, valor_mensal_vigilancia: o.valorMensalVigilancia ?? null, ultimo_mes_faturado_vigilancia: o.ultimoMesFaturadoVigilancia || null, faturas_vigilancia: o.faturasVigilancia || [], validade_contrato: o.validadeContrato || null, documento_url: o.documentoUrl || null, documento_nome: o.documentoNome || null, data_criacao: msToISO(o.dataCriacao) })
             },
             locais: {
                 tabela: 'locais',
-                from: r => ({ id: r.id, adminId: r.admin_id, clienteId: r.cliente_id, nome: r.nome, morada: r.morada, numeroPorta: r.numero_porta || null, codigoPostal: r.codigo_postal || null, cidade: r.cidade || null, freguesia: r.freguesia || null, pinMapa: r.pin_mapa || null, dataCriacao: isoToMs(r.data_criacao) }),
-                to:   o => ({ id: o.id, admin_id: o.adminId, cliente_id: o.clienteId, nome: o.nome, morada: o.morada || null, numero_porta: o.numeroPorta || null, codigo_postal: o.codigoPostal || null, cidade: o.cidade || null, freguesia: o.freguesia || null, pin_mapa: o.pinMapa || null, data_criacao: msToISO(o.dataCriacao) })
+                from: r => ({ id: r.id, adminId: r.admin_id, clienteId: r.cliente_id, nome: r.nome, morada: r.morada, numeroPorta: r.numero_porta || null, codigoPostal: r.codigo_postal || null, cidade: r.cidade || null, freguesia: r.freguesia || null, pinMapa: r.pin_mapa || null, dataCriacao: isoToMs(r.data_criacao), ...(r.passaporte_tecnico != null ? { passaporteTecnico: r.passaporte_tecnico } : {}) }),
+                to:   o => ({ id: o.id, admin_id: o.adminId, cliente_id: o.clienteId, nome: o.nome, morada: o.morada || null, numero_porta: o.numeroPorta || null, codigo_postal: o.codigoPostal || null, cidade: o.cidade || null, freguesia: o.freguesia || null, pin_mapa: o.pinMapa || null, data_criacao: msToISO(o.dataCriacao), ...(o.passaporteTecnico !== undefined ? { passaporte_tecnico: o.passaporteTecnico } : {}) })
             },
             equipamentos: {
                 tabela: 'equipamentos',
-                from: r => ({ id: r.id, adminId: r.admin_id, localId: r.local_id, tipo: r.tipo, marca: r.marca, numeroSerie: r.numero_serie, observacoes: r.observacoes, dataInstalacao: r.data_instalacao || null, garantiaAte: r.garantia_ate || null, dataCriacao: isoToMs(r.data_criacao) }),
-                to:   o => ({ id: o.id, admin_id: o.adminId, local_id: o.localId || null, tipo: o.tipo, marca: o.marca || null, numero_serie: o.numeroSerie || null, observacoes: o.observacoes || null, data_instalacao: o.dataInstalacao || null, garantia_ate: o.garantiaAte || null, data_criacao: msToISO(o.dataCriacao) })
+                from: r => ({ id: r.id, adminId: r.admin_id, localId: r.local_id, tipo: r.tipo, marca: r.marca, numeroSerie: r.numero_serie, observacoes: r.observacoes, dataInstalacao: r.data_instalacao || null, garantiaAte: r.garantia_ate || null, dataCriacao: isoToMs(r.data_criacao), ...(r.cliente_id != null ? { clienteId: r.cliente_id } : {}), ...(r.ficha_tecnica != null ? { fichaTecnica: r.ficha_tecnica } : {}) }),
+                to:   o => ({ id: o.id, admin_id: o.adminId, local_id: o.localId || null, tipo: o.tipo, marca: o.marca || null, numero_serie: o.numeroSerie || null, observacoes: o.observacoes || null, data_instalacao: o.dataInstalacao || null, garantia_ate: o.garantiaAte || null, data_criacao: msToISO(o.dataCriacao), ...(o.clienteId !== undefined ? { cliente_id: o.clienteId } : {}), ...(o.fichaTecnica !== undefined ? { ficha_tecnica: o.fichaTecnica } : {}) })
             },
             registosManutencao: {
                 tabela: 'registos_manutencao',
-                from: r => ({ id: r.id, adminId: r.admin_id, contratoId: r.contrato_id, equipamentoId: r.equipamento_id, servicoId: r.servico_id || null, dataRealizacao: r.data_realizacao, tecnicoId: r.tecnico_id, observacoes: r.observacoes, proximaData: r.proxima_data, dataCriacao: isoToMs(r.data_criacao) }),
-                to:   o => ({ id: o.id, admin_id: o.adminId, contrato_id: o.contratoId, equipamento_id: o.equipamentoId || null, servico_id: o.servicoId || null, data_realizacao: nn(o.dataRealizacao), tecnico_id: o.tecnicoId || null, observacoes: o.observacoes || null, proxima_data: nn(o.proximaData), data_criacao: msToISO(o.dataCriacao) })
+                from: r => ({ id: r.id, adminId: r.admin_id, contratoId: r.contrato_id, equipamentoId: r.equipamento_id, servicoId: r.servico_id || null, ...(r.local_id !== undefined ? { localId: r.local_id } : {}), ...(Array.isArray(r.sistemas_ids) ? { sistemasIds: r.sistemas_ids } : {}), dataRealizacao: r.data_realizacao, tecnicoId: r.tecnico_id, observacoes: r.observacoes, proximaData: r.proxima_data, dataCriacao: isoToMs(r.data_criacao) }),
+                to:   o => ({ id: o.id, admin_id: o.adminId, contrato_id: o.contratoId, equipamento_id: o.equipamentoId || null, servico_id: o.servicoId || null, ...(o.localId !== undefined ? { local_id: o.localId || null } : {}), ...(Array.isArray(o.sistemasIds) ? { sistemas_ids: o.sistemasIds } : {}), data_realizacao: nn(o.dataRealizacao), tecnico_id: o.tecnicoId || null, observacoes: o.observacoes || null, proxima_data: nn(o.proximaData), data_criacao: msToISO(o.dataCriacao) })
             },
             veiculos: {
                 tabela: 'veiculos',
@@ -989,6 +989,7 @@
                 s.fotos.push({ url, dataCriacao: Date.now(), funcionarioId: usuarioLogado?.id || null });
                 guardarDados(dados);
                 _osRenderFotos(osId);
+                document.dispatchEvent(new CustomEvent('tg:passport-photo-updated', { detail: { osId } }));
             } catch (e) {
                 console.error('Erro ao guardar foto da OS:', e);
                 alert('⚠️ Não foi possível guardar a foto: ' + (e.message || e));
@@ -5199,8 +5200,8 @@
         //  Financeiro) mostram uma mensagem simples por agora — ficam para as
         //  próximas fases, sem quebrar nada do que já existe nesses menus.
         // =====================================================================
-        const WS_CLIENTE_ABAS = ['resumo', 'historico', 'locais', 'os', 'obras', 'assistencias', 'contratos', 'relatorios', 'equipamentos', 'financeiro'];
-        const WS_CLIENTE_ABAS_LABEL = { resumo: 'Resumo', historico: 'Histórico', locais: 'Locais', os: 'Ordens de Serviço', obras: 'Obras', assistencias: 'Assistências', contratos: 'Contratos', relatorios: 'Relatórios', equipamentos: 'Equipamentos', financeiro: 'Financeiro' };
+        const WS_CLIENTE_ABAS = ['resumo', 'historico', 'locais', 'os', 'obras', 'assistencias', 'contratos', 'financeiro'];
+        const WS_CLIENTE_ABAS_LABEL = { resumo: 'Resumo', historico: 'Histórico', locais: 'Instalações', os: 'Ordens de Serviço', obras: 'Obras', assistencias: 'Assistências', contratos: 'Contratos', relatorios: 'Relatórios', equipamentos: 'Equipamentos', financeiro: 'Financeiro' };
         function abrirWorkspaceCliente(clienteId) {
             const cliente = dados.clientes?.find(c => c.id === clienteId);
             if (!cliente) return;
@@ -5239,6 +5240,7 @@
             }, 350);
         }
         async function _wsClienteAba(clienteId, aba) {
+            if (aba === 'passaporte') aba = 'locais'; // compatibilidade com ligações anteriores
             const admin = adminAtual();
             // Cada separador só aparece se o módulo correspondente estiver mesmo ativo nesta
             // conta — Assistências precisa do Assist, Contratos e Equipamentos (que vivem dentro
@@ -5250,6 +5252,7 @@
                 if (a === 'relatorios') return admin?.segurancaAtivo === true;
                 return true;
             });
+            if (aba === 'equipamentos' || aba === 'relatorios') aba = 'locais';
             if (!abasVisiveis.includes(aba)) aba = 'resumo'; // a aba pedida já não está disponível
             window._wsAbaAtual = aba;
             const cliente = dados.clientes?.find(c => c.id === clienteId);
@@ -5268,14 +5271,14 @@
                             <div style="width:48px;height:48px;border-radius:12px;background:#eef2f7;display:flex;align-items:center;justify-content:center;font-weight:700;color:#152a52;font-size:1.05rem;flex-shrink:0;">${iniciais}</div>
                             <div style="flex:1;min-width:0;">
                                 <div style="font-weight:700;font-size:1.15rem;">${escapeHtmlSimples(cliente.nome)}</div>
-                                <div style="font-size:.8rem;color:#64748b;">${cliente.nif ? 'NIF ' + escapeHtmlSimples(cliente.nif) + ' · ' : ''}${escapeHtmlSimples(cliente.cidade || cliente.endereco || '—')} · ${locaisCliente.length + 1} local${locaisCliente.length ? 'is' : ''}</div>
+                                <div style="font-size:.8rem;color:#64748b;">${cliente.nif ? 'NIF ' + escapeHtmlSimples(cliente.nif) + ' · ' : ''}${escapeHtmlSimples(cliente.cidade || cliente.endereco || '—')} · ${locaisCliente.length + 1} instalaç${locaisCliente.length ? 'ões' : 'ão'}</div>
                             </div>
                             <button class="close-modal" onclick="_wsClienteFechar()">&times;</button>
                         </div>
                         <div style="padding:14px 22px 0;display:flex;gap:8px;flex-wrap:wrap;flex-shrink:0;">
                             <button class="btn btn-sm btn-primary" onclick="_wsMarcarOS('${clienteId}')"><i class="fas fa-clipboard-plus"></i> Marcar OS</button>
                             ${moduloAssistAtivo(admin) ? `<button class="btn btn-sm btn-outline" onclick="_wsMarcarAssistencia('${clienteId}')"><i class="fas fa-headset"></i> Marcar assistência</button>` : ''}
-                            <button class="btn btn-sm btn-outline" onclick="_wsSairPara('${clienteId}');abrirModalNovoLocalCliente('${clienteId}')"><i class="fas fa-map-pin"></i> Novo local</button>
+                            <button class="btn btn-sm btn-outline" onclick="_wsSairPara('${clienteId}');abrirModalNovoLocalCliente('${clienteId}')"><i class="fas fa-map-pin"></i> Nova instalação</button>
                             <button class="btn btn-sm btn-outline" onclick="_wsSairPara('${clienteId}');abrirModal('cliente','${clienteId}')"><i class="fas fa-edit"></i> Editar dados</button>
                             <button class="btn btn-sm btn-outline" onclick="_wsClienteAba('${clienteId}','historico')"><i class="fas fa-clock-rotate-left"></i> Histórico completo</button>
                         </div>
@@ -5292,7 +5295,10 @@
             const conteudo = document.getElementById('wsClienteConteudo');
             if (aba === 'resumo') conteudo.innerHTML = await _wsResumoHtml(clienteId);
             else if (aba === 'historico') await window.TGClientHistory.show(clienteId);
-            else if (aba === 'locais') conteudo.innerHTML = _wsLocaisHtml(clienteId);
+            else if (aba === 'locais') {
+                if (moduloPassaporteAtivo(admin) && window.TGPassport) await window.TGPassport.show(clienteId);
+                else conteudo.innerHTML = _wsLocaisHtml(clienteId);
+            }
             else if (aba === 'os') conteudo.innerHTML = await _wsOsHtml(clienteId);
             else if (aba === 'obras') conteudo.innerHTML = _wsObrasHtml(clienteId);
             else if (aba === 'contratos') conteudo.innerHTML = _wsContratosHtml(clienteId);
@@ -5660,7 +5666,7 @@
                 // mesmo local, para mostrar os relatórios que lhe pertencem na prática.
                 const tiposContrato = c.tiposTrabalho || [];
                 const relatoriosDoContrato = (dados.relatoriosEspecialidade || [])
-                    .filter(r => r.clienteId === clienteId && (r.localId || null) === (c.localId || null) && tiposContrato.includes(r.tipo) && !r.rascunho)
+                    .filter(r => r.clienteId === clienteId && _contratoAbrangeLocal(c, r.localId) && tiposContrato.includes(r.tipo) && !r.rascunho)
                     .sort((a, b) => (b.data || '').localeCompare(a.data || ''));
                 const relatoriosHtml = relatoriosDoContrato.length
                     ? `<div style="margin-top:6px;padding-left:28px;">${relatoriosDoContrato.slice(0, 3).map(r => `
@@ -5674,7 +5680,7 @@
                         <i class="fas fa-file-signature" style="color:#94a3b8;width:18px;"></i>
                         <div style="flex:1;min-width:0;">
                             <div style="font-size:.86rem;font-weight:600;text-align:left;">Contrato ${escapeHtmlSimples(c.numero || '—')} — ${escapeHtmlSimples(_equipStrContrato(c))}</div>
-                            <div style="font-size:.76rem;color:#64748b;text-align:left;">${escapeHtmlSimples(nomeLocal(c.localId))} · ${PERIODICIDADE_LABEL[c.periodicidade] || '—'}${c.validadeContrato ? ' · válido até ' + c.validadeContrato.split('-').reverse().join('/') : ''}</div>
+                            <div style="font-size:.76rem;color:#64748b;text-align:left;">${escapeHtmlSimples(_contratoInstalacoesLabel(c))} · ${PERIODICIDADE_LABEL[c.periodicidade] || '—'}${c.validadeContrato ? ' · válido até ' + c.validadeContrato.split('-').reverse().join('/') : ''}</div>
                         </div>
                         <span style="font-size:.7rem;font-weight:600;padding:3px 9px;border-radius:6px;background:${cor[1]};color:${cor[0]};white-space:nowrap;">${estado}</span>
                     </div>
@@ -5682,6 +5688,7 @@
                 </div>`;
             }).join('');
             return `
+                <div id="tg_maintenance_customer">${window.TGContractMaintenance?.maintenanceHTML(clienteId) || ''}</div>
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
                     <div class="help-text" style="margin:0;">${contratosCliente.length} contrato${contratosCliente.length === 1 ? '' : 's'} registado${contratosCliente.length === 1 ? '' : 's'}.</div>
                     <button class="btn btn-sm btn-primary" onclick="_wsNovoContrato('${clienteId}')"><i class="fas fa-plus"></i> Novo contrato</button>
@@ -5778,7 +5785,7 @@
             const linhasLocais = locaisParaMostrar.map(l => {
                 const osDoLocal = osCliente.filter(s => (s.localId || null) === l.id).sort((a, b) => (b.data || '').localeCompare(a.data || ''));
                 const ultima = osDoLocal[0];
-                const contratoDoLocal = contratosCliente.find(c => (c.localId || null) === l.id && c.validadeContrato);
+                const contratoDoLocal = contratosCliente.find(c => _contratoAbrangeLocal(c, l.id) && c.validadeContrato);
                 let estadoTxt = 'Sem OS registadas ainda', estadoCor = '#f1f5f9', estadoTexto = '#64748b';
                 if (ultima) { estadoTxt = `Última OS · ${(ultima.data || '').split('-').reverse().join('/')} · ${escapeHtmlSimples(ultima.descricao || (ultima.tiposTrabalho || [])[0] || 'OS')}`; estadoCor = '#dcfce7'; estadoTexto = '#166534'; }
                 if (contratoDoLocal && contratoDoLocal.validadeContrato && contratoDoLocal.validadeContrato <= em30) { estadoCor = '#fef3c7'; estadoTexto = '#92400e'; }
@@ -5792,14 +5799,15 @@
                 </div>`;
             }).join('');
             return `
+                <div id="tg_maintenance_customer">${window.TGContractMaintenance?.maintenanceHTML(clienteId) || ''}</div>
                 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:20px;">
-                    <div style="background:#f8fafc;border-radius:10px;padding:14px;"><div style="font-size:.76rem;color:#64748b;text-align:left;">Locais</div><div style="font-size:1.5rem;font-weight:700;">${locaisParaMostrar.length}</div></div>
+                    <div style="background:#f8fafc;border-radius:10px;padding:14px;"><div style="font-size:.76rem;color:#64748b;text-align:left;">Instalações</div><div style="font-size:1.5rem;font-weight:700;">${locaisParaMostrar.length}</div></div>
                     <div style="background:#f8fafc;border-radius:10px;padding:14px;"><div style="font-size:.76rem;color:#64748b;text-align:left;">OS abertas</div><div style="font-size:1.5rem;font-weight:700;">${osAbertas}</div></div>
                     ${contratosAtivos ? `<div style="background:#f8fafc;border-radius:10px;padding:14px;"><div style="font-size:.76rem;color:#64748b;text-align:left;">Equipamentos</div><div style="font-size:1.5rem;font-weight:700;">${equipCliente}</div></div>
                     <div style="background:${contratosAVencer ? '#fef3c7' : '#f8fafc'};border-radius:10px;padding:14px;"><div style="font-size:.76rem;color:${contratosAVencer ? '#92400e' : '#64748b'};text-align:left;">Contratos a vencer</div><div style="font-size:1.5rem;font-weight:700;color:${contratosAVencer ? '#92400e' : 'inherit'};">${contratosAVencer}</div></div>` : ''}
                 </div>
                 <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px 18px;">
-                    <div style="font-weight:600;font-size:.9rem;margin-bottom:8px;">Locais e última atividade</div>
+                    <div style="font-weight:600;font-size:.9rem;margin-bottom:8px;">Instalações e última atividade</div>
                     ${linhasLocais}
                 </div>
             `;
@@ -5815,19 +5823,20 @@
                         <i class="fas ${icone}" style="color:#94a3b8;width:18px;"></i>
                         <div style="flex:1;"><div style="font-weight:600;font-size:.88rem;">${escapeHtmlSimples(nome)}</div><div style="font-size:.78rem;color:#64748b;">${escapeHtmlSimples(morada || 'Sem morada registada')}</div></div>
                         ${botaoEditar || ''}
+                        ${moduloPassaporteAtivo(adminAtual()) ? `<button type="button" class="btn btn-sm btn-outline" onclick="event.stopPropagation();TGPassport.open('${clienteId}','${chave === 'sede' ? '' : chave}')">Passaporte</button>` : ''}
                         <i class="fas fa-chevron-down" id="wsLocalSeta-${chave}" style="color:#cbd5e1;"></i>
                     </div>
                     <div id="wsLocalDet-${chave}" style="display:none;padding:4px 0 14px 28px;"></div>
                 </div>`;
             const linhaSede = linhaLocal('sede', 'fa-building', 'Sede', cliente.endereco);
             const linhasExtra = locaisCliente.map(l => linhaLocal(l.id, 'fa-map-pin', l.nome, l.morada,
-                `<button class="btn btn-sm btn-outline" onclick="event.stopPropagation();_wsSairPara('${clienteId}');abrirModalLocalCliente('${clienteId}','${l.id}')"><i class="fas fa-edit"></i></button>`
+                `<button class="btn btn-sm btn-outline" onclick="event.stopPropagation();_wsSairPara('${clienteId}');abrirModalLocalCliente('${clienteId}','${l.id}')"><i class="fas fa-edit"></i></button><button type="button" class="btn btn-sm btn-danger" onclick="event.stopPropagation();eliminarLocalCliente('${l.id}','${clienteId}')"><i class="fas fa-trash"></i> Apagar</button>`
             )).join('');
             return `
                 <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:0 18px;">
                     ${linhaSede}${linhasExtra}
                 </div>
-                <button class="btn btn-sm btn-outline" style="margin-top:14px;" onclick="_wsSairPara('${clienteId}');abrirModalNovoLocalCliente('${clienteId}')"><i class="fas fa-plus"></i> Adicionar local</button>
+                <button class="btn btn-sm btn-outline" style="margin-top:14px;" onclick="_wsSairPara('${clienteId}');abrirModalNovoLocalCliente('${clienteId}')"><i class="fas fa-plus"></i> Adicionar instalação</button>
             `;
         }
         async function _wsLocalToggle(clienteId, chave) {
@@ -6281,6 +6290,7 @@
             if (_modalElVerOs) _modalElVerOs.style.maxWidth = '860px'; // mesma largura do "Ver Obra" — evita saltos ao alternar entre os dois
             const _mapaInfoVerOs = _osMapaInfo(os.clienteId, os.morada, os.localId);
             campos.innerHTML = `
+                ${window.TGPassport?.osButton(os) || ''}
                 ${os.morada ? `<div style="margin-bottom:12px;color:#334155;font-size:.88rem;"><i class="fas fa-location-dot" style="color:#94a3b8;"></i> ${escapeHtmlSimples(os.morada)} ${_mapaInfoVerOs ? `<a href="${_mapaInfoVerOs.url}" target="_blank" rel="noopener" title="${_mapaInfoVerOs.exato ? 'Ver pin exato no mapa' : 'Ver morada no mapa (aproximado)'}" style="color:${_mapaInfoVerOs.exato ? '#16a34a' : '#dc2626'};margin-left:4px;"><i class="fas fa-map-location-dot"></i></a>` : ''}</div>` : ''}
                 <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
                     <button type="button" class="btn btn-sm" id="verOsBtnFolhas" onclick="_verOsMostrar('${osId}','folhas')" style="flex:1;min-width:110px;background:#0ea5e9;color:#fff;"><i class="fas fa-clipboard-list"></i> Folhas de obra</button>
@@ -6322,7 +6332,7 @@
             if (aba === 'checklist') {
                 const adminChk = dados.administradores?.find(a => a.id === os.adminId);
                 const itensEntradaChk = (adminChk?.checklistEntradaItens || []).filter(it => it.ativo !== false);
-                const itensSaidaChk = (adminChk?.obrasChecklistItens || []).filter(it => it.ativo !== false);
+                const itensSaidaChk = window.TGContractMaintenance ? window.TGContractMaintenance.checklist(os,adminChk) : (adminChk?.obrasChecklistItens || []).filter(it => it.ativo !== false);
                 // Só consulta — quem marca os pontos é sempre o técnico (ao dar entrada/saída,
                 // no telemóvel ou no Modo Quiosque), nunca aqui.
                 const podeEditarChk = false;
@@ -6356,14 +6366,15 @@
             }
             const folhas = (dados.folhasObra || []).filter(f => f.servicoId === osId).sort((a, b) => (b.data || '').localeCompare(a.data || ''));
             if (aba === 'relatorios') {
-                const tiposDaOS = (os.tiposTrabalho || []).filter(t => TIPOS_ESPECIALIDADE.includes(t));
+                const tiposDaOS = window.TGEquipmentReports?.requirements(os) || (os.tiposTrabalho || []).filter(t => TIPOS_ESPECIALIDADE.includes(t)).map(tipo=>({tipo,equipamentoId:null}));
                 const relatoriosDaOS = (dados.relatoriosEspecialidade || []).filter(r => r.servicoId === osId);
                 const nomes = { REX: 'Extintores', RBI: 'Bocas de Incêndio', RSI: 'Sistemas de Incêndio', RCM: 'Central de Incêndio', RIE: 'Iluminação de Emergência', RCP: 'Portas Corta-fogo', RCCTV: 'CCTV', RIN: 'Intrusão', RDI: 'Declaração de Instalação' };
                 if (!tiposDaOS.length) {
                     cont.innerHTML = '<p class="help-text">Esta OS não tem tipos de trabalho com relatório de especialidade associados.</p>';
                 } else {
-                    cont.innerHTML = tiposDaOS.map(tipo => {
-                        const rels = relatoriosDaOS.filter(r => r.tipo === tipo).sort((a, b) => (b.criadoEm || 0) - (a.criadoEm || 0));
+                    cont.innerHTML = tiposDaOS.map(req => {
+                        const tipo=req.tipo;
+                        const rels = relatoriosDaOS.filter(r => r.tipo === tipo && (r.campos?.equipamentoId || null)===(req.equipamentoId || null)).sort((a, b) => (b.criadoEm || 0) - (a.criadoEm || 0));
                         const feito = rels.find(r => !r.rascunho);
                         const rascunho = rels.find(r => r.rascunho);
                         let estadoHtml, acaoHtml;
@@ -6372,14 +6383,14 @@
                             acaoHtml = `<button type="button" class="btn btn-sm" style="background:#0ea5e9;color:#fff;" onclick="_verRelatorioEspecialidadeSnapshot('${feito.id}')">Ver</button>`;
                         } else if (rascunho) {
                             estadoHtml = `<span style="color:#d97706;font-weight:700;"><i class="fas fa-pen"></i> Rascunho — por assinar</span>`;
-                            acaoHtml = `<button type="button" class="btn btn-sm" style="background:#f59e0b;color:#fff;" onclick="_fecharModalGenerico();_abrirModalRelatorioEspecialidade('${osId}','${tipo}',()=>renderizarTudo())"><i class="fas fa-pen"></i> Continuar</button>`;
+                            acaoHtml = `<button type="button" class="btn btn-sm" style="background:#f59e0b;color:#fff;" onclick="_fecharModalGenerico();_abrirModalRelatorioEspecialidade('${osId}','${tipo}',()=>renderizarTudo(),'${req.equipamentoId || ''}')"><i class="fas fa-pen"></i> Continuar</button>`;
                         } else {
                             estadoHtml = `<span style="color:#94a3b8;">Ainda não foi iniciado</span>`;
-                            acaoHtml = `<button type="button" class="btn btn-sm btn-outline" onclick="_fecharModalGenerico();_abrirModalRelatorioEspecialidade('${osId}','${tipo}',()=>renderizarTudo())"><i class="fas fa-plus"></i> Iniciar</button>`;
+                            acaoHtml = `<button type="button" class="btn btn-sm btn-outline" onclick="_fecharModalGenerico();_abrirModalRelatorioEspecialidade('${osId}','${tipo}',()=>renderizarTudo(),'${req.equipamentoId || ''}')"><i class="fas fa-plus"></i> Iniciar</button>`;
                         }
                         return `<div style="border:1px solid #e6eaf2;border-radius:8px;padding:10px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
                             <div>
-                                <div style="font-weight:700;">${tipo} — ${nomes[tipo] || tipo}</div>
+                                <div style="font-weight:700;">${tipo} — ${nomes[tipo] || tipo}${req.equipamentoId ? ' · '+escapeHtmlSimples(req.equipamentoNome || req.equipamentoId) : ''}</div>
                                 <div style="font-size:.82rem;margin-top:2px;">${estadoHtml}</div>
                             </div>
                             ${acaoHtml}
@@ -7924,9 +7935,9 @@
         function tipoExigePresencialAnual(tipo) { return ['intrusao', 'incendio', 'extintores'].includes(tipo); }
         function addMeses(dataStr, meses) {
             if (!dataStr) return null;
-            const d = new Date(dataStr + 'T00:00:00');
+            const d = new Date(dataStr + 'T00:00:00Z');
             if (isNaN(d.getTime())) return null;
-            d.setMonth(d.getMonth() + meses);
+            d.setUTCMonth(d.getUTCMonth() + meses);
             if (isNaN(d.getTime())) return null;
             return d.toISOString().slice(0, 10);
         }
@@ -7934,9 +7945,9 @@
         // preciso para intervalos pequenos (um "mês" de calendário varia entre 28-31 dias).
         function addDias(dataStr, dias) {
             if (!dataStr) return null;
-            const d = new Date(dataStr + 'T00:00:00');
+            const d = new Date(dataStr + 'T00:00:00Z');
             if (isNaN(d.getTime())) return null;
-            d.setDate(d.getDate() + dias);
+            d.setUTCDate(d.getUTCDate() + dias);
             if (isNaN(d.getTime())) return null;
             return d.toISOString().slice(0, 10);
         }
@@ -7984,6 +7995,7 @@
             return regs.sort((a, b) => (a.dataRealizacao < b.dataRealizacao ? 1 : -1))[0];
         }
         function calcularProximaManutencao(contrato) {
+            if (window.TGContractMaintenance?.plans(contrato).length) return window.TGContractMaintenance.nextDate(contrato);
             try {
                 const ult = ultimoRegistoContrato(contrato.id);
                 const base = ult ? ult.dataRealizacao : contrato.dataInicio;
@@ -8104,6 +8116,10 @@
         }
         // Limite de uma funcionalidade para o pack da conta. Sem pack (conta antiga) → sem limite
         // (Infinity), para o modelo antigo continuar a funcionar exatamente como antes.
+        // O Passaporte pertence ao pack da empresa, incluindo os seus técnicos.
+        function moduloPassaporteAtivo(admin) {
+            return ['expert', 'pro', 'supreme'].includes(packDoAdmin(admin));
+        }
         function packLimite(admin, chaveLimite) {
             const p = packDoAdmin(admin);
             if (!p) return Infinity;
@@ -9425,6 +9441,8 @@
             });
             if (r === 'admin' && moduloContratosAtivo(adminAtual())) {
                 (dados.contratos || []).filter(c => c.adminId === _tenantId()).forEach(c => {
+                    const renovacao=window.TGContractMaintenance?.alerts(c,getDataHoje());
+                    if (renovacao) eventos.push({data:renovacao.data,tipo:'Renovação de contrato',icone:'fa-file-signature',item:c.numero || 'Contrato',estado:estadoDataFrota(renovacao.data),abrir:`abrirModalContrato('${c.id}')`});
                     const prox = calcularProximaManutencao(c);
                     if (prox) {
                         const cliente = dados.clientes?.find(cl => cl.id === c.clienteId);
@@ -9515,7 +9533,7 @@
             const tecnicos = (dados.funcionarios || []).filter(f => f.adminId === adminId && f.role !== 'admin' && !f.suspenso);
             preencherFiltroSelect('filtroTecnico', tecnicos.map(t => `<option value="${t.id}">${escapeHtmlSimples(t.nome)}</option>`).join(''));
             const cidadesSet = new Set();
-            todos.forEach(c => { const l = dados.locais?.find(x => x.id === c.localId); if (l?.cidade) cidadesSet.add(l.cidade); });
+            todos.forEach(c => _contratoInstalacoes(c).forEach(l => { if (l.cidade) cidadesSet.add(l.cidade); }));
             preencherFiltroSelect('filtroCidade', [...cidadesSet].sort().map(ci => `<option value="${ci}">${ci}</option>`).join(''));
             const _admTiposC = (dados.administradores || []).find(a => a.id === adminId);
             const _tiposCustomC = (_admTiposC && Array.isArray(_admTiposC.tiposEquipamento)) ? _admTiposC.tiposEquipamento : [];
@@ -9574,7 +9592,7 @@
                 if (fTipo && !tiposContrato.includes(fTipo)) return false;
                 if (fCliente && c.clienteId !== fCliente) return false;
                 if (fTecnico && c.tecnicoId !== fTecnico) return false;
-                if (fCidade) { const l = dados.locais?.find(x => x.id === c.localId); if (!l || l.cidade !== fCidade) return false; }
+                if (fCidade && !_contratoInstalacoes(c).some(l => l.cidade === fCidade)) return false;
                 return true;
             });
             lista.sort((a, b) => ((a.prox || '9999-99-99') < (b.prox || '9999-99-99') ? -1 : 1));
@@ -9593,10 +9611,10 @@
                 const linhaCor = est.chave === 'vencido' ? 'linha-fixa-vermelho' : est.chave === 'a_vencer' ? 'linha-fixa-amarelo' : '';
                 return `<tr class="${linhaCor}">
                             <td><input type="checkbox" class="chk-contrato" value="${c.id}" ${_contratosSelecionados.includes(c.id) ? 'checked' : ''} onchange="toggleSelecaoContrato('${c.id}', this.checked)" /></td>
-                            <td><strong>${c.numero || '-'}</strong></td>
+                            <td><strong>${c.numero || '-'}</strong>${window.TGContractMaintenance?.alerts(c,getDataHoje()) ? '<div class="help-text" style="color:#b45309">'+(c.validadeContrato < getDataHoje() ? 'Contrato expirado' : 'Rever renovação até '+escapeHtmlSimples(c.validadeContrato))+'</div>' : ''}</td>
                             <td>${cli ? obterNomeCliente(cli.id) : 'Removido'}</td>
-                            <td>${escapeHtmlSimples(local?.nome || '-')}</td>
-                            <td>${escapeHtmlSimples(local?.cidade || '-')}</td>
+                            <td>${escapeHtmlSimples(_contratoInstalacoesLabel(c))}</td>
+                            <td>${escapeHtmlSimples([...new Set(_contratoInstalacoes(c).map(l => l.cidade).filter(Boolean))].join(', ') || '-')}</td>
                             <td>${tipoLabel}</td>
                             <td>${PERIODICIDADE_LABEL[c.periodicidade] || '-'}</td>
                             <td>${c.dataInicio || '-'}</td>
@@ -9656,7 +9674,7 @@
             document.getElementById('massa_data_fim').value = hoje;
             document.getElementById('massa_hora').value = '09:00';
             const nomes = _contratosSelecionados.map(id => dados.contratos?.find(c => c.id === id)).filter(Boolean).map(c => c.numero || c.id);
-            document.getElementById('massaResumoContratos').innerHTML = `<strong>${_contratosSelecionados.length} contrato(s)</strong> selecionado(s): ${nomes.slice(0, 6).join(', ')}${nomes.length > 6 ? '…' : ''}`;
+            document.getElementById('massaResumoContratos').innerHTML = `<strong>${_contratosSelecionados.length} contrato(s)</strong> selecionado(s) — uma OS por instalação abrangida: ${nomes.slice(0, 6).join(', ')}${nomes.length > 6 ? '…' : ''}`;
             document.getElementById('modalGerarOSMassaOverlay').classList.add('open');
         }
         async function gerarOSEmMassaConfirmar() {
@@ -9670,23 +9688,30 @@
             const hora = document.getElementById('massa_hora').value || '09:00';
             const adminId = usuarioLogado?.adminId || usuarioLogado?.id;
             const diasIntervalo = Math.floor((new Date(dataFim) - new Date(dataIni)) / 86400000) + 1;
+            if (gerarOSEmMassaConfirmar.emCurso) return;
+            gerarOSEmMassaConfirmar.emCurso=true;
+            try {
             dados.servicos = dados.servicos || [];
+            const visitas = ids.flatMap(id => { const c = dados.contratos?.find(x => x.id === id && x.adminId === adminId); return c ? _contratoInstalacoes(c).map(local => ({ c, local })) : []; });
             let criadas = 0;
-            for (let i = 0; i < ids.length; i++) {
-                const c = dados.contratos?.find(x => x.id === ids[i]);
-                if (!c) continue;
-                const diaOffset = diasIntervalo > 1 ? Math.floor(i * diasIntervalo / ids.length) : 0;
-                const dataOSDate = new Date(dataIni + 'T00:00:00'); dataOSDate.setDate(dataOSDate.getDate() + diaOffset);
+            const ignoradas=[];
+            for (let i = 0; i < visitas.length; i++) {
+                const { c, local } = visitas[i];
+                const diaOffset = diasIntervalo > 1 ? Math.floor(i * diasIntervalo / visitas.length) : 0;
+                const dataOSDate = new Date(dataIni + 'T00:00:00Z'); dataOSDate.setUTCDate(dataOSDate.getUTCDate() + diaOffset);
                 const dataStr = dataOSDate.toISOString().slice(0, 10);
-                const local = dados.locais?.find(l => l.id === c.localId);
-                const equipStr = _equipStrContrato(c);
+                const sistemasIds=window.TGContractMaintenance?.due(c,local.id,dataStr) || [];
+                if (window.TGContractMaintenance?.plans(c).length && !sistemasIds.length) continue;
+                try { await window.TGContractMaintenance?.availability(c,local.id,sistemasIds); } catch(e) { ignoradas.push(`${c.numero} / ${local.nome}: ${e.message}`); continue; }
+                const equipamentosOS = window.TGContractMaintenance?.equipmentForOS(c,local.id,sistemasIds) || _contratoEquipamentos(c, local.id);
+                const equipStr = equipamentosOS.map(e => (EQUIP_TIPOS[e.tipo] || e.tipo) + (e.marca ? " — " + e.marca : "")).join(", ") || "Sem equipamentos abrangidos nesta instalação";
                 const novaOS = {
                     id: gerarId(),
                     numeroRegisto: await gerarNumeroRegistoServidor(),
                     clienteId: c.clienteId,
                     funcionarioId: encId,
                     contratoId: c.id,
-                    localId: c.localId || null,
+                    localId: local.id || null,
                     data: dataStr,
                     hora: hora,
                     morada: local ? (local.morada || '') : _moradaCompletaLocal(local),
@@ -9700,16 +9725,23 @@
                     origem: 'contrato',
                     adminId: adminId
                 };
+                window.TGContractMaintenance?.snapshot(novaOS,c,sistemasIds);
                 dados.servicos.push(novaOS);
                 c.ultimaOSGeradaData = dataStr;
                 c.ultimaOSGeradaId = novaOS.id;
                 criadas++;
             }
-            guardarDados(dados);
+            try { await guardarDados(dados); } catch(e) {
+                renderizarTudo();
+                alert("As OS foram guardadas neste dispositivo, mas a sincronização está por confirmar. Verifica a ligação antes de repetir a geração.");
+                return;
+            }
             document.getElementById('modalGerarOSMassaOverlay').classList.remove('open');
             _contratosSelecionados = [];
             renderizarTudo();
-            alert(`✅ ${criadas} Ordens de Serviço geradas entre ${dataIni.split('-').reverse().join('/')} e ${dataFim.split('-').reverse().join('/')}, atribuídas ao responsável escolhido.`);
+            alert(`✅ ${criadas} Ordens de Serviço geradas entre ${dataIni.split('-').reverse().join('/')} e ${dataFim.split('-').reverse().join('/')}, atribuídas ao responsável escolhido.${ignoradas.length ? "\n\nNão criadas:\n" + ignoradas.join("\n") : ""}`);
+            } catch(e) { alert(e.message || "Não foi possível terminar a geração de OS."); }
+            finally { gerarOSEmMassaConfirmar.emCurso=false; }
         }
 
         let gerarOSContratoId = null;
@@ -9738,6 +9770,7 @@
             const funcOpts = funcionarios.map(f => `<label style="display:flex;align-items:center;gap:8px;padding:4px 0;cursor:pointer;"><input type="checkbox" class="os-gerar-func-chk" value="${f.id}" onchange="_gerarOSAtualizarResponsavel()" style="width:auto;" /> ${escapeHtmlSimples(f.nome)}</label>`).join('');
             document.getElementById('modalGerarOSCampos').innerHTML = `
                     <div class="help-text" style="margin-bottom:8px;">Contrato <strong>${c.numero}</strong> — ${cli?.nome || ''}${local ? ' / ' + local.nome : ''}</div>
+                    <div class="form-group"><label>Instalação da intervenção *</label><select id="os_gerar_local">${_contratoOpcoesInstalacao(c)}</select></div>
                     <div class="form-group"><label>Equipamento do contrato</label><input type="text" value="${equipStr}" disabled style="background:#e9edf2;" /></div>
                     <div class="form-group"><label>Atribuir a *</label>
                         <div style="max-height:150px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:8px;padding:8px;">
@@ -9757,6 +9790,7 @@
                     <div class="form-group"><label>Hora *</label><input type="time" id="os_hora" value="${new Date().toTimeString().slice(0,5)}" /></div>
                     <div class="form-group"><label>Notas</label><textarea id="os_notas" rows="2" placeholder="Instruções adicionais (opcional)"></textarea></div>
                 `;
+            window.TGContractMaintenance?.osPicker(c);
             document.getElementById('modalGerarOSOverlay').classList.add('open');
         }
         function _gerarOSAtualizarResponsavel() {
@@ -9781,10 +9815,18 @@
             const idsSelecionados = [...document.querySelectorAll('.os-gerar-func-chk:checked')].map(c => c.value);
             if (!idsSelecionados.length) { alert('Selecione pelo menos uma pessoa.'); return; }
             const encId = idsSelecionados[0];
+            const localId = document.getElementById('os_gerar_local').value;
+            let sistemasIds=[];
+            try { sistemasIds=window.TGContractMaintenance?.selectedOS(c,localId) || []; } catch(e) { alert(e.message); return; }
             const data = document.getElementById('os_data').value;
+            if (!data) { alert('Indica a data da intervenção.'); return; }
             const hora = document.getElementById('os_hora').value;
             const notas = document.getElementById('os_notas').value.trim();
 
+            if (confirmarGerarOS.emCurso) return;
+            confirmarGerarOS.emCurso=true;
+            try {
+            await window.TGContractMaintenance?.availability(c,localId,sistemasIds);
             if (data && hora) {
                 const duracaoMin = 60;
                 const inicioNovo = _horaMin(hora);
@@ -9800,8 +9842,10 @@
                     if (!confirm(`⚠️ Sobreposição detetada: já existe uma OS marcada para este responsável no mesmo dia/hora (${conflito.descricao || conflito.hora}).\n\nQuer criar esta OS mesmo assim?`)) return;
                 }
             }
-            const local = dados.locais?.find(l => l.id === c.localId);
-            const equipStr = _equipStrContrato(c);
+            const local = _contratoInstalacoes(c).find(l => l.id === localId);
+            if (c.adminId !== adminId || !local) { alert('Instalação inválida para este contrato.'); return; }
+            const equipamentosOS = window.TGContractMaintenance?.equipmentForOS(c,localId,sistemasIds) || _contratoEquipamentos(c, localId);
+                const equipStr = equipamentosOS.map(e => (EQUIP_TIPOS[e.tipo] || e.tipo) + (e.marca ? " — " + e.marca : "")).join(", ") || "Sem equipamentos abrangidos nesta instalação";
             const descricao = `Manutenção — Contrato ${c.numero}${local ? ' / ' + local.nome : ''}. Equipamento: ${equipStr}.${notas ? ' ' + notas : ''}`;
             dados.servicos = dados.servicos || [];
             const novaOS = {
@@ -9812,7 +9856,7 @@
                 funcionariosIds: idsSelecionados,
                 relatorioResponsavelId: document.getElementById('os_gerar_responsavel') ? (document.getElementById('os_gerar_responsavel').value || null) : null,
                 contratoId: c.id,
-                localId: c.localId || null,
+                localId: localId || null,
                 data: data,
                 hora: hora || '',
                 morada: local ? (local.morada || '') : _moradaCompletaLocal(local),
@@ -9826,13 +9870,84 @@
                 origem: 'contrato',
                 adminId: adminId
             };
+            try { window.TGContractMaintenance?.snapshot(novaOS,c,sistemasIds); } catch(e) { alert(e.message); return; }
             dados.servicos.push(novaOS);
             c.ultimaOSGeradaData = data;
             c.ultimaOSGeradaId = novaOS.id;
-            guardarDados(dados);
+            try { await guardarDados(dados); } catch(e) {
+                renderizarTudo();
+                fecharGerarOS();
+                alert("A OS foi guardada neste dispositivo, mas ainda não foi possível confirmar a sincronização. Verifica a ligação antes de criar outra OS.");
+                return;
+            }
             fecharGerarOS();
             renderizarTudo();
             alert('✅ Ordem de serviço gerada e atribuída a ' + idsSelecionados.length + ' pessoa(s).');
+            } catch(e) { alert(e.message || 'Não foi possível criar a OS. Tenta novamente.'); }
+            finally { confirmarGerarOS.emCurso=false; }
+        }
+
+        // Empty string represents the customer's Sede; missing coverage keeps legacy contracts intact.
+        function _contratoLocalIds(c) {
+            return [...new Set(Array.isArray(c.locaisIds) && c.locaisIds.length ? c.locaisIds : [c.localId || ''])];
+        }
+        function _contratoAbrangeLocal(c, localId) {
+            return _contratoLocalIds(c).includes(localId || '');
+        }
+        function _contratoInstalacoes(c) {
+            return _contratoLocalIds(c).map(id => id
+                ? (dados.locais || []).find(l => l.id === id && l.adminId === c.adminId && l.clienteId === c.clienteId)
+                : { ...(dados.clientes || []).find(cl => cl.id === c.clienteId && cl.adminId === c.adminId), id: '', nome: 'Sede' }
+            ).filter(Boolean);
+        }
+        function _contratoInstalacoesLabel(c) {
+            return _contratoInstalacoes(c).map(l => l.nome).join(', ') || 'Instalação indisponível';
+        }
+        function _contratoEquipamentos(c, localId) {
+            const ids = c.equipamentosIds?.length ? c.equipamentosIds : [c.equipamentoId].filter(Boolean);
+            return ids.map(id => (dados.equipamentos || []).find(e => e.id === id && e.adminId === c.adminId && !e.apagadoSuperAdmin)).filter(e => {
+                if (!e || (e.clienteId && e.clienteId !== c.clienteId)) return false;
+                const lid = e.localId || (e.clienteId ? '' : (c.localId || ''));
+                const l = lid ? (dados.locais || []).find(x => x.id === lid && x.adminId === c.adminId && x.clienteId === c.clienteId) : null;
+                return (!lid || !!l) && _contratoAbrangeLocal(c, lid) && (localId === undefined || lid === (localId || ''));
+            });
+        }
+        function _ctEquipamentosDisponiveis() {
+            const adminId = usuarioLogado?.adminId || usuarioLogado?.id, clienteId = document.getElementById('ct_cliente').value;
+            const locaisIds = [document.getElementById('ct_local').value];
+            return (dados.equipamentos || []).filter(e => {
+                if (e.adminId !== adminId || e.apagadoSuperAdmin || (e.clienteId && e.clienteId !== clienteId)) return false;
+                if (!e.localId) return e.clienteId === clienteId && locaisIds.includes('');
+                return locaisIds.includes(e.localId) && (dados.locais || []).some(l => l.id === e.localId && l.adminId === adminId && l.clienteId === clienteId);
+            });
+        }
+        function _ctAdicionarTodosEquipamentos() {
+            _ctEquipamentosAtuais = [...new Set([..._ctEquipamentosAtuais, ..._ctEquipamentosDisponiveis().map(e => e.id)])];
+            _renderListaEquipContrato();
+            _atualizarSelectEquipDisponivel();
+        }
+
+        function _contratoOpcoesInstalacao(c) {
+            return _contratoInstalacoes(c).map(l => `<option value="${escapeHtmlSimples(l.id)}" ${l.id === (c.localId || '') ? 'selected' : ''}>${escapeHtmlSimples(l.nome)}</option>`).join('');
+        }
+        function _ctRenderCobertura(ids = ['']) {
+            const cont = document.getElementById('ct_cobertura'); if (!cont) return;
+            const clienteId = document.getElementById('ct_cliente').value;
+            const adminId = usuarioLogado?.adminId || usuarioLogado?.id;
+            const localId = document.getElementById('ct_local').value || ids[0] || '';
+            const locais = [{ id: '', nome: 'Sede' }, ...(dados.locais || []).filter(l => l.adminId === adminId && l.clienteId === clienteId)];
+            cont.innerHTML = locais.map(l => `<label style="display:flex;align-items:center;gap:8px;margin:5px 0;"><input type="radio" name="ct_instalacao" class="ct-local-chk" value="${escapeHtmlSimples(l.id)}" ${l.id === localId ? 'checked' : ''} onchange="_ctCoberturaChange()" style="width:auto;" />${escapeHtmlSimples(l.nome)}</label>`).join('');
+        }
+        function _ctCoberturaChange(principalChanged = false) {
+            const select = document.getElementById('ct_local');
+            if (!principalChanged) { const chosen=document.querySelector('.ct-local-chk:checked'); if(chosen)select.value=chosen.value; }
+            document.querySelectorAll('.ct-local-chk').forEach(chk => chk.checked=chk.value===select.value);
+            select.dataset.principalAnterior=select.value;
+            const available = new Set(_ctEquipamentosDisponiveis().map(e => e.id));
+            _ctEquipamentosAtuais = _ctEquipamentosAtuais.filter(id => available.has(id));
+            _renderListaEquipContrato();
+            if (document.getElementById('ct_equip_add')) _atualizarSelectEquipDisponivel();
+            window.TGContractMaintenance?.refreshPlan();
         }
 
         let contratoEditandoId = null;
@@ -9849,7 +9964,8 @@
             const admin = adminAtual();
             if (!moduloContratosAtivo(admin)) { alert('Módulo de Contratos de Manutenção não está ativo.'); return; }
             contratoEditandoId = id;
-            const c = id ? dados.contratos?.find(x => x.id === id) : null;
+            const c = id ? dados.contratos?.find(x => x.id === id && x.adminId === (usuarioLogado?.adminId || usuarioLogado?.id)) : null;
+            if (id && !c) { alert('Contrato indisponível.'); return; }
             document.getElementById('modalContratoTitulo').innerHTML = '<i class="fas fa-file-signature"></i> ' + (id ? 'Editar Contrato' : 'Novo Contrato');
             const adminId = usuarioLogado?.adminId || usuarioLogado?.id;
             const clientes = (dados.clientes || []).filter(cl => cl.adminId === adminId);
@@ -9874,16 +9990,17 @@
                     <div class="help-text" style="margin:-14px 0 14px;">Não existe? <a href="#" onclick="fecharModalContrato(); abrirModal('cliente', null); return false;">Criar cliente</a> e volte a abrir o contrato.</div>
 
                     <div class="ff-secao ff-tint-id">
-                        <div class="ff-secao-head"><i class="fas fa-location-dot"></i> Local e Equipamento</div>
+                        <div class="ff-secao-head"><i class="fas fa-location-dot"></i> Instalação e Equipamento</div>
                         <div class="ff-secao-body">
-                            <div class="form-group ff-span2"><label>Local / Instalação *</label>
+                            <div class="form-group ff-span2"><label>Instalação *</label>
                                 <div style="display:flex;gap:8px;align-items:center;">
                                     <select id="ct_local" onchange="onLocalContratoChange()" style="flex:1;"></select>
-                                    <button type="button" class="btn btn-sm btn-danger" title="Apagar este local" onclick="apagarLocalContrato()"><i class="fas fa-trash"></i></button>
+                                    <button type="button" class="btn btn-sm btn-danger" title="Apagar esta instalação" onclick="apagarLocalContrato()"><i class="fas fa-trash"></i></button>
                                 </div>
                             </div>
+                            <div class="form-group ff-span2"><label>Instalação do contrato</label><div id="ct_cobertura"></div><div class="help-text">Cada contrato pertence a uma única instalação e reúne os equipamentos dessa instalação.</div></div>
                             <div id="ct_novo_local" class="ff-span2" style="display:none; padding:10px; background:#f8fafc; border-radius:8px;">
-                                <div class="form-group" style="margin-bottom:8px;"><label>Nome do novo local *</label><input type="text" id="ct_local_nome" placeholder="Ex: Loja Centro" /></div>
+                                <div class="form-group" style="margin-bottom:8px;"><label>Nome da nova instalação *</label><input type="text" id="ct_local_nome" placeholder="Ex: Loja Centro" /></div>
                                 <div class="form-group" style="margin-bottom:8px;"><label>Morada</label><input type="text" id="ct_local_morada" placeholder="Rua/Avenida" autocomplete="off" /></div>
                                 <div class="form-group" style="margin-bottom:8px;"><label>Número de porta</label><input type="text" id="ct_local_numero" placeholder="Ex.: 12, 3º Dto" /></div>
                                 <div class="form-group" style="margin-bottom:8px;"><label>Código Postal</label><input type="text" id="ct_local_cp" placeholder="0000-000" autocomplete="off" oninput="aplicarMascaraCP(this); _cttPreencherPorCP(this.value,{cidade:'ct_local_cidade',freguesia:'ct_local_freguesia',morada:'ct_local_morada'})" maxlength="8" /></div>
@@ -9892,16 +10009,17 @@
                                 <div class="form-group" style="margin-bottom:0;"><label><i class="fas fa-map-pin" style="color:#dc2626;"></i> Pin do Google Maps (opcional) <a href="https://www.google.com/maps" target="_blank" rel="noopener" style="font-weight:400;font-size:.78rem;color:#2563eb;text-decoration:none;margin-left:8px;"><i class="fas fa-up-right-from-square"></i> Abrir Google Maps</a></label><input type="text" id="ct_local_pin_mapa" placeholder="Cola aqui o link ou as coordenadas copiadas do Google Maps" autocomplete="off" oninput="_clienteAtualizarLinkPin('ct_local_pin_mapa','ct_local_pin_mapa_link')" /><div id="ct_local_pin_mapa_link" style="margin-top:6px;font-size:.82rem;"></div></div>
                             </div>
                             <div class="form-group ff-span2">
-                                <label>Equipamentos / Sistemas *</label>
+                                <label>Equipamentos / Sistemas abrangidos *</label><button type="button" class="btn btn-sm btn-outline" onclick="_ctAdicionarTodosEquipamentos()">Adicionar todos da instalação</button>
                                 <div id="ct_equip_lista" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;"></div>
                                 <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
                                     <div style="flex:1;min-width:200px;"><select id="ct_equip_add" onchange="onEquipAddContratoChange()"></select></div>
                                     <button type="button" class="btn btn-sm btn-primary" onclick="adicionarEquipContrato()">➕ Adicionar</button>
                                 </div>
-                                <div class="help-text">Podes adicionar vários equipamentos/sistemas ao mesmo contrato — e voltar a editar este contrato mais tarde para acrescentar mais.</div>
+                                <div class="help-text">Escolhe os equipamentos desta instalação. Cada equipamento define o seu relatório de especialidade ou Sem relatório.</div>
                             </div>
                             <div id="ct_novo_equip" class="ff-span2" style="display:none; padding:10px; background:#f8fafc; border-radius:8px;">
                                 <div class="form-group" style="margin-bottom:8px;"><label>Tipo *</label><select id="ct_equip_tipo" onchange="onTipoContratoChange(this)">${tipoOpts}</select><div id="ct_equip_tipo_gerir" style="margin-top:6px;"></div></div>
+                                <div class="form-group" style="margin-bottom:8px;"><label>Relatório de especialidade *</label><select id="ct_equip_relatorio">${window.TGEquipmentReports?.options() || '<option value="">Sem relatório</option>'}</select></div>${window.TGEquipmentReports?.maintenanceFields(null,'ct_equip') || ''}
                                 <div class="form-group" style="margin-bottom:8px;"><label>Marca</label><input type="text" id="ct_equip_marca" /></div>
                                 <div class="form-group" style="margin-bottom:8px;"><label>Nº de série</label><input type="text" id="ct_equip_serie" /></div>
                                 <div class="form-group" style="margin-bottom:8px;"><label>Data de instalação/venda</label><input type="date" id="ct_equip_data_instalacao" /></div>
@@ -9928,7 +10046,7 @@
                     </div>
 
                     <div class="ff-secao ff-tint-doc">
-                        <div class="ff-secao-head"><i class="fas fa-tags"></i> Especialidades cobertas pelo contrato</div>
+                        <div class="ff-secao-head"><i class="fas fa-tags"></i> Tipos de trabalho anteriores</div>
                         <div class="ff-secao-body">
                             <div class="form-group ff-span2">
                                 <div id="ct_tipos_trabalho_cont" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
@@ -9985,6 +10103,7 @@
             _ctEquipamentosAtuais = c ? [...(c.equipamentosIds && c.equipamentosIds.length ? c.equipamentosIds : (c.equipamentoId ? [c.equipamentoId] : []))] : [];
             if (c) {
                 document.getElementById('ct_local').value = c.localId || '';
+                _ctRenderCobertura(_contratoLocalIds(c));
                 onLocalContratoChange();
                 _renderListaEquipContrato();
                 if (c.periodicidade && !document.getElementById('ct_period').disabled) document.getElementById('ct_period').value = c.periodicidade;
@@ -9992,8 +10111,9 @@
             } else {
                 _renderListaEquipContrato();
             }
+            window.TGContractMaintenance?.mount(c);
             document.getElementById('modalContratoOverlay').classList.add('open');
-            if (!id && adminAtual()?.contratoModoWizard) setTimeout(_ctWizardAtivar, 30);
+            if (!window.TGContractMaintenance && !id && adminAtual()?.contratoModoWizard) setTimeout(_ctWizardAtivar, 30);
         }
 
         // Documento anexo do contrato (apólice, condições assinadas, etc.) — só PDF, até 2 MB,
@@ -10046,24 +10166,14 @@
             const estadoEl = document.getElementById('ct_documento_estado');
             if (estadoEl) estadoEl.textContent = '';
         }
-        function apagarLocalContrato() {
+        async function apagarLocalContrato() {
             const localId = document.getElementById('ct_local').value;
-            if (!localId || localId === '__novo__') { alert('Seleciona um local existente para apagar.'); return; }
+            if (!localId || localId === '__novo__') { alert('Seleciona uma instalação existente para apagar.'); return; }
             const local = dados.locais?.find(l => l.id === localId);
-            if (!local) return;
-            const contratosLigados = (dados.contratos || []).filter(c => c.localId === localId && c.id !== contratoEditandoId).length;
-            const equipsLigados = (dados.equipamentos || []).filter(e => e.localId === localId).length;
-            let aviso = `Apagar o local "${local.nome}"?`;
-            if (contratosLigados || equipsLigados) aviso += `\n\n⚠️ Este local está associado a ${contratosLigados} outro(s) contrato(s) e ${equipsLigados} equipamento(s). Esses registos ficarão sem local associado.`;
-            if (!confirm(aviso)) return;
-            dados.locais = (dados.locais || []).filter(l => l.id !== localId);
-            (dados.equipamentos || []).forEach(e => { if (e.localId === localId) e.localId = null; });
-            (dados.contratos || []).forEach(c => { if (c.localId === localId) c.localId = null; });
-            guardarDados(dados);
+            if (!local || !await eliminarLocalCliente(localId, local.clienteId)) return;
             onClienteContratoChange();
             document.getElementById('ct_local').value = '';
             onLocalContratoChange();
-            alert('Local apagado.');
         }
         function onClienteObraChange() {
             const cliId = document.getElementById('ob_cliente')?.value || '';
@@ -10073,7 +10183,7 @@
             const locais = (dados.locais || []).filter(l => l.adminId === adminId && l.clienteId === cliId);
             localSel.innerHTML = '<option value="">— Morada principal do cliente (Sede) —</option>'
                 + locais.map(l => `<option value="${l.id}">${l.nome}</option>`).join('')
-                + '<option value="__novo__">➕ Criar novo local</option>';
+                + '<option value="__novo__">➕ Criar nova instalação</option>';
             onLocalObraChange();
         }
         function onLocalObraChange() {
@@ -10096,13 +10206,16 @@
         function onClienteContratoChange() {
             const cliId = document.getElementById('ct_cliente').value;
             const localSel = document.getElementById('ct_local');
+            if (localSel.dataset.cliente && localSel.dataset.cliente !== cliId) { _ctEquipamentosAtuais = []; _renderListaEquipContrato(); }
+            localSel.dataset.cliente = cliId;
             const adminId = usuarioLogado?.adminId || usuarioLogado?.id;
             const cli = dados.clientes?.find(c => c.id === cliId);
             const locais = (dados.locais || []).filter(l => l.adminId === adminId && l.clienteId === cliId);
             const moradaSede = cli ? [cli.morada, cli.codigoPostal, cli.cidade].filter(Boolean).join(', ') : '';
             localSel.innerHTML = `<option value="">Sede${moradaSede ? ' — ' + moradaSede : ''}</option>`
                 + locais.map(l => `<option value="${l.id}">${l.nome}</option>`).join('')
-                + '<option value="__novo__">➕ Criar novo local</option>';
+                + '<option value="__novo__">➕ Criar nova instalação</option>';
+            _ctRenderCobertura();
             onLocalContratoChange();
         }
 
@@ -10110,6 +10223,7 @@
 
         function onLocalContratoChange() {
             const localId = document.getElementById('ct_local').value;
+            _ctCoberturaChange(true);
             const novoLocalDiv = document.getElementById('ct_novo_local');
             novoLocalDiv.style.display = (localId === '__novo__') ? 'block' : 'none';
             if (localId === '__novo__') {
@@ -10126,14 +10240,13 @@
         }
 
         function _atualizarSelectEquipDisponivel() {
-            const localId = document.getElementById('ct_local').value;
             const equipSel = document.getElementById('ct_equip_add');
-            const adminId = usuarioLogado?.adminId || usuarioLogado?.id;
-            let equipOpts = '';
-            if (localId && localId !== '__novo__') {
-                const equips = (dados.equipamentos || []).filter(eq => eq.adminId === adminId && eq.localId === localId && !_ctEquipamentosAtuais.includes(eq.id));
-                equipOpts = equips.map(eq => `<option value="${eq.id}">${EQUIP_TIPOS[eq.tipo] || eq.tipo}${eq.marca ? ' - ' + eq.marca : ''}</option>`).join('');
-            }
+            if (!equipSel) return;
+            const equips = _ctEquipamentosDisponiveis().filter(e => !_ctEquipamentosAtuais.includes(e.id));
+            const equipOpts = equips.map(eq => {
+                const local = (dados.locais || []).find(l => l.id === eq.localId);
+                return `<option value="${escapeHtmlSimples(eq.id)}">${escapeHtmlSimples((EQUIP_TIPOS[eq.tipo] || eq.tipo) + (eq.marca ? ' — ' + eq.marca : '') + ' · ' + (local?.nome || 'Sede'))}</option>`;
+            }).join('');
             equipSel.innerHTML = '<option value="">Selecione um já existente…</option>' + equipOpts + '<option value="__novo__">➕ Criar novo equipamento</option>';
             onEquipAddContratoChange();
         }
@@ -10188,13 +10301,15 @@
                     const eq = dados.equipamentos?.find(e => e.id === id);
                     const label = eq ? `${EQUIP_TIPOS[eq.tipo] || eq.tipo}${eq.marca ? ' - ' + eq.marca : ''}` : 'Equipamento';
                     return `<span style="display:inline-flex;align-items:center;gap:6px;background:#eef2ff;color:#3730a3;padding:5px 10px;border-radius:16px;font-size:.82rem;font-weight:600;">
-                        ${label}
+                        ${escapeHtmlSimples(label)} · ${escapeHtmlSimples((dados.locais || []).find(l => l.id === eq?.localId)?.nome || (eq?.localId === "__novo__" ? "Nova instalação" : "Sede"))}
+                        ${eq ? window.TGEquipmentReports?.equipmentField(eq) || '' : ''}
                         <button type="button" onclick="event.stopPropagation();imprimirEtiquetaQrEquip('${id}')" title="Imprimir etiqueta QR" style="background:none;border:none;color:#3730a3;cursor:pointer;"><i class="fas fa-qrcode"></i></button>
                         <button type="button" onclick="removerEquipContrato('${id}')" style="background:none;border:none;color:#3730a3;cursor:pointer;font-weight:700;">×</button>
                     </span>`;
                 }).join('');
             }
             aplicarRegrasContrato();
+            window.TGContractMaintenance?.refreshPlan();
         }
 
         function removerEquipContrato(id) {
@@ -10312,10 +10427,15 @@
             if (val === '__novo__') {
                 const tipo = document.getElementById('ct_equip_tipo').value;
                 if (!tipo) { alert('Escolha o tipo do novo equipamento.'); return; }
+                let relatorio;
+                try { relatorio=window.TGEquipmentReports?.validate(document.getElementById('ct_equip_relatorio')?.value); } catch(e) { alert(e.message); return; }
+                let manutencao;
+                try {manutencao=window.TGEquipmentReports?.maintenanceValidate(document.getElementById('ct_equip_periodicidade')?.value,document.getElementById('ct_equip_proxima')?.value);}catch(e){alert(e.message);return;}
                 equipId = gerarId();
                 dados.equipamentos = dados.equipamentos || [];
                 dados.equipamentos.push({
-                    id: equipId, adminId, localId, tipo,
+                    id: equipId, adminId, clienteId, localId, tipo,
+                    fichaTecnica: {relatorioEspecialidade: relatorio ?? '',manutencao},
                     marca: document.getElementById('ct_equip_marca').value.trim(),
                     numeroSerie: document.getElementById('ct_equip_serie').value.trim(),
                     observacoes: document.getElementById('ct_equip_obs').value.trim(),
@@ -10323,12 +10443,14 @@
                     garantiaAte: document.getElementById('ct_equip_garantia')?.value || null,
                     dataCriacao: Date.now()
                 });
+                if(document.getElementById('ct_equip_relatorio'))document.getElementById('ct_equip_relatorio').selectedIndex=0;
                 document.getElementById('ct_equip_marca').value = '';
                 document.getElementById('ct_equip_serie').value = '';
                 document.getElementById('ct_equip_obs').value = '';
                 if (document.getElementById('ct_equip_data_instalacao')) document.getElementById('ct_equip_data_instalacao').value = '';
                 if (document.getElementById('ct_equip_garantia')) document.getElementById('ct_equip_garantia').value = '';
             } else if (val) {
+                if (!_ctEquipamentosDisponiveis().some(e => e.id === val)) { alert("Escolhe um equipamento das instalações abrangidas."); return; }
                 equipId = val;
             } else {
                 alert('Escolhe um equipamento existente ou cria um novo.');
@@ -10371,6 +10493,7 @@
             const interv = document.getElementById('ct_interv');
             const help = document.getElementById('ct_regra_help');
             if (!period || !interv) return;
+            if (window.TGContractMaintenance) {period.disabled=false;interv.disabled=false;if(help)help.textContent='Cada equipamento define a sua periodicidade e próxima manutenção.';return;}
             if (_algumEquipExigePresencialAnual()) {
                 period.value = 'anual'; period.disabled = true;
                 interv.value = 'presencial'; interv.disabled = true;
@@ -10517,13 +10640,41 @@
         }
 
         async function salvarContrato() {
+            if (salvarContrato.emCurso) return;
             const adminId = usuarioLogado?.adminId || usuarioLogado?.id;
             const clienteId = document.getElementById('ct_cliente').value;
             if (!clienteId) { alert('Selecione um cliente.'); return; }
+            if (contratoEditandoId && !(dados.contratos || []).some(c => c.id === contratoEditandoId && c.adminId === adminId)) { alert('Contrato inválido.'); return; }
+            if (!(dados.clientes || []).some(c => c.id === clienteId && c.adminId === adminId)) { alert('Cliente inválido.'); return; }
             let localId = document.getElementById('ct_local').value;
+            let locaisIds = localId === '__novo__' ? [] : [localId || ''];
+            if (localId !== '__novo__') locaisIds.push(localId || '');
+            locaisIds = [...new Set(locaisIds)];
+            if (locaisIds.some(id => id && !(dados.locais || []).some(l => l.id === id && l.adminId === adminId && l.clienteId === clienteId))) { alert('Escolhe apenas instalações deste cliente.'); return; }
+            const duplicado=(dados.contratos || []).find(c=>c.adminId===adminId && c.clienteId===clienteId && c.id!==contratoEditandoId && _contratoAbrangeLocal(c,localId) && (!c.validadeContrato || c.validadeContrato>=getDataHoje()));
+            const original=(dados.contratos || []).find(c=>c.id===contratoEditandoId);
+            if(localId!=='__novo__' && duplicado && (!original || original.clienteId!==clienteId || (original.localId || '')!==(localId || ''))){alert('Já existe um contrato ativo nesta instalação: '+(duplicado.numero || duplicado.id)+'. Edita esse contrato para incluir os equipamentos.');return;}
+            if (!_ctEquipamentosAtuais.length) { alert('Adiciona pelo menos um equipamento/sistema ao contrato — usa o botão "Adicionar" ou "Criar e adicionar este equipamento".'); return; }
+            const equipamentosIds = [..._ctEquipamentosAtuais];
+            if (equipamentosIds.some(id => { const e = (dados.equipamentos || []).find(x => x.id === id && x.adminId === adminId); const l = e?.localId && e.localId !== '__novo__' ? (dados.locais || []).find(x => x.id === e.localId && x.adminId === adminId) : null; return !e || (e.clienteId && e.clienteId !== clienteId) || (l && l.clienteId !== clienteId); })) { alert('Os equipamentos devem pertencer a este cliente.'); return; }
+            const coberturaIds = [...locaisIds, ...(localId === '__novo__' ? ['__novo__'] : [])];
+            if (equipamentosIds.some(id => { const e = dados.equipamentos.find(x => x.id === id); return !coberturaIds.includes(e.localId || (e.clienteId ? '' : (localId || ''))); })) { alert('Cada contrato pertence a uma instalação. Remove os equipamentos de outras instalações deste contrato.'); return; }
+            try { for(const id of equipamentosIds)window.TGEquipmentReports?.validate(dados.equipamentos.find(e=>e.id===id)?.fichaTecnica?.relatorioEspecialidade); } catch(e) {alert(e.message);return;}
+            const equipamentoId = equipamentosIds[0];
+            const tipo = dados.equipamentos?.find(e => e.id === equipamentoId)?.tipo;
+            let periodicidade = document.getElementById('ct_period').value;
+            let tipoIntervencao = document.getElementById('ct_interv').value;
+            const tecnicoId = document.getElementById('ct_tecnico').value || null;
+            if (!window.TGContractMaintenance && _algumEquipExigePresencialAnual()) { periodicidade = 'anual'; tipoIntervencao = 'presencial'; }
+            const dataInicio = document.getElementById('ct_inicio').value;
+            const valor = document.getElementById('ct_valor').value;
+            if (!dataInicio) { alert('Indique a data de início.'); return; }
+            if (valor === '') { alert('Indique o valor.'); return; }
+            let gestaoManutencao;
+            try { gestaoManutencao = window.TGContractMaintenance?.collect(); } catch(e) { alert(e.message); return; }
             if (localId === '__novo__') {
                 const nome = document.getElementById('ct_local_nome').value.trim();
-                if (!nome) { alert('Indique o nome do novo local.'); return; }
+                if (!nome) { alert('Indique o nome da nova instalação.'); return; }
                 localId = gerarId();
                 dados.locais = dados.locais || [];
                 dados.locais.push({
@@ -10536,21 +10687,10 @@
                     pinMapa: document.getElementById('ct_local_pin_mapa')?.value.trim() || null,
                     dataCriacao: Date.now()
                 });
+                locaisIds.push(localId);
                 // corrige equipamentos criados antes do local ser gravado (ficavam com localId literal '__novo__')
-                (dados.equipamentos || []).forEach(eq => { if (eq.localId === '__novo__') eq.localId = localId; });
+                (dados.equipamentos || []).forEach(eq => { if (eq.adminId === adminId && eq.clienteId === clienteId && equipamentosIds.includes(eq.id) && eq.localId === '__novo__') eq.localId = localId; });
             }
-            if (!_ctEquipamentosAtuais.length) { alert('Adiciona pelo menos um equipamento/sistema ao contrato — usa o botão "Adicionar" ou "Criar e adicionar este equipamento".'); return; }
-            const equipamentosIds = [..._ctEquipamentosAtuais];
-            const equipamentoId = equipamentosIds[0];
-            const tipo = dados.equipamentos?.find(e => e.id === equipamentoId)?.tipo;
-            let periodicidade = document.getElementById('ct_period').value;
-            let tipoIntervencao = document.getElementById('ct_interv').value;
-            const tecnicoId = document.getElementById('ct_tecnico').value || null;
-            if (_algumEquipExigePresencialAnual()) { periodicidade = 'anual'; tipoIntervencao = 'presencial'; }
-            const dataInicio = document.getElementById('ct_inicio').value;
-            const valor = document.getElementById('ct_valor').value;
-            if (!dataInicio) { alert('Indique a data de início.'); return; }
-            if (valor === '') { alert('Indique o valor.'); return; }
             if (!dados.contratos) dados.contratos = [];
             const tiposTrabalho = _ctTiposTrabalhoSelecionados();
             const vigilanciaAtiva = document.getElementById('ct_vigilancia')?.checked || false;
@@ -10561,15 +10701,23 @@
             if (contratoEditandoId) {
                 const c = dados.contratos.find(x => x.id === contratoEditandoId);
                 if (c) {
-                    Object.assign(c, { clienteId, localId, equipamentoId, equipamentosIds, tipo, tiposTrabalho, periodicidade, tipoIntervencao, tecnicoId, dataInicio, valor, vigilanciaAtiva, valorMensalVigilancia, validadeContrato, documentoUrl, documentoNome });
+                    Object.assign(c, { ...(gestaoManutencao ? { gestaoManutencao } : {}), clienteId, localId, locaisIds, equipamentoId, equipamentosIds, tipo, tiposTrabalho, periodicidade, tipoIntervencao, tecnicoId, dataInicio, valor, vigilanciaAtiva, valorMensalVigilancia, validadeContrato, documentoUrl, documentoNome });
                     c.proximaManutencao = calcularProximaManutencao(c);
                 }
             } else {
-                const novo = { id: gerarId(), numero: gerarNumeroContrato(clienteId), adminId, clienteId, localId, equipamentoId, equipamentosIds, tipo, tiposTrabalho, periodicidade, tipoIntervencao, tecnicoId, dataInicio, valor, vigilanciaAtiva, valorMensalVigilancia, validadeContrato, documentoUrl, documentoNome, dataCriacao: Date.now() };
+                const novo = { id: gerarId(), numero: gerarNumeroContrato(clienteId), ...(gestaoManutencao ? { gestaoManutencao } : {}), adminId, clienteId, localId, locaisIds, equipamentoId, equipamentosIds, tipo, tiposTrabalho, periodicidade, tipoIntervencao, tecnicoId, dataInicio, valor, vigilanciaAtiva, valorMensalVigilancia, validadeContrato, documentoUrl, documentoNome, dataCriacao: Date.now() };
                 novo.proximaManutencao = calcularProximaManutencao(novo);
                 dados.contratos.push(novo);
             }
-            guardarDados(dados);
+            // Keep identifiers stable if synchronization needs a retry.
+            contratoEditandoId ||= dados.contratos[dados.contratos.length - 1].id;
+            const select = document.getElementById('ct_local');
+            if (![...select.options].some(o => o.value === (localId || ''))) select.add(new Option(dados.locais.find(l => l.id === localId)?.nome || 'Instalação', localId));
+            select.value = localId || '';
+            _ctRenderCobertura(locaisIds);
+            if (salvarContrato.emCurso) return;
+            salvarContrato.emCurso = true;
+            try { await guardarDados(dados); } catch (_) { alert('Contrato guardado neste dispositivo, mas a sincronização ainda está pendente. Tenta guardar novamente.'); return; } finally { salvarContrato.emCurso = false; }
             fecharModalContrato();
             renderizarTudo();
             abrirSecao('contratos');
@@ -10646,10 +10794,12 @@
             const hoje = getDataHoje();
             document.getElementById('modalRegistoCampos').innerHTML = `
                     <div class="help-text" style="margin-bottom:8px;">Contrato ${c.numero} — ${tipoLabel} (${PERIODICIDADE_LABEL[c.periodicidade] || '-'})</div>
+                    <div class="form-group"><label>Instalação da manutenção *</label><select id="rg_local">${_contratoOpcoesInstalacao(c)}</select></div>
                     <div class="form-group"><label>Data de realização *</label><input type="date" id="rg_data" value="${hoje}" required /></div>
                     <div class="form-group"><label>Técnico responsável</label><select id="rg_tecnico"><option value="">—</option>${tecOpts}</select></div>
                     <div class="form-group"><label>Observações</label><textarea id="rg_obs" rows="3"></textarea></div>
                 `;
+            window.TGContractMaintenance?.registoPicker(c);
             document.getElementById('modalRegistoOverlay').classList.add('open');
         }
 
@@ -10661,21 +10811,25 @@
             const c = dados.contratos?.find(x => x.id === registoContratoId);
             if (!c) return;
             const adminId = usuarioLogado?.adminId || usuarioLogado?.id;
+            const localId = document.getElementById('rg_local').value;
+            const local = _contratoInstalacoes(c).find(l => l.id === localId);
+            if (c.adminId !== adminId || !local) { alert('Instalação inválida para este contrato.'); return; }
             const dataRealizacao = document.getElementById('rg_data').value;
             if (!dataRealizacao) { alert('Indique a data de realização.'); return; }
-            const proximaData = avancarPeriodicidade(dataRealizacao, c.periodicidade);
+            let sistemasIds=[];
+            try { sistemasIds=window.TGContractMaintenance?.selectedOS(c,localId,'ct_rg_planos') || []; } catch(e) { alert(e.message); return; }
+            const proximaData = window.TGContractMaintenance?.recordNext(c,dataRealizacao,sistemasIds) || avancarPeriodicidade(dataRealizacao, c.periodicidade);
             const tecnicoId = document.getElementById('rg_tecnico').value || null;
             const observacoes = document.getElementById('rg_obs').value.trim();
             dados.registosManutencao = dados.registosManutencao || [];
             dados.registosManutencao.push({
-                id: gerarId(), adminId, contratoId: c.id, equipamentoId: c.equipamentoId,
+                id: gerarId(), adminId, ...(window.TGContractMaintenance?.plans(c).length ? { sistemasIds } : {}), localId: localId || null, contratoId: c.id, equipamentoId: c.equipamentoId,
                 dataRealizacao, tecnicoId, observacoes, proximaData, dataCriacao: Date.now()
             });
-            c.proximaManutencao = proximaData;
+            c.proximaManutencao = calcularProximaManutencao(c);
             if (c.clienteId) _notificarFuncionario(c.clienteId, '✅ Manutenção realizada', 'A manutenção do contrato ' + (c.numero || '') + ' foi concluída com sucesso.', adminId);
             // Gera automaticamente uma folha de obra desta manutenção
             const cli = dados.clientes?.find(x => x.id === c.clienteId);
-            const local = dados.locais?.find(l => l.id === c.localId);
             const tipoLabel = _equipStrContrato(c);
             dados.folhasObra = dados.folhasObra || [];
             dados.folhasObra.push({
@@ -10687,6 +10841,7 @@
                 data: dataRealizacao,
                 funcionarioId: tecnicoId || c.tecnicoId || usuarioLogado?.id,
                 servicoId: null,
+                localId: localId || null,
                 contratoId: c.id,
                 dataAtualizacao: Date.now(),
                 adminId: adminId,
@@ -10699,6 +10854,7 @@
         }
 
         function abrirHistoricoContrato(contratoId) {
+            if (window.TGContractMaintenance) { document.getElementById('modalHistoricoOverlay').classList.add('open'); window.TGContractMaintenance.history(contratoId); return; }
             const c = dados.contratos?.find(x => x.id === contratoId);
             if (!c) return;
             const cli = dados.clientes?.find(x => x.id === c.clienteId);
@@ -12303,6 +12459,7 @@
                         ${_moradaBadge}
                         ${_climaBadge}
                         ${_pontoBadge}
+                        ${window.TGPassport?.osButton(s) || ''}
                     </div>
                     <div style="margin-top:5px;">${_estadoEditavel}</div>
                     ${emConf ? '<div class="ag-conflito-badge"><i class="fas fa-exclamation-triangle"></i> Sobreposição de horário</div>' : ''}
@@ -15818,7 +15975,8 @@
         let _checklistSaidaCallbackPendente = null, _checklistSaidaRespostas = {}, _checklistSaidaAlvoPendente = null;
         function _checklistSaidaVerificar(adminId, callback, alvo) {
             const admin = dados.administradores?.find(a => a.id === adminId);
-            const itens = (admin?.obrasChecklistItens || []).filter(it => it.ativo !== false);
+            const os = alvo?.tipo === 'servico' ? (dados.servicos || []).find(s => s.id === alvo.id && s.adminId === adminId) : null;
+            const itens = window.TGContractMaintenance ? window.TGContractMaintenance.checklist(os,admin) : (admin?.obrasChecklistItens || []).filter(it => it.ativo !== false);
             if (!itens.length) { callback(); return; }
             _checklistSaidaCallbackPendente = callback;
             _checklistSaidaAlvoPendente = alvo || null;
@@ -16380,7 +16538,7 @@
                 const locaisCliente = (dados.locais || []).filter(l => l.clienteId === cli.id);
                 localSel.innerHTML = '<option value="">— Morada principal do cliente (Sede) —</option>' +
                     locaisCliente.map(l => `<option value="${l.id}">${l.nome}</option>`).join('') +
-                    '<option value="__novo__">➕ Criar novo local</option>';
+                    '<option value="__novo__">➕ Criar nova instalação</option>';
             }
         }
         function criarOSdaObra(obraId, obraRecemCriada) {
@@ -19290,7 +19448,7 @@
         }
         function renderizarGuia() {
             const cont = document.getElementById('guiaConteudo'); if (!cont) return;
-            const desc = {"funcionarios": "Esta secção é onde gere toda a equipa técnica da empresa. Pode criar novos funcionários e editar os existentes, definindo nome, telefone, email e senha de acesso à aplicação. É aqui que define o ordenado bruto e as horas semanais, dados que alimentam depois os relatórios de assiduidade e de custos. Pode associar um veículo da frota a cada funcionário — e só quem tiver veículo atribuído é que passa a ver o card da Frota. Cada funcionário criado fica habilitado a iniciar sessão com o seu email e senha. A partir desse momento pode ser escolhido como responsável de uma Ordem de Serviço. Pode ainda ligar ou desligar o registo de ponto com GPS pessoa a pessoa. Convém manter os dados atualizados para que os documentos saiam corretos. Ao eliminar um funcionário, retira-lhe o acesso à plataforma.","clientes": "Aqui mantém a base de dados de todos os clientes da empresa. Cada cliente pode ter nome, NIF, contactos, morada e vários locais associados. Estes dados são reutilizados em todo o sistema, evitando reescrever moradas e contactos a cada trabalho. Quando cria uma Ordem de Serviço, escolhe o cliente a partir desta lista. O mesmo acontece nas folhas de obra e nos contratos de manutenção. Ter os clientes bem preenchidos torna os relatórios e os PDFs muito mais completos e profissionais. Pode pesquisar, editar ou eliminar clientes a qualquer momento. É normalmente o primeiro passo antes de agendar qualquer serviço. Quanto melhor a ficha do cliente, menos tempo perde depois no terreno.","frota": "Esta área concentra a gestão de todos os veículos da empresa. Para cada viatura pode registar matrícula, documentos, datas de inspeção e de seguro, e o histórico de manutenções. Regista também sinistros e os respetivos detalhes para acompanhamento. O sistema calcula e avisa quando uma inspeção, seguro ou revisão está a aproximar-se ou já venceu. Pode atribuir cada veículo a um funcionário ou encarregado, que passa então a ver o card da Frota. Quem não tiver veículo atribuído não vê esta secção, mantendo o painel limpo. Os avisos ajudam a evitar multas e paragens inesperadas. É um add-on opcional da plataforma. Bem usada, reduz custos e prolonga a vida dos veículos.","servicos": "As Ordens de Serviço são o centro da operação diária. Aqui regista cada trabalho a realizar, com cliente, descrição, data, hora e duração prevista. Pode atribuir cada OS a um técnico responsável pela execução. O estado evolui de pendente para em andamento e, no fim, concluído, dando visibilidade do ponto de situação. As OS aparecem no calendário da Agenda de Obras, onde podem ser reorganizadas por arrastamento. Podem ser geradas automaticamente quando uma obra passa ao estado Ativa. Ao terminar, dão origem a uma folha de obra com materiais e assinatura do cliente. O sistema avisa o responsável caso tente aprovar férias a alguém com OS marcadas nesse período. É a partir destas ordens que se constroem os relatórios e os números do financeiro. Em resumo, é o registo central de tudo o que a equipa faz.","folhas": "As folhas de obra documentam o trabalho efetivamente realizado em cada Ordem de Serviço. Permitem descrever a intervenção, listar os materiais consumidos e registar observações. O cliente pode assinar diretamente no ecrã do dispositivo, ficando a assinatura guardada na folha. Servem como comprovativo do serviço prestado para o cliente e para a empresa. Os materiais consumidos abatem ao stock do armazém, mantendo as quantidades reais. Também alimentam o financeiro, ligando o trabalho aos respetivos custos. Pode anexar fotografias e gerar um documento para envio. Ficam associadas à OS e à obra correspondentes. É a peça que fecha o ciclo de cada serviço.","requisicoes": "As requisições servem para a equipa pedir material ao responsável de forma organizada. Um funcionário ou encarregado cria o pedido indicando os artigos e quantidades. O admin ou encarregado analisa e aprova ou rejeita cada requisição. Ao aprovar, o material é abatido ao stock automaticamente. Isto evita pedidos informais e mantém o controlo do que sai do armazém. Cada requisição tem um estado para se saber se está pendente ou já tratada. Ajuda a planear reposições quando o stock baixa. Mantém um histórico de quem pediu o quê e quando. É a ponte entre o terreno e o armazém.","relatorio-os": "Consulte relatórios operacionais de ordens de serviço, assistências, clientes e locais, técnicos e equipas, obras, manutenções e stock. Cada opção respeita os módulos e acessos da empresa. Escolha os filtros, consulte a pré-visualização e exporte em PDF ou Excel. Os relatórios de especialidade mantêm-se nos trabalhos e clientes.","agenda-obras": "A Agenda de Obras é o calendário de planeamento das Ordens de Serviço. Pode ver o trabalho por semana ou por mês, conforme preferir. Cada OS aparece no respetivo dia e pode ser arrastada para outra data. Pode atribuir ou trocar o responsável diretamente a partir do cartão da OS. O sistema deteta e assinala conflitos quando a mesma pessoa fica com sobreposições. Há uma zona de OS por agendar, para arrastar para o calendário. Ajuda a distribuir a carga de trabalho de forma equilibrada. Dá uma visão imediata da semana à equipa de gestão. É a forma mais visual de organizar o terreno.","ponto": "Esta secção regista a assiduidade da equipa através da picagem de ponto. Cada pessoa pica a entrada e a saída a partir do seu dispositivo. Pode ativar a captura da localização GPS no momento da picagem, por pessoa. Os registos servem de base ao cálculo das horas trabalhadas. Ficam organizados por dia e por funcionário. Permitem detetar atrasos, faltas e horas extra. São depois usados na secção de Assiduidade. Garantem um registo objetivo e com data/hora. Reduzem erros e discussões sobre horários.","assiduidade": "A Assiduidade transforma os registos de ponto em relatórios úteis. Mostra as horas trabalhadas por funcionário e por período. Apresenta totais, faltas e desvios face ao previsto. Pode exportar em PDF e em Excel para processamento ou arquivo. Facilita o fecho mensal e o apoio ao processamento salarial. Dá uma visão clara da disponibilidade da equipa. Ajuda a identificar padrões de absentismo. Complementa os dados de ordenado definidos na ficha do funcionário. É um instrumento de gestão de pessoas.","pedidos": "Aqui são geridos os pedidos de férias e de faltas da equipa. O funcionário submete o pedido, podendo anexar um justificativo. O responsável vê os pedidos pendentes e aprova ou rejeita. Ao aprovar, o sistema avisa se a pessoa tiver Ordens de Serviço marcadas nesse período. Isto evita aprovar ausências que deixariam trabalhos sem técnico. Cada pedido tem um estado visível para ambas as partes. Mantém um histórico das ausências ao longo do tempo. Ajuda a planear a equipa com antecedência. É a forma formal de tratar férias e faltas.","encarregados": "Esta secção gere os encarregados e as equipas que cada um supervisiona. Os encarregados têm um nível de acesso intermédio, entre o admin e o funcionário. Podem aceder à agenda, às ordens de serviço e a relatórios, sem funções de administração da empresa. Pode definir os seus dados, contactos e veículo atribuído. Servem para descentralizar a coordenação no terreno. Cada encarregado acompanha o trabalho da sua equipa. Ajudam a aliviar a carga de gestão do administrador. Tal como os funcionários, podem ter registo de ponto e GPS. São peças-chave em empresas com várias frentes de obra.","contratos": "Os contratos de manutenção organizam as intervenções periódicas por cliente e equipamento. Para cada contrato define a periodicidade, o tipo de intervenção e os dados do equipamento. O sistema calcula automaticamente a data da próxima manutenção. Avisa quando há contratos vencidos ou prestes a vencer, com sinalização por cores. Isto evita falhar manutenções e perder credibilidade junto do cliente. Cada contrato fica ligado ao cliente e ao local respetivos. Ajuda a gerar receita recorrente e previsível. É um add-on opcional da plataforma. Bem usado, é uma fonte estável de trabalho planeado.","artigos": "Esta área é o catálogo de stock da empresa. Cada artigo pode ter marca, categoria, unidade, stock atual e stock mínimo. Pode ativar alertas para ser avisado quando um artigo fica em rutura. Os movimentos de entrada e saída mantêm as quantidades atualizadas. Pode importar e exportar o catálogo em CSV para tratar muitos artigos de uma vez. Os artigos são usados nas encomendas, requisições e planos de obra. Ajuda a saber sempre o que existe em armazém. Reduz compras desnecessárias e ruturas em obra. Faz parte do add-on Armazém.","encomendas": "Aqui regista as encomendas de material aos fornecedores. Cada encomenda pode ter vários itens com marca, categoria e quantidade. Pode associar a encomenda a uma obra específica. Na receção, dá entrada do material em stock de forma simples. Pode anexar a fatura do fornecedor à encomenda recebida. O sistema atualiza o stock automaticamente com o que chega. Mantém o histórico de compras e respetivos custos. Ajuda a planear reposições com base nas obras em curso. Integra-se com o financeiro pelo lado das compras. Faz parte do add-on Armazém.","fornecedores": "Esta secção mantém a lista de fornecedores da empresa. Para cada um pode guardar contactos e informação relevante. São usados na criação de encomendas de material. Ter os fornecedores organizados acelera o processo de compra. Evita procurar contactos dispersos por vários sítios. Pode editar ou remover fornecedores quando necessário. Complementa o catálogo de artigos e as encomendas. Ajuda a comparar e a escolher o fornecedor certo. Faz parte do add-on Armazém.","obras-longa": "O Planeamento de Obra acompanha cada obra do início ao fim. Cada obra tem um estado que evolui por Preparação, Ativa, Suspensa e Concluída. O card mostra contadores rápidos de quantas estão em cada estado. Quando uma obra passa a Ativa, pode gerar logo uma Ordem de Serviço. Cada obra tem um plano de materiais com quantidades previstas, recebidas e consumidas. Isto permite comparar o orçamentado com o realmente gasto. O sistema assinala obras com excedente de materiais. Liga-se às encomendas e ao stock do armazém. Dá uma visão clara do andamento e dos custos de cada obra. Faz parte do add-on Armazém.","financeiro": "O Financeiro dá a visão económica da operação. Mostra a faturação das Ordens de Serviço num período à escolha. Apresenta as compras de material e o resultado final. Inclui um gráfico de evolução mensal para perceber tendências. Tem detalhe por cliente, para saber quem gera mais valor. Pode filtrar por mês, ano ou todo o histórico. Permite exportar a informação em PDF. Junta num só sítio o que entra e o que sai. Ajuda a tomar decisões com base em números. Está incluído no add-on Armazém.","agenda": "A Agenda reúne as datas importantes que se aproximam. Inclui fim de licença, inspeções, manutenções e contratos a vencer. Funciona como um resumo de prazos a não falhar. Ajuda a antecipar renovações e intervenções. Evita surpresas de última hora. Dá uma visão rápida do que exige atenção em breve. Complementa os avisos espalhados pelos vários cards. É útil para o planeamento semanal. Mantém a gestão um passo à frente.","reports": "O painel de Reports concentra os indicadores de gestão da empresa. Resume a equipa, as ordens de serviço, os clientes e os custos. Dá uma visão geral do estado do negócio num relance. Ajuda a identificar pontos fortes e áreas a melhorar. Serve de apoio à tomada de decisão. Complementa os relatórios mais específicos das outras secções. É pensado para uma leitura rápida pelo administrador. Reúne num só ecrã o essencial. Poupa tempo na recolha de informação.","minha-licenca": "Aqui consulta o estado da sua licença e dos add-ons. Vê as datas de validade da licença base, da Frota, dos Contratos e do Armazém. Pode pedir a ativação ou a renovação, em plano mensal ou anual. O pedido segue para o Super Admin com as instruções de pagamento. Quando perto de expirar, surgem botões de renovação. Mantém a transparência sobre o que tem contratado. Evita interrupções por esquecimento de renovar. É o ponto único para gerir a sua subscrição. Garante que continua com acesso a tudo o que precisa.","ajuda-peticoes": "Este é o canal de suporte da plataforma. Permite enviar pedidos de ajuda ou reportar problemas ao administrador da plataforma. Pode acompanhar o estado e a resposta de cada pedido. Mantém um histórico das comunicações. Evita ter de recorrer a meios externos para pedir apoio. O cartão sinaliza quando há novidades por ler. É a forma mais rápida de obter assistência. Útil sempre que surge uma dúvida ou um imprevisto. Liga-o diretamente a quem gere a plataforma.","auditoria":"O Histórico/Auditoria regista quem fez o quê e quando dentro da empresa. Inclui criação, edição e eliminação de registos, aprovações de pedidos, assinaturas de folhas e início e fim de sessão. Cada entrada guarda a data e hora, o utilizador, o seu papel, a ação e a secção afetada. Pode filtrar por utilizador, ação ou secção para encontrar rapidamente o que procura. Os registos mais recentes aparecem primeiro. Pode exportar tudo em CSV para arquivo ou análise. É uma ferramenta de transparência e de segurança. Ajuda a esclarecer dúvidas e a investigar enganos sem acusações. Só o administrador (e o Super Admin) tem acesso a este histórico.","contactos": "Mostra a informação e os contactos da empresa. Fica visível no ecrã inicial, antes de iniciar sessão. Serve de cartão de visita digital da empresa. Ajuda quem chega a saber como contactar. Reúne os dados essenciais num só sítio. É simples e direto. Complementa a imagem profissional da plataforma."};
+            const desc = {"funcionarios": "Esta secção é onde gere toda a equipa técnica da empresa. Pode criar novos funcionários e editar os existentes, definindo nome, telefone, email e senha de acesso à aplicação. É aqui que define o ordenado bruto e as horas semanais, dados que alimentam depois os relatórios de assiduidade e de custos. Pode associar um veículo da frota a cada funcionário — e só quem tiver veículo atribuído é que passa a ver o card da Frota. Cada funcionário criado fica habilitado a iniciar sessão com o seu email e senha. A partir desse momento pode ser escolhido como responsável de uma Ordem de Serviço. Pode ainda ligar ou desligar o registo de ponto com GPS pessoa a pessoa. Convém manter os dados atualizados para que os documentos saiam corretos. Ao eliminar um funcionário, retira-lhe o acesso à plataforma.","clientes": "Aqui mantém a base de dados de todos os clientes da empresa. Cada cliente pode ter nome, NIF, contactos, morada e várias instalações associadas. Estes dados são reutilizados em todo o sistema, evitando reescrever moradas e contactos a cada trabalho. Quando cria uma Ordem de Serviço, escolhe o cliente a partir desta lista. O mesmo acontece nas folhas de obra e nos contratos de manutenção. Ter os clientes bem preenchidos torna os relatórios e os PDFs muito mais completos e profissionais. Pode pesquisar, editar ou eliminar clientes a qualquer momento. É normalmente o primeiro passo antes de agendar qualquer serviço. Quanto melhor a ficha do cliente, menos tempo perde depois no terreno.","frota": "Esta área concentra a gestão de todos os veículos da empresa. Para cada viatura pode registar matrícula, documentos, datas de inspeção e de seguro, e o histórico de manutenções. Regista também sinistros e os respetivos detalhes para acompanhamento. O sistema calcula e avisa quando uma inspeção, seguro ou revisão está a aproximar-se ou já venceu. Pode atribuir cada veículo a um funcionário ou encarregado, que passa então a ver o card da Frota. Quem não tiver veículo atribuído não vê esta secção, mantendo o painel limpo. Os avisos ajudam a evitar multas e paragens inesperadas. É um add-on opcional da plataforma. Bem usada, reduz custos e prolonga a vida dos veículos.","servicos": "As Ordens de Serviço são o centro da operação diária. Aqui regista cada trabalho a realizar, com cliente, descrição, data, hora e duração prevista. Pode atribuir cada OS a um técnico responsável pela execução. O estado evolui de pendente para em andamento e, no fim, concluído, dando visibilidade do ponto de situação. As OS aparecem no calendário da Agenda de Obras, onde podem ser reorganizadas por arrastamento. Podem ser geradas automaticamente quando uma obra passa ao estado Ativa. Ao terminar, dão origem a uma folha de obra com materiais e assinatura do cliente. O sistema avisa o responsável caso tente aprovar férias a alguém com OS marcadas nesse período. É a partir destas ordens que se constroem os relatórios e os números do financeiro. Em resumo, é o registo central de tudo o que a equipa faz.","folhas": "As folhas de obra documentam o trabalho efetivamente realizado em cada Ordem de Serviço. Permitem descrever a intervenção, listar os materiais consumidos e registar observações. O cliente pode assinar diretamente no ecrã do dispositivo, ficando a assinatura guardada na folha. Servem como comprovativo do serviço prestado para o cliente e para a empresa. Os materiais consumidos abatem ao stock do armazém, mantendo as quantidades reais. Também alimentam o financeiro, ligando o trabalho aos respetivos custos. Pode anexar fotografias e gerar um documento para envio. Ficam associadas à OS e à obra correspondentes. É a peça que fecha o ciclo de cada serviço.","requisicoes": "As requisições servem para a equipa pedir material ao responsável de forma organizada. Um funcionário ou encarregado cria o pedido indicando os artigos e quantidades. O admin ou encarregado analisa e aprova ou rejeita cada requisição. Ao aprovar, o material é abatido ao stock automaticamente. Isto evita pedidos informais e mantém o controlo do que sai do armazém. Cada requisição tem um estado para se saber se está pendente ou já tratada. Ajuda a planear reposições quando o stock baixa. Mantém um histórico de quem pediu o quê e quando. É a ponte entre o terreno e o armazém.","relatorio-os": "Consulte relatórios operacionais de ordens de serviço, assistências, clientes e instalações, técnicos e equipas, obras, manutenções e stock. Cada opção respeita os módulos e acessos da empresa. Escolha os filtros, consulte a pré-visualização e exporte em PDF ou Excel. Os relatórios de especialidade mantêm-se nos trabalhos e clientes.","agenda-obras": "A Agenda de Obras é o calendário de planeamento das Ordens de Serviço. Pode ver o trabalho por semana ou por mês, conforme preferir. Cada OS aparece no respetivo dia e pode ser arrastada para outra data. Pode atribuir ou trocar o responsável diretamente a partir do cartão da OS. O sistema deteta e assinala conflitos quando a mesma pessoa fica com sobreposições. Há uma zona de OS por agendar, para arrastar para o calendário. Ajuda a distribuir a carga de trabalho de forma equilibrada. Dá uma visão imediata da semana à equipa de gestão. É a forma mais visual de organizar o terreno.","ponto": "Esta secção regista a assiduidade da equipa através da picagem de ponto. Cada pessoa pica a entrada e a saída a partir do seu dispositivo. Pode ativar a captura da localização GPS no momento da picagem, por pessoa. Os registos servem de base ao cálculo das horas trabalhadas. Ficam organizados por dia e por funcionário. Permitem detetar atrasos, faltas e horas extra. São depois usados na secção de Assiduidade. Garantem um registo objetivo e com data/hora. Reduzem erros e discussões sobre horários.","assiduidade": "A Assiduidade transforma os registos de ponto em relatórios úteis. Mostra as horas trabalhadas por funcionário e por período. Apresenta totais, faltas e desvios face ao previsto. Pode exportar em PDF e em Excel para processamento ou arquivo. Facilita o fecho mensal e o apoio ao processamento salarial. Dá uma visão clara da disponibilidade da equipa. Ajuda a identificar padrões de absentismo. Complementa os dados de ordenado definidos na ficha do funcionário. É um instrumento de gestão de pessoas.","pedidos": "Aqui são geridos os pedidos de férias e de faltas da equipa. O funcionário submete o pedido, podendo anexar um justificativo. O responsável vê os pedidos pendentes e aprova ou rejeita. Ao aprovar, o sistema avisa se a pessoa tiver Ordens de Serviço marcadas nesse período. Isto evita aprovar ausências que deixariam trabalhos sem técnico. Cada pedido tem um estado visível para ambas as partes. Mantém um histórico das ausências ao longo do tempo. Ajuda a planear a equipa com antecedência. É a forma formal de tratar férias e faltas.","encarregados": "Esta secção gere os encarregados e as equipas que cada um supervisiona. Os encarregados têm um nível de acesso intermédio, entre o admin e o funcionário. Podem aceder à agenda, às ordens de serviço e a relatórios, sem funções de administração da empresa. Pode definir os seus dados, contactos e veículo atribuído. Servem para descentralizar a coordenação no terreno. Cada encarregado acompanha o trabalho da sua equipa. Ajudam a aliviar a carga de gestão do administrador. Tal como os funcionários, podem ter registo de ponto e GPS. São peças-chave em empresas com várias frentes de obra.","contratos": "Os contratos de manutenção organizam as intervenções periódicas por cliente e equipamento. Para cada contrato define a periodicidade, o tipo de intervenção e os dados do equipamento. O sistema calcula automaticamente a data da próxima manutenção. Avisa quando há contratos vencidos ou prestes a vencer, com sinalização por cores. Isto evita falhar manutenções e perder credibilidade junto do cliente. Cada contrato fica ligado ao cliente e ao local respetivos. Ajuda a gerar receita recorrente e previsível. É um add-on opcional da plataforma. Bem usado, é uma fonte estável de trabalho planeado.","artigos": "Esta área é o catálogo de stock da empresa. Cada artigo pode ter marca, categoria, unidade, stock atual e stock mínimo. Pode ativar alertas para ser avisado quando um artigo fica em rutura. Os movimentos de entrada e saída mantêm as quantidades atualizadas. Pode importar e exportar o catálogo em CSV para tratar muitos artigos de uma vez. Os artigos são usados nas encomendas, requisições e planos de obra. Ajuda a saber sempre o que existe em armazém. Reduz compras desnecessárias e ruturas em obra. Faz parte do add-on Armazém.","encomendas": "Aqui regista as encomendas de material aos fornecedores. Cada encomenda pode ter vários itens com marca, categoria e quantidade. Pode associar a encomenda a uma obra específica. Na receção, dá entrada do material em stock de forma simples. Pode anexar a fatura do fornecedor à encomenda recebida. O sistema atualiza o stock automaticamente com o que chega. Mantém o histórico de compras e respetivos custos. Ajuda a planear reposições com base nas obras em curso. Integra-se com o financeiro pelo lado das compras. Faz parte do add-on Armazém.","fornecedores": "Esta secção mantém a lista de fornecedores da empresa. Para cada um pode guardar contactos e informação relevante. São usados na criação de encomendas de material. Ter os fornecedores organizados acelera o processo de compra. Evita procurar contactos dispersos por vários sítios. Pode editar ou remover fornecedores quando necessário. Complementa o catálogo de artigos e as encomendas. Ajuda a comparar e a escolher o fornecedor certo. Faz parte do add-on Armazém.","obras-longa": "O Planeamento de Obra acompanha cada obra do início ao fim. Cada obra tem um estado que evolui por Preparação, Ativa, Suspensa e Concluída. O card mostra contadores rápidos de quantas estão em cada estado. Quando uma obra passa a Ativa, pode gerar logo uma Ordem de Serviço. Cada obra tem um plano de materiais com quantidades previstas, recebidas e consumidas. Isto permite comparar o orçamentado com o realmente gasto. O sistema assinala obras com excedente de materiais. Liga-se às encomendas e ao stock do armazém. Dá uma visão clara do andamento e dos custos de cada obra. Faz parte do add-on Armazém.","financeiro": "O Financeiro dá a visão económica da operação. Mostra a faturação das Ordens de Serviço num período à escolha. Apresenta as compras de material e o resultado final. Inclui um gráfico de evolução mensal para perceber tendências. Tem detalhe por cliente, para saber quem gera mais valor. Pode filtrar por mês, ano ou todo o histórico. Permite exportar a informação em PDF. Junta num só sítio o que entra e o que sai. Ajuda a tomar decisões com base em números. Está incluído no add-on Armazém.","agenda": "A Agenda reúne as datas importantes que se aproximam. Inclui fim de licença, inspeções, manutenções e contratos a vencer. Funciona como um resumo de prazos a não falhar. Ajuda a antecipar renovações e intervenções. Evita surpresas de última hora. Dá uma visão rápida do que exige atenção em breve. Complementa os avisos espalhados pelos vários cards. É útil para o planeamento semanal. Mantém a gestão um passo à frente.","reports": "O painel de Reports concentra os indicadores de gestão da empresa. Resume a equipa, as ordens de serviço, os clientes e os custos. Dá uma visão geral do estado do negócio num relance. Ajuda a identificar pontos fortes e áreas a melhorar. Serve de apoio à tomada de decisão. Complementa os relatórios mais específicos das outras secções. É pensado para uma leitura rápida pelo administrador. Reúne num só ecrã o essencial. Poupa tempo na recolha de informação.","minha-licenca": "Aqui consulta o estado da sua licença e dos add-ons. Vê as datas de validade da licença base, da Frota, dos Contratos e do Armazém. Pode pedir a ativação ou a renovação, em plano mensal ou anual. O pedido segue para o Super Admin com as instruções de pagamento. Quando perto de expirar, surgem botões de renovação. Mantém a transparência sobre o que tem contratado. Evita interrupções por esquecimento de renovar. É o ponto único para gerir a sua subscrição. Garante que continua com acesso a tudo o que precisa.","ajuda-peticoes": "Este é o canal de suporte da plataforma. Permite enviar pedidos de ajuda ou reportar problemas ao administrador da plataforma. Pode acompanhar o estado e a resposta de cada pedido. Mantém um histórico das comunicações. Evita ter de recorrer a meios externos para pedir apoio. O cartão sinaliza quando há novidades por ler. É a forma mais rápida de obter assistência. Útil sempre que surge uma dúvida ou um imprevisto. Liga-o diretamente a quem gere a plataforma.","auditoria":"O Histórico/Auditoria regista quem fez o quê e quando dentro da empresa. Inclui criação, edição e eliminação de registos, aprovações de pedidos, assinaturas de folhas e início e fim de sessão. Cada entrada guarda a data e hora, o utilizador, o seu papel, a ação e a secção afetada. Pode filtrar por utilizador, ação ou secção para encontrar rapidamente o que procura. Os registos mais recentes aparecem primeiro. Pode exportar tudo em CSV para arquivo ou análise. É uma ferramenta de transparência e de segurança. Ajuda a esclarecer dúvidas e a investigar enganos sem acusações. Só o administrador (e o Super Admin) tem acesso a este histórico.","contactos": "Mostra a informação e os contactos da empresa. Fica visível no ecrã inicial, antes de iniciar sessão. Serve de cartão de visita digital da empresa. Ajuda quem chega a saber como contactar. Reúne os dados essenciais num só sítio. É simples e direto. Complementa a imagem profissional da plataforma."};
             const itens = [];
             document.querySelectorAll('#cardsGrid .card-principal').forEach(c => {
                 if (c.classList.contains('hidden-card')) return;
@@ -19411,7 +19569,7 @@
                 </div>`;
             }
 
-            h += _portalAccordion('locais', 'fa-building', `Intervenções por Local / Instalação`, _gerarHTMLIntervencoesPorLocal(cli.id, true, _dataCorteMeses(12), 'portal-acc-locais'), false);
+            h += _portalAccordion('locais', 'fa-building', `Intervenções por Instalação`, _gerarHTMLIntervencoesPorLocal(cli.id, true, _dataCorteMeses(12), 'portal-acc-locais'), false);
 
             // Ordens de Serviço
             let hOss = '';
@@ -19630,12 +19788,12 @@
                 </div>
                 <p style="color:#64748b;">Indique onde precisa de assistência e o que aconteceu.</p>
                 <form onsubmit="event.preventDefault();portalEnviarAssistencia();">
-                    <div class="form-group"><label for="portalAjudaLocal">Local *</label>
+                    <div class="form-group"><label for="portalAjudaLocal">Instalação *</label>
                         <select id="portalAjudaLocal" required ${locais.length === 1 ? 'disabled' : ''}>
-                            ${locais.length !== 1 ? '<option value="">Selecione o local</option>' : ''}
+                            ${locais.length !== 1 ? '<option value="">Selecione a instalação</option>' : ''}
                             ${locais.map(l => `<option value="${escapeHtmlSimples(l.id)}">${escapeHtmlSimples(l.nome || 'Local')} — ${escapeHtmlSimples(l.morada || l.cidade || 'Morada não indicada')}</option>`).join('')}
                         </select>
-                        <small style="color:#64748b;">${locais.length === 1 ? 'O seu único local foi selecionado automaticamente.' : locais.length ? 'Escolha o local onde ocorre o problema.' : 'Ainda não tem locais registados. Contacte a empresa para adicionar o local.'}</small>
+                        <small style="color:#64748b;">${locais.length === 1 ? 'A sua única instalação foi selecionada automaticamente.' : locais.length ? 'Escolha a instalação onde ocorre o problema.' : 'Ainda não tem instalações registadas. Contacte a empresa para adicionar uma instalação.'}</small>
                     </div>
                     <div class="form-group"><label for="portalAjudaUrgencia">Urgência *</label>
                         <select id="portalAjudaUrgencia" required><option value="">Selecione a urgência</option><option value="baixa">Baixa — pode aguardar</option><option value="normal">Normal — necessita de assistência</option><option value="alta">Alta — afeta o funcionamento</option><option value="urgente">Urgente — serviço parado</option></select>
@@ -19660,7 +19818,7 @@
             const urgencia = document.getElementById('portalAjudaUrgencia')?.value;
             const prioridades = { baixa: 'Baixa', normal: 'Normal', alta: 'Alta', urgente: 'Urgente' };
             const desc = (document.getElementById('portalAjudaDesc')?.value || '').trim();
-            if (!local) { alert('Selecione um local válido.'); return; }
+            if (!local) { alert('Selecione uma instalação válida.'); return; }
             if (!Object.prototype.hasOwnProperty.call(prioridades, urgencia)) { alert('Indique a urgência do pedido.'); return; }
             if (!desc || desc.length > 4000) { alert('Descreva o problema (até 4000 caracteres).'); return; }
             const btn = document.getElementById('portalAjudaEnviar'), estado = document.getElementById('portalAjudaEstado');
@@ -20064,7 +20222,7 @@
                         <div class="report-item"><span>Em dia</span><span style="color:#16a34a;">${ctEmDia}</span></div>
                         <div class="report-item"><span>A vencer (≤30d)</span><span style="color:#f59e0b;">${ctAVencer}</span></div>
                         <div class="report-item"><span>Vencidos</span><span style="color:#dc2626;">${ctVencidos}</span></div>
-                        <div class="report-item"><span>Locais / Equipamentos</span><span>${totalLocais} / ${totalEquip}</span></div>
+                        <div class="report-item"><span>Instalações / Equipamentos</span><span>${totalLocais} / ${totalEquip}</span></div>
                         <div class="report-item"><span>Manutenções realizadas</span><span>${totalRegistos}</span></div>
                         <div class="report-item" style="font-weight:bold; border-top:1px solid #e2e8f0; padding-top:8px;"><span>Valor anual contratado</span><span>${eur(ctValor)}</span></div>
                     </div>
@@ -24939,7 +25097,7 @@ async function salvarAdmin(e) {
             const locaisCliente = (dados.locais || []).filter(l => l.clienteId === cliId);
             localSel.innerHTML = '<option value="">— Morada principal do cliente (Sede) —</option>' +
                 locaisCliente.map(l => `<option value="${l.id}">${l.nome}</option>`).join('') +
-                '<option value="__novo__">➕ Criar novo local</option>';
+                '<option value="__novo__">➕ Criar nova instalação</option>';
         }
         function _foNovoLocalToggle() {
             const val = document.getElementById('fo_local')?.value;
@@ -25417,16 +25575,16 @@ async function salvarAdmin(e) {
                                 </div>` : ''}
                                 <div class="form-group"><label>Duração (min)</label><input type="number" id="s_duracao" step="15" min="0" value="${item && item.duracao != null ? item.duracao : ''}" placeholder="ex.: 60 (para detetar sobreposições)" /></div>
                                 <div class="form-group"><label>Duração estimada (dias)</label><input type="number" id="s_duracao_dias" step="1" min="0" value="${item && item.duracaoDias != null ? item.duracaoDias : ''}" placeholder="para obras grandes" /></div>
-                                <div class="form-group ff-span2"><label>Local / Instalação</label>
+                                <div class="form-group ff-span2"><label>Instalação</label>
                                     <select id="s_local" onchange="_osPreencherMoradaDoLocal(this.value)">
                                         <option value="">— Morada principal do cliente —</option>
                                         ${(dados.locais || []).filter(l => l.clienteId === (item ? item.clienteId : '')).map(l => `<option value="${l.id}" ${item && item.localId === l.id ? 'selected' : ''}>${l.nome}</option>`).join('')}
-                                        <option value="__novo__">➕ Criar novo local</option>
+                                        <option value="__novo__">➕ Criar nova instalação</option>
                                     </select>
                                     <div class="help-text">Se o cliente tiver mais que uma instalação registada, escolhe aqui qual desta OS. Deixa em branco para usar a morada principal.</div>
                                 </div>
                                 <div id="s_novo_local" class="ff-span2" style="display:none; padding:10px; background:#f8fafc; border-radius:8px;">
-                                    <div class="form-group" style="margin-bottom:8px;"><label>Nome do novo local *</label><input type="text" id="s_local_nome" placeholder="Ex: Loja Centro" /></div>
+                                    <div class="form-group" style="margin-bottom:8px;"><label>Nome da nova instalação *</label><input type="text" id="s_local_nome" placeholder="Ex: Loja Centro" /></div>
                                     <div class="form-group" style="margin-bottom:0;"><label><i class="fas fa-map-pin" style="color:#dc2626;"></i> Pin do Google Maps (opcional) <a href="https://www.google.com/maps" target="_blank" rel="noopener" style="font-weight:400;font-size:.78rem;color:#2563eb;text-decoration:none;margin-left:8px;"><i class="fas fa-up-right-from-square"></i> Abrir Google Maps</a></label><input type="text" id="s_local_pin_mapa" placeholder="Cola aqui o link ou as coordenadas copiadas do Google Maps" autocomplete="off" oninput="_clienteAtualizarLinkPin('s_local_pin_mapa','s_local_pin_mapa_link')" /><div id="s_local_pin_mapa_link" style="margin-top:6px;font-size:.82rem;"></div></div>
                                 </div>
                                 <div class="form-group ff-span2"><label>Morada da instalação</label><input type="text" id="s_morada" value="${item && item.morada != null ? item.morada : ''}" placeholder="Preenche automaticamente ao escolher o cliente, mas pode editar" autocomplete="off" /><div id="s_morada_ajuda" class="help-text"></div></div>
@@ -25457,16 +25615,16 @@ async function salvarAdmin(e) {
                         <div class="ff-secao ff-tint-id">
                             <div class="ff-secao-head"><i class="fas fa-map-marker-alt"></i> Local da Instalação</div>
                             <div class="ff-secao-body">
-                                <div class="form-group ff-span2"><label>Local / Instalação</label>
+                                <div class="form-group ff-span2"><label>Instalação</label>
                                     <select id="fo_local" onchange="_foNovoLocalToggle()">
                                         <option value="">— Morada principal do cliente (Sede) —</option>
                                         ${(dados.locais || []).filter(l => l.clienteId === (item ? item.clienteId : '')).map(l => `<option value="${l.id}" ${item && item.localId === l.id ? 'selected' : ''}>${l.nome}</option>`).join('')}
-                                        <option value="__novo__">➕ Criar novo local</option>
+                                        <option value="__novo__">➕ Criar nova instalação</option>
                                     </select>
                                     <div class="help-text">Por defeito usa a Sede (morada principal do cliente). Escolhe outra instalação se o cliente tiver mais que uma.</div>
                                 </div>
                                 <div id="fo_novo_local" class="ff-span2" style="display:none; padding:10px; background:#f8fafc; border-radius:8px;">
-                                    <div class="form-group" style="margin-bottom:0;"><label>Nome do novo local *</label><input type="text" id="fo_local_nome" placeholder="Ex: Loja Centro" /></div>
+                                    <div class="form-group" style="margin-bottom:0;"><label>Nome da nova instalação *</label><input type="text" id="fo_local_nome" placeholder="Ex: Loja Centro" /></div>
                                 </div>
                             </div>
                         </div>
@@ -25713,19 +25871,19 @@ async function salvarAdmin(e) {
                     </div>
 
                     <div class="ff-secao ff-tint-id">
-                        <div class="ff-secao-head"><i class="fas fa-location-dot"></i> Local e Cliente</div>
+                        <div class="ff-secao-head"><i class="fas fa-location-dot"></i> Instalação e Cliente</div>
                         <div class="ff-secao-body">
                             <div class="form-group ff-span2"><label>Cliente</label><div style="display:flex;gap:8px;"><input type="text" id="ob_cliente_busca" style="flex:1;" placeholder="Digite o nome ou nº do cliente (opcional)…" value="${item && item.clienteId ? (() => { const cc = (dados.clientes || []).find(x => x.id === item.clienteId); return cc ? _clienteLabel(cc) : ''; })() : ''}" oninput="clienteBuscaInput('ob_cliente_busca','ob_cliente', onClienteObraChange)" onfocus="clienteBuscaFoco('ob_cliente_busca')" onblur="clienteBuscaEsconder('ob_cliente_busca')" autocomplete="off" /><input type="hidden" id="ob_cliente" value="${item && item.clienteId ? item.clienteId : ''}" /><button type="button" class="btn btn-outline" onclick="obraAddCliente()" title="Adicionar cliente"><i class="fas fa-plus"></i></button></div></div>
-                            <div class="form-group ff-span2"><label>Local / Instalação</label>
+                            <div class="form-group ff-span2"><label>Instalação</label>
                                 <select id="ob_local" onchange="onLocalObraChange()">
                                     <option value="">— Morada principal do cliente (Sede) —</option>
                                     ${item && item.clienteId ? (dados.locais || []).filter(l => l.clienteId === item.clienteId).map(l => `<option value="${l.id}" ${item.localId === l.id ? 'selected' : ''}>${l.nome}</option>`).join('') : ''}
-                                    <option value="__novo__">➕ Criar novo local</option>
+                                    <option value="__novo__">➕ Criar nova instalação</option>
                                 </select>
                                 <div class="help-text">Por defeito usa a Sede (morada principal do cliente). Escolhe outra instalação se o cliente tiver mais que uma, ou cria uma nova.</div>
                             </div>
                             <div id="ob_novo_local" class="ff-span2" style="display:none;padding:10px;background:#f8fafc;border-radius:8px;">
-                                <div class="form-group" style="margin-bottom:8px;"><label>Nome do novo local *</label><input type="text" id="ob_local_nome" placeholder="Ex: Loja Centro" /></div>
+                                <div class="form-group" style="margin-bottom:8px;"><label>Nome da nova instalação *</label><input type="text" id="ob_local_nome" placeholder="Ex: Loja Centro" /></div>
                                 <div class="form-group" style="margin-bottom:8px;"><label>Morada da instalação</label><input type="text" id="ob_morada" placeholder="Rua, número..." autocomplete="off" /></div>
                                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
                                     <div class="form-group" style="margin-bottom:0;"><label>Número de porta</label><input type="text" id="ob_local_numero" placeholder="ex.: 3, 3A" /></div>
@@ -26876,7 +27034,7 @@ async function salvarAdmin(e) {
                 const _sStatusNovo = document.getElementById('s_status')?.value;
                 if (_sStatusNovo === 'concluído' && (!isEdit || item?.status !== 'concluído')) {
                     const _sAdminChk = dados.administradores?.find(a => a.id === (usuarioLogado.role === 'admin' ? usuarioLogado.id : usuarioLogado.adminId));
-                    const _sItensChk = (_sAdminChk?.obrasChecklistItens || []).filter(it => it.ativo !== false);
+                    const _sItensChk = window.TGContractMaintenance ? window.TGContractMaintenance.checklist(item,_sAdminChk) : (_sAdminChk?.obrasChecklistItens || []).filter(it => it.ativo !== false);
                     const _sConclChk = item?.checklist || {};
                     const _sPorMarcarChk = _sItensChk.filter(it => !_sConclChk[it.id]);
                     if (_sPorMarcarChk.length) {
@@ -26904,7 +27062,7 @@ async function salvarAdmin(e) {
                 let _sLocalIdResolvido = document.getElementById('s_local') ? document.getElementById('s_local').value : (_osExist ? _osExist.localId : null);
                 if (_sLocalIdResolvido === '__novo__') {
                     const nomeNovoLocal = (document.getElementById('s_local_nome')?.value || '').trim();
-                    if (!nomeNovoLocal) { alert('Indique o nome do novo local.'); return; }
+                    if (!nomeNovoLocal) { alert('Indique o nome da nova instalação.'); return; }
                     const clienteIdNovoLocal = document.getElementById('s_cliente').value;
                     // Evita criar um local repetido por engano (ex.: escolheste sempre "Criar novo
                     // local" em vez de escolher o já existente na lista) — isso estava a fazer
@@ -27042,7 +27200,7 @@ async function salvarAdmin(e) {
                     _foLocalId = document.getElementById('fo_local')?.value || '';
                     if (_foLocalId === '__novo__') {
                         const nomeNovoLocal = (document.getElementById('fo_local_nome')?.value || '').trim();
-                        if (!nomeNovoLocal) { alert('Indique o nome do novo local.'); return; }
+                        if (!nomeNovoLocal) { alert('Indique o nome da nova instalação.'); return; }
                         const novoLocalId = gerarId();
                         dados.locais = dados.locais || [];
                         dados.locais.push({ id: novoLocalId, adminId: _foAdminId, clienteId: _foClienteId, nome: nomeNovoLocal, morada: _foCliente?.morada || '', dataCriacao: Date.now() });
@@ -27102,22 +27260,23 @@ async function salvarAdmin(e) {
                 _folhaConsumoPendente.push(..._foMatExtra.map(x => ({ artigoId: x.artigoId, consumido: x.qtd })));
                 _foMatExtra = [];
                 // Se a folha vem de uma OS ligada a um contrato, regista a manutenção automaticamente
-                if (!isEdit && obj.servicoId) {
+                if (obj.servicoId && !(dados.registosManutencao || []).some(r => r.servicoId === obj.servicoId && r.adminId === obj.adminId)) {
                     const osv = dados.servicos?.find(s => s.id === obj.servicoId);
                     if (osv?.contratoId) {
                         const cont = dados.contratos?.find(c => c.id === osv.contratoId);
-                        if (cont) {
+                        if(cont && window.TGContractMaintenance){obj.contratoId=cont.id;window.TGContractMaintenance.registerMaintenance(osv,obj);}
+                        else if (cont) {
                             obj.contratoId = cont.id;
-                            const proximaData = avancarPeriodicidade(obj.data || getDataHoje(), cont.periodicidade);
+                            const proximaData = window.TGContractMaintenance?.recordNext(cont,obj.data || getDataHoje(),osv.planoManutencao?.sistemasIds || []) || avancarPeriodicidade(obj.data || getDataHoje(), cont.periodicidade);
                             dados.registosManutencao = dados.registosManutencao || [];
                             dados.registosManutencao.push({
-                                id: gerarId(), adminId: cont.adminId, contratoId: cont.id, equipamentoId: cont.equipamentoId, servicoId: obj.servicoId,
+                                id: gerarId(), adminId: cont.adminId, localId: osv.localId || null, ...(osv.planoManutencao?.sistemasIds ? { sistemasIds: osv.planoManutencao.sistemasIds } : {}), contratoId: cont.id, equipamentoId: cont.equipamentoId, servicoId: obj.servicoId,
                                 dataRealizacao: obj.data || getDataHoje(),
                                 tecnicoId: obj.funcionarioId || cont.tecnicoId || null,
                                 observacoes: 'Manutenção concluída via OS ' + (osv.numeroRegisto || '') + '.',
                                 proximaData, dataCriacao: Date.now()
                             });
-                            cont.proximaManutencao = proximaData;
+                            cont.proximaManutencao = calcularProximaManutencao(cont);
                             if (cont.clienteId) _notificarFuncionario(cont.clienteId, '✅ Manutenção realizada', 'A manutenção do contrato ' + (cont.numero || '') + ' foi concluída com sucesso.', cont.adminId);
                         }
                     }
@@ -27254,7 +27413,7 @@ async function salvarAdmin(e) {
                 let _obMorada = '', _obCp = '', _obCidade = '', _obNumero = '', _obFreguesia = '';
                 if (_obLocalId === '__novo__') {
                     const nomeNovoLocal = (document.getElementById('ob_local_nome')?.value || '').trim();
-                    if (!nomeNovoLocal) { alert('Indique o nome do novo local.'); return; }
+                    if (!nomeNovoLocal) { alert('Indique o nome da nova instalação.'); return; }
                     _obMorada = document.getElementById('ob_morada')?.value.trim() || '';
                     _obNumero = document.getElementById('ob_local_numero')?.value.trim() || '';
                     _obCp = document.getElementById('ob_cp')?.value.trim() || '';
@@ -29498,7 +29657,7 @@ window._relPrefill = function(msg){
             }
         }
 
-        // Novo local/instalação OU editar um já existente — mesmo formulário para os dois casos.
+        // Nova instalação/instalação OU editar um já existente — mesmo formulário para os dois casos.
         // Chamada com só clienteId = criar; com localId também = editar esse local.
         function abrirModalNovoLocalCliente(clienteId) { abrirModalLocalCliente(clienteId, null); }
         function abrirModalEditarLocalCliente(localId, clienteId) { abrirModalLocalCliente(clienteId, localId); }
@@ -29507,10 +29666,10 @@ window._relPrefill = function(msg){
             if (!cli) return;
             const local = localId ? dados.locais?.find(l => l.id === localId) : null;
             document.getElementById('modalGenericoTitulo').innerHTML = local
-                ? `<i class="fas fa-map-pin"></i> Editar morada — ${escapeHtmlSimples(local.nome)}`
-                : `<i class="fas fa-map-pin"></i> Nova morada/instalação — ${escapeHtmlSimples(_clienteLabel(cli))}`;
+                ? `<i class="fas fa-map-pin"></i> Editar instalação — ${escapeHtmlSimples(local.nome)}`
+                : `<i class="fas fa-map-pin"></i> Nova instalação — ${escapeHtmlSimples(_clienteLabel(cli))}`;
             document.getElementById('modalGenericoCampos').innerHTML = `
-                <div class="form-group"><label>Nome do local *</label><input type="text" id="nl_nome" value="${escapeHtmlSimples(local?.nome || '')}" placeholder="Ex: Loja Centro, Armazém 2..." required /></div>
+                <div class="form-group"><label>Nome da instalação *</label><input type="text" id="nl_nome" value="${escapeHtmlSimples(local?.nome || '')}" placeholder="Ex: Loja Centro, Armazém 2..." required /></div>
                 <div class="form-group"><label>Morada</label><input type="text" id="nl_morada" value="${escapeHtmlSimples(local ? (local.morada || '') : (cli.morada || ''))}" placeholder="Rua/Avenida" autocomplete="off" /></div>
                 <div class="form-group"><label>Número de porta</label><input type="text" id="nl_numero" value="${escapeHtmlSimples(local?.numeroPorta || '')}" placeholder="Ex.: 12, 3º Dto" /></div>
                 <div class="form-group"><label>Código Postal</label><input type="text" id="nl_cp" value="${escapeHtmlSimples(local?.codigoPostal || '')}" placeholder="0000-000" autocomplete="off" oninput="aplicarMascaraCP(this); _cttPreencherPorCP(this.value,{cidade:'nl_cidade',freguesia:'nl_freguesia',morada:'nl_morada'})" maxlength="8" /></div>
@@ -29526,7 +29685,7 @@ window._relPrefill = function(msg){
             const cli = dados.clientes?.find(c => c.id === clienteId);
             if (!cli) return;
             const nome = document.getElementById('nl_nome').value.trim();
-            if (!nome) { alert('Indique o nome do local.'); return; }
+            if (!nome) { alert('Indique o nome da instalação.'); return; }
             dados.locais = dados.locais || [];
             let local = localId ? dados.locais.find(l => l.id === localId) : null;
             const isNovo = !local;
@@ -29544,32 +29703,44 @@ window._relPrefill = function(msg){
             guardarDados(dados);
             _fecharModalGenerico();
             renderizarClientes();
-            alert(isNovo ? '✅ Instalação criada.' : '✅ Morada atualizada.');
+            alert(isNovo ? '✅ Instalação criada.' : '✅ Instalação atualizada.');
         }
-        function eliminarLocalCliente(localId, clienteId) {
-            if (usuarioLogado?.role !== 'admin' && usuarioLogado?.role !== 'subadmin') { alert('Sem permissão.'); return; }
-            const local = (dados.locais || []).find(l => l.id === localId);
-            if (!local) return;
-            const nContratos = (dados.contratos || []).filter(c => c.localId === localId).length;
-            const nEquip = (dados.equipamentos || []).filter(e => e.localId === localId).length;
-            const nObras = (dados.obras || []).filter(o => o.localId === localId).length;
-            const nOS = (dados.servicos || []).filter(s => s.localId === localId).length;
-            let aviso = `Eliminar a instalação "${local.nome}"?`;
-            if (nContratos || nEquip || nObras || nOS) {
-                aviso += `\n\n⚠️ Está associada a: ${nContratos} contrato(s), ${nEquip} equipamento(s), ${nObras} obra(s) e ${nOS} OS. Esses registos ficam sem instalação associada (não são apagados), mas passam a mostrar-se em "Sede".`;
+        async function eliminarLocalCliente(localId, clienteId) {
+            if (usuarioLogado?.role !== 'admin' && usuarioLogado?.role !== 'subadmin') { alert('Sem permissão.'); return false; }
+            const adminId = adminDoUtilizador()?.id;
+            const local = (dados.locais || []).find(l => l.id === localId && l.clienteId === clienteId && l.adminId === adminId);
+            if (!local || eliminarLocalCliente.emCurso?.has(localId)) return false;
+            const colecoes = ['contratos', 'equipamentos', 'obras', 'servicos', 'relatoriosEspecialidade', 'assistencias', 'folhasObra', 'registosManutencao'];
+            const total = colecoes.reduce((n, col) => n + (dados[col] || []).filter(r => r.localId === localId && r.adminId === adminId).length, 0);
+            const aviso = `Apagar a instalação "${local.nome}"?\n\n` + (total
+                ? 'Os registos associados serão mantidos no cliente e passarão a aparecer na Sede. Os contratos mantêm as outras instalações abrangidas.\n\n'
+                : '') + 'Escreva APAGAR para confirmar:';
+            if (prompt(aviso, '') !== 'APAGAR') return false;
+            eliminarLocalCliente.emCurso ||= new Set();
+            eliminarLocalCliente.emCurso.add(localId);
+            dados.locais = (dados.locais || []).filter(l => l !== local);
+            (dados.contratos || []).filter(c => c.adminId === adminId && c.clienteId === clienteId && _contratoAbrangeLocal(c, localId)).forEach(c => {
+                c.locaisIds = _contratoLocalIds(c).filter(id => id !== localId);
+                if (!c.locaisIds.length) c.locaisIds = [''];
+                if (c.localId === localId) c.localId = c.locaisIds[0] || null;
+            });
+            colecoes.forEach(col => (dados[col] || []).forEach(r => {
+                if (r.localId === localId && r.adminId === adminId) r.localId = null;
+            }));
+            try {
+                await guardarDados(dados);
+                alert('Instalação apagada.');
+            } catch (e) {
+                alert('A eliminação ficou pendente de sincronização. Verifique a ligação e tente sincronizar novamente.');
+            } finally {
+                eliminarLocalCliente.emCurso.delete(localId);
+                renderizarTudo();
+                const overlay = document.getElementById('wsClienteOverlay');
+                if (overlay?.classList.contains('open') && overlay.dataset.clienteAtual === clienteId) await _wsClienteAba(clienteId, 'locais');
+                const contId = 'acordeao-conteudo-' + clienteId, cont = document.getElementById(contId);
+                if (cont) cont.innerHTML = _gerarHTMLIntervencoesPorLocal(clienteId, false, _dataCorteMeses(3), contId);
             }
-            if (!confirm(aviso)) return;
-            dados.locais = (dados.locais || []).filter(l => l.id !== localId);
-            (dados.contratos || []).forEach(c => { if (c.localId === localId) c.localId = null; });
-            (dados.equipamentos || []).forEach(e => { if (e.localId === localId) e.localId = null; });
-            (dados.obras || []).forEach(o => { if (o.localId === localId) o.localId = null; });
-            (dados.servicos || []).forEach(s => { if (s.localId === localId) s.localId = null; });
-            guardarDados(dados);
-            renderizarTudo();
-            const contId = 'acordeao-conteudo-' + clienteId;
-            const cont = document.getElementById(contId);
-            if (cont) cont.innerHTML = _gerarHTMLIntervencoesPorLocal(clienteId, false, _dataCorteMeses(3), contId);
-            alert('Instalação eliminada.');
+            return true;
         }
         async function _toggleAcordeaoCliente(clienteId) {
             const linha = document.getElementById('acordeao-cliente-' + clienteId);
@@ -29593,6 +29764,7 @@ window._relPrefill = function(msg){
         function _tiposEspecialidadePendentes(osId) {
             const os = dados.servicos?.find(s => s.id === osId);
             if (!os) return [];
+            if(window.TGEquipmentReports)return window.TGEquipmentReports.pending(os).map(r=>r.tipo);
             const feitos = (dados.relatoriosEspecialidade || []).filter(r => r.servicoId === osId && !r.rascunho).map(r => r.tipo);
             return (os.tiposTrabalho || []).filter(t => TIPOS_ESPECIALIDADE.includes(t) && !feitos.includes(t));
         }
@@ -29626,12 +29798,19 @@ window._relPrefill = function(msg){
         }
 
         function abrirFilaRelatoriosEspecialidade(osId, tiposPendentes, onConcluir) {
+            const os=dados.servicos?.find(s=>s.id===osId);
+            if(window.TGEquipmentReports && os){
+                const pending=window.TGEquipmentReports.pending(os);
+                if(!pending.length){onConcluir();return;}
+                const req=pending[0];
+                _abrirModalRelatorioEspecialidade(osId,req.tipo,()=>{
+                    if(window.TGEquipmentReports.pending(os).some(r=>r.tipo===req.tipo && r.equipamentoId===req.equipamentoId)){alert('O relatório ficou em rascunho. Conclui e assina antes de terminar a OS.');return;}
+                    abrirFilaRelatoriosEspecialidade(osId,[],onConcluir);
+                },req.equipamentoId);
+                return;
+            }
             if (!tiposPendentes.length) { onConcluir(); return; }
-            const tipo = tiposPendentes[0];
-            const resto = tiposPendentes.slice(1);
-            _abrirModalRelatorioEspecialidade(osId, tipo, () => {
-                abrirFilaRelatoriosEspecialidade(osId, resto, onConcluir);
-            });
+            _abrirModalRelatorioEspecialidade(osId, tiposPendentes[0], () => abrirFilaRelatoriosEspecialidade(osId,tiposPendentes.slice(1),onConcluir));
         }
 
         let _relEspecOnMessageAtual = null;
@@ -29642,8 +29821,13 @@ window._relPrefill = function(msg){
             if (_relEspecOnMessageAtual) { window.removeEventListener('message', _relEspecOnMessageAtual); _relEspecOnMessageAtual = null; }
         }
 
-        async function _abrirModalRelatorioEspecialidade(osId, tipo, onGuardado) {
+        async function _abrirModalRelatorioEspecialidade(osId, tipo, onGuardado, equipamentoId = null) {
             const os = dados.servicos?.find(s => s.id === osId);
+            if(!os)return;
+            const requisito=window.TGEquipmentReports?.resolve(os,tipo,equipamentoId);
+            equipamentoId=requisito?.equipamentoId || null;
+            if(Array.isArray(os.planoManutencao?.relatoriosEquipamentos) && !requisito){alert('Este relatório não está associado a um equipamento desta OS.');return;}
+            const mesmoEquipamento=r=>r.adminId===os.adminId && (r.campos?.equipamentoId || null)===equipamentoId;
             const souAdmin0 = usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin';
             // O encarregado responsável pelo funcionário atribuído ao relatório também pode preenchê-lo/assiná-lo.
             const _encarregadoAtual = usuarioLogado?.role === 'encarregado' ? dados.encarregados?.find(e => e.id === usuarioLogado.id) : null;
@@ -29686,7 +29870,7 @@ window._relPrefill = function(msg){
             overlay.innerHTML = `
                 <div class="modal" style="max-width:1100px;width:96vw;height:92vh;display:flex;flex-direction:column;padding:0;">
                     <div class="modal-header" style="display:flex;justify-content:space-between;align-items:center;padding:12px 18px;border-bottom:1px solid #e2e8f0;">
-                        <h3 style="margin:0;"><i class="fas fa-file-signature"></i> Relatório ${def ? def.nome : (tipoCustomDef ? tipoCustomDef.nome : tipo)} (${tipo})</h3>
+                        <h3 style="margin:0;"><i class="fas fa-file-signature"></i> Relatório ${def ? def.nome : (tipoCustomDef ? tipoCustomDef.nome : tipo)} (${tipo})${equipamentoId ? ' · '+escapeHtmlSimples(requisito.equipamentoNome || equipamentoId) : ''}</h3>
                         <div style="display:flex;align-items:center;gap:14px;">
                             <span style="font-size:.78rem;color:#6b6a63;">Preenche o relatório e assina no final da folha para concluir.</span>
                             <button type="button" onclick="_fecharModalRelatorioEspecialidade()" title="Fechar" style="background:none;border:none;font-size:1.4rem;line-height:1;color:#6b6a63;cursor:pointer;padding:0 4px;">&times;</button>
@@ -29708,7 +29892,7 @@ window._relPrefill = function(msg){
 
             // Se já existir um rascunho guardado para esta OS+tipo, reabre exatamente onde ficou
             // (em vez do modelo em branco).
-            const rascunhoExistente = (dados.relatoriosEspecialidade || []).find(r => r.servicoId === osId && r.tipo === tipo && r.rascunho);
+            const rascunhoExistente = (dados.relatoriosEspecialidade || []).find(r => r.servicoId === osId && r.tipo === tipo && mesmoEquipamento(r) && r.rascunho);
             let usouRascunho = false;
             let estadoRexRestaurar = null;
             if (rascunhoExistente) {
@@ -29739,7 +29923,7 @@ window._relPrefill = function(msg){
                 // a OS antiga ainda estar carregada em memória — é a forma correta a partir de agora).
                 let relatorioAnteriorConcluido = os.clienteId
                     ? (dados.relatoriosEspecialidade || [])
-                        .filter(r => r.clienteId === os.clienteId && r.tipo === tipo && !r.rascunho && r.id !== rascunhoExistente?.id && r.localId === localAtualRel)
+                        .filter(r => r.clienteId === os.clienteId && r.tipo === tipo && mesmoEquipamento(r) && !r.rascunho && r.id !== rascunhoExistente?.id && r.localId === localAtualRel)
                         .sort((a, b) => (b.criadoEm || 0) - (a.criadoEm || 0))[0]
                     : null;
                 // 2ª tentativa (só relatórios antigos, de antes desta correção, sem localId
@@ -29747,12 +29931,12 @@ window._relPrefill = function(msg){
                 // carregada em memória.
                 if (!relatorioAnteriorConcluido && os.clienteId) {
                     relatorioAnteriorConcluido = (dados.relatoriosEspecialidade || [])
-                        .filter(r => r.clienteId === os.clienteId && r.tipo === tipo && !r.rascunho && r.id !== rascunhoExistente?.id && (r.localId === undefined || r.localId === null))
+                        .filter(r => r.clienteId === os.clienteId && r.tipo === tipo && mesmoEquipamento(r) && !r.rascunho && r.id !== rascunhoExistente?.id && (r.localId === undefined || r.localId === null))
                         .filter(r => { const osDoR = dados.servicos?.find(s => s.id === r.servicoId); return (osDoR?.localId || null) === localAtualRel; })
                         .sort((a, b) => (b.criadoEm || 0) - (a.criadoEm || 0))[0];
                 }
                 console.log('[relatório anterior] cliente=', os.clienteId, 'tipo=', tipo, 'localAtual=', localAtualRel, '— candidatos disponíveis:',
-                    (dados.relatoriosEspecialidade || []).filter(r => r.clienteId === os.clienteId && r.tipo === tipo && !r.rascunho).map(r => ({ id: r.id, numero: r.numeroDocumento, localId: r.localId, servicoId: r.servicoId })));
+                    (dados.relatoriosEspecialidade || []).filter(r => r.clienteId === os.clienteId && r.tipo === tipo && mesmoEquipamento(r) && !r.rascunho).map(r => ({ id: r.id, numero: r.numeroDocumento, localId: r.localId, servicoId: r.servicoId })));
                 console.log('[relatório anterior] encontrado?', relatorioAnteriorConcluido ? relatorioAnteriorConcluido.numeroDocumento : 'NENHUM');
                 if (relatorioAnteriorConcluido) {
                     let htmlAnterior = relatorioAnteriorConcluido.campos?.htmlSnapshot || '';
@@ -29838,6 +30022,7 @@ window._relPrefill = function(msg){
             const contratoOS = os.contratoId ? dados.contratos?.find(ct => ct.id === os.contratoId) : null;
             const initMsg = {
                 type: 'init',
+                equipamentoId, equipamentoNome:requisito?.equipamentoNome || '',
                 numero: numDoc,
                 data: hoje,
                 cliente: cliente?.nome || '',
@@ -29946,12 +30131,17 @@ window._relPrefill = function(msg){
             }, 150);
 
             async function onMessage(ev) {
-                const msg = ev.data || {};
+                if(ev.source!==iframe.contentWindow)return;
+                const msg = {...(ev.data || {})};
+                if(equipamentoId && msg.html && !msg.html.includes('data-tg-equipment-report')){
+                    const heading='<div data-tg-equipment-report="'+escapeHtmlSimples(equipamentoId)+'" style="padding:12px;border-bottom:1px solid #ccc;font-weight:bold">Equipamento: '+escapeHtmlSimples(requisito.equipamentoNome || equipamentoId)+'</div>';
+                    msg.html=msg.html.replace(/(<body[^>]*>)/i,'$1'+heading);
+                }
                 if (msg.type === 'relatorioEspecialidadeRascunho') {
-                    const pastaRasc = _tenantId() + '/' + osId + '_' + tipo + '_rascunho';
+                    const pastaRasc = _tenantId() + '/' + osId + '_' + tipo + (equipamentoId ? '_' + encodeURIComponent(equipamentoId) : '') + '_rascunho';
                     const htmlOkRasc = msg.html ? await _uploadTextoStorage(pastaRasc + '.html', msg.html, 'text/html') : false;
                     dados.relatoriosEspecialidade = dados.relatoriosEspecialidade || [];
-                    const idxRasc = dados.relatoriosEspecialidade.findIndex(r => r.servicoId === osId && r.tipo === tipo && r.rascunho);
+                    const idxRasc = dados.relatoriosEspecialidade.findIndex(r => r.servicoId === osId && r.tipo === tipo && mesmoEquipamento(r) && r.rascunho);
                     const registoRasc = {
                         id: idxRasc !== -1 ? dados.relatoriosEspecialidade[idxRasc].id : gerarId(),
                         adminId: _tenantId(),
@@ -29966,6 +30156,8 @@ window._relPrefill = function(msg){
                         criadoEm: idxRasc !== -1 ? dados.relatoriosEspecialidade[idxRasc].criadoEm : Date.now(),
                         atualizadoEm: Date.now()
                     };
+                    registoRasc.localId=os.localId || null;
+                    registoRasc.campos={...registoRasc.campos,...(equipamentoId ? {equipamentoId,equipamentoNome:requisito.equipamentoNome} : {})};
                     if (idxRasc !== -1) dados.relatoriosEspecialidade[idxRasc] = registoRasc;
                     else dados.relatoriosEspecialidade.push(registoRasc);
                     guardarDados(dados);
@@ -30017,9 +30209,11 @@ window._relPrefill = function(msg){
                     tecnicoId: usuarioLogado?.id || null,
                     criadoEm: Date.now()
                 };
+                novoRel.campos={...novoRel.campos,...(equipamentoId ? {equipamentoId,equipamentoNome:requisito.equipamentoNome} : {})};
                 dados.relatoriosEspecialidade = dados.relatoriosEspecialidade || [];
-                dados.relatoriosEspecialidade = dados.relatoriosEspecialidade.filter(r => !(r.servicoId === osId && r.tipo === tipo && r.rascunho));
+                dados.relatoriosEspecialidade = dados.relatoriosEspecialidade.filter(r => !(r.servicoId === osId && r.tipo === tipo && mesmoEquipamento(r) && r.rascunho));
                 dados.relatoriosEspecialidade.push(novoRel);
+                window.TGContractMaintenance?.registerMaintenance(os,(dados.folhasObra || []).find(f=>f.servicoId===osId && f.adminId===os.adminId));
                 guardarDados(dados);
                 overlay.classList.remove('open');
                 onGuardado();
@@ -30150,7 +30344,7 @@ window._relPrefill = function(msg){
             const especialidades = os.tiposTrabalho.filter(t => TIPOS_ESPECIALIDADE.includes(t));
             if (!especialidades.length) return '';
             const feitos = (dados.relatoriosEspecialidade || []).filter(r => r.servicoId === osId && !r.rascunho).map(r => r.tipo);
-            const todasFeitas = especialidades.every(t => feitos.includes(t));
+            const todasFeitas = window.TGEquipmentReports ? !window.TGEquipmentReports.pending(os).length : especialidades.every(t => feitos.includes(t));
             const lista = especialidades.map(t => nomes[t] || t).join(', ');
             return todasFeitas ? (' * ' + lista + ' efetuada' + (especialidades.length > 1 ? 's' : '')) : (' * ' + lista + ' (em curso)');
         }
