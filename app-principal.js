@@ -2572,18 +2572,40 @@
             document.getElementById('qs_geo_status').textContent = 'Ainda não capturada.';
             document.getElementById('qs_password_saida').value = '';
             _quiosqueRenderPessoasSetup();
+            const pinBox = document.getElementById('qs_admin_pin_box');
+            const pinInput = document.getElementById('qs_admin_pin');
+            if (pinBox) pinBox.style.display = usuarioLogado?.role === 'admin' ? '' : 'none';
+            if (pinInput) { pinInput.value = ''; pinInput.placeholder = _quiosqueAdminPessoa() ? 'PIN já definido (deixa vazio para manter)' : '4 dígitos para picar no quiosque'; }
             document.getElementById('modalQuiosqueSetupOverlay').classList.add('open');
+        }
+        // O PIN de picagem do administrador é independente da palavra-passe de login.
+        function _quiosqueAdminPinKey() { return 'tg_quiosque_admin_pin_' + _tenantQuiosque(); }
+        function _quiosqueAdminPessoa() {
+            const adminId = _tenantQuiosque();
+            if (!adminId) return null;
+            const admin = dados.administradores?.find(a => a.id === adminId)
+                || (usuarioLogado?.role === 'admin' && usuarioLogado.id === adminId ? usuarioLogado : null);
+            if (!admin || admin.ativo === false || admin.ehDistribuidor) return null;
+            let pin = '';
+            try { pin = localStorage.getItem(_quiosqueAdminPinKey()) || ''; } catch (e) {}
+            if (!/^\d{4}$/.test(pin)) return null;
+            return { id: adminId, adminId, nome: admin.nome || 'Administrador', foto: admin.foto || null, pin, role: 'admin', _tipo: 'admin' };
         }
         function _quiosqueRenderPessoasSetup() {
             const cont = document.getElementById('qs_pessoas_lista'); if (!cont) return;
             const adminId = _tenantQuiosque();
             const funcs = (dados.funcionarios || []).filter(f => f.adminId === adminId && f.role !== 'admin' && f.role !== 'superadmin').map(f => ({ id: f.id, nome: f.nome, tipo: 'funcionario' }));
             const encs = (dados.encarregados || []).filter(e => e.adminId === adminId).map(e => ({ id: e.id, nome: e.nome, tipo: 'encarregado' }));
-            const pessoas = [...funcs, ...encs];
+            const admin = usuarioLogado?.role === 'admin' && usuarioLogado.id === adminId
+                ? (dados.administradores?.find(a => a.id === adminId) || usuarioLogado)
+                : _quiosqueAdminPessoa();
+            const admins = admin && admin.ativo !== false && !admin.ehDistribuidor
+                ? [{ id: adminId, nome: admin.nome || 'Administrador', tipo: 'admin' }] : [];
+            const pessoas = [...funcs, ...encs, ...admins];
             cont.innerHTML = pessoas.length ? pessoas.map(p => `
                 <label style="display:flex;align-items:center;gap:8px;padding:5px 0;cursor:pointer;">
                     <input type="checkbox" data-qs-pessoa="${p.id}" data-qs-tipo="${p.tipo}" style="width:auto;" />
-                    ${p.nome} <span style="color:#94a3b8;font-size:.78rem;">(${p.tipo === 'encarregado' ? 'Encarregado' : 'Funcionário'})</span>
+                    ${p.nome} <span style="color:#94a3b8;font-size:.78rem;">(${p.tipo === 'admin' ? 'Administrador' : p.tipo === 'encarregado' ? 'Encarregado' : 'Funcionário'})</span>
                 </label>
             `).join('') : '<div style="color:#94a3b8;font-size:.85rem;">Sem funcionários ou encarregados nesta empresa.</div>';
         }
@@ -2602,10 +2624,15 @@
             document.getElementById('qs_campos_agenda').style.display = modo === 'agenda' ? 'block' : 'none';
         }
         function _confirmarAtivacaoQuiosque() {
+            if (!_podeAtivarQuiosque()) { alert('Não tens autorização para ativar o Modo Quiosque.'); return; }
             const modo = document.querySelector('input[name="qs_modo"]:checked')?.value || 'obra_fixa';
             const pass = document.getElementById('qs_password_saida').value;
             if (!pass || pass.length < 4) { alert('Escolhe uma password de saída com pelo menos 4 caracteres.'); return; }
+            const adminPin = usuarioLogado?.role === 'admin' ? (document.getElementById('qs_admin_pin')?.value || '').trim() : '';
+            if (adminPin && !/^\d{4}$/.test(adminPin)) { alert('O PIN de picagem do administrador deve ter exatamente 4 números.'); return; }
+            if (adminPin && adminPin === pass) { alert('O PIN de picagem deve ser diferente da password de saída do quiosque.'); return; }
             if (modo === 'agenda') {
+                if (adminPin) { try { localStorage.setItem(_quiosqueAdminPinKey(), adminPin); } catch (e) {} }
                 try {
                     localStorage.setItem('tg_quiosque', _tenantQuiosque());
                     localStorage.setItem('tg_quiosque_modo', 'agenda');
@@ -2621,10 +2648,12 @@
             const obraId = document.getElementById('qs_obra').value;
             if (!obraId) { alert('Seleciona a obra desta obra/aparelho.'); return; }
             const selecionados = [...document.querySelectorAll('#qs_pessoas_lista input[data-qs-pessoa]:checked')].map(chk => chk.dataset.qsPessoa);
-            if (!selecionados.length) { alert('Seleciona pelo menos um funcionário/encarregado para esta obra.'); return; }
+            if (!selecionados.length) { alert('Seleciona pelo menos uma pessoa para esta obra.'); return; }
+            if (selecionados.includes(_tenantQuiosque()) && !adminPin && !_quiosqueAdminPessoa()) { alert('Define o PIN do administrador para picar entrada nesta obra.'); return; }
             if (!_quiosqueGeoTemp) { alert('Captura a localização atual antes de ativar (geofence).'); return; }
             const obra = dados.obras?.find(o => o.id === obraId);
             try {
+                if (adminPin) localStorage.setItem(_quiosqueAdminPinKey(), adminPin);
                 localStorage.setItem('tg_quiosque', _tenantQuiosque());
                 localStorage.setItem('tg_quiosque_modo', 'obra_fixa');
                 localStorage.setItem('tg_quiosque_obra', obraId);
@@ -3017,7 +3046,8 @@
             const adminId = _tenantQuiosque();
             const funcs = (dados.funcionarios || []).filter(f => f.adminId === adminId && f.role !== 'admin' && f.role !== 'superadmin' && !f.suspenso).map(f => ({ ...f, _tipo: 'funcionario' }));
             const encs = (dados.encarregados || []).filter(e => e.adminId === adminId && !e.suspenso).map(e => ({ ...e, _tipo: 'encarregado' }));
-            return [...funcs, ...encs];
+            const admin = _quiosqueAdminPessoa();
+            return [...funcs, ...encs, ...(admin ? [admin] : [])];
         }
         function _quiosqueAgendaSelecionarItem(tipo, id) {
             const painel = document.getElementById('tgqPainel');
@@ -3460,7 +3490,8 @@
             try { selecionados = JSON.parse(localStorage.getItem('tg_quiosque_pessoas') || '[]'); } catch (e) {}
             const funcs = (dados.funcionarios || []).filter(f => f.adminId === adminId && f.role !== 'admin' && f.role !== 'superadmin' && !f.suspenso && (!selecionados.length || selecionados.includes(f.id))).map(f => ({ ...f, _tipo: 'funcionario' }));
             const encs = (dados.encarregados || []).filter(e => e.adminId === adminId && !e.suspenso && (!selecionados.length || selecionados.includes(e.id))).map(e => ({ ...e, _tipo: 'encarregado' }));
-            return [...funcs, ...encs];
+            const admin = _quiosqueAdminPessoa();
+            return [...funcs, ...encs, ...(admin && (!selecionados.length || selecionados.includes(admin.id)) ? [admin] : [])];
         }
         function _quiosqueMostrarGrid() {
             _quiosquePinAtual = ''; _quiosquePessoaSelecionada = null;

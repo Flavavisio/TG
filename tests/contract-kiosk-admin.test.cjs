@@ -1,0 +1,9 @@
+const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
+const src=fs.readFileSync('app-principal.js','utf8');
+function pick(name){const a=src.indexOf('        function '+name+'('),b=src.indexOf('\n        }',a);assert(a>=0&&b>a,name);return src.slice(a,b+10);}
+const code=['_tenantQuiosque','_quiosqueAdminPinKey','_quiosqueAdminPessoa','_quiosqueAgendaPessoasEmpresa','_quiosquePessoas'].map(pick).join('\n')+';return {_quiosqueAdminPessoa,_quiosqueAgendaPessoasEmpresa,_quiosquePessoas}';
+function demo(){const u={id:'a',role:'admin'},d={administradores:[{id:'a',nome:'Admin',ativo:true},{id:'b',nome:'Other'}],funcionarios:[{id:'f',adminId:'a',nome:'Tech',role:'funcionario',pin:'1234'}],encarregados:[]},m=new Map(),s={getItem:k=>m.get(k)||null,setItem:(k,v)=>m.set(k,v)};return {u,d,m,...new Function('usuarioLogado','dados','localStorage',code)(u,d,s)};}
+test('admin must configure a PIN before kiosk clock-in',()=>{const x=demo();assert.equal(x._quiosqueAdminPessoa(),null);assert.deepEqual(x._quiosqueAgendaPessoasEmpresa().map(p=>p.id),['f']);});
+test('admin can appear in agenda and fixed kiosk, separated by tenant',()=>{const x=demo();x.m.set('tg_quiosque_admin_pin_a','7392');assert.deepEqual(x._quiosqueAgendaPessoasEmpresa().map(p=>p.id),['f','a']);x.m.set('tg_quiosque_pessoas','["a"]');assert.deepEqual(x._quiosquePessoas().map(p=>p.id),['a']);x.u.id='b';assert.equal(x._quiosqueAdminPessoa(),null);});
+test('disabled admin cannot appear',()=>{const x=demo();x.m.set('tg_quiosque_admin_pin_a','7392');x.d.administradores[0].ativo=false;assert.equal(x._quiosqueAdminPessoa(),null);});
+test('both shells have administrator PIN configuration',()=>{for(const f of ['index.html','login.html'])assert.match(fs.readFileSync(f,'utf8'),/id="qs_admin_pin"/);});
