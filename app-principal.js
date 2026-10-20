@@ -16873,7 +16873,6 @@
                 const seqFornecedor = (dados.encomendas || []).filter(e => e.adminId === adminId && typeof e.numero === 'string' && e.numero.startsWith(prefixoEnc))
                     .reduce((max, e) => Math.max(max, Number(e.numero.slice(prefixoEnc.length)) || 0), 0) + 1;
                 const numeroEnc = 'ENC-' + nomeFornecedorSlug + '-' + String(seqFornecedor).padStart(3, '0');
-                const numeroEnc = 'ENC-' + nomeFornecedorSlug + '-' + String(seqFornecedor).padStart(3, '0');
                 (dados.encomendas = dados.encomendas || []).push({ id: encId, adminId, numero: numeroEnc, fornecedorId, obraId, data, estado: 'pendente', observacoes: obs, dataCriacao: Date.now() });
             }
             itens.forEach(it => {
