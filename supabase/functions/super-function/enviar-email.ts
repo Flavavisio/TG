@@ -102,7 +102,7 @@ async function emailPertenceEmpresa(service, tenant, destinatario) {
   if (String(admin?.email || "").trim().toLowerCase() === alvo) return true;
   for (const tabela of ["funcionarios", "encarregados", "clientes"]) {
     const { data, error } = await service.from(tabela)
-      .select("id").eq("admin_id", tenant).ilike("email", alvo.replace(/[\\%_]/g, "\\Deno.serve(async (req) => {")).limit(1);
+      .select("id").eq("admin_id", tenant).ilike("email", alvo.replace(/[\\%_]/g, "\\$&")).limit(1);
     if (error) throw error;
     if (data?.length) return true;
   }
