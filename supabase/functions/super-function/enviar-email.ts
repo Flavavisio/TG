@@ -69,13 +69,106 @@ function montarEmail(tipo, p) {
   if (tipo === "lembrete_pagamento") { const c=`<p>Olá ${escapeHtml(nome)},</p><p>Este é um lembrete de que o pagamento da sua licença <strong>${escapeHtml(plataforma)}</strong>${p.empresa?` (${escapeHtml(p.empresa)})`:""} ainda não foi confirmado do nosso lado.</p>${avisoBox(`<strong>⏱️ Por favor, efetue o pagamento no prazo máximo de 48 horas.</strong>`,"vermelho")}${p.valor?infoCard([{rotulo:"Valor",valor:p.valor,grande:true,notaPequena:true},{rotulo:"IBAN",valor:p.iban},{rotulo:"MB WAY",valor:p.mbway}]):""}<p style="color:#64748b;font-size:13px;"><strong>Se já efetuou o pagamento</strong>, pode ignorar esta mensagem.</p>`; return {subject:`Lembrete de pagamento - ${semAcentosAssunto(plataforma)}`,html:render(plataforma,p.logo_url,c)}; }
   return null;
 }
+
+// Proteção de envios: não basta um JWT Supabase válido; é necessário autorizar
+// o remetente, tipo de mensagem e destinatário no servidor.
+// Chamadas internas entre Edge Functions usam o token SERVICE_ROLE já existente.
+// Nunca enviar esta chave ao navegador.
+const TG_EMAIL_ADMIN_TIPOS = new Set(["boas_vindas_equipa", "cancelamento_licenca"]);
+
+function validarEndereco(email) {
+  return typeof email === "string" && email.length <= 254
+    && /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(email);
+}
+
+function linkTotalGestSeguro(raw) {
+  if (!raw) return true;
+  try {
+    const url = new URL(String(raw));
+    const host = url.hostname.toLowerCase();
+    const supaHost = new URL(Deno.env.get("SUPABASE_URL") || "https://invalid.example").hostname.toLowerCase();
+    return url.protocol === "https:" && !url.username && !url.password &&
+      (host === "totalgest.pt" || host === "www.totalgest.pt" ||
+       (host === supaHost && url.pathname.startsWith("/auth/v1/")));
+  } catch (_) { return false; }
+}
+
+async function emailPertenceEmpresa(service, tenant, destinatario) {
+  // Evita confiar no admin_id ou no destinatário enviados pelo browser.
+  const alvo = destinatario.trim().toLowerCase();
+  const { data: admin, error: erroAdmin } = await service.from("administradores")
+    .select("email").eq("id", tenant).maybeSingle();
+  if (erroAdmin) throw erroAdmin;
+  if (String(admin?.email || "").trim().toLowerCase() === alvo) return true;
+  for (const tabela of ["funcionarios", "encarregados", "clientes"]) {
+    const { data, error } = await service.from(tabela)
+      .select("id").eq("admin_id", tenant).ilike("email", alvo.replace(/[\\%_]/g, "\\Deno.serve(async (req) => {")).limit(1);
+    if (error) throw error;
+    if (data?.length) return true;
+  }
+  return false;
+}
+
+async function autorizarEnvio(req, body) {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!supabaseUrl || !serviceKey) return { status: 503, erro: "Serviço de email indisponível." };
+  const token = /^Bearer\s+(.+)$/i.exec(req.headers.get("authorization") || "")?.[1]?.trim();
+  if (!token) return { status: 401, erro: "Autenticação necessária." };
+
+  // Fluxos de criação de contas, recuperação e notificações de sistema são
+  // enviados exclusivamente por funções internas autenticadas com service_role.
+  if (token === serviceKey) return { ok: true };
+
+  const anon = Deno.env.get("SUPABASE_ANON_KEY");
+  if (!anon) return { status: 503, erro: "Autenticação de email indisponível." };
+  const authClient = createClient(supabaseUrl, anon, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+  const { data: authData, error: authError } = await authClient.auth.getUser(token);
+  if (authError || !authData?.user?.id) return { status: 401, erro: "Sessão inválida." };
+
+  const service = createClient(supabaseUrl, serviceKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+  const { data: perfil, error: erroPerfil } = await service.from("perfis")
+    .select("papel, admin_id, registo_id").eq("id", authData.user.id).maybeSingle();
+  if (erroPerfil) throw erroPerfil;
+  if (!perfil) return { status: 403, erro: "Acesso não autorizado." };
+
+  // Super Admin pode realizar notificações administrativas. Para os restantes
+  // gestores, apenas templates operacionais e destinatários da própria empresa.
+  if (perfil.papel === "superadmin") return { ok: true };
+  if (!["admin", "subadmin"].includes(perfil.papel) || !TG_EMAIL_ADMIN_TIPOS.has(body.tipo)) {
+    return { status: 403, erro: "Tipo de mensagem não autorizado." };
+  }
+  const tenant = perfil.papel === "admin" ? perfil.registo_id : perfil.admin_id;
+  if (!tenant || !await emailPertenceEmpresa(service, tenant, body.to_email)) {
+    return { status: 403, erro: "Destinatário fora da empresa." };
+  }
+  return { ok: true };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  if (req.method !== "POST") return json({ erro: "Método não permitido." }, 405);
   try {
-    const GMAIL_USER=Deno.env.get("GMAIL_USER"), GMAIL_APP_PASSWORD=Deno.env.get("GMAIL_APP_PASSWORD");
-    if (!GMAIL_USER || !GMAIL_APP_PASSWORD) return json({erro:"GMAIL_USER / GMAIL_APP_PASSWORD não configurados nos secrets da função."},500);
-    const body=await req.json().catch(()=>({})); const {tipo,to_email}=body;
-    if (!tipo || !to_email) return json({erro:"Faltam dados (tipo, to_email)."},400);
+    const tamanho = Number(req.headers.get("content-length") || 0);
+    if (tamanho > 65536) return json({ erro: "Pedido demasiado grande." }, 413);
+    const raw = await req.text();
+    if (raw.length > 65536) return json({ erro: "Pedido demasiado grande." }, 413);
+    let body;
+    try { body = JSON.parse(raw); } catch (_) { return json({ erro: "JSON inválido." }, 400); }
+    if (!body || typeof body !== "object" || Array.isArray(body)) return json({ erro: "Pedido inválido." }, 400);
+    const { tipo, to_email } = body;
+    if (typeof tipo !== "string" || !validarEndereco(to_email)) return json({ erro: "Tipo ou destinatário inválido." }, 400);
+    if (!linkTotalGestSeguro(body.link_confirmacao) || !linkTotalGestSeguro(body.link_renovacao)) {
+      return json({ erro: "Link de ação não autorizado." }, 400);
+    }
+    const acesso = await autorizarEnvio(req, body);
+    if (!acesso.ok) return json({ erro: acesso.erro }, acesso.status);
+    const GMAIL_USER = Deno.env.get("GMAIL_USER"), GMAIL_APP_PASSWORD = Deno.env.get("GMAIL_APP_PASSWORD");
+    if (!GMAIL_USER || !GMAIL_APP_PASSWORD) return json({ erro: "Serviço de email indisponível." }, 503);
     if (tipo==="pagamento" || tipo==="lembrete_pagamento") { try { const SUPABASE_URL=Deno.env.get("SUPABASE_URL"), SERVICE_KEY=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"); const service=createClient(SUPABASE_URL,SERVICE_KEY); const {data}=await service.from("administradores").select("dados_bancarios").eq("id","superadmin").maybeSingle(); const db=data?.dados_bancarios||{}; Object.assign(body,{titular:db.titular||"",iban:db.iban||"(a definir)",banco:db.banco||"",swift:db.swift||"",mbway:db.mbway||"",instrucoes:db.instrucoes||""}); } catch(e){ console.error("Erro ao buscar dados bancários:",e); } }
     const email=montarEmail(tipo,body); if (!email) return json({erro:"Tipo de email desconhecido: "+tipo},400);
     const client=new SMTPClient({connection:{hostname:"smtp.gmail.com",port:465,tls:true,auth:{username:GMAIL_USER,password:GMAIL_APP_PASSWORD}}});
