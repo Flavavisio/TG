@@ -2,7 +2,7 @@ const fs = require('node:fs'), path = require('node:path'), assert = require('no
 const { chromium } = require('playwright');
 const root = process.cwd();
 const fixture = '<div class="form-group orc-linha-produto"><input id="text" style="font-size:12px" value="Rascunho"><textarea id="notes" style="font-size:13px">Notas</textarea><select id="choice" style="font-size:14px"><option>Opção</option></select><div id="editable" contenteditable="true" style="font-size:12px">Texto editável</div><button id="button" style="font-size:12px">Guardar</button></div>';
-const pages = ['index.html', 'login.html', 'TOTALGEST_CRM.html', 'TOTALGEST_ASSIST.html', 'TOTALGEST_RONDAS.html', 'TOTALGEST CRM.html'];
+const pages = ['index.html', 'login.html', 'TOTALGEST_CRM.html', 'TOTALGEST_ASSIST.html', 'TOTALGEST_RONDAS.html', 'TOTALGEST CRM.html', 'equip.html', 'redefinir-password.html'];
 (async () => {
  const browser = await chromium.launch({headless:true, executablePath:process.env.CHROMIUM_BINARY, args:['--no-sandbox','--disable-dev-shm-usage','--disable-gpu']});
  try {
@@ -60,6 +60,6 @@ const pages = ['index.html', 'login.html', 'TOTALGEST_CRM.html', 'TOTALGEST_ASSI
    assert.equal(await frame.locator('#report').inputValue(),'Relatório em curso');
    await context.close();
   }
-  console.log('PASS: six app/module pages on mobile and desktop, wide touch screens, dynamic and nested report frames, preserved drafts/zoom/print typography.');
+  console.log('PASS: eight app/module pages on mobile and desktop, wide touch screens, dynamic and nested report frames, preserved drafts/zoom/print typography.');
  } finally {await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1});

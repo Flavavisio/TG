@@ -25,7 +25,7 @@ test('both entry points and the current push module are covered by the service w
 
 test('form sizing is available in both shells, standalone modules and the offline cache',()=>{
  const worker=fs.readFileSync(path.join(root,'sw.js'),'utf8');
- const modules=['TOTALGEST_CRM.html','TOTALGEST_ASSIST.html','TOTALGEST_RONDAS.html','TOTALGEST CRM.html'];
+ const modules=['TOTALGEST_CRM.html','TOTALGEST_ASSIST.html','TOTALGEST_RONDAS.html','TOTALGEST CRM.html','equip.html','redefinir-password.html'];
  for(const html of [...files,...modules.map(p=>fs.readFileSync(path.join(root,p),'utf8'))]){
   const css=html.match(/href="(tg-form-focus\.css\?[^"]+)"/)[1];
   const js=html.match(/src="(tg-form-focus\.js\?[^"]+)"/)[1];
