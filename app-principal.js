@@ -3183,9 +3183,9 @@
                     ${!aberto
                         ? `<button type="button" class="tgq-acao-btn" style="background:#16a34a;" onclick="_quiosqueAgendaPicar('entrada')"><i class="fas fa-sign-in-alt"></i> Dar Entrada</button>`
                         : `
-                        <button type="button" class="tgq-acao-btn" style="background:#f59e0b;" onclick="_quiosqueAgendaPicar('almoco')"><i class="fas fa-utensils"></i> Ir Almoçar</button>
-                        <button type="button" class="tgq-acao-btn" style="background:#dc2626;" onclick="_quiosqueAgendaPicar('terminar_hoje')"><i class="fas fa-sign-out-alt"></i> Terminar por Hoje</button>
-                        ${ehResponsavel ? `<button type="button" class="tgq-acao-btn" style="background:#7c3aed;" onclick="_quiosqueAgendaPicar('terminar_servico')"><i class="fas fa-flag-checkered"></i> Terminar ${s.tipo === 'servico' ? 'OS' : 'Obra'}</button>` : ''}
+                        <button type="button" class="tgq-acao-btn" style="background:#f59e0b;" onclick="_quiosqueAgendaPicar('almoco')"><i class="fas fa-utensils"></i> Sair para almoço</button>
+                        <button type="button" class="tgq-acao-btn" style="background:#dc2626;" onclick="_quiosqueAgendaPicar('terminar_hoje')"><i class="fas fa-sign-out-alt"></i> Saída de Obra / OS<small style="display:block;font-size:.78rem;font-weight:400;margin-top:4px;">A obra / OS fica por concluir.</small></button>
+                        ${ehResponsavel ? `<button type="button" class="tgq-acao-btn" style="background:#7c3aed;" onclick="_quiosqueAgendaPicar('terminar_servico')"><i class="fas fa-flag-checkered"></i> Concluir Obra / OS</button>` : ''}
                         `}
                     <button type="button" class="tgq-acao-btn" style="background:#64748b;" onclick="_quiosqueAgendaGrid()">Cancelar</button>
                 </div>
@@ -14694,7 +14694,7 @@
                 await _obraLongaRegistarSaida(obraId);
                 return;
             }
-            const resposta = await perguntarSaidaObra('Saída da obra "' + obra.nome + '" às ' + hora + '.\n\nO que aconteceu?');
+            const resposta = await perguntarSaidaObra('Saída da obra "' + obra.nome + '" às ' + hora + '.\n\nO que pretendes fazer?');
             if (resposta == null) return; // cancelou
             const _saidaConfirmada = await _obraLongaRegistarSaida(obraId); // fecha sempre a própria entrada, seja qual for a resposta
             if (!_saidaConfirmada) return; // já foi avisado do problema — não avança com o resto do fluxo
@@ -14740,9 +14740,9 @@
                 document.getElementById('modalGenericoCampos').innerHTML = `
                     <p style="white-space:pre-line;margin-bottom:14px;">${escapeHtmlSimples(texto)}</p>
                     <div style="display:flex;flex-direction:column;gap:8px;">
-                        <button type="button" class="btn" style="background:#f59e0b;color:#fff;" onclick="_responderSaidaObraLonga('almoco')"><i class="fas fa-utensils"></i> Pausa para almoço</button>
-                        <button type="button" class="btn" style="background:#0ea5e9;color:#fff;" onclick="_responderSaidaObraLonga('hoje')">Terminado por hoje — vou preencher a folha e materiais</button>
-                        <button type="button" class="btn btn-success" onclick="_responderSaidaObraLonga('sim')">Sim, terminei a obra — preencher folha, relatório e finalizar</button>
+                        <button type="button" class="btn" style="background:#f59e0b;color:#fff;" onclick="_responderSaidaObraLonga('almoco')"><i class="fas fa-utensils"></i> Sair para almoço</button>
+                        <button type="button" class="btn" style="background:#0ea5e9;color:#fff;" onclick="_responderSaidaObraLonga('hoje')">Saída de Obra / OS<small style="display:block;font-size:.78rem;font-weight:400;margin-top:4px;">A obra / OS fica por concluir.</small></button>
+                        <button type="button" class="btn btn-success" onclick="_responderSaidaObraLonga('sim')">Concluir Obra / OS</button>
                     </div>
                 `;
                 document.getElementById('modalGenericoForm').onsubmit = e => e.preventDefault();
@@ -28053,7 +28053,7 @@ async function salvarAdmin(e) {
                 document.getElementById('modalSimNaoNaoBtn').style.display = 'none';
                 document.getElementById('modalSimNaoAlmocoBtn').style.display = 'block';
                 document.getElementById('modalSimNaoHojeBtn').style.display = 'block';
-                document.getElementById('modalSimNaoSimTexto').textContent = 'Sim, terminei a obra e quero finalizar';
+                document.getElementById('modalSimNaoSimTexto').textContent = 'Concluir Obra / OS';
                 document.getElementById('modalSimNaoTexto').textContent = texto;
                 document.getElementById('modalSimNaoOverlay').classList.add('open');
             });
@@ -28229,7 +28229,7 @@ async function salvarAdmin(e) {
                 const _prosseguirSaidaOS = async (kmSai) => {
                 aberto.saida = hora;
                 if (loc) { aberto.latSaida = loc.lat; aberto.lngSaida = loc.lng; }
-                const resposta = await perguntarSaidaObra('Saída picada às ' + hora + '.\n\nTerminaste a obra?');
+                const resposta = await perguntarSaidaObra('Saída da OS às ' + hora + '.\n\nO que pretendes fazer?');
                 if (resposta == null) {
                     // Cancelou (cruz) — desfaz a saída que já tínhamos gravado, como se nunca
                     // tivesse picado nada, para não ficar um registo "a meio" por engano.
@@ -30698,8 +30698,7 @@ window._relPrefill = function(msg){
                 `;
             submitBtn.textContent = 'Criar Folha';
             overlay.classList.add('open');
-            // A assinatura só faz sentido quando a obra está mesmo a terminar. No "Terminado por
-            // hoje" (Stand By) fica escondida — não pesa nem é preciso.
+            // A assinatura só faz sentido quando a obra está mesmo a terminar. Na opção "Saída de Obra / OS" (Stand By) fica escondida — não pesa nem é preciso.
             const _mostraAssinatura = terminou !== false;
             const _assCont = document.getElementById('fo_assinatura_cont');
             if (_assCont) _assCont.style.display = _mostraAssinatura ? '' : 'none';
@@ -30809,7 +30808,7 @@ window._relPrefill = function(msg){
             submitBtn.textContent = 'Criar Folha';
             overlay.classList.add('open');
             // A assinatura só faz sentido quando a obra está mesmo a terminar (relatório final ao
-            // cliente). No "Terminado por hoje" fica escondida — não pesa nem é preciso.
+            // cliente). Na opção "Saída de Obra / OS" fica escondida — não pesa nem é preciso.
             const _mostraAssinatura = !_folhaOSPendente || _folhaOSPendente.terminou !== false;
             const _assCont = document.getElementById('fo_assinatura_cont');
             if (_assCont) _assCont.style.display = _mostraAssinatura ? '' : 'none';
@@ -31395,7 +31394,7 @@ window._relPrefill = function(msg){
             // "a meio" dessa obra/OS, mesmo que o registo de ponto dela esteja tecnicamente fechado.
             const pausaPendente = _pausaAlmocoPendente();
             if (pausaPendente) {
-                alert('A última coisa que registaste foi uma pausa para almoço ' + (pausaPendente.tipo === 'os' ? 'numa OS' : 'numa obra') + ' ("' + pausaPendente.nome + '"). Tens de voltar lá e dar saída a sério (Não / Terminado por hoje / Sim) antes de poderes fechar aqui o Registo de Ponto geral.');
+                alert('A última coisa que registaste foi uma pausa para almoço ' + (pausaPendente.tipo === 'os' ? 'numa OS' : 'numa obra') + ' ("' + pausaPendente.nome + '"). Tens de voltar lá e dar saída a sério (Saída de Obra / OS ou Concluir Obra / OS) antes de poderes fechar aqui o Registo de Ponto geral.');
                 return;
             }
             const aberto = todosAbertos.find(p => !p.servicoId) || pontoAbertoHoje();
