@@ -3184,7 +3184,7 @@
                         ? `<button type="button" class="tgq-acao-btn" style="background:#16a34a;" onclick="_quiosqueAgendaPicar('entrada')"><i class="fas fa-sign-in-alt"></i> Dar Entrada</button>`
                         : `
                         <button type="button" class="tgq-acao-btn" style="background:#f59e0b;" onclick="_quiosqueAgendaPicar('almoco')"><i class="fas fa-utensils"></i> Sair para almoço</button>
-                        <button type="button" class="tgq-acao-btn" style="background:#dc2626;" onclick="_quiosqueAgendaPicar('terminar_hoje')"><i class="fas fa-sign-out-alt"></i> Saída de Obra / OS<small style="display:block;font-size:.78rem;font-weight:400;margin-top:4px;">A obra / OS fica por concluir.</small></button>
+                        <button type="button" class="tgq-acao-btn" style="background:#dc2626;" onclick="_quiosqueAgendaPicar('terminar_hoje')"><i class="fas fa-sign-out-alt"></i> Saída de Obra / OS</button>
                         ${ehResponsavel ? `<button type="button" class="tgq-acao-btn" style="background:#7c3aed;" onclick="_quiosqueAgendaPicar('terminar_servico')"><i class="fas fa-flag-checkered"></i> Concluir Obra / OS</button>` : ''}
                         `}
                     <button type="button" class="tgq-acao-btn" style="background:#64748b;" onclick="_quiosqueAgendaGrid()">Cancelar</button>
@@ -14741,7 +14741,7 @@
                     <p style="white-space:pre-line;margin-bottom:14px;">${escapeHtmlSimples(texto)}</p>
                     <div style="display:flex;flex-direction:column;gap:8px;">
                         <button type="button" class="btn" style="background:#f59e0b;color:#fff;" onclick="_responderSaidaObraLonga('almoco')"><i class="fas fa-utensils"></i> Sair para almoço</button>
-                        <button type="button" class="btn" style="background:#0ea5e9;color:#fff;" onclick="_responderSaidaObraLonga('hoje')">Saída de Obra / OS<small style="display:block;font-size:.78rem;font-weight:400;margin-top:4px;">A obra / OS fica por concluir.</small></button>
+                        <button type="button" class="btn" style="background:#0ea5e9;color:#fff;" onclick="_responderSaidaObraLonga('hoje')">Saída de Obra / OS</button>
                         <button type="button" class="btn btn-success" onclick="_responderSaidaObraLonga('sim')">Concluir Obra / OS</button>
                     </div>
                 `;
