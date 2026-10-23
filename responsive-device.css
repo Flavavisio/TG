@@ -7,7 +7,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
   #btnZoom{display:none!important}
 }
 /* Login fields can receive focus before the rest of the app finishes loading. */
-#landEmail,#landSenha,#loginEmail,#loginSenha{font-size:16px!important}
+#landEmail,#landSenha,#loginEmail,#loginSenha{font-size:max(16px,var(--tg-form-focus-min,16px))!important}
 @media(max-width:900px){
   .header-left,.header-title,.header .user-info,.form-group{min-width:0}
   .header-title h2{overflow-wrap:anywhere}
