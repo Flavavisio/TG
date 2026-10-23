@@ -14380,13 +14380,11 @@
         }
         function _obraLongaPontoAberto(obraId) {
             if (!usuarioLogado) return null;
-            const hoje = getDataHoje();
-            return (dados.obraPontoLonga || []).find(p => p.funcionarioId === usuarioLogado.id && p.obraId === obraId && p.data === hoje && p.entrada && !p.saida) || null;
+            return (dados.obraPontoLonga || []).find(p => p.funcionarioId === usuarioLogado.id && p.obraId === obraId && p.entrada && !p.saida) || null;
         }
         function _obraLongaPontoAbertoQualquer() {
             if (!usuarioLogado) return null;
-            const hoje = getDataHoje();
-            return (dados.obraPontoLonga || []).find(p => p.funcionarioId === usuarioLogado.id && p.data === hoje && p.entrada && !p.saida) || null;
+            return (dados.obraPontoLonga || []).find(p => p.funcionarioId === usuarioLogado.id && p.entrada && !p.saida) || null;
         }
         function finalizarObraLonga(obraId) {
             const obra0 = (dados.obras || []).find(o => o.id === obraId);
@@ -14687,7 +14685,6 @@
             if (!aberto) { alert('Não tens entrada em aberto nesta obra.'); return; }
             const obra = (dados.obras || []).find(o => o.id === obraId); if (!obra) return;
             const hora = new Date().toTimeString().slice(0, 5);
-            const horasDestaSessao = aberto.entrada ? calcularHoras(aberto.entrada, hora) : 0;
             if (obra.estado === 'concluida') {
                 // A obra já foi finalizada por outra pessoa entretanto — só fecha esta entrada,
                 // sem perguntar nada nem voltar a mexer no estado da obra.
@@ -14782,10 +14779,80 @@
             if (btnCancelar) btnCancelar.style.display = '';
             if (_modalSaidaOuAlmocoResolve) { _modalSaidaOuAlmocoResolve(valor); _modalSaidaOuAlmocoResolve = null; }
         }
+        // Mantém cada intervalo no seu dia civil, sem alterar calcularHoras para
+        // aceitar saídas anteriores à entrada nos restantes registos da aplicação.
+        function _intervalosSaidaObra(aberto, dataSaida, horaSaida) {
+            const inicio = aberto.data + 'T' + aberto.entrada;
+            const fim = dataSaida + 'T' + horaSaida;
+            const agora = getDataHoje() + 'T' + new Date().toTimeString().slice(0, 5);
+            const dataValida = data => /^\d{4}-\d{2}-\d{2}$/.test(data) &&
+                !isNaN(Date.parse(data + 'T00:00:00Z')) && new Date(data + 'T00:00:00Z').toISOString().slice(0, 10) === data;
+            if (!dataValida(aberto.data) || !dataValida(dataSaida) ||
+                !/^([01]\d|2[0-3]):[0-5]\d$/.test(horaSaida) || fim < inicio || fim > agora) {
+                throw new Error('Indica uma saída entre a entrada e a data e hora atuais.');
+            }
+            const partes = [];
+            let dia = aberto.data;
+            let entrada = aberto.entrada;
+            while (dia < dataSaida) {
+                partes.push({ data: dia, entrada, saida: '24:00' });
+                const seguinte = new Date(dia + 'T00:00:00Z');
+                seguinte.setUTCDate(seguinte.getUTCDate() + 1);
+                dia = seguinte.toISOString().slice(0, 10);
+                entrada = '00:00';
+            }
+            if (entrada !== horaSaida || !partes.length) partes.push({ data: dia, entrada, saida: horaSaida });
+            return partes;
+        }
+        function _pedirSaidaObraAnterior(aberto) {
+            return new Promise(resolve => {
+                const overlay = document.createElement('div');
+                overlay.className = 'modal-overlay open';
+                overlay.style.zIndex = '10050';
+                const agora = getDataHoje() + 'T' + new Date().toTimeString().slice(0, 5);
+                overlay.innerHTML = `<form class="modal" role="dialog" aria-modal="true" aria-labelledby="saidaAnteriorTitulo" style="max-width:480px;">
+                    <h3 id="saidaAnteriorTitulo">Fechar entrada de dia anterior</h3>
+                    <p>Esta entrada ficou aberta desde ${escapeHtmlSimples(aberto.data)} às ${escapeHtmlSimples(aberto.entrada)}. Confirma quando saíste. As horas só serão contabilizadas até ao momento indicado.</p>
+                    <div class="form-group"><label for="saidaAnteriorMomento">Data e hora reais de saída</label>
+                    <input id="saidaAnteriorMomento" type="datetime-local" required min="${escapeHtmlSimples(aberto.data + 'T' + aberto.entrada)}" max="${agora}" value="${agora}"></div>
+                    <p class="saida-anterior-erro" role="alert" style="color:#dc2626;"></p>
+                    <div class="modal-actions"><button type="button" class="btn">Cancelar</button><button type="submit" class="btn btn-success">Confirmar saída</button></div>
+                </form>`;
+                const terminar = valor => { document.removeEventListener('keydown', tecla); overlay.remove(); resolve(valor); };
+                const tecla = ev => { if (ev.key === 'Escape') { ev.stopImmediatePropagation(); terminar(null); } };
+                overlay.querySelector('button[type="button"]').onclick = () => terminar(null);
+                overlay.querySelector('form').onsubmit = ev => {
+                    ev.preventDefault();
+                    const [data, hora] = overlay.querySelector('input').value.split('T');
+                    try { _intervalosSaidaObra(aberto, data, hora); }
+                    catch (erro) { overlay.querySelector('.saida-anterior-erro').textContent = erro.message; return; }
+                    terminar({ data, hora });
+                };
+                document.addEventListener('keydown', tecla);
+                document.body.appendChild(overlay);
+                overlay.querySelector('input').focus();
+            });
+        }
         async function _obraLongaRegistarSaida(obraId) {
             const aberto = _obraLongaPontoAberto(obraId);
             if (!aberto) return true;
-            aberto.saida = new Date().toTimeString().slice(0, 5);
+            const momento = aberto.data !== getDataHoje()
+                ? await _pedirSaidaObraAnterior(aberto)
+                : { data: getDataHoje(), hora: new Date().toTimeString().slice(0, 5) };
+            if (!momento) return false;
+            // Uma confirmação concorrente não pode dividir nem fechar a sessão duas vezes.
+            if (aberto.saida || _obraLongaPontoAberto(obraId)?.id !== aberto.id) return false;
+            let partes;
+            try { partes = _intervalosSaidaObra(aberto, momento.data, momento.hora); }
+            catch (e) { alert(e.message); return false; }
+            const novos = partes.slice(1).map((parte, i) => ({
+                id: gerarId(), funcionarioId: aberto.funcionarioId, adminId: aberto.adminId,
+                obraId: aberto.obraId, ...parte,
+                lat: null, lng: null, latSaida: null, lngSaida: null,
+                kmInicio: null, kmFim: i === partes.length - 2 ? aberto.kmFim : null
+            }));
+            aberto.saida = partes[0].saida;
+            if (novos.length) { aberto.kmFim = null; dados.obraPontoLonga.push(...novos); }
             let erro = null;
             _mostrarCarregando('A confirmar saída...');
             try { await guardarDados(dados); } catch (e) { erro = e; } finally { _esconderCarregando(); }
@@ -14794,7 +14861,7 @@
                 alert('⚠️ A saída ficou registada no ecrã, mas ainda NÃO foi confirmada pelo servidor (' + (erro.message || 'falha de ligação') + '). A app vai continuar a tentar sozinha — verifica a tua ligação à internet e confirma mais tarde em "Registo de Ponto" se já ficou certo. Se o aviso persistir, avisa o administrador.');
                 return false;
             }
-            alert('Saída da obra registada e confirmada ✓ às ' + aberto.saida);
+            alert('Saída da obra registada e confirmada ✓ em ' + momento.data + ' às ' + momento.hora);
             _refrescarModalObraLongaSeAberto(obraId);
             return true;
         }
@@ -15538,15 +15605,15 @@
 
         function _botaoPontoObraHTML(obra) {
             if (usuarioLogado?.role !== 'funcionario' && usuarioLogado?.role !== 'encarregado' && usuarioLogado?.role !== 'vendedor' && usuarioLogado?.role !== 'admin' && usuarioLogado?.role !== 'subadmin') return '';
+            const aberto = _obraLongaPontoAberto(obra.id);
+            if (aberto) {
+                return `<button type="button" class="btn btn-sm" style="background:#dc2626;color:#fff;" onclick="event.stopPropagation();obraLongaPicarSaida('${obra.id}')"><i class="fas fa-stop-circle"></i> Saída</button>`;
+            }
             // Admin e sub-admin têm acesso a todas as obras da empresa, mesmo não estando
             // alocados — só funcionário/encarregado/vendedor ficam limitados à obra onde constam.
             if (!['admin', 'subadmin'].includes(usuarioLogado.role)) {
                 const idsAtrib = (obra.responsaveisIds && obra.responsaveisIds.length) ? obra.responsaveisIds : [obra.responsavelId].filter(Boolean);
                 if (idsAtrib.length && !idsAtrib.includes(usuarioLogado.id)) return '';
-            }
-            const aberto = _obraLongaPontoAberto(obra.id);
-            if (aberto) {
-                return `<button type="button" class="btn btn-sm" style="background:#dc2626;color:#fff;" onclick="event.stopPropagation();obraLongaPicarSaida('${obra.id}')"><i class="fas fa-stop-circle"></i> Saída</button>`;
             }
             if (obra.estado === 'concluida') return '';
             return `<button type="button" class="btn btn-sm" style="background:#16a34a;color:#fff;" onclick="event.stopPropagation();obraLongaPicarEntrada('${obra.id}')"><i class="fas fa-fingerprint"></i> Entrada</button>`;
@@ -31377,13 +31444,20 @@ window._relPrefill = function(msg){
             // mesmo tempo (ex: entrada geral às 9h00 + entrada numa OS às 9h30).
             const hojePP = getDataHoje();
             const todosAbertos = (dados.ponto || []).filter(p => p.funcionarioId === usuarioLogado.id && p.data === hojePP && p.entrada && !p.saida);
+            // Os bloqueios abaixo protegem a SAÍDA geral. Uma entrada de obra antiga
+            // não pode impedir o início de um novo dia ou o regresso ao serviço.
+            const aberto = todosAbertos.find(p => !p.servicoId) || pontoAbertoHoje();
+            if (!aberto) {
+                abrirModalEntradaPonto();
+                return;
+            }
             const osAberta = todosAbertos.find(p => p.servicoId);
             if (osAberta) {
                 const osLigada = dados.servicos?.find(s => s.id === osAberta.servicoId);
                 alert('Tens uma entrada aberta na OS' + (osLigada?.numeroRegisto ? ' #' + osLigada.numeroRegisto : '') + (osLigada ? (' — "' + (osLigada.descricao || _nomeClienteOS(osLigada.clienteId)) + '"') : '') + '.\n\nTens de dar saída por lá primeiro (Agenda de Obras), antes de poderes fechar aqui o Registo de Ponto geral.');
                 return;
             }
-            const obraLongaAberta = (dados.obraPontoLonga || []).find(p => p.funcionarioId === usuarioLogado.id && p.entrada && !p.saida);
+            const obraLongaAberta = (dados.obraPontoLonga || []).find(p => p.funcionarioId === usuarioLogado.id && p.data === hojePP && p.entrada && !p.saida);
             if (obraLongaAberta) {
                 const obraLigada = dados.obras?.find(o => o.id === obraLongaAberta.obraId);
                 alert('Tens uma entrada aberta na obra' + (obraLigada ? (' "' + obraLigada.nome + '"') : '') + '.\n\nTens de dar saída por lá primeiro (Obras de Longa Duração), antes de poderes fechar aqui o Registo de Ponto geral.');
@@ -31397,7 +31471,6 @@ window._relPrefill = function(msg){
                 alert('A última coisa que registaste foi uma pausa para almoço ' + (pausaPendente.tipo === 'os' ? 'numa OS' : 'numa obra') + ' ("' + pausaPendente.nome + '"). Tens de voltar lá e dar saída a sério (Saída de Obra / OS ou Concluir Obra / OS) antes de poderes fechar aqui o Registo de Ponto geral.');
                 return;
             }
-            const aberto = todosAbertos.find(p => !p.servicoId) || pontoAbertoHoje();
             if (aberto) {
                 const resposta = await perguntarSaidaOuAlmoco('Vais dar saída às ' + new Date().toTimeString().slice(0, 5) + '.');
                 if (resposta == null) return;
