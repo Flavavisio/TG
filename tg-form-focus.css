@@ -1,0 +1,12 @@
+/* Readable form text prevents mobile browsers from zooming on focus.
+   Screen-only: retain document typography when printing reports. */
+@media screen and (max-width:900px), screen and (any-pointer:coarse) {
+  html body input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]):not([type=hidden]):not([type=button]):not([type=submit]):not([type=reset]):not([type=image]):not([type=file]),
+  html body select,
+  html body textarea,
+  html body [contenteditable="true"],
+  html body [contenteditable="plaintext-only"],
+  html body [contenteditable=""] {
+    font-size:16px!important;
+  }
+}
