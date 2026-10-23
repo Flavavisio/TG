@@ -7,6 +7,17 @@
   html body [contenteditable="true"],
   html body [contenteditable="plaintext-only"],
   html body [contenteditable=""] {
-    font-size:16px!important;
+    font-size:max(16px, var(--tg-form-focus-min, 16px))!important;
   }
+}
+/* Touch devices can use a desktop viewport or a mouse as their primary pointer. */
+@media screen {
+  html body [data-tg-form-focus-sized] {
+    font-size:max(16px, var(--tg-form-focus-min, 16px))!important;
+    /* The readable size must apply on pointerdown, before native focus zoom. */
+    transition-property:border-color, box-shadow, background-color, color!important;
+  }
+}
+@media print {
+  [data-tg-form-focus-sized] { transition:none!important; }
 }

@@ -2,8 +2,46 @@
 (function () {
     'use strict';
     const source = document.currentScript?.src || location.href;
-    const stylesheet = new URL('tg-form-focus.css?v=1.0.0', source).href;
+    const stylesheet = new URL('tg-form-focus.css?v=1.1.0', source).href;
     const documents = new WeakSet();
+    const originalSizes = new WeakMap();
+    const controls = 'input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]):not([type=hidden]):not([type=button]):not([type=submit]):not([type=reset]):not([type=image]):not([type=file]),select,textarea,[contenteditable="true"],[contenteditable="plaintext-only"],[contenteditable=""]';
+
+    function prepareControl(event) {
+        const field = event.target?.closest?.(controls);
+        if (!field || field.disabled || field.readOnly) return;
+        const win = field.ownerDocument.defaultView;
+        if (!win || win.matchMedia('print').matches) return;
+        if (!win.navigator.maxTouchPoints && !win.matchMedia('(max-width:900px), (any-pointer:coarse)').matches) return;
+
+        // 16 CSS pixels alone are insufficient when the page or a container is
+        // reduced. Size the text BEFORE the browser's default tap-to-focus action.
+        // Never change the viewport, prevent the tap, or reset the user's zoom.
+        let scale = 1;
+        let topWindow = win;
+        let node = field;
+        while (node) {
+            const owner = node.ownerDocument.defaultView;
+            const zoom = parseFloat(owner.getComputedStyle(node).zoom);
+            if (zoom > 0) scale *= zoom;
+            if (node.parentElement) node = node.parentElement;
+            else {
+                try { node = owner.frameElement; } catch (_) { node = null; }
+                if (node) topWindow = node.ownerDocument.defaultView;
+            }
+        }
+        const viewport = topWindow.visualViewport;
+        if (viewport) {
+            // Page zoom / fit-to-screen can expose more CSS pixels than the screen.
+            const screenWidth = topWindow.screen.width;
+            const pageScale = screenWidth > 0 && viewport.width > 0 ? screenWidth / viewport.width : 1;
+            scale *= Math.min(1, viewport.scale || 1, pageScale);
+        }
+        if (!originalSizes.has(field)) originalSizes.set(field, parseFloat(win.getComputedStyle(field).fontSize) || 16);
+        const minimum = Math.max(originalSizes.get(field), Math.ceil(16 / Math.min(1, scale) * 100) / 100);
+        field.style.setProperty('--tg-form-focus-min', minimum + 'px');
+        field.setAttribute('data-tg-form-focus-sized', '');
+    }
 
     function prepareFrame(frame) {
         try {
@@ -26,6 +64,10 @@
             if (event.target?.localName === 'iframe') prepareFrame(event.target);
         }, true);
         doc.querySelectorAll('iframe').forEach(prepareFrame);
+        // Delegation also covers materials/hours added after opening a work sheet.
+        doc.addEventListener('pointerdown', prepareControl, true);
+        doc.addEventListener('touchstart', prepareControl, { capture: true, passive: true });
+        doc.addEventListener('focusin', prepareControl, true);
     }
 
     prepare(document);
