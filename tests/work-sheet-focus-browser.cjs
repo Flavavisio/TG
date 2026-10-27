@@ -5,8 +5,8 @@ const functions = ['criarFolhaDaObra', 'criarFolhaDaOS', '_horasBloqueadasHTML',
   .map(name => source.match(new RegExp('        function ' + name + '\\([^]*?\\n        \\}'))[0]).join('\n');
 const shell = `<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="responsive-device.css">
-<link id="tg-form-focus-style" rel="stylesheet" href="tg-form-focus.css?v=1.1.0">
-<script src="tg-form-focus.js?v=1.1.0"></script></head><body>
+<link id="tg-form-focus-style" rel="stylesheet" href="tg-form-focus.css?v=1.2.0">
+<script src="tg-form-focus.js?v=1.2.0"></script></head><body>
 <div class="modal-overlay" id="modalOverlay"><div class="modal"><h3 id="modalTitulo"></h3>
 <form><div id="modalCampos"></div><button id="modalSubmitBtn">Criar Folha</button></form></div></div></body></html>`;
 (async () => {

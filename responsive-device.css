@@ -18,3 +18,8 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
   #tg-signup-card .signup-grid2{grid-template-columns:minmax(0,1fr)}
   #tg-landing .tg-toto-note p{min-width:0}
 }
+
+/* A scaled opening animation makes 16px fields smaller at the first tap. */
+@media screen and (max-width:900px), screen and (any-pointer:coarse){
+ #modalOverlay > .modal,#modalGenericoOverlay > .modal,#modalFolhaObrigOverlay > .modal{animation:none!important}
+}

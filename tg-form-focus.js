@@ -2,7 +2,7 @@
 (function () {
     'use strict';
     const source = document.currentScript?.src || location.href;
-    const stylesheet = new URL('tg-form-focus.css?v=1.1.0', source).href;
+    const stylesheet = new URL('tg-form-focus.css?v=1.2.0', source).href;
     const documents = new WeakSet();
     const originalSizes = new WeakMap();
     const controls = 'input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]):not([type=hidden]):not([type=button]):not([type=submit]):not([type=reset]):not([type=image]):not([type=file]),select,textarea,[contenteditable="true"],[contenteditable="plaintext-only"],[contenteditable=""]';
@@ -39,8 +39,9 @@
         }
         if (!originalSizes.has(field)) originalSizes.set(field, parseFloat(win.getComputedStyle(field).fontSize) || 16);
         const minimum = Math.max(originalSizes.get(field), Math.ceil(16 / Math.min(1, scale) * 100) / 100);
-        field.style.setProperty('--tg-form-focus-min', minimum + 'px');
-        field.setAttribute('data-tg-form-focus-sized', '');
+        const size = minimum + 'px';
+        if (field.style.getPropertyValue('--tg-form-focus-min') !== size) field.style.setProperty('--tg-form-focus-min', size);
+        if (!field.hasAttribute('data-tg-form-focus-sized')) field.setAttribute('data-tg-form-focus-sized', '');
     }
 
     function prepareFrame(frame) {
@@ -59,6 +60,25 @@
             link.href = stylesheet;
             doc.head.appendChild(link);
         }
+        // Prepare inserted fields before the first tap, including the compulsory
+        // exit sheet and material rows. Native iOS focus may precede focusin.
+        let pending = false;
+        const refresh = () => {
+            if (pending) return;
+            pending = true;
+            doc.defaultView.requestAnimationFrame(() => {
+                pending = false;
+                doc.querySelectorAll(controls).forEach(field => prepareControl({target:field}));
+            });
+        };
+        const observer = new doc.defaultView.MutationObserver(records => {
+            if (records.some(r => r.type === 'childList' || !r.target.matches?.(controls))) refresh();
+        });
+        observer.observe(doc.documentElement, {childList:true, subtree:true, attributes:true, attributeFilter:['class','style']});
+        doc.defaultView.addEventListener('resize', refresh);
+        doc.defaultView.visualViewport?.addEventListener('resize', refresh);
+        doc.addEventListener('DOMContentLoaded', refresh, {once:true});
+        refresh();
         // Capture iframe loads, including srcdoc reports created after opening a modal.
         doc.addEventListener('load', event => {
             if (event.target?.localName === 'iframe') prepareFrame(event.target);
