@@ -19,7 +19,7 @@ function exerciseCRM(granted){
  const document={body:{classList:{contains:()=>false},appendChild(n){sections.set(n.id,n);}},getElementById:id=>sections.get(id)||null,querySelector:q=>q.includes('#cardsGrid')?{hidden:false,classList:{contains:()=>!granted}}:null,createElement:el,addEventListener(){}};
  const window={addEventListener(){}};
  const load=new Function('window','document','MutationObserver','setInterval','usuarioLogado','_licencaValidaTenant','adminDoUtilizador','moduloCrmAtivo','moduloAssistAtivo','abrirSecao','irParaInicio','alert','URLSearchParams',source+';return window.TGModules;');
- const app=load(window,document,class{observe(){}},()=>{},{id:'u',role:'admin'},()=>true,()=>({}),()=>true,()=>true,x=>{if(window.TGModules.prepare(x))calls.push(x);},()=>{},m=>messages.push(m),class{toString(){return 'embedded=1';}});
+ const app=load(window,document,class{observe(){}},()=>{},{id:'u',role:'admin'},()=>true,()=>({}),()=>true,()=>true,x=>calls.push(x),()=>{},m=>messages.push(m),class{toString(){return 'embedded=1';}});
  app.open('crm');return {calls,messages,sections};
 }
 test('CRM navigation prepares module for permitted accounts',()=>{
