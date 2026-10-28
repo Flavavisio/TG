@@ -56,73 +56,10 @@
             return `<div data-ct-system="${esc(tipo)}" data-ct-equipment="${esc(e.id)}" data-ct-equipment-name="${esc(name)}" style="border:1px solid #e2e8f0;border-radius:8px;padding:12px;margin-bottom:10px;grid-column:1/-1"><strong>${esc(name)}</strong><div class="ff-secao-body"><div class="form-group"><label>Periodicidade<select data-period ${forced?'disabled':''}>${option(PERIODICIDADE_LABEL,forced?'anual':(p.equipamentoId?p.periodicidade:config.periodicidade) || config.periodicidade || p.periodicidade || read('ct_period') || 'anual')}</select></label></div><div class="form-group"><label>Próxima manutenção<input type="date" data-next value="${esc((p.equipamentoId?p.proximaData:config.proximaData) || config.proximaData || p.proximaData || avancarPeriodicidade(read('ct_inicio') || getDataHoje(),(p.equipamentoId?p.periodicidade:config.periodicidade) || config.periodicidade || p.periodicidade || read('ct_period') || 'anual'))}"></label></div><div class="form-group"><label>Intervenção<select data-intervention ${forced?'disabled':''}>${option({presencial:'Presencial',remota:'Remota'},forced?'presencial':p.intervencao || read('ct_interv') || 'presencial')}</select></label></div><div class="form-group ff-span2"><label>Tarefas de manutenção (uma por linha)<textarea rows="4">${esc((p.tarefas || []).map(t=>t.texto).join('\n'))}</textarea></label></div></div></div>`;
         }).join('') || '<p class="help-text">Seleciona primeiro os equipamentos abrangidos.</p>';
     }
-    // Works with the current hidden customer ID and the older select form.
-    function openCustomerPicker(){
-        const field=document.getElementById('ct_cliente');
-        const actor=()=>JSON.stringify([usuarioLogado?.adminId || usuarioLogado?.id,usuarioLogado?.id]);
-        const owner=actor(),tenant=usuarioLogado?.adminId || usuarioLogado?.id;
-        const permitted=()=>field?.isConnected && document.getElementById('ct_cliente')===field && actor()===owner && manager(editing || draftContract()) && (typeof _licencaValidaTenant!=='function' || _licencaValidaTenant());
-        if(!permitted())return;
-        document.getElementById('ct-client-picker')?.remove();
-        const customers=()=> (dados.clientes || []).filter(c=>c.adminId===tenant && !c.apagadoSuperAdmin);
-        const scoped=new Map(customers().map(c=>[c.id,c]));
-        const options=field.tagName==='SELECT'
-            ? [...field.options].filter(o=>o.value && !o.disabled && scoped.has(o.value)).map(o=>({value:o.value,label:o.textContent.trim()}))
-            : customers().map(c=>({value:c.id,label:_clienteLabel(c)}));
-        options.sort((a,b)=>a.label.localeCompare(b.label,'pt',{numeric:true}));
-        const dlg=document.createElement('dialog');dlg.id='ct-client-picker';
-        dlg.setAttribute('aria-label','Selecionar cliente');
-        dlg.style.cssText='position:fixed;inset:0;margin:auto;width:min(94vw,600px);box-sizing:border-box;max-height:85vh;overflow-y:auto;border:1px solid #d7e2ef;border-radius:16px;padding:18px;background:#fff;color:#162a45;box-shadow:0 28px 90px #0005;z-index:2147483647;';
-        const title=document.createElement('h3');title.textContent='Selecionar cliente';title.style.margin='0 0 14px';
-        const search=document.createElement('input');search.type='search';search.placeholder='Pesquisar por nome ou número de cliente…';search.setAttribute('aria-label','Pesquisar clientes');
-        search.style.cssText='box-sizing:border-box;width:100%;padding:12px;border:1px solid #b7c8dd;border-radius:9px;margin-bottom:10px';
-        const countLabel=document.createElement('p');countLabel.setAttribute('role','status');countLabel.style.cssText='margin:0 0 10px;font-size:.85rem';
-        const list=document.createElement('div');list.style.cssText='max-height:55vh;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;display:flex;flex-direction:column;gap:4px';
-        const footer=document.createElement('button');footer.type='button';footer.textContent='Fechar';footer.className='btn btn-outline';footer.style.marginTop='12px';
-        footer.onclick=()=>dlg.close();
-        dlg.append(title,search,countLabel,list,footer);
-        function render(){
-            if(!permitted()){dlg.close();return;}
-            const query=search.value.trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
-            list.replaceChildren();let count=0;
-            for(const o of options){
-                if(query&&!o.label.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().includes(query))continue;
-                count++;
-                const btn=document.createElement('button');btn.type='button';
-                btn.textContent=o.label;btn.style.cssText='display:block;width:100%;text-align:left;padding:12px;border:1px solid #e0e7ef;border-radius:8px;background:'+(o.value===field.value?'#e9f2ff':'#fff')+';color:#172842;cursor:pointer';
-                btn.onclick=()=>{
-                    if(!permitted() || !customers().some(c=>c.id===o.value)){dlg.close();return;}
-                    field.value=o.value;
-                    const input=document.getElementById('ct_cliente_busca');
-                    if(input){input.value=o.label;input.dataset.selecionadoLabel=o.label;}
-                    const dropdown=document.getElementById('ct_cliente_busca_dd');if(dropdown)dropdown.style.display='none';
-                    if(field.tagName!=='SELECT' && typeof onClienteContratoChange==='function')onClienteContratoChange();
-                    field.dispatchEvent(new Event('change',{bubbles:true}));
-                    dlg.close();
-                };
-                list.appendChild(btn);
-            }
-            countLabel.textContent=count+' cliente'+(count===1?'':'s');
-            if(!count){const empty=document.createElement('p');empty.textContent='Nenhum cliente encontrado.';list.appendChild(empty);}
-        }
-        search.addEventListener('input',render);
-        dlg.addEventListener('close',()=>{dlg.remove();if(permitted())document.getElementById('ct-client-open')?.focus();},{once:true});
-        document.body.appendChild(dlg);render();dlg.showModal();search.focus();
-    }
-    function mountCustomerPicker(){
-        const select=document.getElementById('ct_cliente');
-        if(!select || document.getElementById('ct-client-open'))return;
-        const btn=document.createElement('button');btn.id='ct-client-open';btn.type='button';btn.className='btn btn-outline';
-        btn.textContent='Pesquisar / ver todos os clientes';
-        btn.style.cssText='display:block;margin:10px 0 3px;font-size:.85rem;max-width:100%;background:#fff;color:#152a52;border:1px solid #b7c8dd';
-        btn.onclick=openCustomerPicker;
-        select.insertAdjacentElement('afterend',btn);
-    }
     function mount(c) {
         editing=c || null;draft=JSON.parse(JSON.stringify(obj(c?.gestaoManutencao)));
         draft.plano=(draft.plano || []).map(p=>{const e=(dados.equipamentos || []).find(e=>e.id===p.equipamentoId && e.adminId===c?.adminId);return e?.fichaTecnica?.manutencao?{...p,...e.fichaTecnica.manutencao}:p;});
         const root=document.querySelector('#modalContratoCampos .ff-wrap'); if (!root) return;
-        mountCustomerPicker();
         root.querySelector('#ct_tipos_trabalho_cont')?.closest('.ff-secao')?.remove();
         if(_contratoLocalIds(c || {}).length>1)root.querySelector('#ct_cobertura')?.insertAdjacentHTML('afterend','<p class="help-text">Este contrato antigo abrangia várias instalações. Para guardar, escolhe uma instalação e mantém apenas os equipamentos dessa instalação. O histórico anterior é preservado.</p>');
         const srv=obj(draft.servicos),com=obj(draft.comercial);
@@ -146,23 +83,6 @@
             input('ct_aviso','Antecedência do aviso de renovação (dias)',com.avisoDias ?? 30,'number')+
             textarea('ct_com_notas','Condições de renovação e pagamento',com.notas)+
             '<p class="form-group ff-span2 help-text">As condições ficam registadas no contrato. A renovação e a emissão de faturas são confirmadas pelo administrador.</p>'));
-        // O responsável é selecionado por intervenção/OS. Os campos legados ficam no
-        // DOM, para preservar dados históricos e não alterar o contrato ao guardar.
-        for(const label of root.querySelectorAll('label')){
-            const text=(label.textContent || '').trim().toLocaleLowerCase('pt-PT');
-            if(/^técnico responsável\b/.test(text) || /^tecnico responsavel\b/.test(text)){
-                const field=label.closest('.form-group') || label;
-                field.hidden=true;field.style.display='none';
-            }
-        }
-        const validade=root.querySelector('#ct_validade');
-        if(validade){
-            const field=validade.closest('.form-group') || validade.closest('label');
-            if(field){field.hidden=true;field.style.display='none';}
-        }
-        for(const heading of root.querySelectorAll('.ff-secao-head')){
-            heading.textContent=heading.textContent.replace(/periodicidade e responsável/i,'Periodicidade de manutenção');
-        }
         // Existing fields stay in their original sections; tabs simply organize the complete form.
         const sections=[...root.querySelectorAll(':scope > .ff-secao')];
         sections.forEach(s=>s.dataset.contractTab=s.querySelector('#ct_local')?'cobertura':s.querySelector('#ct_period') || s.id==='ct_plano_extra'?'plano':'resumo');
@@ -297,107 +217,6 @@
         }
         return incomplete;
     }
-    // Yearly contract visits: a maintenance register linked to one OS counts as one visit,
-    // even when several equipment/system plans were completed at that visit.
-    function yearlyVisits(c,year=new Date().getFullYear()) {
-        if(!c || !Number.isInteger(Number(year)) || Number(year)<2000 || Number(year)>2200)return null;
-        const tenant=c.adminId,yr=String(year);
-        const n=c.gestaoManutencao?.servicos?.visitasAno;
-        const planned=n==null || n==='' ? null : (Number.isInteger(Number(n)) && Number(n)>=0 ? Number(n) : null);
-        const records=(dados.registosManutencao || []).filter(r=>
-            r.adminId===tenant && r.contratoId===c.id &&
-            /^\d{4}-\d{2}-\d{2}/.test(String(r.dataRealizacao||'')) &&
-            String(r.dataRealizacao).slice(0,4)===yr
-        );
-        const unique=new Map();
-        for(const r of records) {
-            // Do not collapse separate manual visits on the same day.
-            const key=r.servicoId ? 'os:'+r.servicoId : (r.id ? 'reg:'+r.id : 'legacy:'+records.indexOf(r));
-            if(!unique.has(key))unique.set(key,r);
-        }
-        const completed=unique.size;
-        return {year:Number(year),planned,completed,remaining:planned===null?null:Math.max(0,planned-completed),
-            excess:planned===null?null:Math.max(0,completed-planned),known:planned!==null,
-            records:[...unique.values()]};
-    }
-    function yearlyVisitsHTML(c,year=new Date().getFullYear()) {
-        const v=yearlyVisits(c,year);if(!v)return '';
-        const pct=v.planned>0?Math.min(100,Math.round(v.completed/v.planned*100)):0;
-        return '<section class="ct-year-visits" style="padding:14px;border:1px solid #dce5f1;border-radius:12px;margin:12px 0;background:#f8fafc">'+
-            '<strong>Visitas de manutenção — '+esc(v.year)+'</strong>'+
-            '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:10px">'+
-            '<span>Previstas: <b>'+esc(v.planned===null?'Não definido':v.planned)+'</b></span>'+
-            '<span>Realizadas: <b>'+esc(v.completed)+'</b></span>'+
-            '<span>Por realizar: <b>'+esc(v.remaining===null?'—':v.remaining)+'</b></span></div>'+
-            (v.planned>0?'<div role="progressbar" aria-valuenow="'+esc(Math.min(v.completed,v.planned))+'" aria-valuemin="0" aria-valuemax="'+esc(v.planned)+'" style="height:7px;border-radius:6px;background:#dfe7f2;margin-top:10px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:#2860a6"></div></div>':'')+
-            (v.excess>0?'<p class="help-text">Visitas adicionais: '+esc(v.excess)+'</p>':'')+
-            '<p class="help-text">Contagem baseada nos registos de manutenção concluídos deste contrato. Não inclui OS sem manutenção confirmada; registos antigos sem ligação à OS podem precisar de conferência.</p></section>';
-    }
-    // Read-only annual calendar: completed events from confirmed maintenance logs;
-    // future events from existing next-maintenance calculations (not fabricated yearly dates).
-    function annualCalendar(c,year=new Date().getFullYear()) {
-        if(!c || !Number.isInteger(Number(year)) || year<2000 || year>2200)return [];
-        const y=String(year),events=[],seen=new Set(),first=y+'-01-01',last=y+'-12-31';
-        for(const row of (dados.registosManutencao||[])) {
-            if(row.adminId!==c.adminId || row.contratoId!==c.id || !String(row.dataRealizacao||'').startsWith(y+'-'))continue;
-            const key=row.servicoId?'os:'+row.servicoId:(row.id?'reg:'+row.id:'legacy:'+((dados.registosManutencao||[]).indexOf(row)));
-            if(seen.has(key))continue;seen.add(key);
-            events.push({date:String(row.dataRealizacao).slice(0,10),type:'feito',label:'Manutenção realizada',osId:row.servicoId||null,key});
-        }
-        // Project future occurrences only for equipment with an explicit, valid periodicity.
-        // These are indicative and NEVER create duplicate work orders.
-        for(const row of schedule(c)){
-            if(!row.data || !row.plan?.periodicidade)continue;
-            let current=String(row.data).slice(0,10),iterations=0;
-            if(!/^\d{4}-\d{2}-\d{2}$/.test(current))continue;
-            while(current<first && iterations++<500){
-                const next=avancarPeriodicidade(current,row.plan.periodicidade);
-                if(!next || next<=current)break;current=next;
-            }
-            while(current<=last && iterations++<500){
-                if(current>=first) {
-                    // Match a confirmed visit in a narrow window to avoid a false overdue
-                    // warning when the technician attended a few days early or late.
-                    // Without system identity we cannot safely clear an equipment visit.
-                    const plannedDay=Date.parse(current+'T12:00:00Z');
-                    const alreadyDone=(dados.registosManutencao||[]).some(reg=>{
-                        if(reg.adminId!==c.adminId || reg.contratoId!==c.id)return false;
-                        if(!Array.isArray(reg.sistemasIds) || !reg.sistemasIds.length)return false;
-                        if(!reg.sistemasIds.includes(row.plan.id) &&
-                           !(row.plan.origemSistemaId && reg.sistemasIds.includes(row.plan.origemSistemaId)))return false;
-                        if(recordLocation(reg,c)!==(row.localId||''))return false;
-                        const actualDay=Date.parse(String(reg.dataRealizacao||'').slice(0,10)+'T12:00:00Z');
-                        return Number.isFinite(actualDay) && Math.abs(actualDay-plannedDay)<=14*86400000;
-                    });
-                    if(!alreadyDone)events.push({date:current,type:current<getDataHoje()?'atraso':'previsto',
-                    label:planLabel(row.plan)+' — '+(row.localNome||'Instalação'),osId:null,
-                    key:'plan:'+c.id+':'+(row.localId||'')+':'+row.plan.id+':'+current});
-                }
-                const next=avancarPeriodicidade(current,row.plan.periodicidade);
-                if(!next || next<=current)break;current=next;
-            }
-        }
-        return events.sort((a,b)=>a.date.localeCompare(b.date));
-    }
-    function annualCalendarHTML(c,year=new Date().getFullYear()) {
-        const events=annualCalendar(c,year);
-        const months=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-        return '<div class="ct-annual-calendar"><h4>Calendário de visitas — '+esc(year)+'</h4>'+
-        '<p class="help-text">Mostra as visitas concluídas e as ocorrências futuras previstas pela periodicidade de cada equipamento. Previsões não são agendamentos nem criam OS; confirma o planeamento antes de atribuir técnicos.</p>'+
-        '<div class="ct-month-grid">'+months.map((name,i)=>{
-            const rows=events.filter(e=>Number(e.date.slice(5,7))===i+1);
-            return '<section class="ct-month"><strong>'+name+'</strong>'+
-                (rows.length?rows.map(e=>'<div class="ct-month-event ct-event-'+esc(e.type)+'"><span>'+esc(e.date.slice(8,10))+' — '+esc(e.label)+'</span>'+
-                    (e.osId?'<button class="btn btn-sm btn-outline" type="button" data-contract-os="'+esc(e.osId)+'">OS</button>':'')+'</div>').join(''):'<small>Sem visitas registadas ou previstas</small>')+'</section>';
-        }).join('')+'</div></div>';
-    }
-    function contractWarning(c,today=getDataHoje()){
-        if(!c)return null;
-        const dueDates=schedule(c).filter(x=>x.data && x.data<today).map(x=>x.data);
-        if(dueDates.length)return {type:'late',text:dueDates.length+' manutenção(ões) com data ultrapassada'};
-        const upcoming=schedule(c).filter(x=>x.data && x.data>=today && x.data<=new Date(new Date(today+'T12:00:00').getTime()+30*86400000).toISOString().slice(0,10));
-        return upcoming.length?{type:'soon',text:upcoming.length+' manutenção(ões) nos próximos 30 dias'}:null;
-    }
     function historyHTML(c,incomplete) {
         const orders=(dados.servicos || []).filter(os=>os.adminId===c.adminId && os.clienteId===c.clienteId && os.contratoId===c.id && !os.apagadoSuperAdmin).sort((a,b)=>String(b.data).localeCompare(String(a.data)));
         const orderIds=new Set(orders.map(os=>os.id));
@@ -406,7 +225,7 @@
         const sheetButtons=list=>list.map(f=>`<div class="help-text">${esc(f.data)} · ${esc(f.descricao || 'Folha de obra')} <button type="button" class="btn btn-sm btn-outline" data-contract-sheet="${esc(f.id)}">Folha de obra</button> <button type="button" class="btn btn-sm btn-outline" data-contract-pdf="${esc(f.id)}">PDF</button></div>`).join('');
         const m=typeof _margemContrato==='function'?_margemContrato(c.id):null;
         const margem=m?.nFolhas?'<p class="help-text">Rentabilidade acumulada: valor '+esc(m.valorContrato.toFixed(2))+' € · custos '+esc(m.custoTotal.toFixed(2))+' € · margem '+esc(m.margem.toFixed(2))+' €</p>':'';
-        return yearlyVisitsHTML(c)+annualCalendarHTML(c)+margem+(incomplete?'<p role="status">Não foi possível confirmar todo o histórico. <button type="button" class="btn btn-sm" data-contract-retry>Tentar novamente</button></p>':'')+
+        return margem+(incomplete?'<p role="status">Não foi possível confirmar todo o histórico. <button type="button" class="btn btn-sm" data-contract-retry>Tentar novamente</button></p>':'')+
             `<p class="help-text">${orders.length} OS · ${sheets.length} folhas de obra originais · ${regs.length} manutenções registadas</p>`+
             orders.map(os=>`<article style="padding:12px;border-bottom:1px solid #e2e8f0"><strong>OS ${esc(os.numeroRegisto || '—')}</strong> · ${esc(os.data)} · ${esc(os.status)} · ${esc((dados.locais || []).find(l=>l.id===os.localId)?.nome || 'Sede')}<p>${esc(os.descricao)}</p><button type="button" class="btn btn-sm btn-outline" data-contract-os="${esc(os.id)}">Ver OS</button>${sheetButtons(sheets.filter(f=>f.servicoId===os.id))}</article>`).join('')+
             (sheets.some(f=>!orderIds.has(f.servicoId))?'<h4>Folhas de manutenção</h4>'+sheetButtons(sheets.filter(f=>!orderIds.has(f.servicoId))):'')+
@@ -516,80 +335,8 @@
         if(!ids.length){alert('Seleciona os sistemas que queres juntar na mesma OS.');return;}
         b.disabled=true;try{await openMaintenance(c,localId,ids);}catch(_){alert('Não foi possível abrir a manutenção. Tenta novamente.');}finally{if(b.isConnected)b.disabled=false;}
     });
-    // Contract-specific visit counters. Never infer contract identity from table position.
-    function decorateContractRows() {
-        const table=document.querySelector('#secao-contratos .tabela-compacta-contratos');
-        if(!table || !usuarioLogado || !moduloContratosAtivo(adminAtual()))return;
-        const tid=usuarioLogado.adminId || usuarioLogado.id;
-        const list=(dados.contratos||[]).filter(c=>c.adminId===tid && !c.apagadoSuperAdmin);
-        const lookup=new Map();
-        for(const c of list){const key=String(c.numero||'').trim();if(key){if(lookup.has(key))lookup.set(key,null);else lookup.set(key,c);}}
-        const head=table.tHead?.rows?.[0];
-        if(head && ![...head.cells].some(th=>/visitas/i.test(th.textContent))){
-            const th=document.createElement('th');th.textContent='Visitas '+new Date().getFullYear();th.dataset.ctYearHead='true';
-            head.insertBefore(th,head.cells[9]||null);
-        }
-        for(const row of table.tBodies[0]?.rows||[]){
-            const cells=[...row.cells],reference=cells[1]?.textContent?.trim();
-            if(!reference || cells.length<12)continue;
-            const contract=lookup.get(reference);
-            let cell=row.querySelector('[data-ct-year-cell]');
-            if(!cell){cell=document.createElement('td');cell.setAttribute('data-ct-year-cell','');row.insertBefore(cell,cells[9]);}
-            const v=contract?yearlyVisits(contract):null;
-            const value=v?(v.known?v.completed+' / '+v.planned:v.completed+' / —'):'—';
-            const sub=v?(v.known?(v.remaining?v.remaining+' em falta':v.excess?v.excess+' extra':'Concluído'):'Meta por definir'):'Confirmar contrato';
-            const warning=contract?contractWarning(contract):null;
-            const signature=value+'|'+sub+'|'+(warning?.text||'');
-            if(cell.dataset.value!==signature){
-                cell.dataset.value=signature;
-                cell.replaceChildren();
-                const strong=document.createElement('strong');strong.textContent=value;cell.appendChild(strong);
-                const small=document.createElement('small');small.textContent=sub;small.style.cssText='display:block;font-size:.72rem;color:#64748b';cell.appendChild(small);
-                if(warning){const note=document.createElement('small');note.textContent=warning.text;note.style.cssText='display:block;font-size:.7rem;color:'+(warning.type==='late'?'#b91c1c':'#a16207');cell.appendChild(note);}
-                if(v?.planned>0){const bar=document.createElement('div');bar.style.cssText='height:4px;margin-top:5px;background:#e5eaf2;border-radius:6px;overflow:hidden';const inner=document.createElement('div');inner.style.cssText='height:100%;background:#2563eb;width:'+Math.min(100,Math.round(v.completed/v.planned*100))+'%';bar.appendChild(inner);cell.appendChild(bar);}
-            }
-        }
-    }
-    let contractTableObserver;
-    function watchContractRows(){
-        const body=document.getElementById('tabelaContratos');
-        if(!body||contractTableObserver)return;
-        contractTableObserver=new MutationObserver(()=>{contractTableObserver.disconnect();try{decorateContractRows();}finally{contractTableObserver.observe(body,{childList:true,subtree:true});}});
-        contractTableObserver.observe(body,{childList:true,subtree:true});
-        decorateContractRows();
-    }
-    function renderContractAlerts() {
-        const section=document.getElementById('secao-contratos');
-        if(!section || !usuarioLogado || !moduloContratosAtivo(adminAtual())){document.getElementById('ct-contract-alerts')?.remove();return;}
-        const tid=usuarioLogado.adminId||usuarioLogado.id;
-        const all=(dados.contratos||[]).filter(c=>c.adminId===tid&&!c.apagadoSuperAdmin);
-        let root=document.getElementById('ct-contract-alerts');
-        if(!root){root=document.createElement('div');root.id='ct-contract-alerts';root.className='ct-alert-strip';const toolbar=section.querySelector('#ct-contract-toolbar');if(toolbar)toolbar.appendChild(root);else {const table=section.querySelector('.table-wrapper');table?.parentNode.insertBefore(root,table);}}
-        const late=[],soon=[];
-        for(const c of all){const w=contractWarning(c);if(!w)continue;(w.type==='late'?late:soon).push(c);}
-        root.textContent='';
-        const title=document.createElement('strong');title.textContent='Avisos de manutenção';root.appendChild(title);
-        const text=document.createElement('span');text.textContent='  '+late.length+' contrato(s) com manutenção atrasada · '+soon.length+' com manutenção nos próximos 30 dias';root.appendChild(text);
-        const caption=document.createElement('small');caption.textContent=' Alertas internos, calculados quando os dados são atualizados. Não são notificações push.';root.appendChild(caption);
-    }
-    function setupContractSearch(){
-        const section=document.getElementById('secao-contratos'),body=document.getElementById('tabelaContratos');if(!section||!body)return;
-        let search=document.getElementById('ct-fast-search');
-        if(!search){search=document.createElement('input');search.id='ct-fast-search';search.type='search';search.placeholder='Pesquisar contrato, cliente ou instalação';search.setAttribute('aria-label','Pesquisar contratos');search.className='ct-fast-search';const toolbar=section.querySelector('#ct-contract-toolbar');if(toolbar)toolbar.prepend(search);else {const table=section.querySelector('.table-wrapper');table?.parentNode.insertBefore(search,table);}}
-        function filter(){const query=search.value.trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();for(const row of body.rows){const text=row.textContent.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();row.hidden=!!query&&!text.includes(query);}}
-        if(!search.dataset.wired){search.addEventListener('input',filter);search.dataset.wired='true';}
-        filter();
-    }
-    function renderAnnualPortfolio() {
-        document.getElementById('ct-annual-portfolio')?.remove();
-        watchContractRows();
-        decorateContractRows();
-        setupContractSearch();
-        renderContractAlerts();
-    }
-    document.addEventListener('tg:interface-updated',()=>{renderMaintenance();renderAnnualPortfolio();});
+    document.addEventListener('tg:interface-updated',renderMaintenance);
 
-    window.TGContractMaintenance={mount,collect,refreshPlan,plans,schedule,nextDate,due,osPicker,selectedOS,equipmentForOS,recordNext,snapshot,checklist,registerMaintenance,registoPicker,completedTasks,yearlyVisits,yearlyVisitsHTML,annualCalendar,annualCalendarHTML,contractWarning,history,historyHTML,loadHistory,alerts,maintenanceRows,maintenanceHTML,renderMaintenance,pendingOS,availability};
+    window.TGContractMaintenance={mount,collect,refreshPlan,plans,schedule,nextDate,due,osPicker,selectedOS,equipmentForOS,recordNext,snapshot,checklist,registerMaintenance,registoPicker,completedTasks,history,historyHTML,loadHistory,alerts,maintenanceRows,maintenanceHTML,renderMaintenance,pendingOS,availability};
     renderMaintenance();
-    renderAnnualPortfolio();
 })();

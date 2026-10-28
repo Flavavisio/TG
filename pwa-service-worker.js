@@ -17,7 +17,7 @@
                         if (!novoWorker) return;
                         novoWorker.addEventListener('statechange', function () {
                             if (novoWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                void _verificarVersaoEmEspera();
+                                _mostrarAvisoNovaVersao();
                             }
                         });
                     });
@@ -30,17 +30,10 @@
                 });
                 navigator.serviceWorker.addEventListener('message', function (ev) {
                     if (ev.data && ev.data.type === 'SW_UPDATED') {
-                        void _verificarVersaoEmEspera();
+                        _mostrarAvisoNovaVersao();
                     }
                 });
             });
-        }
-        async function _verificarVersaoEmEspera() {
-            try {
-                const reg = await navigator.serviceWorker.getRegistration();
-                // SW_UPDATED also arrives after activation. An active version is already installed.
-                if (reg?.waiting && navigator.serviceWorker.controller) _mostrarAvisoNovaVersao();
-            } catch (_) {}
         }
         let _avisoNovaVersaoMostrado = false;
         function _mostrarAvisoNovaVersao() {

@@ -262,8 +262,8 @@
         const M = {
             administradores: {
                 tabela: 'administradores',
-                from: r => ({ id: r.id, nome: r.nome, email: r.email, empresa: r.empresa || '', nif: r.nif || null, logo: r.logo || null, licencaFeedback: r.licenca_feedback || null, contratosPlano: r.contratos_plano || null, contratosExpiracao: isoToMs(r.contratos_expiracao), frotaPlano: r.frota_plano || null, frotaExpiracao: isoToMs(r.frota_expiracao), armazemPlano: r.armazem_plano || null, armazemExpiracao: isoToMs(r.armazem_expiracao), portalPlano: r.portal_plano || null, portalExpiracao: isoToMs(r.portal_expiracao), crmPlano: r.crm_plano || null, crmExpiracao: isoToMs(r.crm_expiracao), assistPlano: r.assist_plano || null, assistExpiracao: isoToMs(r.assist_expiracao), erpPlano: r.erp_plano || null, erpExpiracao: isoToMs(r.erp_expiracao), notificacoesPlano: r.notificacoes_plano || null, notificacoesExpiracao: isoToMs(r.notificacoes_expiracao), dadosBancarios: r.dados_bancarios || null, integracaoFaturacao: r.integracao_faturacao || null, ativo: r.ativo, mudarSenha: r.mudar_senha === true, ultimoLogin: isoToMs(r.ultimo_login), ultimaAtividade: isoToMs(r.ultima_atividade), mostrarEstadoOnline: r.mostrar_estado_online === true, layout: r.layout || null, tiposEquipamento: r.tipos_equipamento || [], logo: r.logo, notificarAprovacao: r.notificar_aprovacao === true, nomeFiscal: r.nome_fiscal || null, numeroRegistoPrevio: r.numero_registo_previo || null, dataRegistoPrevio: r.data_registo_previo || null, numeroAnepc: r.numero_anepc || null, dataAnepc: r.data_anepc || null, anepcValidade: r.anepc_validade || null, registoPrevioValidade: r.registo_previo_validade || null, corCorporativa: r.cor_corporativa || null, favoritos: Array.isArray(r.favoritos) ? r.favoritos : [], ivaPeriodicidade: r.iva_periodicidade || 'mensal', irsPeriodicidade: r.irs_periodicidade || 'semestral', painelTvAtivo: r.painel_tv_ativo === true, descricoesRapidasOS: Array.isArray(r.descricoes_rapidas_os) ? r.descricoes_rapidas_os : ['Instalação', 'Manutenção', 'Visita', 'Formação'], horaEntradaHabitual: r.hora_entrada_habitual || '09:00', toleranciaAtrasoMin: r.tolerancia_atraso_min != null ? r.tolerancia_atraso_min : 15, certificadoraLogo: r.certificadora_logo || null, ehDistribuidor: r.eh_distribuidor === true, distribuidorDesconto: r.distribuidor_desconto != null ? Number(r.distribuidor_desconto) : null, distribuidorId: r.distribuidor_id || null, precoDistribuidorCobrado: r.preco_distribuidor_cobrado != null ? Number(r.preco_distribuidor_cobrado) : null, distribuidorPagamentoPrazo: isoToMs(r.distribuidor_pagamento_prazo), precoFundador: r.preco_fundador === true, obrasAvancadoAtivo: r.obras_avancado_ativo === true, expressAtivo: r.express_ativo === true, obrasChecklistItens: Array.isArray(r.obras_checklist_itens) ? r.obras_checklist_itens : [], checklistEntradaItens: Array.isArray(r.checklist_entrada_itens) ? r.checklist_entrada_itens : [], osModoWizard: r.os_modo_wizard === true, contratoModoWizard: r.contrato_modo_wizard === true, kmPontoGeralAtivo: r.km_ponto_geral_ativo === true, kmPorOsAtivo: r.km_por_os_ativo === true, segurancaAtivo: r.seguranca_ativo === true, segurosAtivo: r.seguros_ativo === true, shstAtivo: r.shst_ativo === true, materiaisEntregaAtivo: r.materiais_entrega_ativo === true, packAtual: r.pack_atual || null, packEscalao: r.pack_escalao || null, packBlocos: r.pack_blocos || 0, areasNegocio: Array.isArray(r.areas_negocio) ? r.areas_negocio : null, onboardingComoTrabalha: Array.isArray(r.onboarding_como_trabalha) ? r.onboarding_como_trabalha : [], modulosAtivos: Array.isArray(r.modulos_ativos) ? r.modulos_ativos : null, onboardingAtividadeConcluido: r.onboarding_atividade_concluido === true, lembretePagamentoEm: isoToMs(r.lembrete_pagamento_em), concelho: r.concelho || null, contratosDemoDias: r.contratos_demo_dias || null, frotaDemoDias: r.frota_demo_dias || null, armazemDemoDias: r.armazem_demo_dias || null, crmDemoDias: r.crm_demo_dias || null, erpDemoDias: r.erp_demo_dias || null, rondasPlano: r.rondas_plano || null, rondasExpiracao: isoToMs(r.rondas_expiracao), rondasDemoDias: r.rondas_demo_dias || null, usoSecoes: r.uso_secoes ? (typeof r.uso_secoes === 'string' ? JSON.parse(r.uso_secoes) : r.uso_secoes) : {}, usoSecoesUltima: isoToMs(r.uso_secoes_ultima), ultimaSincronizacaoMoloniArtigos: isoToMs(r.ultima_sincronizacao_moloni_artigos), licencaFaseAvisada: r.licenca_fase_avisada || null, dataCriacao: isoToMs(r.data_criacao) }),
-                to:   o => ({ id: o.id, nome: o.nome, email: o.email, senha: o.senha, empresa: o.empresa || null, nif: o.nif || null, logo: o.logo || null, licenca_feedback: o.licencaFeedback || null, contratos_plano: o.contratosPlano || null, contratos_expiracao: msToISO(o.contratosExpiracao), frota_plano: o.frotaPlano || null, frota_expiracao: msToISO(o.frotaExpiracao), armazem_plano: o.armazemPlano || null, armazem_expiracao: msToISO(o.armazemExpiracao), portal_plano: o.portalPlano || null, portal_expiracao: msToISO(o.portalExpiracao), crm_plano: o.crmPlano || null, crm_expiracao: msToISO(o.crmExpiracao), assist_plano: o.assistPlano || null, assist_expiracao: msToISO(o.assistExpiracao), erp_plano: o.erpPlano || null, erp_expiracao: msToISO(o.erpExpiracao), notificacoes_plano: o.notificacoesPlano || null, notificacoes_expiracao: msToISO(o.notificacoesExpiracao), dados_bancarios: o.dadosBancarios || null, integracao_faturacao: o.integracaoFaturacao || null, ativo: o.ativo !== false, mudar_senha: o.mudarSenha === true, ultimo_login: o.ultimoLogin ? msToISO(o.ultimoLogin) : null, ultima_atividade: o.ultimaAtividade ? msToISO(o.ultimaAtividade) : null, mostrar_estado_online: o.mostrarEstadoOnline === true, layout: o.layout || null, tipos_equipamento: o.tiposEquipamento || [], logo: o.logo || null, notificar_aprovacao: o.notificarAprovacao === true, nome_fiscal: o.nomeFiscal || null, numero_registo_previo: o.numeroRegistoPrevio || null, data_registo_previo: o.dataRegistoPrevio || null, numero_anepc: o.numeroAnepc || null, data_anepc: o.dataAnepc || null, anepc_validade: o.anepcValidade || null, registo_previo_validade: o.registoPrevioValidade || null, cor_corporativa: o.corCorporativa || null, favoritos: o.favoritos || [], iva_periodicidade: o.ivaPeriodicidade || 'mensal', irs_periodicidade: o.irsPeriodicidade || 'semestral', painel_tv_ativo: o.painelTvAtivo === true, descricoes_rapidas_os: o.descricoesRapidasOS || null, hora_entrada_habitual: o.horaEntradaHabitual || '09:00', tolerancia_atraso_min: o.toleranciaAtrasoMin != null ? o.toleranciaAtrasoMin : 15, certificadora_logo: o.certificadoraLogo || null, eh_distribuidor: o.ehDistribuidor === true, distribuidor_desconto: o.distribuidorDesconto ?? null, distribuidor_id: o.distribuidorId || null, preco_distribuidor_cobrado: o.precoDistribuidorCobrado ?? null, distribuidor_pagamento_prazo: o.distribuidorPagamentoPrazo ? msToISO(o.distribuidorPagamentoPrazo) : null, preco_fundador: o.precoFundador === true, obras_avancado_ativo: o.obrasAvancadoAtivo === true, express_ativo: o.expressAtivo === true, obras_checklist_itens: o.obrasChecklistItens || [], checklist_entrada_itens: o.checklistEntradaItens || [], os_modo_wizard: o.osModoWizard === true, contrato_modo_wizard: o.contratoModoWizard === true, km_ponto_geral_ativo: o.kmPontoGeralAtivo === true, km_por_os_ativo: o.kmPorOsAtivo === true, seguranca_ativo: o.segurancaAtivo === true, seguros_ativo: o.segurosAtivo === true, shst_ativo: o.shstAtivo === true, materiais_entrega_ativo: o.materiaisEntregaAtivo === true, pack_atual: o.packAtual || null, pack_escalao: o.packEscalao || null, pack_blocos: o.packBlocos || 0, areas_negocio: o.areasNegocio || null, onboarding_como_trabalha: o.onboardingComoTrabalha || [], modulos_ativos: o.modulosAtivos || null, onboarding_atividade_concluido: o.onboardingAtividadeConcluido === true, lembrete_pagamento_em: o.lembretePagamentoEm ? msToISO(o.lembretePagamentoEm) : null, concelho: o.concelho || null, contratos_demo_dias: o.contratosDemoDias || null, frota_demo_dias: o.frotaDemoDias || null, armazem_demo_dias: o.armazemDemoDias || null, crm_demo_dias: o.crmDemoDias || null, erp_demo_dias: o.erpDemoDias || null, rondas_plano: o.rondasPlano || null, rondas_expiracao: msToISO(o.rondasExpiracao), rondas_demo_dias: o.rondasDemoDias || null, uso_secoes: JSON.stringify(o.usoSecoes || {}), uso_secoes_ultima: o.usoSecoesUltima ? msToISO(o.usoSecoesUltima) : null, ultima_sincronizacao_moloni_artigos: o.ultimaSincronizacaoMoloniArtigos ? msToISO(o.ultimaSincronizacaoMoloniArtigos) : null, licenca_fase_avisada: o.licencaFaseAvisada || null, data_criacao: msToISO(o.dataCriacao) })
+                from: r => ({ id: r.id, nome: r.nome, email: r.email, empresa: r.empresa || '', nif: r.nif || null, logo: r.logo || null, licencaFeedback: r.licenca_feedback || null, contratosPlano: r.contratos_plano || null, contratosExpiracao: isoToMs(r.contratos_expiracao), frotaPlano: r.frota_plano || null, frotaExpiracao: isoToMs(r.frota_expiracao), armazemPlano: r.armazem_plano || null, armazemExpiracao: isoToMs(r.armazem_expiracao), portalPlano: r.portal_plano || null, portalExpiracao: isoToMs(r.portal_expiracao), crmPlano: r.crm_plano || null, crmExpiracao: isoToMs(r.crm_expiracao), assistPlano: r.assist_plano || null, assistExpiracao: isoToMs(r.assist_expiracao), erpPlano: r.erp_plano || null, erpExpiracao: isoToMs(r.erp_expiracao), notificacoesPlano: r.notificacoes_plano || null, notificacoesExpiracao: isoToMs(r.notificacoes_expiracao), dadosBancarios: r.dados_bancarios || null, integracaoFaturacao: r.integracao_faturacao || null, ativo: r.ativo, mudarSenha: r.mudar_senha === true, ultimoLogin: isoToMs(r.ultimo_login), ultimaAtividade: isoToMs(r.ultima_atividade), mostrarEstadoOnline: r.mostrar_estado_online === true, layout: r.layout || null, tiposEquipamento: r.tipos_equipamento || [], logo: r.logo, notificarAprovacao: r.notificar_aprovacao === true, numeroRegistoPrevio: r.numero_registo_previo || null, dataRegistoPrevio: r.data_registo_previo || null, numeroAnepc: r.numero_anepc || null, dataAnepc: r.data_anepc || null, anepcValidade: r.anepc_validade || null, registoPrevioValidade: r.registo_previo_validade || null, corCorporativa: r.cor_corporativa || null, favoritos: Array.isArray(r.favoritos) ? r.favoritos : [], ivaPeriodicidade: r.iva_periodicidade || 'mensal', irsPeriodicidade: r.irs_periodicidade || 'semestral', painelTvAtivo: r.painel_tv_ativo === true, descricoesRapidasOS: Array.isArray(r.descricoes_rapidas_os) ? r.descricoes_rapidas_os : ['Instalação', 'Manutenção', 'Visita', 'Formação'], horaEntradaHabitual: r.hora_entrada_habitual || '09:00', toleranciaAtrasoMin: r.tolerancia_atraso_min != null ? r.tolerancia_atraso_min : 15, certificadoraLogo: r.certificadora_logo || null, ehDistribuidor: r.eh_distribuidor === true, distribuidorDesconto: r.distribuidor_desconto != null ? Number(r.distribuidor_desconto) : null, distribuidorId: r.distribuidor_id || null, precoDistribuidorCobrado: r.preco_distribuidor_cobrado != null ? Number(r.preco_distribuidor_cobrado) : null, distribuidorPagamentoPrazo: isoToMs(r.distribuidor_pagamento_prazo), precoFundador: r.preco_fundador === true, obrasAvancadoAtivo: r.obras_avancado_ativo === true, expressAtivo: r.express_ativo === true, obrasChecklistItens: Array.isArray(r.obras_checklist_itens) ? r.obras_checklist_itens : [], checklistEntradaItens: Array.isArray(r.checklist_entrada_itens) ? r.checklist_entrada_itens : [], osModoWizard: r.os_modo_wizard === true, contratoModoWizard: r.contrato_modo_wizard === true, kmPontoGeralAtivo: r.km_ponto_geral_ativo === true, kmPorOsAtivo: r.km_por_os_ativo === true, segurancaAtivo: r.seguranca_ativo === true, segurosAtivo: r.seguros_ativo === true, shstAtivo: r.shst_ativo === true, materiaisEntregaAtivo: r.materiais_entrega_ativo === true, packAtual: r.pack_atual || null, packEscalao: r.pack_escalao || null, packBlocos: r.pack_blocos || 0, areasNegocio: Array.isArray(r.areas_negocio) ? r.areas_negocio : null, onboardingComoTrabalha: Array.isArray(r.onboarding_como_trabalha) ? r.onboarding_como_trabalha : [], modulosAtivos: Array.isArray(r.modulos_ativos) ? r.modulos_ativos : null, onboardingAtividadeConcluido: r.onboarding_atividade_concluido === true, lembretePagamentoEm: isoToMs(r.lembrete_pagamento_em), concelho: r.concelho || null, contratosDemoDias: r.contratos_demo_dias || null, frotaDemoDias: r.frota_demo_dias || null, armazemDemoDias: r.armazem_demo_dias || null, crmDemoDias: r.crm_demo_dias || null, erpDemoDias: r.erp_demo_dias || null, rondasPlano: r.rondas_plano || null, rondasExpiracao: isoToMs(r.rondas_expiracao), rondasDemoDias: r.rondas_demo_dias || null, usoSecoes: r.uso_secoes ? (typeof r.uso_secoes === 'string' ? JSON.parse(r.uso_secoes) : r.uso_secoes) : {}, usoSecoesUltima: isoToMs(r.uso_secoes_ultima), ultimaSincronizacaoMoloniArtigos: isoToMs(r.ultima_sincronizacao_moloni_artigos), licencaFaseAvisada: r.licenca_fase_avisada || null, dataCriacao: isoToMs(r.data_criacao) }),
+                to:   o => ({ id: o.id, nome: o.nome, email: o.email, senha: o.senha, empresa: o.empresa || null, nif: o.nif || null, logo: o.logo || null, licenca_feedback: o.licencaFeedback || null, contratos_plano: o.contratosPlano || null, contratos_expiracao: msToISO(o.contratosExpiracao), frota_plano: o.frotaPlano || null, frota_expiracao: msToISO(o.frotaExpiracao), armazem_plano: o.armazemPlano || null, armazem_expiracao: msToISO(o.armazemExpiracao), portal_plano: o.portalPlano || null, portal_expiracao: msToISO(o.portalExpiracao), crm_plano: o.crmPlano || null, crm_expiracao: msToISO(o.crmExpiracao), assist_plano: o.assistPlano || null, assist_expiracao: msToISO(o.assistExpiracao), erp_plano: o.erpPlano || null, erp_expiracao: msToISO(o.erpExpiracao), notificacoes_plano: o.notificacoesPlano || null, notificacoes_expiracao: msToISO(o.notificacoesExpiracao), dados_bancarios: o.dadosBancarios || null, integracao_faturacao: o.integracaoFaturacao || null, ativo: o.ativo !== false, mudar_senha: o.mudarSenha === true, ultimo_login: o.ultimoLogin ? msToISO(o.ultimoLogin) : null, ultima_atividade: o.ultimaAtividade ? msToISO(o.ultimaAtividade) : null, mostrar_estado_online: o.mostrarEstadoOnline === true, layout: o.layout || null, tipos_equipamento: o.tiposEquipamento || [], logo: o.logo || null, notificar_aprovacao: o.notificarAprovacao === true, numero_registo_previo: o.numeroRegistoPrevio || null, data_registo_previo: o.dataRegistoPrevio || null, numero_anepc: o.numeroAnepc || null, data_anepc: o.dataAnepc || null, anepc_validade: o.anepcValidade || null, registo_previo_validade: o.registoPrevioValidade || null, cor_corporativa: o.corCorporativa || null, favoritos: o.favoritos || [], iva_periodicidade: o.ivaPeriodicidade || 'mensal', irs_periodicidade: o.irsPeriodicidade || 'semestral', painel_tv_ativo: o.painelTvAtivo === true, descricoes_rapidas_os: o.descricoesRapidasOS || null, hora_entrada_habitual: o.horaEntradaHabitual || '09:00', tolerancia_atraso_min: o.toleranciaAtrasoMin != null ? o.toleranciaAtrasoMin : 15, certificadora_logo: o.certificadoraLogo || null, eh_distribuidor: o.ehDistribuidor === true, distribuidor_desconto: o.distribuidorDesconto ?? null, distribuidor_id: o.distribuidorId || null, preco_distribuidor_cobrado: o.precoDistribuidorCobrado ?? null, distribuidor_pagamento_prazo: o.distribuidorPagamentoPrazo ? msToISO(o.distribuidorPagamentoPrazo) : null, preco_fundador: o.precoFundador === true, obras_avancado_ativo: o.obrasAvancadoAtivo === true, express_ativo: o.expressAtivo === true, obras_checklist_itens: o.obrasChecklistItens || [], checklist_entrada_itens: o.checklistEntradaItens || [], os_modo_wizard: o.osModoWizard === true, contrato_modo_wizard: o.contratoModoWizard === true, km_ponto_geral_ativo: o.kmPontoGeralAtivo === true, km_por_os_ativo: o.kmPorOsAtivo === true, seguranca_ativo: o.segurancaAtivo === true, seguros_ativo: o.segurosAtivo === true, shst_ativo: o.shstAtivo === true, materiais_entrega_ativo: o.materiaisEntregaAtivo === true, pack_atual: o.packAtual || null, pack_escalao: o.packEscalao || null, pack_blocos: o.packBlocos || 0, areas_negocio: o.areasNegocio || null, onboarding_como_trabalha: o.onboardingComoTrabalha || [], modulos_ativos: o.modulosAtivos || null, onboarding_atividade_concluido: o.onboardingAtividadeConcluido === true, lembrete_pagamento_em: o.lembretePagamentoEm ? msToISO(o.lembretePagamentoEm) : null, concelho: o.concelho || null, contratos_demo_dias: o.contratosDemoDias || null, frota_demo_dias: o.frotaDemoDias || null, armazem_demo_dias: o.armazemDemoDias || null, crm_demo_dias: o.crmDemoDias || null, erp_demo_dias: o.erpDemoDias || null, rondas_plano: o.rondasPlano || null, rondas_expiracao: msToISO(o.rondasExpiracao), rondas_demo_dias: o.rondasDemoDias || null, uso_secoes: JSON.stringify(o.usoSecoes || {}), uso_secoes_ultima: o.usoSecoesUltima ? msToISO(o.usoSecoesUltima) : null, ultima_sincronizacao_moloni_artigos: o.ultimaSincronizacaoMoloniArtigos ? msToISO(o.ultimaSincronizacaoMoloniArtigos) : null, licenca_fase_avisada: o.licencaFaseAvisada || null, data_criacao: msToISO(o.dataCriacao) })
             },
             funcionarios: {
                 tabela: 'funcionarios',
@@ -332,8 +332,8 @@
             },
             folhasObra: {
                 tabela: 'folhas_obra',
-                from: r => ({ id: r.id, servicoId: r.servico_id, contratoId: r.contrato_id, clienteId: r.cliente_id || null, localId: r.local_id || null, obraDescricao: r.obra_descricao, descricao: r.descricao, materiais: r.materiais, horasTrabalhadas: Number(r.horas_trabalhadas) || 0, data: r.data || '', funcionarioId: r.funcionario_id, adminId: r.admin_id, obraId: r.obra_id, assinatura: r.assinatura, assinaturaPath: r.assinatura_path || null, assinaturaNome: r.assinatura_nome, dataAtualizacao: isoToMs(r.data_atualizacao), folhaFinal: r.folha_final === true, origem: r.origem || null, validada: r.validada === true, validadaPor: r.validada_por || null, validadaEm: r.validada_em || null }),
-                to:   o => ({ id: o.id, servico_id: o.servicoId || null, cliente_id: o.clienteId || null, contrato_id: o.contratoId || null, local_id: o.localId || null, obra_descricao: o.obraDescricao || 'Sem descrição', descricao: o.descricao || null, materiais: o.materiais || null, horas_trabalhadas: o.horasTrabalhadas || 0, data: nn(o.data), funcionario_id: o.funcionarioId || null, admin_id: o.adminId, obra_id: o.obraId || null, assinatura: o.assinatura || null, assinatura_path: o.assinaturaPath || null, assinatura_nome: o.assinaturaNome || null, data_atualizacao: msToISO(o.dataAtualizacao), folha_final: o.folhaFinal === true, origem: o.origem || null })
+                from: r => ({ id: r.id, servicoId: r.servico_id, contratoId: r.contrato_id, clienteId: r.cliente_id || null, localId: r.local_id || null, obraDescricao: r.obra_descricao, descricao: r.descricao, materiais: r.materiais, horasTrabalhadas: Number(r.horas_trabalhadas) || 0, data: r.data || '', funcionarioId: r.funcionario_id, adminId: r.admin_id, obraId: r.obra_id, assinatura: r.assinatura, assinaturaPath: r.assinatura_path || null, assinaturaNome: r.assinatura_nome, dataAtualizacao: isoToMs(r.data_atualizacao), folhaFinal: r.folha_final === true, origem: r.origem || null }),
+                to:   o => ({ id: o.id, servico_id: o.servicoId || null, contrato_id: o.contratoId || null, local_id: o.localId || null, obra_descricao: o.obraDescricao || 'Sem descrição', descricao: o.descricao || null, materiais: o.materiais || null, horas_trabalhadas: o.horasTrabalhadas || 0, data: nn(o.data), funcionario_id: o.funcionarioId || null, admin_id: o.adminId, obra_id: o.obraId || null, assinatura: o.assinatura || null, assinatura_path: o.assinaturaPath || null, assinatura_nome: o.assinaturaNome || null, data_atualizacao: msToISO(o.dataAtualizacao), folha_final: o.folhaFinal === true, origem: o.origem || null })
             },
             kmViagens: {
                 tabela: 'km_viagens',
@@ -2556,13 +2556,15 @@
             const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         }
-        function _podeAtivarQuiosque() {
-            if (!['admin','subadmin','encarregado'].includes(usuarioLogado?.role) || !_licencaValidaTenant()) return false;
-            const admin = usuarioLogado.role === 'admin' ? adminAtual() : adminDoUtilizador();
-            return !!admin && !admin.ehDistribuidor && moduloArmazemAtivo(admin);
-        }
         function ativarModoQuiosque() {
-            if (!_podeAtivarQuiosque()) { alert('O Modo Quiosque não está disponível para este perfil ou para a licença desta empresa.'); return; }
+            if (usuarioLogado?.role !== 'admin' && usuarioLogado?.role !== 'subadmin' && usuarioLogado?.role !== 'encarregado') { alert('Apenas administradores e encarregados podem ativar o Modo Quiosque.'); return; }
+            const adminRefQuiosque = usuarioLogado.role === 'admin' ? adminAtual() : adminDoUtilizador();
+            if (!moduloArmazemAtivo(adminRefQuiosque)) {
+                fecharModalPerfil();
+                alert('O Modo Quiosque está incluído no add-on "Armazém / Stock / Gestão de Obras". Ative-o na secção "Minha Licença" para o usar.');
+                abrirSecao('minha-licenca');
+                return;
+            }
             const adminId = _tenantQuiosque();
             const obras = (dados.obras || []).filter(o => o.adminId === adminId && o.estado !== 'concluida');
             document.getElementById('qs_obra').innerHTML = obras.length
@@ -2572,40 +2574,18 @@
             document.getElementById('qs_geo_status').textContent = 'Ainda não capturada.';
             document.getElementById('qs_password_saida').value = '';
             _quiosqueRenderPessoasSetup();
-            const pinBox = document.getElementById('qs_admin_pin_box');
-            const pinInput = document.getElementById('qs_admin_pin');
-            if (pinBox) pinBox.style.display = usuarioLogado?.role === 'admin' ? '' : 'none';
-            if (pinInput) { pinInput.value = ''; pinInput.placeholder = _quiosqueAdminPessoa() ? 'PIN já definido (deixa vazio para manter)' : '4 dígitos para picar no quiosque'; }
             document.getElementById('modalQuiosqueSetupOverlay').classList.add('open');
-        }
-        // O PIN de picagem do administrador é independente da palavra-passe de login.
-        function _quiosqueAdminPinKey() { return 'tg_quiosque_admin_pin_' + _tenantQuiosque(); }
-        function _quiosqueAdminPessoa() {
-            const adminId = _tenantQuiosque();
-            if (!adminId) return null;
-            const admin = dados.administradores?.find(a => a.id === adminId)
-                || (usuarioLogado?.role === 'admin' && usuarioLogado.id === adminId ? usuarioLogado : null);
-            if (!admin || admin.ativo === false || admin.ehDistribuidor) return null;
-            let pin = '';
-            try { pin = localStorage.getItem(_quiosqueAdminPinKey()) || ''; } catch (e) {}
-            if (!/^\d{4}$/.test(pin)) return null;
-            return { id: adminId, adminId, nome: admin.nome || 'Administrador', foto: admin.foto || null, pin, role: 'admin', _tipo: 'admin' };
         }
         function _quiosqueRenderPessoasSetup() {
             const cont = document.getElementById('qs_pessoas_lista'); if (!cont) return;
             const adminId = _tenantQuiosque();
             const funcs = (dados.funcionarios || []).filter(f => f.adminId === adminId && f.role !== 'admin' && f.role !== 'superadmin').map(f => ({ id: f.id, nome: f.nome, tipo: 'funcionario' }));
             const encs = (dados.encarregados || []).filter(e => e.adminId === adminId).map(e => ({ id: e.id, nome: e.nome, tipo: 'encarregado' }));
-            const admin = usuarioLogado?.role === 'admin' && usuarioLogado.id === adminId
-                ? (dados.administradores?.find(a => a.id === adminId) || usuarioLogado)
-                : _quiosqueAdminPessoa();
-            const admins = admin && admin.ativo !== false && !admin.ehDistribuidor
-                ? [{ id: adminId, nome: admin.nome || 'Administrador', tipo: 'admin' }] : [];
-            const pessoas = [...funcs, ...encs, ...admins];
+            const pessoas = [...funcs, ...encs];
             cont.innerHTML = pessoas.length ? pessoas.map(p => `
                 <label style="display:flex;align-items:center;gap:8px;padding:5px 0;cursor:pointer;">
                     <input type="checkbox" data-qs-pessoa="${p.id}" data-qs-tipo="${p.tipo}" style="width:auto;" />
-                    ${p.nome} <span style="color:#94a3b8;font-size:.78rem;">(${p.tipo === 'admin' ? 'Administrador' : p.tipo === 'encarregado' ? 'Encarregado' : 'Funcionário'})</span>
+                    ${p.nome} <span style="color:#94a3b8;font-size:.78rem;">(${p.tipo === 'encarregado' ? 'Encarregado' : 'Funcionário'})</span>
                 </label>
             `).join('') : '<div style="color:#94a3b8;font-size:.85rem;">Sem funcionários ou encarregados nesta empresa.</div>';
         }
@@ -2624,15 +2604,10 @@
             document.getElementById('qs_campos_agenda').style.display = modo === 'agenda' ? 'block' : 'none';
         }
         function _confirmarAtivacaoQuiosque() {
-            if (!_podeAtivarQuiosque()) { alert('Não tens autorização para ativar o Modo Quiosque.'); return; }
             const modo = document.querySelector('input[name="qs_modo"]:checked')?.value || 'obra_fixa';
             const pass = document.getElementById('qs_password_saida').value;
             if (!pass || pass.length < 4) { alert('Escolhe uma password de saída com pelo menos 4 caracteres.'); return; }
-            const adminPin = usuarioLogado?.role === 'admin' ? (document.getElementById('qs_admin_pin')?.value || '').trim() : '';
-            if (adminPin && !/^\d{4}$/.test(adminPin)) { alert('O PIN de picagem do administrador deve ter exatamente 4 números.'); return; }
-            if (adminPin && adminPin === pass) { alert('O PIN de picagem deve ser diferente da password de saída do quiosque.'); return; }
             if (modo === 'agenda') {
-                if (adminPin) { try { localStorage.setItem(_quiosqueAdminPinKey(), adminPin); } catch (e) {} }
                 try {
                     localStorage.setItem('tg_quiosque', _tenantQuiosque());
                     localStorage.setItem('tg_quiosque_modo', 'agenda');
@@ -2648,12 +2623,10 @@
             const obraId = document.getElementById('qs_obra').value;
             if (!obraId) { alert('Seleciona a obra desta obra/aparelho.'); return; }
             const selecionados = [...document.querySelectorAll('#qs_pessoas_lista input[data-qs-pessoa]:checked')].map(chk => chk.dataset.qsPessoa);
-            if (!selecionados.length) { alert('Seleciona pelo menos uma pessoa para esta obra.'); return; }
-            if (selecionados.includes(_tenantQuiosque()) && !adminPin && !_quiosqueAdminPessoa()) { alert('Define o PIN do administrador para picar entrada nesta obra.'); return; }
+            if (!selecionados.length) { alert('Seleciona pelo menos um funcionário/encarregado para esta obra.'); return; }
             if (!_quiosqueGeoTemp) { alert('Captura a localização atual antes de ativar (geofence).'); return; }
             const obra = dados.obras?.find(o => o.id === obraId);
             try {
-                if (adminPin) localStorage.setItem(_quiosqueAdminPinKey(), adminPin);
                 localStorage.setItem('tg_quiosque', _tenantQuiosque());
                 localStorage.setItem('tg_quiosque_modo', 'obra_fixa');
                 localStorage.setItem('tg_quiosque_obra', obraId);
@@ -3046,8 +3019,7 @@
             const adminId = _tenantQuiosque();
             const funcs = (dados.funcionarios || []).filter(f => f.adminId === adminId && f.role !== 'admin' && f.role !== 'superadmin' && !f.suspenso).map(f => ({ ...f, _tipo: 'funcionario' }));
             const encs = (dados.encarregados || []).filter(e => e.adminId === adminId && !e.suspenso).map(e => ({ ...e, _tipo: 'encarregado' }));
-            const admin = _quiosqueAdminPessoa();
-            return [...funcs, ...encs, ...(admin ? [admin] : [])];
+            return [...funcs, ...encs];
         }
         function _quiosqueAgendaSelecionarItem(tipo, id) {
             const painel = document.getElementById('tgqPainel');
@@ -3183,9 +3155,9 @@
                     ${!aberto
                         ? `<button type="button" class="tgq-acao-btn" style="background:#16a34a;" onclick="_quiosqueAgendaPicar('entrada')"><i class="fas fa-sign-in-alt"></i> Dar Entrada</button>`
                         : `
-                        <button type="button" class="tgq-acao-btn" style="background:#f59e0b;" onclick="_quiosqueAgendaPicar('almoco')"><i class="fas fa-utensils"></i> Sair para almoço</button>
-                        <button type="button" class="tgq-acao-btn" style="background:#dc2626;" onclick="_quiosqueAgendaPicar('terminar_hoje')"><i class="fas fa-sign-out-alt"></i> Saída de Obra / OS</button>
-                        ${ehResponsavel ? `<button type="button" class="tgq-acao-btn" style="background:#7c3aed;" onclick="_quiosqueAgendaPicar('terminar_servico')"><i class="fas fa-flag-checkered"></i> Concluir Obra / OS</button>` : ''}
+                        <button type="button" class="tgq-acao-btn" style="background:#f59e0b;" onclick="_quiosqueAgendaPicar('almoco')"><i class="fas fa-utensils"></i> Ir Almoçar</button>
+                        <button type="button" class="tgq-acao-btn" style="background:#dc2626;" onclick="_quiosqueAgendaPicar('terminar_hoje')"><i class="fas fa-sign-out-alt"></i> Terminar por Hoje</button>
+                        ${ehResponsavel ? `<button type="button" class="tgq-acao-btn" style="background:#7c3aed;" onclick="_quiosqueAgendaPicar('terminar_servico')"><i class="fas fa-flag-checkered"></i> Terminar ${s.tipo === 'servico' ? 'OS' : 'Obra'}</button>` : ''}
                         `}
                     <button type="button" class="tgq-acao-btn" style="background:#64748b;" onclick="_quiosqueAgendaGrid()">Cancelar</button>
                 </div>
@@ -3490,8 +3462,7 @@
             try { selecionados = JSON.parse(localStorage.getItem('tg_quiosque_pessoas') || '[]'); } catch (e) {}
             const funcs = (dados.funcionarios || []).filter(f => f.adminId === adminId && f.role !== 'admin' && f.role !== 'superadmin' && !f.suspenso && (!selecionados.length || selecionados.includes(f.id))).map(f => ({ ...f, _tipo: 'funcionario' }));
             const encs = (dados.encarregados || []).filter(e => e.adminId === adminId && !e.suspenso && (!selecionados.length || selecionados.includes(e.id))).map(e => ({ ...e, _tipo: 'encarregado' }));
-            const admin = _quiosqueAdminPessoa();
-            return [...funcs, ...encs, ...(admin && (!selecionados.length || selecionados.includes(admin.id)) ? [admin] : [])];
+            return [...funcs, ...encs];
         }
         function _quiosqueMostrarGrid() {
             _quiosquePinAtual = ''; _quiosquePessoaSelecionada = null;
@@ -3940,8 +3911,6 @@
             atualizarContactos();
             verificarBloqueios();
             aplicarConfigHeader();
-            const btnQuiosque = document.getElementById('btnQuiosque');
-            if (btnQuiosque) btnQuiosque.style.display = _podeAtivarQuiosque() ? 'inline-flex' : 'none';
             const btnPontoAdmin = document.getElementById('btnPontoAdmin');
             if (btnPontoAdmin) {
                 btnPontoAdmin.style.display = (usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin') ? 'inline-flex' : 'none';
@@ -4660,7 +4629,7 @@
                     <div class="report-card" style="border-left-color:#1e40af;background:linear-gradient(135deg,#eff6ff,#fff);">
                         <h4><i class="fas fa-box-open"></i> Pack ${def.nome}</h4>
                         <div class="report-item"><span>Escalão</span><span>${escLabel}</span></div>
-                        ${precoBase ? `<div class="report-item"><span>Preço de catálogo atual</span><span>${precoBase.toFixed(2)} €/mês${_IVA_INC}</span></div>` : ''}
+                        ${precoBase ? `<div class="report-item"><span>Preço base</span><span>${precoBase.toFixed(2)} €/mês${_IVA_INC}</span></div>` : ''}
                         <div style="margin-top:10px;font-size:.85rem;color:#334155;"><strong>Inclui:</strong> Base (OS, folhas, clientes, contratos, relatórios personalizados)${inclui.length ? ', ' + inclui.join(', ') : ''}.</div>
                     </div>`;
             }
@@ -4671,7 +4640,7 @@
                         <h4><i class="fas fa-id-card"></i> ${admin.nome}</h4>
                         <div class="report-item"><span>Empresa</span><span>${admin.empresa || '-'}</span></div>
                         <div class="report-item"><span>Plano</span><span>${planoLabel} ${isDemo ? '<span class="badge badge-demo">Demo</span>' : ''}</span></div>
-                        <div class="report-item"><span>Valor contratado da licença</span><span>${valor}€${_IVA_INC}</span></div>
+                        <div class="report-item"><span>Valor</span><span>${valor}€${_IVA_INC}</span></div>
                         <div class="report-item"><span>Funcionários permitidos</span><span>${maxFunc}</span></div>
                         <div class="report-item"><span>Funcionários atuais (incl. encarregados)</span><span>${totalFunc} / ${maxFunc}</span></div>
                         <div class="report-item"><span>Código da Licença</span><span><strong>${admin.licenca.codigo}</strong></span></div>
@@ -5596,9 +5565,6 @@
         }
         // Obras de Longa Duração — mesmo padrão dos outros separadores: lista, estado colorido,
         // clicar abre a obra, botão para criar uma nova já com o cliente escolhido.
-        function _obraAutosMedicaoDisponiveis(obra) {
-            return !!(obra?.temAutosMedicao && moduloCrmAtivo(dados.administradores?.find(a => a.id === obra.adminId)));
-        }
         function _wsObrasHtml(clienteId) {
             const obrasCliente = (dados.obras || []).filter(o => o.clienteId === clienteId).sort((a, b) => (b.dataCriacao || 0) - (a.dataCriacao || 0));
             const locaisCliente = (dados.locais || []).filter(l => l.clienteId === clienteId);
@@ -5613,9 +5579,9 @@
             const linhas = obrasCliente.map(o => {
                 const corMap = { preparacao: '#475569', ativa: '#166534', suspensa: '#92400e', concluida: '#1e40af' };
                 const corTexto = corMap[o.estado] || corMap.preparacao;
-                return `<div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid #f1f5f9;">
+                return `<div style="display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid #f1f5f9;">
                     <i class="fas fa-hard-hat" style="color:#94a3b8;width:18px;"></i>
-                    <div style="flex:1;min-width:160px;">
+                    <div style="flex:1;min-width:0;">
                         <div style="font-size:.86rem;font-weight:600;text-align:left;">${escapeHtmlSimples(o.nome || 'Obra')}</div>
                         <div style="font-size:.76rem;color:#64748b;text-align:left;">${escapeHtmlSimples(nomeLocal(o.localId))}${o.dataInicioPrevista ? ' · início ' + o.dataInicioPrevista.split('-').reverse().join('/') : ''}${o.dataFimPrevista ? ' · fim ' + o.dataFimPrevista.split('-').reverse().join('/') : ''}</div>
                     </div>
@@ -5623,7 +5589,6 @@
                         ${Object.entries(labels).map(([v, l]) => `<option value="${v}" ${o.estado === v || (!o.estado && v === 'preparacao') ? 'selected' : ''}>${l}</option>`).join('')}
                     </select>
                     <button class="btn btn-sm" style="background:#334155;color:#fff;" onclick="_wsSairPara('${clienteId}');abrirObraLongaDetalhe('${o.id}')" title="Ver Obra"><i class="fas fa-eye"></i> Ver Obra</button>
-                    ${_obraAutosMedicaoDisponiveis(o) ? `<button type="button" class="btn btn-sm btn-outline" onclick="_wsSairPara('${clienteId}');abrirObraLongaDetalhe('${o.id}','autos')" title="Autos de medição"><i class="fas fa-file-invoice-dollar"></i> Autos de medição</button>` : ''}
                     <button class="btn btn-sm" style="background:#0f766e;color:#fff;" onclick="_wsSairPara('${clienteId}');_obraEscolherRelatorio('${o.id}')" title="Relatório da obra"><i class="fas fa-file-lines"></i></button>
                 </div>`;
             }).join('');
@@ -6614,15 +6579,8 @@
             const obra = os.obraId ? (dados.obras || []).find(o => o.id === os.obraId) : null;
             const picagens = (dados.ponto || []).filter(p => p.servicoId === osId).sort((a, b) => (a.data + a.entrada) < (b.data + b.entrada) ? -1 : 1);
             const folhas = (dados.folhasObra || []).filter(f => f.servicoId === osId);
-            // As folhas de obra registam o trabalho efetivamente realizado, incluindo o do Admin.
-            // Usá-las como fonte do total evita excluir horas de quem não tem picagens de funcionário.
-            const totalHorasFolhas = folhas.reduce((s, f) => s + Math.max(0, Number(f.horasTrabalhadas) || 0), 0);
-            const totalHorasPicagens = picagens.reduce((s, p) => s + (p.entrada && p.saida ? calcularHoras(p.entrada, p.saida) : 0), 0);
-            const totalHoras = folhas.length ? totalHorasFolhas : totalHorasPicagens;
-            const funcionariosEnvolvidos = [...new Set([
-                ...picagens.map(p => p.funcionarioId),
-                ...folhas.flatMap(f => [f.funcionarioId, ...(_colegasEnvolvidosNaFolha(f) || [])])
-            ].filter(Boolean))];
+            const totalHoras = picagens.reduce((s, p) => s + (p.entrada && p.saida ? calcularHoras(p.entrada, p.saida) : 0), 0);
+            const funcionariosEnvolvidos = [...new Set(picagens.map(p => p.funcionarioId))];
 
             doc.setFontSize(11); doc.setTextColor(_corRel[0], _corRel[1], _corRel[2]);
             doc.autoTable({
@@ -12374,7 +12332,6 @@
         }
         let _agendaDragId = null;
         function agendaDragStart(e, id) { if (usuarioLogado?.role === 'funcionario' || document.getElementById('tgPainelTVOverlay')?.classList.contains('aberto')) return; _agendaDragId = id; try { e.dataTransfer.setData('text/plain', id); e.dataTransfer.effectAllowed = 'move'; } catch (_) {} }
-        function agendaDragEnd() { _agendaDragId = null; document.querySelectorAll('.ag-drop').forEach(el => el.classList.remove('ag-drop')); }
         function agendaDragOver(e) { e.preventDefault(); e.currentTarget.classList.add('ag-drop'); if (e.dataTransfer) e.dataTransfer.dropEffect = 'move'; }
         function agendaDragLeave(e) { e.currentTarget.classList.remove('ag-drop'); }
         function _notificarAlteracaoOS(s, antesData, antesHora, antesIds) {
@@ -12478,7 +12435,7 @@
             const cls = _estadoClasseAg(estado);
             const emConf = conflitos && conflitos.has(s.id);
             const bloqueada = _osBloqueada(s);
-            const draggableAttr = (!readOnly && !bloqueada) ? `data-tg-agenda-drag draggable="true" ondragend="agendaDragEnd()" ondragstart="agendaDragStart(event,'${s.id}')"` : '';
+            const draggableAttr = (!readOnly && !bloqueada) ? `draggable="true" ondragstart="agendaDragStart(event,'${s.id}')"` : '';
             const _duracaoBadge = (s.duracaoDias && s.duracaoDias > 1) ? `<span style="background:#eef2ff;color:#4f46e5;font-size:.68rem;padding:1px 6px;border-radius:8px;font-weight:700;" title="Duração estimada"><i class="fas fa-calendar-week"></i> ${s.duracaoDias}d</span>` : '';
             const _mapaInfo = _osMapaInfo(s.clienteId, s.morada, s.localId);
             const _moradaBadge = _mapaInfo ? `<a href="${_mapaInfo.url}" target="_blank" rel="noopener" onclick="event.stopPropagation();" title="${_mapaInfo.exato ? 'Ver pin exato no mapa' : 'Ver morada da instalação no mapa (aproximado)'}${s.morada ? ': ' + s.morada.replace(/"/g,'&quot;') : ''}" style="color:${_mapaInfo.exato ? '#16a34a' : '#dc2626'};text-decoration:none;"><i class="fas fa-map-location-dot"></i></a>` : '';
@@ -12631,7 +12588,7 @@
             const label = document.getElementById('agendaObrasLabel');
             if (label) label.textContent = `${nomesSemana[diaSemanaIdx]}, ${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
             const doDia = oss.filter(s => s.data === ds).sort(_ordenarPorHora);
-            const dropAttrs = readOnly ? '' : `data-tg-agenda-drop ondragover="agendaDragOver(event)" ondragleave="agendaDragLeave(event)" ondrop="agendaDrop(event,'${ds}')"`;
+            const dropAttrs = readOnly ? '' : `ondragover="agendaDragOver(event)" ondragleave="agendaDragLeave(event)" ondrop="agendaDrop(event,'${ds}')"`;
             const addBtn = readOnly ? '' : `<button type="button" class="btn btn-sm btn-outline" onclick="novaOSNoDia('${ds}')"><i class="fas fa-plus"></i> Nova OS neste dia</button>`;
             let html = `<div class="agenda-dia-wrap" ${dropAttrs}>
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
@@ -12673,7 +12630,7 @@
                 dias.forEach((d, idx) => {
                     const ds = _fmtDataAg(d);
                     const doDia = oss.filter(s => s.data === ds).sort(_ordenarPorHora);
-                    const dropAttrs = readOnly ? '' : `data-tg-agenda-drop ondragover="agendaDragOver(event)" ondragleave="agendaDragLeave(event)" ondrop="agendaDrop(event,'${ds}')"`;
+                    const dropAttrs = readOnly ? '' : `ondragover="agendaDragOver(event)" ondragleave="agendaDragLeave(event)" ondrop="agendaDrop(event,'${ds}')"`;
                     const addBtn = readOnly ? '' : `<span class="ag-add" title="Criar OS neste dia" onclick="novaOSNoDia('${ds}')">+</span>`;
                     h += `<div class="agenda-col${ds === hojeStr ? ' agenda-hoje' : ''}" ${dropAttrs}>
                         <div class="agenda-col-h">${nomesSemana[idx]} <span class="dnum">${d.getDate()}/${d.getMonth() + 1}</span> ${addBtn}</div>`;
@@ -12729,7 +12686,7 @@
                 const ds = _fmtDataAg(d);
                 const fora = d.getMonth() !== mes;
                 const doDia = oss.filter(s => s.data === ds).sort(_ordenarPorHora);
-                const dropAttrsM = readOnly ? '' : `data-tg-agenda-drop ondragover="agendaDragOver(event)" ondragleave="agendaDragLeave(event)" ondrop="agendaDrop(event,'${ds}')"`;
+                const dropAttrsM = readOnly ? '' : `ondragover="agendaDragOver(event)" ondragleave="agendaDragLeave(event)" ondrop="agendaDrop(event,'${ds}')"`;
                 const addBtnM = readOnly ? '' : `<span class="ag-add" title="Criar OS" onclick="novaOSNoDia('${ds}')">+</span>`;
                 html += `<div class="agenda-mes-cel${fora ? ' fora' : ''}${ds === hojeStr ? ' hoje' : ''}" ${dropAttrsM}>
                     <div class="dia-num">${d.getDate()} ${addBtnM}</div>`;
@@ -12737,7 +12694,7 @@
                     const cls = _estadoClasseAg(s.status || 'pendente');
                     const conf = conflitos && conflitos.has(s.id);
                     const bloq = _osBloqueada(s);
-                    const dragAttrM = (!readOnly && !bloq) ? `data-tg-agenda-drag draggable="true" ondragend="agendaDragEnd()" ondragstart="agendaDragStart(event,'${s.id}')"` : '';
+                    const dragAttrM = (!readOnly && !bloq) ? `draggable="true" ondragstart="agendaDragStart(event,'${s.id}')"` : '';
                     html += `<div class="agenda-mes-os ${cls}" ${dragAttrM} title="${s.hora || ''} ${_nomeClienteOS(s.clienteId)} — ${s.status || 'pendente'}${conf ? ' (sobreposição)' : ''}${bloq ? ' (bloqueada)' : ''}">${bloq ? '🔒 ' : ''}${conf ? '⚠ ' : ''}${s.hora ? s.hora + ' ' : ''}${_nomeClienteOS(s.clienteId).slice(0, 12)}</div>`;
                 });
                 if (doDia.length > 4) html += `<div style="font-size:.68rem;color:#64748b;margin-top:2px;">+${doDia.length - 4} mais</div>`;
@@ -12769,7 +12726,7 @@
                 const cls = _estadoClasseAg(s.status || 'pendente');
                 const emConf = conflitos && conflitos.has(s.id);
                 const bloqueada = _osBloqueada(s);
-                const draggableAttr = (!readOnly && !bloqueada) ? `data-tg-agenda-drag draggable="true" ondragend="agendaDragEnd()" ondragstart="agendaDragStart(event,'${s.id}')"` : '';
+                const draggableAttr = (!readOnly && !bloqueada) ? `draggable="true" ondragstart="agendaDragStart(event,'${s.id}')"` : '';
                 const cliente = escapeHtmlSimples(_nomeClienteOS(s.clienteId).slice(0, 22));
                 const tipo = _tipoOSResumo(s);
                 const coordsChip = _osCoordenadasExatas(s);
@@ -12791,7 +12748,7 @@
                 dias.forEach(d => {
                     const ds = _fmtDataAg(d);
                     const doDia = (pessoaId ? oss.filter(s => s.data === ds && atribuidosDe(s).includes(pessoaId)) : semResponsavel.filter(s => s.data === ds)).sort(_ordenarPorHora);
-                    const dropAttrs = readOnly ? '' : `data-tg-agenda-drop ondragover="agendaDragOver(event)" ondragleave="agendaDragLeave(event)" ondrop="agendaDropGantt(event,'${ds}',${pessoaId ? `'${pessoaId}'` : 'null'})"`;
+                    const dropAttrs = readOnly ? '' : `ondragover="agendaDragOver(event)" ondragleave="agendaDragLeave(event)" ondrop="agendaDropGantt(event,'${ds}',${pessoaId ? `'${pessoaId}'` : 'null'})"`;
                     html += `<div class="agg-cel${ds === hojeStr ? ' agenda-hoje' : ''}" ${dropAttrs}>${doDia.map(chip).join('') || ''}</div>`;
                 });
             };
@@ -13089,7 +13046,7 @@
                 const diasTrabalhados = comp.dias.filter(d => d.horas > 0).length;
                 let normais = 0, extras = 0;
                 comp.dias.forEach(d => { normais += Math.min(d.horas, diario); extras += Math.floor(Math.max(0, d.horas - diario)); });
-                const faltasAprovadas = (dados.pedidos || []).filter(x => x.funcionarioId === p.id && x.tipo === 'falta' && ['aprovado', 'aprovado_ped'].includes(x.status) && x.dataInicio && x.dataFim && x.dataInicio <= fimReal && x.dataFim >= ini);
+                const faltasAprovadas = (dados.pedidos || []).filter(x => x.funcionarioId === p.id && x.tipo === 'falta' && x.status === 'aprovado_ped' && x.dataInicio && x.dataFim && x.dataInicio <= fimReal && x.dataFim >= ini);
                 let numFaltas = 0;
                 faltasAprovadas.forEach(f => { numFaltas += diasUteisFerias(f.dataInicio < ini ? ini : f.dataInicio, f.dataFim > fimReal ? fimReal : f.dataFim, hoje.getFullYear()); });
                 const taxa = diasUteis > 0 ? Math.min(100, Math.round((diasTrabalhados / diasUteis) * 100)) : 0;
@@ -13428,97 +13385,6 @@
             }
         }
 
-        // Cada aviso transporta os IDs que lhe deram origem, em vez de abrir a lista geral.
-        function _acaoPendenciasAlerta(tipo, itens) {
-            return `_abrirPendenciasAlerta(${JSON.stringify(tipo)},${JSON.stringify(itens.map(i => i.id))})`;
-        }
-        function _itensPendenciasAlerta(tipo, ids) {
-            if (!['admin', 'subadmin'].includes(usuarioLogado?.role) || !Array.isArray(ids)) return [];
-            const colecoes = { servico: 'servicos', contrato: 'contratos', veiculo: 'veiculos', requisicao: 'requisicoes', pedido: 'pedidos', artigo: 'artigos', obra: 'obras', assistencia: 'assistencias' };
-            const lista = dados[colecoes[tipo]] || [];
-            return lista.filter(i => i.adminId === _tenantId() && ids.includes(i.id));
-        }
-        function _rotuloPendenciaAlerta(tipo, item) {
-            if (tipo === 'pedido') return `${item.tipo === 'ferias' ? 'Férias' : 'Falta'} — ${obterNomeFuncionario(item.funcionarioId)} · ${item.dataInicio || ''} a ${item.dataFim || ''}`;
-            if (tipo === 'veiculo') return `${item.matricula || 'Veículo'} · ${item.marcaModelo || ''}`;
-            if (tipo === 'contrato') return `Contrato ${item.numero || item.id} · ${obterNomeCliente(item.clienteId)}`;
-            return item.assunto || item.nome || item.descricao || item.numeroRegisto || item.numero || item.id;
-        }
-        function _painelPendenciasAlerta(titulo) {
-            document.getElementById('tgPendenciasOverlay')?.remove();
-            const anterior = document.activeElement;
-            const overlay = document.createElement('div');
-            overlay.id = 'tgPendenciasOverlay'; overlay.className = 'modal-overlay open';
-            overlay.style.zIndex = '10050';
-            const modal = document.createElement('div'); modal.className = 'modal';
-            modal.style.cssText = 'width:min(680px,94vw);max-height:85dvh;overflow:auto;';
-            modal.setAttribute('role', 'dialog'); modal.setAttribute('aria-modal', 'true');
-            modal.setAttribute('aria-label', titulo);
-            const cabecalho = document.createElement('div'); cabecalho.className = 'modal-header';
-            const heading = document.createElement('h3'); heading.textContent = titulo;
-            const fechar = document.createElement('button'); fechar.type = 'button'; fechar.className = 'btn btn-outline'; fechar.textContent = 'Fechar';
-            const encerrar = () => { overlay.remove(); anterior?.focus(); };
-            fechar.onclick = encerrar;
-            cabecalho.append(heading, fechar);
-            const corpo = document.createElement('div'); corpo.style.cssText = 'padding:16px;display:grid;gap:12px;';
-            modal.append(cabecalho, corpo); overlay.append(modal); document.body.append(overlay);
-            overlay.onclick = ev => { if (ev.target === overlay) encerrar(); };
-            overlay.onkeydown = ev => {
-                if (ev.key === 'Escape') { ev.stopPropagation(); encerrar(); }
-                if (ev.key === 'Tab') {
-                    const botoes = [...modal.querySelectorAll('button, a[href]')];
-                    const primeiro = botoes[0], ultimo = botoes[botoes.length - 1];
-                    if (ev.shiftKey && document.activeElement === primeiro) { ev.preventDefault(); ultimo.focus(); }
-                    else if (!ev.shiftKey && document.activeElement === ultimo) { ev.preventDefault(); primeiro.focus(); }
-                }
-            };
-            fechar.focus(); return corpo;
-        }
-        function _abrirPendenciasAlerta(tipo, ids) {
-            const itens = _itensPendenciasAlerta(tipo, ids);
-            if (!itens.length) { mostrarErro('Este aviso já não tem registos disponíveis.'); return; }
-            if (itens.length === 1) { _abrirRegistoPendenciaAlerta(tipo, itens[0].id); return; }
-            const corpo = _painelPendenciasAlerta('Registos deste aviso (' + itens.length + ')');
-            itens.forEach(item => {
-                const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'btn btn-outline';
-                btn.style.cssText = 'text-align:left;white-space:normal;min-height:44px;';
-                btn.textContent = _rotuloPendenciaAlerta(tipo, item);
-                btn.onclick = () => _abrirRegistoPendenciaAlerta(tipo, item.id);
-                corpo.append(btn);
-            });
-        }
-        function _abrirRegistoPendenciaAlerta(tipo, id) {
-            const item = _itensPendenciasAlerta(tipo, [id])[0];
-            if (!item) { mostrarErro('Registo indisponível.'); return; }
-            document.getElementById('tgPendenciasOverlay')?.remove();
-            if (tipo === 'servico') { abrirVerOS(id); return; }
-            if (tipo === 'contrato') { abrirModalContrato(id); return; }
-            if (tipo === 'veiculo') { abrirModalVeiculo(id); return; }
-            if (tipo === 'obra') { abrirObraLongaDetalhe(id); return; }
-            if (tipo === 'artigo') { abrirModal('artigo', id); return; }
-            const corpo = _painelPendenciasAlerta(_rotuloPendenciaAlerta(tipo, item));
-            const detalhe = document.createElement('p'); detalhe.style.whiteSpace = 'pre-wrap';
-            detalhe.textContent = tipo === 'assistencia'
-                ? `${_assistResumoDados(item).cliente} · ${_assistResumoDados(item).local} · ${_assistResumoDados(item).urgencia}\n${item.descricao || ''}`
-                : tipo === 'requisicao'
-                ? `${item.obraDescricao || ''}\n${item.fornecedor || ''}\n${item.descricao || ''}\n${(item.itens || []).map(i => `${i.nome} (${i.quantidade})`).join(', ')}`
-                : `${item.observacao || ''}\n${item.horas ? item.horas + ' horas' : ''}`;
-            corpo.append(detalhe);
-            const botao = (texto, acao, classe = 'btn-outline') => {
-                const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'btn ' + classe; btn.textContent = texto;
-                btn.onclick = () => {
-                    if (!_itensPendenciasAlerta(tipo, [id]).length) { mostrarErro('Registo indisponível.'); return; }
-                    document.getElementById('tgPendenciasOverlay')?.remove(); acao();
-                }; corpo.append(btn);
-            };
-            if (tipo === 'assistencia') { botao('Criar OS desta assistência', () => _abrirAssist(null, id)); return; }
-            if (['pendente', 'pendente_aprov'].includes(item.status)) {
-                botao('Aprovar', () => tipo === 'pedido' ? aprovarPedido(id) : aprovarRequisicao(id), 'btn-success');
-                botao('Rejeitar', () => tipo === 'pedido' ? rejeitarPedido(id) : rejeitarRequisicao(id), 'btn-danger');
-            }
-            if (tipo === 'requisicao') botao('Editar requisição', () => abrirModal('requisicao', id));
-        }
-
         function renderizarAlertas() {
             const cont = document.getElementById('alertasPendencias');
             const contGlobal = document.getElementById('alertaPontoGlobal');
@@ -13528,20 +13394,43 @@
                 // No Express não há ponto nenhum — sem isto, "jaPicou" ficava sempre falso (nunca
                 // há picagem para encontrar) e o aviso "ainda não picaste" nunca desaparecia.
                 const jaPicou = expressAtivo(adminDoUtilizador()) ? true : (dados.ponto || []).some(p => p.funcionarioId === usuarioLogado.id && p.data === hojeF && p.entrada);
-                if (!jaPicou) {
+                const precisaAtivarPush = (typeof Notification !== 'undefined' && Notification.permission === 'default') && moduloNotificacoesAtivo(adminDoUtilizador());
+                const botaoNotif = precisaAtivarPush
+                    ? `<button class="btn btn-sm" style="margin-left:auto;background:#0ea5e9;color:#fff;" onclick="_ativarNotificacoesPush()"><i class="fas fa-bell"></i> Ativar lembretes no telemóvel</button>`
+                    : '';
+                if (!jaPicou || precisaAtivarPush) {
                     cont.style.display = 'block';
-                    cont.innerHTML = `<div class="home-card" style="border-left:4px solid #f59e0b;margin-bottom:10px;">
+                    cont.innerHTML = (!jaPicou ? `<div class="home-card" style="border-left:4px solid #f59e0b;margin-bottom:10px;">
                         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
                             <i class="fas fa-clock" style="color:#f59e0b;font-size:1.3rem;"></i>
                             <div><strong>Ainda não picaste o ponto hoje.</strong><br><span style="font-size:.85rem;color:#64748b;">Não te esqueças de registar a tua entrada.</span></div>
+                            ${botaoNotif}
                         </div>
-                    </div>`;
+                    </div>` : (precisaAtivarPush ? `<div class="home-card" style="border-left:4px solid #0ea5e9;">
+                        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                            <i class="fas fa-bell" style="color:#0ea5e9;font-size:1.3rem;"></i>
+                            <div><strong>Ativa as notificações no telemóvel</strong><br><span style="font-size:.85rem;color:#64748b;">Recebe logo os avisos de novas OS e lembretes de ponto.</span></div>
+                            ${botaoNotif}
+                        </div>
+                    </div>` : ''));
                     if (contGlobal) {
                         contGlobal.classList.add('mostrar');
-                        contGlobal.innerHTML = `<div class="conteudo-alerta" onclick="abrirSecao('ponto')" style="cursor:pointer;">
-                            <i class="fas fa-clock"></i>
-                            <div><strong>Ainda não picaste o ponto hoje.</strong><div class="sub">Toca aqui para ires a "Registo de Ponto".</div></div>
-                        </div>`;
+                        // No topo do telemóvel, o pedido para ativar as notificações tem sempre prioridade
+                        // sobre o aviso de ponto — é a primeira coisa que a pessoa deve ver ao abrir a app.
+                        if (precisaAtivarPush) {
+                            contGlobal.innerHTML = `<div class="conteudo-alerta" style="justify-content:space-between;">
+                                <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+                                    <i class="fas fa-bell" style="color:#0ea5e9;"></i>
+                                    <div style="min-width:0;"><strong>Ativa as notificações</strong><div class="sub">${!jaPicou ? 'E não te esqueças: ainda não picaste o ponto hoje.' : 'Recebe avisos de novas OS e lembretes de ponto.'}</div></div>
+                                </div>
+                                <button class="btn btn-sm" style="background:#0ea5e9;color:#fff;flex-shrink:0;" onclick="event.stopPropagation();_ativarNotificacoesPush()"><i class="fas fa-bell"></i> Ativar</button>
+                            </div>`;
+                        } else {
+                            contGlobal.innerHTML = `<div class="conteudo-alerta" onclick="abrirSecao('ponto')" style="cursor:pointer;">
+                                <i class="fas fa-clock" style="color:#f59e0b;"></i>
+                                <div><strong>Ainda não picaste o ponto hoje.</strong><div class="sub">Toca aqui para ires a "Registo de Ponto".</div></div>
+                            </div>`;
+                        }
                     }
                 } else {
                     cont.style.display = 'none'; cont.innerHTML = '';
@@ -13566,22 +13455,22 @@
                 alertas.push({ tipo: 'info', titulo: `🎂 ${_aniversariantes.length === 1 ? _aniversariantes[0].nome + ' faz anos hoje' : _nomes + ' fazem anos hoje'}`, sub: 'Aproveite para o(a) cumprimentar!', acao: '' });
             }
 
-            const osPendLista = (dados.servicos || []).filter(s => s.adminId === adminId && (s.status || 'pendente') === 'pendente');
-            if (osPendLista.length) alertas.push({ tipo: 'info', titulo: `${osPendLista.length} ${osPendLista.length === 1 ? 'ordem de serviço pendente' : 'ordens de serviço pendentes'}`, sub: 'Atribua ou inicie as ordens para manter o fluxo.', acao: _acaoPendenciasAlerta('servico', osPendLista) });
+            const osPend = (dados.servicos || []).filter(s => s.adminId === adminId && (s.status || 'pendente') === 'pendente').length;
+            if (osPend) alertas.push({ tipo: 'info', titulo: `${osPend} ${osPend === 1 ? 'ordem de serviço pendente' : 'ordens de serviço pendentes'}`, sub: 'Atribua ou inicie as ordens para manter o fluxo.', acao: "abrirSecao('agenda-obras')" });
 
             const assistPortal = moduloAssistAtivo(dados.administradores?.find(a => a.id === adminId)) ? _assistPortalPorTratar(adminId) : [];
-            if (assistPortal.length) alertas.push({tipo:'warning',titulo: `${assistPortal.length} assistência(s) do Portal do Cliente por tratar`,sub:assistPortal.slice(0,3).map(a => {const d=_assistResumoDados(a);return `${d.cliente} · ${d.local} · ${d.urgencia}`;}).join(' | '),acao:_acaoPendenciasAlerta('assistencia', assistPortal)});
-            const assistPendLista = (dados.servicos || []).filter(s => s.adminId === adminId && s.status === 'por aprovar');
-            if (assistPendLista.length) alertas.push({ tipo: 'warning', titulo: `${assistPendLista.length} ${assistPendLista.length === 1 ? 'pedido de assistência por aprovar' : 'pedidos de assistência por aprovar'}`, sub: 'Pedidos enviados pelos clientes no Portal. Aprove ou rejeite.', acao: _acaoPendenciasAlerta('servico', assistPendLista) });
+            if (assistPortal.length) alertas.push({tipo:'warning',titulo: `${assistPortal.length} assistência(s) do Portal do Cliente por tratar`,sub:assistPortal.slice(0,3).map(a => {const d=_assistResumoDados(a);return `${d.cliente} · ${d.local} · ${d.urgencia}`;}).join(' | '),acao:'_abrirAssistGeral()'});
+            const assistPend = (dados.servicos || []).filter(s => s.adminId === adminId && s.status === 'por aprovar').length;
+            if (assistPend) alertas.push({ tipo: 'warning', titulo: `${assistPend} ${assistPend === 1 ? 'pedido de assistência por aprovar' : 'pedidos de assistência por aprovar'}`, sub: 'Pedidos enviados pelos clientes no Portal. Aprove ou rejeite.', acao: "abrirSecao('servicos')" });
 
             const adminRecAlerta = dados.administradores?.find(a => a.id === adminId);
             if (moduloContratosAtivo(adminRecAlerta)) {
                 const contratosAVencerLista = (dados.contratos || []).filter(c => c.adminId === adminId && estadoManutencao(calcularProximaManutencao(c)).chave === 'a_vencer');
-                if (contratosAVencerLista.length) alertas.push({ tipo: 'warning', titulo: `${contratosAVencerLista.length} ${contratosAVencerLista.length === 1 ? 'contrato de manutenção a vencer' : 'contratos de manutenção a vencer'} nos próximos 30 dias`, sub: 'Verifique se é preciso gerar a OS de manutenção.', acao: _acaoPendenciasAlerta('contrato', contratosAVencerLista) });
+                if (contratosAVencerLista.length) alertas.push({ tipo: 'warning', titulo: `${contratosAVencerLista.length} ${contratosAVencerLista.length === 1 ? 'contrato de manutenção a vencer' : 'contratos de manutenção a vencer'} nos próximos 30 dias`, sub: 'Verifique se é preciso gerar a OS de manutenção.', acao: "abrirSecao('contratos')" });
                 contratosAVencerLista.forEach(c => {
                     const dias = estadoManutencao(calcularProximaManutencao(c)).dias;
                     _notificarPorFaseVencimento('contrato_vencer_' + adminId, c.id, dias, () => {
-                        _notificarAdminESubadmin(adminId, '📄 Contrato de manutenção a vencer', 'Contrato ' + (c.numero || '#' + c.id) + ' — ' + _clienteLabel(dados.clientes?.find(cl => cl.id === c.clienteId) || {}) + ' vence em ' + dias + ' dia(s).', _acaoPendenciasAlerta('contrato', [c]));
+                        _notificarAdminESubadmin(adminId, '📄 Contrato de manutenção a vencer', 'Contrato ' + (c.numero || '#' + c.id) + ' — ' + _clienteLabel(dados.clientes?.find(cl => cl.id === c.clienteId) || {}) + ' vence em ' + dias + ' dia(s).', "abrirSecao('contratos')");
                     });
                 });
                 // Validade do CONTRATO em si (o acordo comercial) — diferente da próxima
@@ -13590,9 +13479,9 @@
                 contratosValidadeLista.forEach(c => {
                     const diasValidade = calcularDiasRestantes(new Date(c.validadeContrato + 'T00:00:00').getTime());
                     if (diasValidade <= 30) {
-                        alertas.push({ tipo: 'warning', titulo: `📄 Contrato a renovar — ${_clienteLabel(dados.clientes?.find(cl => cl.id === c.clienteId) || {})}`, sub: `A validade do contrato (${c.numero || '#' + c.id}) termina em ${diasValidade} dia(s). Confirma se precisa de renovação/reajuste de preço.`, acao: _acaoPendenciasAlerta('contrato', [c]) });
+                        alertas.push({ tipo: 'warning', titulo: `📄 Contrato a renovar — ${_clienteLabel(dados.clientes?.find(cl => cl.id === c.clienteId) || {})}`, sub: `A validade do contrato (${c.numero || '#' + c.id}) termina em ${diasValidade} dia(s). Confirma se precisa de renovação/reajuste de preço.`, acao: "abrirSecao('contratos')" });
                         _notificarPorFaseVencimento('contrato_validade_' + adminId, c.id, diasValidade, () => {
-                            _notificarAdminESubadmin(adminId, '📄 Contrato a renovar', 'A validade do contrato ' + (c.numero || '#' + c.id) + ' — ' + _clienteLabel(dados.clientes?.find(cl => cl.id === c.clienteId) || {}) + ' termina em ' + diasValidade + ' dia(s).', _acaoPendenciasAlerta('contrato', [c]));
+                            _notificarAdminESubadmin(adminId, '📄 Contrato a renovar', 'A validade do contrato ' + (c.numero || '#' + c.id) + ' — ' + _clienteLabel(dados.clientes?.find(cl => cl.id === c.clienteId) || {}) + ' termina em ' + diasValidade + ' dia(s).', "abrirSecao('contratos')");
                         });
                     }
                 });
@@ -13613,7 +13502,7 @@
                             tipo: 'danger',
                             titulo: `⚠️ Equipamento com falhas repetidas — ${_clienteLabel(dados.clientes?.find(cl => cl.id === c.clienteId) || {})}`,
                             sub: `${assistenciasRecentes.length} assistências nos últimos 90 dias. Considera aumentar a frequência de manutenção ou avaliar substituir o equipamento.`,
-                            acao: _acaoPendenciasAlerta('contrato', [c])
+                            acao: `abrirSecao('contratos')`
                         });
                         // Só notifica de novo quando o número de falhas MUDAR desde a última vez
                         // (evita repetir a mesma notificação todos os dias sem nada de novo).
@@ -13622,7 +13511,7 @@
                         try { _ultimoValor = localStorage.getItem(_chaveFalhas); } catch (e) {}
                         if (String(assistenciasRecentes.length) !== _ultimoValor) {
                             try { localStorage.setItem(_chaveFalhas, String(assistenciasRecentes.length)); } catch (e) {}
-                            _notificarAdminESubadmin(adminId, '⚠️ Equipamento com falhas repetidas', 'O equipamento do contrato ' + (c.numero || '#' + c.id) + ' (' + _clienteLabel(dados.clientes?.find(cl => cl.id === c.clienteId) || {}) + ') teve ' + assistenciasRecentes.length + ' assistências nos últimos 90 dias.', _acaoPendenciasAlerta('contrato', [c]));
+                            _notificarAdminESubadmin(adminId, '⚠️ Equipamento com falhas repetidas', 'O equipamento do contrato ' + (c.numero || '#' + c.id) + ' (' + _clienteLabel(dados.clientes?.find(cl => cl.id === c.clienteId) || {}) + ') teve ' + assistenciasRecentes.length + ' assistências nos últimos 90 dias.', "abrirSecao('contratos')");
                         }
                     }
                 });
@@ -13642,7 +13531,7 @@
                 const manut = ultimaManut && crit.includes(estadoDataFrota(ultimaManut.proximaData).chave);
                 return crit.includes(insp) || crit.includes(seg) || manut;
             });
-            if (veicsAtencaoLista.length) alertas.push({ tipo: 'warning', titulo: `${veicsAtencaoLista.length} ${veicsAtencaoLista.length === 1 ? 'frota a vencer manutenção' : 'frota a vencer manutenção'}`, sub: 'Verifique a frota e agende a manutenção.', acao: _acaoPendenciasAlerta('veiculo', veicsAtencaoLista) });
+            if (veicsAtencaoLista.length) alertas.push({ tipo: 'warning', titulo: `${veicsAtencaoLista.length} ${veicsAtencaoLista.length === 1 ? 'frota a vencer manutenção' : 'frota a vencer manutenção'}`, sub: 'Verifique a frota e agende a manutenção.', acao: "abrirSecao('frota')" });
             veicsAtencaoLista.forEach(v => {
                 const insp = estadoDataFrota(v.inspecaoValidade);
                 const seg = estadoDataFrota(v.seguroValidade);
@@ -13655,15 +13544,15 @@
                 const candidatos = [insp, seg].concat(manutEstado ? [manutEstado] : []).filter(x => crit.includes(x.chave));
                 const dias = candidatos.length ? Math.min(...candidatos.map(x => x.dias)) : 30;
                 _notificarPorFaseVencimento('frota_vencer_' + adminId, v.id, isFinite(dias) ? dias : 30, () => {
-                    _notificarAdminESubadmin(adminId, '🚗 Veículo a vencer', 'Matrícula ' + (v.matricula || '—') + ' — ' + motivos.join(' e ') + ' a vencer em ' + (isFinite(dias) ? dias : '30') + ' dia(s).', _acaoPendenciasAlerta('veiculo', [v]));
+                    _notificarAdminESubadmin(adminId, '🚗 Veículo a vencer', 'Matrícula ' + (v.matricula || '—') + ' — ' + motivos.join(' e ') + ' a vencer em ' + (isFinite(dias) ? dias : '30') + ' dia(s).', "abrirSecao('frota')");
                 });
             });
 
-            const reqPendLista = (dados.requisicoes || []).filter(r => r.adminId === adminId && (r.status === 'pendente' || r.status === 'pendente_aprov'));
-            if (reqPendLista.length) alertas.push({ tipo: 'info', titulo: `${reqPendLista.length} ${reqPendLista.length === 1 ? 'requisição pendente' : 'requisições pendentes'}`, sub: 'Há requisições a aguardar resposta.', acao: _acaoPendenciasAlerta('requisicao', reqPendLista) });
+            const reqPend = (dados.requisicoes || []).filter(r => r.adminId === adminId && (r.status === 'pendente' || r.status === 'pendente_aprov')).length;
+            if (reqPend) alertas.push({ tipo: 'info', titulo: `${reqPend} ${reqPend === 1 ? 'requisição pendente' : 'requisições pendentes'}`, sub: 'Há requisições a aguardar resposta.', acao: "abrirSecao('requisicoes')" });
 
-            const pedPendLista = (dados.pedidos || []).filter(p => p.adminId === adminId && (p.status === 'pendente' || p.status === 'pendente_aprov'));
-            if (pedPendLista.length) alertas.push({ tipo: 'info', titulo: `${pedPendLista.length} ${pedPendLista.length === 1 ? 'pedido de férias/faltas pendente' : 'pedidos de férias/faltas pendentes'}`, sub: 'Há pedidos a aguardar aprovação.', acao: _acaoPendenciasAlerta('pedido', pedPendLista) });
+            const pedPend = (dados.pedidos || []).filter(p => p.adminId === adminId && (p.status === 'pendente' || p.status === 'pendente_aprov')).length;
+            if (pedPend) alertas.push({ tipo: 'info', titulo: `${pedPend} ${pedPend === 1 ? 'pedido de férias/faltas pendente' : 'pedidos de férias/faltas pendentes'}`, sub: 'Há pedidos a aguardar aprovação.', acao: "abrirSecao('pedidos')" });
 
             if (adminRecAlerta?.licenca?.dataExpiracao) {
                 const diasLic = calcularDiasRestantes(adminRecAlerta.licenca.dataExpiracao);
@@ -13712,23 +13601,23 @@
                     vencSHST.setFullYear(vencSHST.getFullYear() + periodicidadeAnos);
                     const diasSHST = calcularDiasRestantes(vencSHST.getTime());
                     if (diasSHST <= 30) {
-                        alertas.push({ tipo: 'danger', titulo: `⚠️ SHST a renovar — ${p.nome}`, sub: `Consulta de medicina do trabalho vence em ${diasSHST} dia(s) (${vencSHST.toLocaleDateString('pt-PT')}).`, acao: (dados.encarregados || []).some(e => e.id === p.id) ? `abrirModalEditarEncarregado('${p.id}')` : `abrirModal('funcionario','${p.id}')` });
+                        alertas.push({ tipo: 'danger', titulo: `⚠️ SHST a renovar — ${p.nome}`, sub: `Consulta de medicina do trabalho vence em ${diasSHST} dia(s) (${vencSHST.toLocaleDateString('pt-PT')}).`, acao: `abrirModal('funcionario','${p.id}')` });
                         _notificarPorFaseVencimento('shst_' + p.id, 'atual', diasSHST, () => {
-                            _notificarAdminESubadmin(adminId, '⚠️ SHST a renovar', 'A consulta de medicina do trabalho de ' + p.nome + ' vence em ' + diasSHST + ' dia(s).', (dados.encarregados || []).some(e => e.id === p.id) ? `abrirModalEditarEncarregado('${p.id}')` : `abrirModal('funcionario','${p.id}')`);
+                            _notificarAdminESubadmin(adminId, '⚠️ SHST a renovar', 'A consulta de medicina do trabalho de ' + p.nome + ' vence em ' + diasSHST + ' dia(s).', `abrirModal('funcionario','${p.id}')`);
                         });
                     }
                 });
             }
 
             if (moduloArmazemAtivo(adminAtual())) {
-                const stockBaixoLista = (dados.artigos || []).filter(a => a.adminId === adminId && _estadoStockArtigo(a, stockAtualArtigo(a.id)).alerta);
-                if (stockBaixoLista.length) alertas.push({ tipo: 'warning', titulo: `${stockBaixoLista.length} ${stockBaixoLista.length === 1 ? 'artigo em falta' : 'artigos em falta'}`, sub: 'Stock no mínimo ou abaixo — reponha o armazém.', acao: _acaoPendenciasAlerta('artigo', stockBaixoLista) });
+                const stockBaixo = (dados.artigos || []).filter(a => a.adminId === adminId && a.alertaStock === true && a.stockMinimo != null && stockAtualArtigo(a.id) <= a.stockMinimo).length;
+                if (stockBaixo) alertas.push({ tipo: 'warning', titulo: `${stockBaixo} ${stockBaixo === 1 ? 'artigo em falta' : 'artigos em falta'}`, sub: 'Stock no mínimo ou abaixo — reponha o armazém.', acao: "abrirSecao('artigos')" });
 
                 const obrasExced = new Set();
                 (dados.obraMateriais || []).forEach(m => {
                     if (m.adminId === adminId && (m.qtdConsumida || 0) > (m.qtdPrevista || 0)) obrasExced.add(m.obraId);
                 });
-                if (obrasExced.size) alertas.push({ tipo: 'warning', titulo: `${obrasExced.size} ${obrasExced.size === 1 ? 'obra com excedente de materiais' : 'obras com excedente de materiais'}`, sub: 'Consumo acima do previsto. Verifique o plano da obra.', acao: _acaoPendenciasAlerta('obra', (dados.obras || []).filter(o => o.adminId === adminId && obrasExced.has(o.id))) });
+                if (obrasExced.size) alertas.push({ tipo: 'warning', titulo: `${obrasExced.size} ${obrasExced.size === 1 ? 'obra com excedente de materiais' : 'obras com excedente de materiais'}`, sub: 'Consumo acima do previsto. Verifique o plano da obra.', acao: "abrirSecao('obras')" });
             }
 
             if (!alertas.length) { cont.style.display = 'none'; cont.innerHTML = ''; return; }
@@ -13738,7 +13627,7 @@
                 : t === 'warning'
                 ? '<span class="alerta-ic warn"><i class="fas fa-exclamation-triangle"></i></span>'
                 : '<span class="alerta-ic info"><i class="fas fa-info"></i></span>';
-            const linhasHtml = alertas.map(a => `<div class="alerta-linha ${a.tipo === 'danger' ? 'danger' : ''}" role="button" tabindex="0" onkeydown="if(event.key === 'Enter' || event.key === ' '){event.preventDefault();this.click();}" onclick="${escapeHtmlSimples(a.acao)}">
+            const linhasHtml = alertas.map(a => `<div class="alerta-linha ${a.tipo === 'danger' ? 'danger' : ''}" onclick="${a.acao}">
                     ${icone(a.tipo)}
                     <div class="alerta-txt"><div class="alerta-t">${a.titulo}</div><div class="alerta-s">${a.sub}</div></div>
                     <i class="fas fa-chevron-right alerta-chev"></i>
@@ -13992,13 +13881,6 @@
         function _nomeArtigoStock(id) { const a = dados.artigos?.find(x => x.id === id); return a ? a.nome : '—'; }
         function _nomeObraStock(id) { const o = dados.obras?.find(x => x.id === id); return o ? o.nome : '—'; }
 
-        function _estadoStockArtigo(artigo, saldo) {
-            const minimo = artigo.stockMinimo;
-            const temMinimo = minimo !== null && minimo !== undefined && minimo !== '' && Number.isFinite(Number(minimo));
-            const negativo = Number(saldo) < 0;
-            const baixo = negativo || (temMinimo && Number(saldo) <= Number(minimo));
-            return { negativo, baixo, alerta: negativo || (baixo && artigo.alertaStock === true), label: negativo ? 'Stock negativo — regularizar' : baixo ? 'Repor' : 'OK' };
-        }
         function stockAtualArtigo(artigoId, armazemId) {
             const a = dados.artigos?.find(x => x.id === artigoId);
             if (!a) return 0;
@@ -14230,12 +14112,11 @@
             tb.innerHTML = lista.length ? lista.map(a => {
                 const st = stockAtualArtigo(a.id);
                 const min = a.stockMinimo;
-                const estadoStock = _estadoStockArtigo(a, st);
-                const emFalta = estadoStock.baixo;
+                const emFalta = (min != null && st <= min);
                 const monit = a.alertaStock === true;
-                if (estadoStock.alerta) baixo++;
+                if (emFalta && monit) baixo++;
                 const badge = emFalta
-                    ? `<span style="color:#dc2626;font-weight:700;"><i class="fas fa-exclamation-triangle"></i> ${estadoStock.label}${monit ? ' <i class="fas fa-bell" title="Alerta ativo"></i>' : ''}</span>`
+                    ? `<span style="color:#dc2626;font-weight:700;"><i class="fas fa-exclamation-triangle"></i> Repor${monit ? ' <i class="fas fa-bell" title="Alerta ativo"></i>' : ''}</span>`
                     : `<span style="color:#16a34a;font-weight:600;">OK${monit ? ' <i class="fas fa-bell" title="Alerta ativo" style="color:#94a3b8;"></i>' : ''}</span>`;
                 return `<tr>
                     <td>${escapeHtmlSimples(a.nome)}</td><td>${escapeHtmlSimples(a.marca || '—')}</td><td>${escapeHtmlSimples(a.categoria || '—')}</td><td>${escapeHtmlSimples(a.referencia || '—')}</td><td>${_unidadeLabel(a.unidade)}</td>
@@ -14292,7 +14173,7 @@
             const doc = _novoPdf(false); if (!doc) return null;
             const fornecedor = dados.fornecedores?.find(f => f.id === e.fornecedorId);
             const itens = (dados.encomendaItens || []).filter(i => i.encomendaId === encId);
-            let y = _pdfArmHeader(doc, 'Nota de Encomenda', e.numero ? 'N.º de encomenda: ' + e.numero : '');
+            let y = _pdfArmHeader(doc, 'Nota de Encomenda', e.numero || '');
             doc.setFontSize(10); doc.setTextColor(30, 30, 30);
             if (fornecedor) {
                 doc.text('Fornecedor: ' + (fornecedor.nome || '-'), 14, y); y += 5;
@@ -14365,15 +14246,12 @@
             return mapa;
         }
         function totalHorasObra(obraId) {
-            // Contabiliza folhas ligadas diretamente à obra e folhas ligadas a uma OS
-            // pertencente à obra. Alguns registos (incluindo folhas criadas pelo Admin)
-            // ficam associados à OS e não têm obraId, embora sejam trabalho dessa obra.
-            const osIdsObra = new Set((dados.servicos || []).filter(os => os.obraId === obraId).map(os => os.id));
-            const folhas = (dados.folhasObra || []).filter(f =>
-                f.descricao && (f.obraId === obraId || (f.servicoId && osIdsObra.has(f.servicoId)))
-            );
-            const horasFolhas = folhas.reduce((s, f) => s + Math.max(0, Number(f.horasTrabalhadas) || 0), 0);
-            const idsComFolha = new Set(folhas.map(f => f.funcionarioId).filter(Boolean));
+            // As folhas sem descrição não deviam existir (todos os caminhos que criam uma folha
+            // exigem uma) — são tratadas como dados corrompidos/de teste e ficam de fora do total,
+            // tal como em _horasObraPorFuncionarioNoPeriodo.
+            const folhas = (dados.folhasObra || []).filter(f => f.obraId === obraId && f.descricao);
+            const horasFolhas = folhas.reduce((s, f) => s + (Number(f.horasTrabalhadas) || 0), 0);
+            const idsComFolha = new Set(folhas.map(f => f.funcionarioId));
             const mapaHoras = _horasObraPorFuncionario(obraId);
             let horasPontoOutros = 0;
             Object.keys(mapaHoras).forEach(fid => { if (!idsComFolha.has(fid)) horasPontoOutros += mapaHoras[fid]; });
@@ -14381,11 +14259,13 @@
         }
         function _obraLongaPontoAberto(obraId) {
             if (!usuarioLogado) return null;
-            return (dados.obraPontoLonga || []).find(p => p.funcionarioId === usuarioLogado.id && p.obraId === obraId && p.entrada && !p.saida) || null;
+            const hoje = getDataHoje();
+            return (dados.obraPontoLonga || []).find(p => p.funcionarioId === usuarioLogado.id && p.obraId === obraId && p.data === hoje && p.entrada && !p.saida) || null;
         }
         function _obraLongaPontoAbertoQualquer() {
             if (!usuarioLogado) return null;
-            return (dados.obraPontoLonga || []).find(p => p.funcionarioId === usuarioLogado.id && p.entrada && !p.saida) || null;
+            const hoje = getDataHoje();
+            return (dados.obraPontoLonga || []).find(p => p.funcionarioId === usuarioLogado.id && p.data === hoje && p.entrada && !p.saida) || null;
         }
         function finalizarObraLonga(obraId) {
             const obra0 = (dados.obras || []).find(o => o.id === obraId);
@@ -14451,8 +14331,7 @@
 
             // Folhas sem descrição são tratadas como dados corrompidos/de teste — ficam de fora
             // deste relatório, tal como já acontece no Auto de Medição e no "Total de horas".
-            const _osIdsObraRel = new Set((dados.servicos || []).filter(os => os.obraId === obraId).map(os => os.id));
-            const folhas = (dados.folhasObra || []).filter(f => f.descricao && (f.obraId === obraId || (f.servicoId && _osIdsObraRel.has(f.servicoId))));
+            const folhas = (dados.folhasObra || []).filter(f => f.obraId === obraId && f.descricao);
             const horas = totalHorasObra(obraId);
             const responsavelNome = obra.responsavelId ? (obterNomeFuncionario(obra.responsavelId) || '—') : '—';
             const funcionariosEnvolvidos = [...new Set(folhas.map(f => f.funcionarioId))];
@@ -14686,13 +14565,14 @@
             if (!aberto) { alert('Não tens entrada em aberto nesta obra.'); return; }
             const obra = (dados.obras || []).find(o => o.id === obraId); if (!obra) return;
             const hora = new Date().toTimeString().slice(0, 5);
+            const horasDestaSessao = aberto.entrada ? calcularHoras(aberto.entrada, hora) : 0;
             if (obra.estado === 'concluida') {
                 // A obra já foi finalizada por outra pessoa entretanto — só fecha esta entrada,
                 // sem perguntar nada nem voltar a mexer no estado da obra.
                 await _obraLongaRegistarSaida(obraId);
                 return;
             }
-            const resposta = await perguntarSaidaObra('Saída da obra "' + obra.nome + '" às ' + hora + '.\n\nO que pretendes fazer?');
+            const resposta = await perguntarSaidaObra('Saída da obra "' + obra.nome + '" às ' + hora + '.\n\nO que aconteceu?');
             if (resposta == null) return; // cancelou
             const _saidaConfirmada = await _obraLongaRegistarSaida(obraId); // fecha sempre a própria entrada, seja qual for a resposta
             if (!_saidaConfirmada) return; // já foi avisado do problema — não avança com o resto do fluxo
@@ -14738,9 +14618,9 @@
                 document.getElementById('modalGenericoCampos').innerHTML = `
                     <p style="white-space:pre-line;margin-bottom:14px;">${escapeHtmlSimples(texto)}</p>
                     <div style="display:flex;flex-direction:column;gap:8px;">
-                        <button type="button" class="btn" style="background:#f59e0b;color:#fff;" onclick="_responderSaidaObraLonga('almoco')"><i class="fas fa-utensils"></i> Sair para almoço</button>
-                        <button type="button" class="btn" style="background:#0ea5e9;color:#fff;" onclick="_responderSaidaObraLonga('hoje')">Saída de Obra / OS</button>
-                        <button type="button" class="btn btn-success" onclick="_responderSaidaObraLonga('sim')">Concluir Obra / OS</button>
+                        <button type="button" class="btn" style="background:#f59e0b;color:#fff;" onclick="_responderSaidaObraLonga('almoco')"><i class="fas fa-utensils"></i> Pausa para almoço</button>
+                        <button type="button" class="btn" style="background:#0ea5e9;color:#fff;" onclick="_responderSaidaObraLonga('hoje')">Terminado por hoje — vou preencher a folha e materiais</button>
+                        <button type="button" class="btn btn-success" onclick="_responderSaidaObraLonga('sim')">Sim, terminei a obra — preencher folha, relatório e finalizar</button>
                     </div>
                 `;
                 document.getElementById('modalGenericoForm').onsubmit = e => e.preventDefault();
@@ -14780,80 +14660,10 @@
             if (btnCancelar) btnCancelar.style.display = '';
             if (_modalSaidaOuAlmocoResolve) { _modalSaidaOuAlmocoResolve(valor); _modalSaidaOuAlmocoResolve = null; }
         }
-        // Mantém cada intervalo no seu dia civil, sem alterar calcularHoras para
-        // aceitar saídas anteriores à entrada nos restantes registos da aplicação.
-        function _intervalosSaidaObra(aberto, dataSaida, horaSaida) {
-            const inicio = aberto.data + 'T' + aberto.entrada;
-            const fim = dataSaida + 'T' + horaSaida;
-            const agora = getDataHoje() + 'T' + new Date().toTimeString().slice(0, 5);
-            const dataValida = data => /^\d{4}-\d{2}-\d{2}$/.test(data) &&
-                !isNaN(Date.parse(data + 'T00:00:00Z')) && new Date(data + 'T00:00:00Z').toISOString().slice(0, 10) === data;
-            if (!dataValida(aberto.data) || !dataValida(dataSaida) ||
-                !/^([01]\d|2[0-3]):[0-5]\d$/.test(horaSaida) || fim < inicio || fim > agora) {
-                throw new Error('Indica uma saída entre a entrada e a data e hora atuais.');
-            }
-            const partes = [];
-            let dia = aberto.data;
-            let entrada = aberto.entrada;
-            while (dia < dataSaida) {
-                partes.push({ data: dia, entrada, saida: '24:00' });
-                const seguinte = new Date(dia + 'T00:00:00Z');
-                seguinte.setUTCDate(seguinte.getUTCDate() + 1);
-                dia = seguinte.toISOString().slice(0, 10);
-                entrada = '00:00';
-            }
-            if (entrada !== horaSaida || !partes.length) partes.push({ data: dia, entrada, saida: horaSaida });
-            return partes;
-        }
-        function _pedirSaidaObraAnterior(aberto) {
-            return new Promise(resolve => {
-                const overlay = document.createElement('div');
-                overlay.className = 'modal-overlay open';
-                overlay.style.zIndex = '10050';
-                const agora = getDataHoje() + 'T' + new Date().toTimeString().slice(0, 5);
-                overlay.innerHTML = `<form class="modal" role="dialog" aria-modal="true" aria-labelledby="saidaAnteriorTitulo" style="max-width:480px;">
-                    <h3 id="saidaAnteriorTitulo">Fechar entrada de dia anterior</h3>
-                    <p>Esta entrada ficou aberta desde ${escapeHtmlSimples(aberto.data)} às ${escapeHtmlSimples(aberto.entrada)}. Confirma quando saíste. As horas só serão contabilizadas até ao momento indicado.</p>
-                    <div class="form-group"><label for="saidaAnteriorMomento">Data e hora reais de saída</label>
-                    <input id="saidaAnteriorMomento" type="datetime-local" required min="${escapeHtmlSimples(aberto.data + 'T' + aberto.entrada)}" max="${agora}" value="${agora}"></div>
-                    <p class="saida-anterior-erro" role="alert" style="color:#dc2626;"></p>
-                    <div class="modal-actions"><button type="button" class="btn">Cancelar</button><button type="submit" class="btn btn-success">Confirmar saída</button></div>
-                </form>`;
-                const terminar = valor => { document.removeEventListener('keydown', tecla); overlay.remove(); resolve(valor); };
-                const tecla = ev => { if (ev.key === 'Escape') { ev.stopImmediatePropagation(); terminar(null); } };
-                overlay.querySelector('button[type="button"]').onclick = () => terminar(null);
-                overlay.querySelector('form').onsubmit = ev => {
-                    ev.preventDefault();
-                    const [data, hora] = overlay.querySelector('input').value.split('T');
-                    try { _intervalosSaidaObra(aberto, data, hora); }
-                    catch (erro) { overlay.querySelector('.saida-anterior-erro').textContent = erro.message; return; }
-                    terminar({ data, hora });
-                };
-                document.addEventListener('keydown', tecla);
-                document.body.appendChild(overlay);
-                overlay.querySelector('input').focus();
-            });
-        }
         async function _obraLongaRegistarSaida(obraId) {
             const aberto = _obraLongaPontoAberto(obraId);
             if (!aberto) return true;
-            const momento = aberto.data !== getDataHoje()
-                ? await _pedirSaidaObraAnterior(aberto)
-                : { data: getDataHoje(), hora: new Date().toTimeString().slice(0, 5) };
-            if (!momento) return false;
-            // Uma confirmação concorrente não pode dividir nem fechar a sessão duas vezes.
-            if (aberto.saida || _obraLongaPontoAberto(obraId)?.id !== aberto.id) return false;
-            let partes;
-            try { partes = _intervalosSaidaObra(aberto, momento.data, momento.hora); }
-            catch (e) { alert(e.message); return false; }
-            const novos = partes.slice(1).map((parte, i) => ({
-                id: gerarId(), funcionarioId: aberto.funcionarioId, adminId: aberto.adminId,
-                obraId: aberto.obraId, ...parte,
-                lat: null, lng: null, latSaida: null, lngSaida: null,
-                kmInicio: null, kmFim: i === partes.length - 2 ? aberto.kmFim : null
-            }));
-            aberto.saida = partes[0].saida;
-            if (novos.length) { aberto.kmFim = null; dados.obraPontoLonga.push(...novos); }
+            aberto.saida = new Date().toTimeString().slice(0, 5);
             let erro = null;
             _mostrarCarregando('A confirmar saída...');
             try { await guardarDados(dados); } catch (e) { erro = e; } finally { _esconderCarregando(); }
@@ -14862,7 +14672,7 @@
                 alert('⚠️ A saída ficou registada no ecrã, mas ainda NÃO foi confirmada pelo servidor (' + (erro.message || 'falha de ligação') + '). A app vai continuar a tentar sozinha — verifica a tua ligação à internet e confirma mais tarde em "Registo de Ponto" se já ficou certo. Se o aviso persistir, avisa o administrador.');
                 return false;
             }
-            alert('Saída da obra registada e confirmada ✓ em ' + momento.data + ' às ' + momento.hora);
+            alert('Saída da obra registada e confirmada ✓ às ' + aberto.saida);
             _refrescarModalObraLongaSeAberto(obraId);
             return true;
         }
@@ -15492,24 +15302,6 @@
         // sem ter de abrir a Agenda completa.
         // Painel do admin em "O Meu Dia" — alertas do dia, estado da equipa em tempo real,
         // ações rápidas e resumo financeiro. Pensado para gerir, não para trabalho de campo.
-        // Estado de presença partilhado pelos dois painéis; apenas consulta as picagens.
-        function _estadoPresencaPessoa(funcionarioId, hoje) {
-            const emOS = (dados.ponto || []).find(x => x.funcionarioId === funcionarioId && x.servicoId && x.data === hoje && x.entrada && !x.saida);
-            if (emOS) {
-                const os = dados.servicos?.find(s => s.id === emOS.servicoId);
-                return { label: 'Em OS — ' + (obterNomeCliente(os?.clienteId) || '—'), cor: '#0ea5e9', ativo: true };
-            }
-            const emObra = (dados.obraPontoLonga || []).find(x => x.funcionarioId === funcionarioId && x.data === hoje && x.entrada && !x.saida);
-            if (emObra) {
-                const obra = dados.obras?.find(o => o.id === emObra.obraId);
-                return { label: 'Em Obra — ' + (obra?.nome || '—'), cor: '#0ea5e9', ativo: true };
-            }
-            const geral = (dados.ponto || []).filter(x => x.funcionarioId === funcionarioId && !x.servicoId && !x.obraId && x.data === hoje && x.entrada)
-                .sort((a, b) => String(b.entrada).localeCompare(String(a.entrada)) || String(b.dataCriacao || b.id || '').localeCompare(String(a.dataCriacao || a.id || '')))[0];
-            if (geral && !geral.saida) return { label: 'Em serviço', cor: '#16a34a', ativo: true };
-            if (geral) return { label: 'Terminou o dia', cor: '#f97316', ativo: false };
-            return { label: 'Ainda não começou', cor: '#94a3b8', ativo: false };
-        }
         function _htmlPainelAdminHoje(adminId, hoje) {
             const admin = dados.administradores?.find(a => a.id === adminId);
             const equipa = [
@@ -15529,15 +15321,33 @@
             const semPontoAinda = (expressAtivo(admin) || agoraMin <= limiteMin) ? [] : equipa.filter(p => !pontoGeralAberto(p.id));
 
             const osAtrasadas = (dados.servicos || []).filter(s => s.adminId === adminId && s.data === hoje && s.hora && s.status !== 'concluído' && s.status !== 'cancelado' && s.status !== 'em andamento' && s.hora < new Date().toTimeString().slice(0, 5));
-            const feriasPendentes = (dados.pedidos || []).filter(p => p.adminId === adminId && ['pendente', 'pendente_aprov'].includes(p.status));
+            const feriasPendentes = (dados.pedidos || []).filter(p => p.adminId === adminId && p.status === 'pendente');
 
             const alertas = [];
             if (semPontoAinda.length) alertas.push({ icone: 'fa-user-clock', cor: '#dc2626', texto: `${semPontoAinda.length} ${semPontoAinda.length === 1 ? 'pessoa ainda não picou' : 'pessoas ainda não picaram'} o ponto hoje`, aviso: semPontoAinda.map(p => p.nome).join(', '), acao: `abrirSecao('ponto')` });
-            if (osAtrasadas.length) alertas.push({ icone: 'fa-triangle-exclamation', cor: '#f59e0b', texto: `${osAtrasadas.length} ${osAtrasadas.length === 1 ? 'OS atrasada' : 'OS atrasadas'}`, aviso: osAtrasadas.slice(0, 3).map(s => obterNomeCliente(s.clienteId)).join(', '), acao: _acaoPendenciasAlerta('servico', osAtrasadas) });
-            if (feriasPendentes.length) alertas.push({ icone: 'fa-umbrella-beach', cor: '#0ea5e9', texto: `${feriasPendentes.length} ${feriasPendentes.length === 1 ? 'pedido' : 'pedidos'} por aprovar`, aviso: '', acao: _acaoPendenciasAlerta('pedido', feriasPendentes) });
+            if (osAtrasadas.length) alertas.push({ icone: 'fa-triangle-exclamation', cor: '#f59e0b', texto: `${osAtrasadas.length} ${osAtrasadas.length === 1 ? 'OS atrasada' : 'OS atrasadas'}`, aviso: osAtrasadas.slice(0, 3).map(s => obterNomeCliente(s.clienteId)).join(', '), acao: `abrirSecao('servicos')` });
+            if (feriasPendentes.length) alertas.push({ icone: 'fa-umbrella-beach', cor: '#0ea5e9', texto: `${feriasPendentes.length} ${feriasPendentes.length === 1 ? 'pedido' : 'pedidos'} por aprovar`, aviso: '', acao: `abrirSecao('pedidos')` });
 
             // --- Estado da equipa em tempo real ---
-            const estadoPessoa = p => _estadoPresencaPessoa(p.id, hoje);
+            const estadoPessoa = p => {
+                const emOS = (dados.ponto || []).find(x => x.funcionarioId === p.id && x.servicoId && x.data === hoje && x.entrada && !x.saida);
+                if (emOS) { const os = dados.servicos?.find(s => s.id === emOS.servicoId); return { label: 'Em OS — ' + (obterNomeCliente(os?.clienteId) || '—'), cor: '#0ea5e9' }; }
+                const emObra = (dados.obraPontoLonga || []).find(x => x.funcionarioId === p.id && x.data === hoje && x.entrada && !x.saida);
+                if (emObra) { const ob = dados.obras?.find(o => o.id === emObra.obraId); return { label: 'Em Obra — ' + (ob?.nome || '—'), cor: '#0ea5e9' }; }
+                const geral = (dados.ponto || []).find(x => x.funcionarioId === p.id && !x.servicoId && !x.obraId && x.data === hoje && x.entrada);
+                if (geral && !geral.saida) return { label: 'Em serviço', cor: '#16a34a' };
+                if (geral && geral.saida) {
+                    // O Ponto Geral pode ter sido fechado automaticamente por causa de uma pausa
+                    // para almoço a meio de uma OS (não é um "Terminar o Dia" a sério). Se, depois
+                    // dessa saída, a pessoa ainda entrou/saiu de alguma OS ou Obra, está claramente
+                    // a trabalhar — não faz sentido dizer que "terminou o dia".
+                    const aindaTrabalhouDepois = (dados.ponto || []).some(x => x.funcionarioId === p.id && x.servicoId && x.data === hoje && x.entrada > geral.saida)
+                        || (dados.obraPontoLonga || []).some(x => x.funcionarioId === p.id && x.data === hoje && x.entrada > geral.saida);
+                    if (aindaTrabalhouDepois) return { label: 'Em serviço', cor: '#16a34a' };
+                    return { label: 'Terminou o dia', cor: '#f97316' };
+                }
+                return { label: 'Ainda não começou', cor: '#1e293b' };
+            };
             const linhasEquipa = equipa.slice(0, 12).map(p => {
                 const e = estadoPessoa(p);
                 return `<div class="tgm-equipa-linha"><span class="tgm-equipa-dot" style="background:${e.cor};"></span><span class="tgm-equipa-nome">${escapeHtmlSimples(p.nome)}</span><span class="tgm-equipa-estado" style="color:${e.cor};">${e.label}</span></div>`;
@@ -15550,7 +15360,7 @@
             return `
                 <div class="tgm-panel tgm-panel--admin">
                     ${alertas.length ? `<div class="tgm-alertas-admin">${alertas.map(a => `
-                        <div class="tgm-alerta-admin" onclick="${escapeHtmlSimples(a.acao)}">
+                        <div class="tgm-alerta-admin" onclick="${a.acao}">
                             <i class="fas ${a.icone}" style="color:${a.cor};"></i>
                             <div><div class="tgm-alerta-txt">${a.texto}</div>${a.aviso ? `<div class="tgm-alerta-sub">${escapeHtmlSimples(a.aviso)}</div>` : ''}</div>
                             <i class="fas fa-chevron-right" style="margin-left:auto;color:#cbd5e1;font-size:.8rem;"></i>
@@ -15606,26 +15416,26 @@
 
         function _botaoPontoObraHTML(obra) {
             if (usuarioLogado?.role !== 'funcionario' && usuarioLogado?.role !== 'encarregado' && usuarioLogado?.role !== 'vendedor' && usuarioLogado?.role !== 'admin' && usuarioLogado?.role !== 'subadmin') return '';
-            const aberto = _obraLongaPontoAberto(obra.id);
-            if (aberto) {
-                return `<button type="button" class="btn btn-sm" style="background:#dc2626;color:#fff;" onclick="event.stopPropagation();obraLongaPicarSaida('${obra.id}')"><i class="fas fa-stop-circle"></i> Saída</button>`;
-            }
             // Admin e sub-admin têm acesso a todas as obras da empresa, mesmo não estando
             // alocados — só funcionário/encarregado/vendedor ficam limitados à obra onde constam.
             if (!['admin', 'subadmin'].includes(usuarioLogado.role)) {
                 const idsAtrib = (obra.responsaveisIds && obra.responsaveisIds.length) ? obra.responsaveisIds : [obra.responsavelId].filter(Boolean);
                 if (idsAtrib.length && !idsAtrib.includes(usuarioLogado.id)) return '';
             }
+            const aberto = _obraLongaPontoAberto(obra.id);
+            if (aberto) {
+                return `<button type="button" class="btn btn-sm" style="background:#dc2626;color:#fff;" onclick="event.stopPropagation();obraLongaPicarSaida('${obra.id}')"><i class="fas fa-stop-circle"></i> Saída</button>`;
+            }
             if (obra.estado === 'concluida') return '';
             return `<button type="button" class="btn btn-sm" style="background:#16a34a;color:#fff;" onclick="event.stopPropagation();obraLongaPicarEntrada('${obra.id}')"><i class="fas fa-fingerprint"></i> Entrada</button>`;
         }
-        function abrirObraLongaDetalhe(obraId, abaInicial = 'folhas') {
+        function abrirObraLongaDetalhe(obraId) {
             const obra = (dados.obras || []).find(o => o.id === obraId); if (!obra) return;
-            return _verificarAvisoDocsObra(obra).then(() => {
-                _abrirObraLongaDetalheReal(obraId, abaInicial);
+            _verificarAvisoDocsObra(obra).then(() => {
+                _abrirObraLongaDetalheReal(obraId);
             });
         }
-        function _abrirObraLongaDetalheReal(obraId, abaInicial = 'folhas') {
+        function _abrirObraLongaDetalheReal(obraId) {
             const obra = (dados.obras || []).find(o => o.id === obraId); if (!obra) return;
             document.getElementById('modalGenericoOverlay').dataset.obraAtual = obraId;
             document.getElementById('modalGenericoOverlay').classList.add('open');
@@ -15659,7 +15469,7 @@
                     <button type="button" class="btn btn-sm" id="verObraBtnFolhas" onclick="_verObraMostrar('${obraId}','folhas')" style="flex:1;min-width:100px;background:#0ea5e9;color:#fff;"><i class="fas fa-clipboard-list"></i> Folhas de obra</button>
                     <button type="button" class="btn btn-sm" id="verObraBtnMateriais" onclick="_verObraMostrar('${obraId}','materiais')" style="flex:1;min-width:100px;background:#f1f5f9;color:#334155;"><i class="fas fa-boxes-stacked"></i> Materiais</button>
                     <button type="button" class="btn btn-sm" id="verObraBtnDocumentos" onclick="_verObraMostrar('${obraId}','documentos')" style="flex:1;min-width:100px;background:#f1f5f9;color:#334155;"><i class="fas fa-folder-open"></i> Documentos</button>
-                    ${_obraAutosMedicaoDisponiveis(obra) ? `<button type="button" class="btn btn-sm" id="verObraBtnAutos" onclick="_verObraMostrar('${obraId}','autos')" style="flex:1;min-width:100px;background:#f1f5f9;color:#334155;"><i class="fas fa-file-invoice-dollar"></i> Auto de Medição</button>` : ''}
+                    ${(obra.temAutosMedicao && moduloCrmAtivo(dados.administradores?.find(a => a.id === obra.adminId))) ? `<button type="button" class="btn btn-sm" id="verObraBtnAutos" onclick="_verObraMostrar('${obraId}','autos')" style="flex:1;min-width:100px;background:#f1f5f9;color:#334155;"><i class="fas fa-file-invoice-dollar"></i> Auto de Medição</button>` : ''}
                     ${(obrasAvancadoAtivo(dados.administradores?.find(a => a.id === obra.adminId)) && (usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin')) ? `<button type="button" class="btn btn-sm" id="verObraBtnFinanceiro" onclick="_verObraMostrar('${obraId}','financeiro')" style="flex:1;min-width:100px;background:#f1f5f9;color:#334155;"><i class="fas fa-sack-dollar"></i> Financeiro</button>` : ''}
                     ${obrasAvancadoAtivo(dados.administradores?.find(a => a.id === obra.adminId)) ? `<button type="button" class="btn btn-sm" id="verObraBtnMarcos" onclick="_verObraMostrar('${obraId}','marcos')" style="flex:1;min-width:100px;background:#f1f5f9;color:#334155;"><i class="fas fa-list-check"></i> Marcos</button>` : ''}
                     ${obrasAvancadoAtivo(dados.administradores?.find(a => a.id === obra.adminId)) ? `<button type="button" class="btn btn-sm" id="verObraBtnChecklist" onclick="_verObraMostrar('${obraId}','checklist')" style="flex:1;min-width:100px;background:#f1f5f9;color:#334155;"><i class="fas fa-shield-halved"></i> Checklist</button>` : ''}
@@ -15669,7 +15479,7 @@
             document.getElementById('modalGenericoForm').onsubmit = function (ev) { ev.preventDefault(); _fecharModalGenerico(); };
             const _bg = document.querySelector('#modalGenericoOverlay .modal-actions .btn-success'); if (_bg) { _bg.style.display = ''; _bg.innerHTML = '<i class="fas fa-check"></i> Finalizar'; }
             document.getElementById('modalGenericoOverlay').classList.add('open', 'modal-veros');
-            _verObraMostrar(obraId, abaInicial);
+            _verObraMostrar(obraId, 'folhas');
         }
         // Pasta atual aberta na aba Documentos de cada obra (id da pasta, ou null = raiz)
         let _verObraPastaAtual = null;
@@ -15791,7 +15601,7 @@
             }
             if (aba === 'autos') {
                 const _obraAtual = dados.obras?.find(o => o.id === obraId);
-                if (!_obraAutosMedicaoDisponiveis(_obraAtual)) { aba = 'folhas'; }
+                if (!_obraAtual || !moduloCrmAtivo(dados.administradores?.find(a => a.id === _obraAtual.adminId))) { aba = 'folhas'; }
                 else { _renderizarAutosMedicao(obraId); return; }
             }
             // folhas (padrão)
@@ -17020,9 +16830,7 @@
                 // Numeração por fornecedor: ENC-{Fornecedor}-001, 002, ... — conta quantas
                 // encomendas este fornecedor já teve nesta empresa, e usa a seguinte.
                 const nomeFornecedorSlug = (_nomeFornecedor(fornecedorId) || 'FORN').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9]+/g, '').toUpperCase().slice(0, 12) || 'FORN';
-                const prefixoEnc = 'ENC-' + nomeFornecedorSlug + '-';
-                const seqFornecedor = (dados.encomendas || []).filter(e => e.adminId === adminId && typeof e.numero === 'string' && e.numero.startsWith(prefixoEnc))
-                    .reduce((max, e) => Math.max(max, Number(e.numero.slice(prefixoEnc.length)) || 0), 0) + 1;
+                const seqFornecedor = (dados.encomendas || []).filter(e => e.adminId === adminId && e.fornecedorId === fornecedorId).length + 1;
                 const numeroEnc = 'ENC-' + nomeFornecedorSlug + '-' + String(seqFornecedor).padStart(3, '0');
                 (dados.encomendas = dados.encomendas || []).push({ id: encId, adminId, numero: numeroEnc, fornecedorId, obraId, data, estado: 'pendente', observacoes: obs, dataCriacao: Date.now() });
             }
@@ -18302,7 +18110,6 @@
         function _pdfCabecalho(doc, titulo, sub, adminId) {
             const adminRec = dados.administradores?.find(a => a.id === adminId);
             const empresa = adminRec?.empresa || '';
-            const nomeFiscal = adminRec?.nomeFiscal || '';
             const logo = adminRec?.logo || 'https://totalgest.pt/logo-totalgest.png';
             const corRgb = _hexParaRgb(adminRec?.corCorporativa);
             const pw = doc.internal.pageSize.getWidth();
@@ -18318,7 +18125,6 @@
             doc.setFontSize(10); doc.setTextColor(90, 90, 90);
             let y = 24;
             if (empresa) { doc.text(empresa, 14, y); y += 5; }
-            if (nomeFiscal && nomeFiscal.trim() !== empresa.trim()) { doc.setFontSize(8); doc.text(doc.splitTextToSize(nomeFiscal, pw - 60), 14, y); y += 6; doc.setFontSize(10); }
             if (sub) {
                 const linhasSub = doc.splitTextToSize(String(sub), pw - 60);
                 doc.text(linhasSub, 14, y);
@@ -18377,14 +18183,6 @@
             doc.setFontSize(10); doc.setTextColor(90, 90, 90);
             let y = 23;
             if (empresa) { doc.text(empresa, 14, y); y += 5; }
-            const nomeFiscal = String(adminRec?.nomeFiscal || '').trim();
-            if (nomeFiscal && nomeFiscal !== String(empresa).trim()) {
-                doc.setFontSize(9); doc.setTextColor(65, 65, 65);
-                const linhasFiscais = doc.splitTextToSize(nomeFiscal, pw - 28);
-                doc.text(linhasFiscais, 14, y);
-                y += linhasFiscais.length * 4.5 + 1;
-                doc.setFontSize(10); doc.setTextColor(90, 90, 90);
-            }
             if (sub) {
                 // "sub" pode vir com várias linhas (ex.: descrição de uma OS gerada a partir de
                 // uma Obra, com o texto de materiais incluído) — sem isto, o texto seguinte era
@@ -18421,7 +18219,7 @@
             const _corRel = _hexParaRgb(dados.administradores?.find(a => a.id === adminId)?.corCorporativa);
             doc.autoTable({
                 head: [['Artigo', 'Ref.', 'Unid.', 'Stock atual', 'Mínimo', 'Estado']],
-                body: arts.map(a => { const st = stockAtualArtigo(a.id); const estado = _estadoStockArtigo(a, st); return [a.nome, a.referencia || '-', a.unidade || 'un', String(st), a.stockMinimo != null ? String(a.stockMinimo) : '-', estado.label]; }),
+                body: arts.map(a => { const st = stockAtualArtigo(a.id); const falta = a.stockMinimo != null && st <= a.stockMinimo; return [a.nome, a.referencia || '-', a.unidade || 'un', String(st), a.stockMinimo != null ? String(a.stockMinimo) : '-', falta ? 'Repor' : 'OK']; }),
                 startY, styles: { fontSize: 9, cellPadding: 2 }, headStyles: { fillColor: _corRel }
             });
             _tgGuardarPdf(doc, `stock_${_hoje10()}.pdf`);
@@ -18906,18 +18704,6 @@
             setTimeout(_renderizarMapaEquipaDashboardCentral, 60);
             _dashboardCarregarAlertasClima();
             _hdcAnimarGraficos(cont);
-            window.TGSatisfaction?.mount(document.getElementById('hdcSatisfacao'), _hdcRangeDoTipo(_hdcPeriodo.tipo, getDataHoje()));
-        }
-        // O gráfico usa os mesmos dados já autorizados/carregados para a sessão.
-        function _hdcContextoSatisfacao() {
-            return { user: usuarioLogado, tenantId: _tenantId(), reports: dados.relatoriosEspecialidade || [],
-                clients: dados.clientes || [], readSnapshot: async caminho => {
-                    const url = await _obterUrlStorage(caminho);
-                    if (!url) throw new Error('Relatório indisponível');
-                    const resposta = await fetch(url);
-                    if (!resposta.ok) throw new Error('Não foi possível ler o relatório');
-                    return resposta.text();
-                } };
         }
         // Anima todos os gráficos do Dashboard Central a "crescer" quando a página abre, em vez
         // de aparecerem já no tamanho final — barras (verticais e horizontais) crescem de 0 até
@@ -19000,15 +18786,15 @@
             if (tipo === 'hoje') return { ini: hoje, fim: hoje, label: 'hoje' };
             if (tipo === 'semana') {
                 const seg = _segundaDaSemana(new Date(hoje + 'T00:00:00'));
-                return { ini: _fmtDataAg(seg), fim: hoje, label: 'esta semana' };
+                return { ini: seg.toISOString().slice(0, 10), fim: hoje, label: 'esta semana' };
             }
             if (tipo === 'custom' && _hdcPeriodo.ini && _hdcPeriodo.fim) {
                 return { ini: _hdcPeriodo.ini, fim: _hdcPeriodo.fim, label: `${_hdcPeriodo.ini.split('-').reverse().join('/')} a ${_hdcPeriodo.fim.split('-').reverse().join('/')}` };
             }
             // 'mes' (default e fallback do 'custom' sem datas escolhidas ainda)
             const d = new Date(hoje + 'T00:00:00');
-            const ini = _fmtDataAg(new Date(d.getFullYear(), d.getMonth(), 1));
-            const fim = _fmtDataAg(new Date(d.getFullYear(), d.getMonth() + 1, 0));
+            const ini = new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0, 10);
+            const fim = new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString().slice(0, 10);
             return { ini, fim, label: 'este mês' };
         }
         // Período imediatamente anterior, com a mesma duração (para o "↑/↓ vs. período anterior").
@@ -19041,7 +18827,6 @@
             const ini = document.getElementById('hdcCustomIni')?.value;
             const fim = document.getElementById('hdcCustomFim')?.value;
             if (!ini || !fim) return;
-            if (ini > fim) { alert('A data inicial deve ser anterior ou igual à data final.'); return; }
             _hdcPeriodo.ini = ini; _hdcPeriodo.fim = fim;
             renderizarDashboardCentralSecao();
         }
@@ -19134,7 +18919,21 @@
                 ...(dados.funcionarios || []).filter(f => f.adminId === adminId && f.role !== 'admin' && f.role !== 'superadmin' && f.suspenso !== true),
                 ...(dados.encarregados || []).filter(e => e.adminId === adminId && e.suspenso !== true)
             ];
-            const estadoPessoa = p => _estadoPresencaPessoa(p.id, hoje);
+            const estadoPessoa = p => {
+                const emOS = (dados.ponto || []).find(x => x.funcionarioId === p.id && x.servicoId && x.data === hoje && x.entrada && !x.saida);
+                if (emOS) { const os = dados.servicos?.find(s => s.id === emOS.servicoId); return { label: 'Em OS — ' + (obterNomeCliente(os?.clienteId) || '—'), cor: '#0ea5e9', ativo: true }; }
+                const emObra = (dados.obraPontoLonga || []).find(x => x.funcionarioId === p.id && x.data === hoje && x.entrada && !x.saida);
+                if (emObra) { const ob = dados.obras?.find(o => o.id === emObra.obraId); return { label: 'Em Obra — ' + (ob?.nome || '—'), cor: '#0ea5e9', ativo: true }; }
+                const geral = (dados.ponto || []).find(x => x.funcionarioId === p.id && !x.servicoId && !x.obraId && x.data === hoje && x.entrada);
+                if (geral && !geral.saida) return { label: 'Em serviço', cor: '#16a34a', ativo: true };
+                if (geral && geral.saida) {
+                    const aindaTrabalhouDepois = (dados.ponto || []).some(x => x.funcionarioId === p.id && x.servicoId && x.data === hoje && x.entrada > geral.saida)
+                        || (dados.obraPontoLonga || []).some(x => x.funcionarioId === p.id && x.data === hoje && x.entrada > geral.saida);
+                    if (aindaTrabalhouDepois) return { label: 'Em serviço', cor: '#16a34a', ativo: true };
+                    return { label: 'Terminou o dia', cor: '#f97316', ativo: false };
+                }
+                return { label: 'Ainda não começou', cor: '#94a3b8', ativo: false };
+            };
             const equipaComEstado = equipa.map(p => ({ p, e: estadoPessoa(p) }));
             const tecnicosAtivos = equipaComEstado.filter(x => x.e.ativo).length;
 
@@ -19443,14 +19242,13 @@
                         ${proximasManutencoes.length ? `<table class="hdc-tbl">
                             <thead><tr><th>Data</th><th>Cliente</th><th>Contrato</th><th>Estado</th></tr></thead>
                             <tbody>
-                                ${proximasManutencoes.map(({ c, prox, estado }) => `<tr onclick="abrirCardContratos()"><td>${(prox || '').split('-').reverse().join('/')}</td><td>${escapeHtmlSimples(obterNomeCliente(c.clienteId) || '—')}</td><td>${escapeHtmlSimples(c.numero || '—')}</td><td><span style="color:${estado.cor};font-weight:700;">${estado.label}</span></td></tr>`).join('')}
+                                ${proximasManutencoes.map(({ c, prox, estado }) => `<tr onclick="abrirCardContratos()"><td>${(prox || '').split('-').reverse().slice(0, 2).join('/')}</td><td>${escapeHtmlSimples(obterNomeCliente(c.clienteId) || '—')}</td><td>${escapeHtmlSimples(c.numero || '—')}</td><td><span style="color:${estado.cor};font-weight:700;">${estado.label}</span></td></tr>`).join('')}
                             </tbody>
                         </table>` : `<div class="hdc-vazio">Sem contratos de manutenção ativos.</div>`}
                     </div>
                 </div>
 
                 <div class="hdc-row4b">
-                    <div id="hdcSatisfacao" class="hdc-card"></div>
                     ${expressAtivo(admin) ? '' : `<div class="hdc-card hdc-top5">
                         <h4>Top Clientes (faturação — ${range.label})</h4>
                         ${topClientes.length ? `<ul>${topClientes.map(([n, v], i) => `<li><span class="n">${i + 1}</span><span class="nm">${escapeHtmlSimples(n)}</span><span class="vl">${eur(v)}</span></li>`).join('')}</ul>` : `<div class="hdc-vazio">Sem OS concluídas com valor neste período.</div>`}
@@ -19480,7 +19278,7 @@
                         <div class="hdc-legenditem"><span class="k"><i style="background:#94a3b8;"></i>Sem agenda</span><b>${estadosContrato.sem} (${pct(estadosContrato.sem).toFixed(0)}%)</b></div>
                         ` : `<div class="hdc-vazio">Sem contratos de manutenção.</div>`}
                     </div>
-                    <div class="hdc-card hdc-acoes hdc-acoes-rodape">
+                    <div class="hdc-card hdc-acoes">
                         <button onclick="abrirSecao('servicos')"><div class="ic" style="background:var(--hb);"><i class="fas fa-plus"></i></div>Nova OS</button>
                         <button onclick="abrirSecao('clientes')"><div class="ic" style="background:var(--hp);"><i class="fas fa-user-plus"></i></div>Novo Cliente</button>
                         ${expressAtivo(admin)
@@ -20570,7 +20368,7 @@
             } else {
                 document.getElementById('diasRestantes').textContent = '-';
             }
-            document.getElementById('countFunc').textContent = countFunc + ' funcionários · ' + countEncarregados + ' encarregados';
+            document.getElementById('countFunc').textContent = countFunc;
             document.getElementById('countCli').textContent = countCli;
             const elCountLeads = document.getElementById('countLeads');
             if (elCountLeads) elCountLeads.textContent = (dados.leads || []).filter(l => l.adminId === (usuarioLogado?.role === 'admin' ? usuarioLogado.id : usuarioLogado?.adminId) && l.estado !== 'ganho' && l.estado !== 'perdido').length;
@@ -20972,11 +20770,6 @@
 
             cards.forEach(card => {
                 const cardName = card.dataset.card;
-
-                if (cardName === 'quiosque') {
-                    card.classList.toggle('hidden-card', !_podeAtivarQuiosque());
-                    return;
-                }
 
                 // TotalGest Express: primeiro filtro — se não estiver na lista permitida, esconde
                 // sempre, para toda a gente da empresa (admin incluído). Superadmin nunca é
@@ -25713,7 +25506,7 @@ async function salvarAdmin(e) {
                                         </div>
                                     `}
                                 </div>
-                                <div class="form-group"><label>Data</label><input type="date" id="s_data" onchange="_sAvisarDisponibilidade()" value="${item ? item.data : today}" /></div>
+                                <div class="form-group"><label>Data</label><input type="date" id="s_data" value="${item ? item.data : today}" /></div>
                                 <div class="form-group"><label>Hora</label><input type="time" id="s_hora" value="${item ? item.hora : now}" /></div>
                             </div>
                         </div>
@@ -26306,7 +26099,6 @@ async function salvarAdmin(e) {
                 (passo5 && !_expressoWiz) ? { titulo: 'Checklist de segurança', el: passo5 } : null,
                 _expressoWiz ? null : { titulo: 'Faturação', el: passo6 },
                 { titulo: 'Morada', el: passo7 },
-                { titulo: 'Rever e criar', el: document.createElement('section') },
             ].filter(Boolean);
 
             // Limpa o wrap e injeta: barra de progresso + os passos (todos escondidos, exceto o 1º)
@@ -26369,23 +26161,9 @@ async function salvarAdmin(e) {
             if (btnNao) { btnNao.style.background = !sim ? '#dc2626' : '#f1f5f9'; btnNao.style.color = !sim ? '#fff' : '#334155'; }
             if (secTipos) secTipos.style.display = sim ? '' : 'none';
         }
-        function _osWizResumoHtml() {
-            const value = id => document.getElementById(id)?.value || '';
-            const row = (label, text) => '<div style="padding:8px 0;border-bottom:1px solid #e2e8f0;"><strong>' + label + '</strong><div>' + escapeHtmlSimples(text || 'Não indicado') + '</div></div>';
-            const ids = [...document.querySelectorAll('#s_func_checkboxes input.s-func-check:checked')].map(c => c.value);
-            if (!ids.length && value('s_funcionario')) ids.push(value('s_funcionario'));
-            const local = document.getElementById('s_local');
-            return '<h3>Confirmar ordem de serviço</h3><p>Reveja os dados antes de criar. Use Voltar para corrigir.</p>' +
-                row('Cliente', value('s_cliente_busca')) + row('Equipa', ids.map(obterNomeFuncionario).join(', ')) +
-                row('Data e hora', [value('s_data'),value('s_hora')].filter(Boolean).join(' · ')) +
-                row('Trabalho', value('s_descricao')) + row('Relatórios', _sTiposTrabalhoSelecionados().join(', ') || 'Sem relatórios de especialidade') +
-                row('Instalação', local?.selectedOptions?.[0]?.textContent) + row('Morada', [value('s_morada'),value('s_numero_porta'),value('s_codigo_postal'),value('s_cidade')].filter(Boolean).join(', ')) +
-                row('Valor a faturar', value('s_valor') ? Number(value('s_valor')).toFixed(2) + ' €' : 'Não definido');
-        }
         function _osWizRenderBarra() {
             const barra = document.getElementById('osWizBarra'); if (!barra) return;
             const total = _osWizPassos.length;
-            if (_osWizPassos[_osWizPasso].titulo === 'Rever e criar') _osWizPassos[_osWizPasso].el.innerHTML = _osWizResumoHtml();
             barra.innerHTML = `
                 <div style="display:flex;justify-content:space-between;font-size:.78rem;color:#64748b;margin-bottom:6px;">
                     <span>Passo ${_osWizPasso + 1} de ${total} — ${escapeHtmlSimples(_osWizPassos[_osWizPasso].titulo)}</span>
@@ -26396,7 +26174,7 @@ async function salvarAdmin(e) {
             const btnVoltar = document.getElementById('osWizVoltar');
             const btnSeguinte = document.getElementById('osWizSeguinte');
             if (btnVoltar) btnVoltar.style.visibility = _osWizPasso === 0 ? 'hidden' : 'visible';
-            if (btnSeguinte) btnSeguinte.innerHTML = _osWizPasso === total - 1 ? '<i class="fas fa-check"></i> Criar OS' : 'Seguinte <i class="fas fa-arrow-right"></i>';
+            if (btnSeguinte) btnSeguinte.innerHTML = _osWizPasso === total - 1 ? '<i class="fas fa-check"></i> Finalizar' : 'Seguinte <i class="fas fa-arrow-right"></i>';
         }
         function _osWizValidarPassoAtual() {
             const el = _osWizPassos[_osWizPasso].el;
@@ -26412,7 +26190,6 @@ async function salvarAdmin(e) {
                 alert('Seleciona pelo menos um funcionário para esta Ordem de Serviço.');
                 return false;
             }
-            if (funcChecks.length && _bloquearSeAusenteEmOS(Array.from(funcChecks).filter(c => c.checked).map(c => c.value), document.getElementById('s_data')?.value)) return false;
             return true;
         }
         function _osWizSeguinte() {
@@ -26455,7 +26232,7 @@ async function salvarAdmin(e) {
         // Sai do modo wizard sem perder dados já escritos — volta a mostrar tudo de uma vez,
         // como o formulário normal.
         function _osWizSair() {
-            _osWizPassos.forEach(p => { if (p.titulo === 'Rever e criar') p.el.remove(); else p.el.style.display = ''; });
+            _osWizPassos.forEach(p => { p.el.style.display = ''; });
             document.getElementById('osWizBarra')?.remove();
             document.getElementById('osWizVoltar')?.closest('div')?.remove();
             const modalActions = document.querySelector('#modalOverlay .modal-actions');
@@ -27271,7 +27048,6 @@ async function salvarAdmin(e) {
                 const funcionariosIds = _funcCheckCont
                     ? [...(_funcCheckCont.querySelectorAll('input.s-func-check:checked'))].map(c => c.value)
                     : (funcionarioId ? [funcionarioId] : []);
-                if (_bloquearSeAusenteEmOS(funcionariosIds, document.getElementById('s_data').value)) return;
                 let adminId = null;
                 if (usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin') {
                     adminId = _tenantId();
@@ -28121,7 +27897,7 @@ async function salvarAdmin(e) {
                 document.getElementById('modalSimNaoNaoBtn').style.display = 'none';
                 document.getElementById('modalSimNaoAlmocoBtn').style.display = 'block';
                 document.getElementById('modalSimNaoHojeBtn').style.display = 'block';
-                document.getElementById('modalSimNaoSimTexto').textContent = 'Concluir Obra / OS';
+                document.getElementById('modalSimNaoSimTexto').textContent = 'Sim, terminei a obra e quero finalizar';
                 document.getElementById('modalSimNaoTexto').textContent = texto;
                 document.getElementById('modalSimNaoOverlay').classList.add('open');
             });
@@ -28297,7 +28073,7 @@ async function salvarAdmin(e) {
                 const _prosseguirSaidaOS = async (kmSai) => {
                 aberto.saida = hora;
                 if (loc) { aberto.latSaida = loc.lat; aberto.lngSaida = loc.lng; }
-                const resposta = await perguntarSaidaObra('Saída da OS às ' + hora + '.\n\nO que pretendes fazer?');
+                const resposta = await perguntarSaidaObra('Saída picada às ' + hora + '.\n\nTerminaste a obra?');
                 if (resposta == null) {
                     // Cancelou (cruz) — desfaz a saída que já tínhamos gravado, como se nunca
                     // tivesse picado nada, para não ficar um registo "a meio" por engano.
@@ -28603,7 +28379,6 @@ async function salvarAdmin(e) {
             { valor: 'checkbox', label: 'Sim / Não', icon: 'fa-toggle-on' },
             { valor: 'checklist', label: 'Passo do checklist (obrigatório)', icon: 'fa-list-check' },
             { valor: 'lista', label: 'Lista de escolha', icon: 'fa-caret-down' },
-            { valor: 'satisfacao', label: 'Satisfação do cliente (4 níveis)', icon: 'fa-face-smile' },
             { valor: 'data', label: 'Data', icon: 'fa-calendar-day' },
             { valor: 'hora', label: 'Hora', icon: 'fa-clock' },
             { valor: 'titulo', label: 'Título de secção', icon: 'fa-heading' },
@@ -28876,7 +28651,6 @@ async function salvarAdmin(e) {
                     iframe.contentWindow.postMessage({
                         type: 'init',
                         empresaNome: admin.empresa || admin.nome || '',
-                        empresaFiscal: admin.nomeFiscal || '',
                         logoBase64: admin.logo || '',
                         corCorporativa: admin.corCorporativa || '',
                         anepcNumero: admin.numeroAnepc || '',
@@ -28971,8 +28745,8 @@ async function salvarAdmin(e) {
             _rpAtualizarPreview(tipo);
         }
         async function _rpAdicionarCampo(codigo) {
+            const label = document.getElementById('rp_novo_campo_label').value.trim();
             const tipoCampo = document.getElementById('rp_novo_campo_tipo').value;
-            const label = tipoCampo === 'satisfacao' ? 'Grau de satisfação do cliente' : document.getElementById('rp_novo_campo_label').value.trim();
             if (!label) { alert('Escreve o nome do campo (ou, para um Título de secção, o texto do título).'); return; }
             let opcoes = null;
             if (tipoCampo === 'lista') {
@@ -28985,11 +28759,6 @@ async function salvarAdmin(e) {
             const tipo = (dados.tiposTrabalhoCustom || []).find(t => t.codigo === codigo && t.adminId === tid);
             if (!tipo) return;
             tipo.campos = tipo.campos || [];
-            // Uma única resposta de satisfação por relatório, para evitar duplicar métricas.
-            if (tipoCampo === 'satisfacao' && tipo.campos.some(c => c.tipo === 'satisfacao' || (c.tipo === 'lista' && /satisfaç|satisfac/i.test(c.label || '')))) {
-                alert('Este modelo já contém um campo de satisfação do cliente.');
-                return;
-            }
             // Limite de campos por relatório, conforme o pack (Express 5 / Expert 15 / Pro 40 / ∞).
             const limiteCampos = packLimite(adminAtual(), 'camposPorRelatorio');
             if (tipo.campos.length >= limiteCampos) {
@@ -29034,51 +28803,6 @@ async function salvarAdmin(e) {
         const REPORT_TEMPLATES = {};
         Object.keys(REPORT_TEMPLATES_B64).forEach(k => { try { REPORT_TEMPLATES[k] = decodeURIComponent(escape(atob(REPORT_TEMPLATES_B64[k]))); } catch(e) { REPORT_TEMPLATES[k] = atob(REPORT_TEMPLATES_B64[k]); } });
 
-        // O nome fiscal faz parte do branding: reaplicar em cada render/página e rascunho.
-        function _tgAtualizarNomeFiscalDocumento(doc, nomeFiscal, empresaNome) {
-            const fiscal = String(nomeFiscal || '').trim();
-            const comercial = String(empresaNome || '').trim();
-            doc.querySelectorAll('#tg-nome-fiscal-especialidade').forEach(el => el.remove());
-            doc.querySelectorAll('.brand').forEach(brand => {
-                const nome = brand.querySelector('.empresa-nome');
-                if (!nome) return;
-                let el = brand.querySelector('.empresa-fiscal');
-                if (!fiscal || fiscal === comercial) { if (el) el.remove(); return; }
-                if (!el) { el = doc.createElement('div'); el.className = 'empresa-fiscal'; }
-                el.textContent = fiscal;
-                el.style.cssText = 'display:block;clear:both;font:500 12px/1.45 Arial,sans-serif;color:#374151;margin:4px 0 5px;white-space:normal;overflow-wrap:anywhere;';
-                nome.insertAdjacentElement('afterend', el);
-            });
-        }
-        function _tgPrepararNomeFiscalEspecialidade(html, tipo) {
-            if (!html || tipo === 'RDI') return html;
-            const anchor = 'nomeEl.textContent = msg.empresaNome;';
-            const chamada = '(' + _tgAtualizarNomeFiscalDocumento.toString() + ')(document, msg.empresaFiscal, msg.empresaNome);';
-            return html.replaceAll(anchor, anchor + chamada);
-        }
-
-        // RCCTV / Intrusão: adicionar uma resposta de satisfação opcional antes das assinaturas.
-        // O SELECT é serializado pelos modelos ao guardar rascunho ou concluir; a leitura
-        // existente TGSatisfaction.extract identifica os quatro graus no HTML do relatório.
-        function _tgAdicionarSatisfacaoRelatorio(html) {
-            const anchor = '<div class="signrow">';
-            if (!html || html.includes('id="tg_satisfacao_cliente"') || !html.includes(anchor)) return html;
-            const campo = `<div class="config-field" data-tg-sat-field="1" style="margin:14px 0 18px;">
-                <label for="tg_satisfacao_cliente" style="display:block;font-size:.76rem;color:var(--muted,#64748b);margin-bottom:7px;">Grau de satisfação do cliente</label>
-                <select id="tg_satisfacao_cliente" aria-label="Grau de satisfação do cliente" style="display:block;width:100%;max-width:320px;min-height:38px;padding:7px 10px;border:1px solid var(--line,#cbd5e1);border-radius:7px;background:#fff;font:inherit;">
-                    <option value="">— Sem resposta —</option>
-                    <option value="muito_insatisfeito">Muito insatisfeito</option>
-                    <option value="insatisfeito">Insatisfeito</option>
-                    <option value="satisfeito">Satisfeito</option>
-                    <option value="muito_satisfeito">Muito satisfeito</option>
-                </select>
-            </div>`;
-            return html.replace(anchor, campo + anchor);
-        }
-        ['RCCTV', 'RIN'].forEach(tipo => {
-            REPORT_TEMPLATES[tipo] = _tgAdicionarSatisfacaoRelatorio(REPORT_TEMPLATES[tipo]);
-        });
-
         // Gera, na hora, o formulário HTML de um relatório personalizado (tipo de trabalho
         // criado pelo próprio admin em "Relatórios personalizados por tipo"). Segue exatamente
         // o mesmo protocolo (mensagens init/permissao/rascunho/concluído) dos modelos fixos
@@ -29092,13 +28816,6 @@ async function salvarAdmin(e) {
                 if (c.tipo === 'numero') return `<input type="number" step="0.01" ${idAttr} style="width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:6px;font-family:inherit;font-size:${fsz};">`;
                 if (c.tipo === 'data') return `<input type="date" ${idAttr} style="width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:6px;font-family:inherit;font-size:${fsz};">`;
                 if (c.tipo === 'hora') return `<input type="time" ${idAttr} style="width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:6px;font-family:inherit;font-size:${fsz};">`;
-                if (c.tipo === 'satisfacao') return `<select ${idAttr} aria-label="Grau de satisfação do cliente" style="width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:6px;font-family:inherit;font-size:${fsz};background:#fff;">
-                    <option value="">— Sem resposta —</option>
-                    <option value="muito_insatisfeito">Muito insatisfeito</option>
-                    <option value="insatisfeito">Insatisfeito</option>
-                    <option value="satisfeito">Satisfeito</option>
-                    <option value="muito_satisfeito">Muito satisfeito</option>
-                </select>`;
                 if (c.tipo === 'lista') return `<select ${idAttr} style="width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:6px;font-family:inherit;font-size:${fsz};background:#fff;">
                     <option value="">— Escolhe —</option>
                     ${(c.opcoes || []).map(o => `<option value="${escapeHtmlSimples(o)}">${escapeHtmlSimples(o)}</option>`).join('')}
@@ -29130,7 +28847,7 @@ async function salvarAdmin(e) {
                     </div>`;
                     return;
                 }
-                const campoBloco = `<div style="flex:1;min-width:0;"><label ${c.tipo === 'satisfacao' ? `for="${c.id}"` : ''} style="font-size:${_RP_TAM_LABEL[tam]};">${escapeHtmlSimples(c.label)}</label>${campoHtml(c, _RP_TAM_CAMPO[tam])}</div>`;
+                const campoBloco = `<div style="flex:1;min-width:0;"><label style="font-size:${_RP_TAM_LABEL[tam]};">${escapeHtmlSimples(c.label)}</label>${campoHtml(c, _RP_TAM_CAMPO[tam])}</div>`;
                 if (c.largura === 'metade') {
                     if (_pendente) { camposHtml += `<div class="field-row" style="display:flex;gap:14px;">${_pendente}${campoBloco}</div>`; _pendente = null; }
                     else { _pendente = campoBloco; }
@@ -29189,7 +28906,6 @@ async function salvarAdmin(e) {
   <header class="top">
     <div class="brand">
       <div class="empresa-nome" id="empresaNomeTxt"></div>
-      <div id="empresaFiscalTxt" style="display:none;font-size:.76rem;font-weight:500;color:var(--muted);margin-top:3px;line-height:1.4;"></div>
       <div id="anepcRpLinha" style="display:none;font-size:.68rem;color:var(--muted);margin-top:3px;line-height:1.5;"></div>
       <img id="certLogoImg" style="display:none;max-height:34px;max-width:120px;margin-top:6px;object-fit:contain;" />
     </div>
@@ -29233,7 +28949,6 @@ window._relPrefill = function(msg){
   const moradaResto = [msg.codigoPostal, msg.localidade].filter(Boolean).join(' ');
   const moradaTxt = document.getElementById('txtMorada'); if (moradaTxt) moradaTxt.textContent = [moradaPartes, moradaResto].filter(Boolean).join(' · ') || '—';
   const empresaNomeTxt = document.getElementById('empresaNomeTxt'); if (empresaNomeTxt) empresaNomeTxt.textContent = msg.empresaNome || '';
-  const empresaFiscalTxt = document.getElementById('empresaFiscalTxt'); if (empresaFiscalTxt) { const fiscal = String(msg.empresaFiscal || '').trim(); empresaFiscalTxt.textContent = fiscal; empresaFiscalTxt.style.display = fiscal && fiscal !== String(msg.empresaNome || '').trim() ? 'block' : 'none'; }
 };
 <\/script>
 <script>
@@ -29810,52 +29525,6 @@ window._relPrefill = function(msg){
             } catch (e) { console.error('ler texto do storage:', e); return null; }
         }
 
-        // Keep saved reports inside the mobile app; iOS standalone windows may
-        // expose neither the browser Back button nor a way to close the document.
-        function _abrirLeitorRelatorioGuardado() {
-            document.getElementById('tgRelatorioGuardado')?._tgFechar?.();
-            const anterior = document.activeElement;
-            const overflow = document.body.style.overflow;
-            const overlay = document.createElement('div');
-            overlay.id = 'tgRelatorioGuardado';
-            overlay.setAttribute('role', 'dialog');
-            overlay.setAttribute('aria-modal', 'true');
-            overlay.setAttribute('aria-label', 'Relatório guardado');
-            overlay.style.cssText = 'position:fixed;inset:0;z-index:500000;display:flex;flex-direction:column;background:#fff;height:100dvh;box-sizing:border-box;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);';
-            overlay.innerHTML = '<div style="display:flex;align-items:center;gap:12px;flex-shrink:0;padding:8px 12px;background:#fff;color:#152a52;border-bottom:1px solid #cbd5e1;font:600 16px system-ui"><span style="flex:1">Relatório</span><button type="button" aria-label="Fechar relatório e voltar" title="Fechar relatório e voltar" style="width:48px;height:48px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;color:#152a52;font:32px system-ui;cursor:pointer">&times;</button></div>';
-            const frame = document.createElement('iframe');
-            frame.title = 'Relatório guardado';
-            frame.style.cssText = 'display:block;width:100%;flex:1;min-height:0;border:0;background:#fff';
-            const status = '<meta name="viewport" content="width=device-width,initial-scale=1"><p style="font:16px system-ui;padding:20px;color:#64748b">A carregar relatório…</p>';
-            frame.srcdoc = status;
-            overlay.appendChild(frame);
-            const closeButton = overlay.querySelector('button');
-            const onKey = event => { if (event.key === 'Escape') fechar(); };
-            function fechar() {
-                overlay.remove();
-                document.body.style.overflow = overflow;
-                document.removeEventListener('keydown', onKey);
-                if (anterior?.isConnected) anterior.focus({preventScroll:true});
-            }
-            overlay._tgFechar = fechar;
-            closeButton.addEventListener('click', fechar);
-            document.addEventListener('keydown', onKey);
-            document.body.style.overflow = 'hidden';
-            document.body.appendChild(overlay);
-            closeButton.focus({preventScroll:true});
-            return {
-                mostrar(html, imprimir) {
-                    if (!overlay.isConnected) return;
-                    frame.onload = () => {
-                        if (imprimir) setTimeout(() => {
-                            if (overlay.isConnected) { try { frame.contentWindow.focus(); frame.contentWindow.print(); } catch (_) {} }
-                        }, 400);
-                    };
-                    frame.srcdoc = html;
-                }
-            };
-        }
-
         async function _verRelatorioEspecialidadeSnapshot(relatorioId, autoImprimir) {
             const r = (dados.relatoriosEspecialidade || []).find(x => x.id === relatorioId);
             if (!r || !r.campos) { alert('Este relatório não tem um snapshot guardado para visualizar.'); return; }
@@ -29863,14 +29532,11 @@ window._relPrefill = function(msg){
             // Abre a janela já aqui, ainda dentro do clique do utilizador (síncrono),
             // para o Safari/iOS não bloquear o pop-up. Só depois é que vamos
             // buscar o conteúdo (que pode envolver pedidos assíncronos ao storage).
-            const leitor = window.matchMedia('(max-width:900px), (any-pointer:coarse)').matches ? _abrirLeitorRelatorioGuardado() : null;
-            const w = leitor ? null : window.open('', '_blank');
-            if (!leitor && !w) { alert('O browser bloqueou a janela nova. Permite pop-ups para veres o relatório.'); return; }
-            if (w) {
-                w.document.open();
-                w.document.write('<p style="font-family:sans-serif;color:#64748b;padding:20px;">A carregar relatório…</p>');
-                w.document.close();
-            }
+            const w = window.open('', '_blank');
+            if (!w) { alert('O browser bloqueou a janela nova. Permite pop-ups para veres o relatório.'); return; }
+            w.document.open();
+            w.document.write('<p style="font-family:sans-serif;color:#64748b;padding:20px;">A carregar relatório…</p>');
+            w.document.close();
 
             let html = r.campos.htmlSnapshot || '';
             if (!html && r.campos.htmlSnapshotPath) {
@@ -29883,14 +29549,11 @@ window._relPrefill = function(msg){
                 } catch (e) { console.error('ler snapshot do storage:', e); }
             }
             if (!html) {
-                if (leitor) { leitor.mostrar('<p style="font:16px system-ui;padding:20px;color:#dc2626">Não foi possível carregar o relatório guardado. Fecha e tenta novamente.</p>'); return; }
                 try { w.document.body.innerHTML = '<p style="font-family:sans-serif;color:#dc2626;padding:20px;">Não foi possível carregar o relatório guardado.</p>'; } catch (e) {}
                 alert('Não foi possível carregar o relatório guardado.');
                 return;
             }
 
-            if (leitor) { leitor.mostrar(html, autoImprimir === true); return; }
-            if (w.closed) return;
             w.document.open();
             w.document.write(html);
             w.document.close();
@@ -30242,7 +29905,7 @@ window._relPrefill = function(msg){
                     if (!htmlRascunho && rascunhoExistente.campos?.htmlSnapshotPath) {
                         htmlRascunho = await _obterTextoStorage(rascunhoExistente.campos.htmlSnapshotPath) || '';
                     }
-                    if (htmlRascunho) { iframe.srcdoc = _tgPrepararNomeFiscalEspecialidade(['RCCTV', 'RIN'].includes(tipo) ? _tgAdicionarSatisfacaoRelatorio(htmlRascunho) : htmlRascunho, tipo); usouRascunho = true; }
+                    if (htmlRascunho) { iframe.srcdoc = htmlRascunho; usouRascunho = true; }
                 }
             }
             // Sem rascunho em aberto: se já existir um relatório CONCLUÍDO anterior desta mesma
@@ -30286,7 +29949,7 @@ window._relPrefill = function(msg){
                             const docAnterior = new DOMParser().parseFromString(htmlAnterior, 'text/html');
                             camposParaRestaurar = {};
                             docAnterior.querySelectorAll('input[id], select[id], textarea[id]').forEach(el => {
-                                if (/^sign_|_nome$/i.test(el.id) || el.id === 'tg_satisfacao_cliente' || (tipoCustomDef?.campos || []).some(c => c.tipo === 'satisfacao' && c.id === el.id) || el.tagName === 'CANVAS') return; // nunca reaproveita assinaturas nem avaliações antigas
+                                if (/^sign_|_nome$/i.test(el.id) || el.tagName === 'CANVAS') return; // nunca reaproveita assinaturas/nomes de quem assinou
                                 if (el.type === 'checkbox' || el.type === 'radio') camposParaRestaurar[el.id] = el.checked;
                                 else camposParaRestaurar[el.id] = el.tagName === 'TEXTAREA' ? el.textContent : el.value;
                             });
@@ -30327,7 +29990,7 @@ window._relPrefill = function(msg){
                     }
                 }
             }
-            if (!usouRascunho) iframe.srcdoc = _tgPrepararNomeFiscalEspecialidade(template, tipo); // sempre o modelo normal — nunca o snapshot bloqueado
+            if (!usouRascunho) iframe.srcdoc = template; // sempre o modelo normal — nunca o snapshot bloqueado
 
             let numeroInicial = 1;
             // Já não se acrescenta "-L1"/"-L2" ao número — a Sede e cada Local têm o mesmo
@@ -30356,11 +30019,6 @@ window._relPrefill = function(msg){
             await iframeCarregado;
 
             const adminRec = dados.administradores?.find(a => a.id === _tenantId());
-
-            // Rascunhos não recebem init (preserva os valores); atualiza só o cabeçalho.
-            if (usouRascunho && tipo !== 'RDI') {
-                _tgAtualizarNomeFiscalDocumento(iframe.contentDocument, adminRec?.nomeFiscal, adminRec?.empresa || adminRec?.nome);
-            }
             const contratoOS = os.contratoId ? dados.contratos?.find(ct => ct.id === os.contratoId) : null;
             const initMsg = {
                 type: 'init',
@@ -30380,7 +30038,6 @@ window._relPrefill = function(msg){
                 podeAssinar: podeAssinarRelatorio,
                 logoBase64: adminRec?.logo || '',
                 empresaNome: adminRec?.empresa || adminRec?.nome || '',
-                empresaFiscal: adminRec?.nomeFiscal || '',
                 empresaNif: adminRec?.nif || '',
                 registoPrevioData: adminRec?.dataRegistoPrevio || '',
                 anepcNumero: adminRec?.numeroAnepc || '',
@@ -30553,7 +30210,6 @@ window._relPrefill = function(msg){
                     criadoEm: Date.now()
                 };
                 novoRel.campos={...novoRel.campos,...(equipamentoId ? {equipamentoId,equipamentoNome:requisito.equipamentoNome} : {})};
-                if (window.TGSatisfaction) novoRel.campos.satisfacaoCliente = window.TGSatisfaction.extract(msg.html || '');
                 dados.relatoriosEspecialidade = dados.relatoriosEspecialidade || [];
                 dados.relatoriosEspecialidade = dados.relatoriosEspecialidade.filter(r => !(r.servicoId === osId && r.tipo === tipo && mesmoEquipamento(r) && r.rascunho));
                 dados.relatoriosEspecialidade.push(novoRel);
@@ -30566,17 +30222,6 @@ window._relPrefill = function(msg){
             _relEspecOnMessageAtual = onMessage;
         }
 
-        function _sAvisarDisponibilidade() {
-            const cont = document.getElementById('s_func_checkboxes');
-            const data = document.getElementById('s_data')?.value;
-            if (!cont) return;
-            let aviso = document.getElementById('s_aviso_disponibilidade');
-            if (!aviso) { aviso = document.createElement('div'); aviso.id = 's_aviso_disponibilidade'; aviso.setAttribute('role','status'); cont.after(aviso); }
-            const conflitos = [...cont.querySelectorAll('input.s-func-check:checked')].map(c => ({ id:c.value, ausencia:_funcionarioAusenteEm(c.value,data) })).filter(x => x.ausencia);
-            aviso.hidden = !conflitos.length;
-            aviso.style.cssText = 'color:#b91c1c;background:#fef2f2;padding:8px;border-radius:8px;margin-top:8px;';
-            aviso.textContent = conflitos.map(x => (obterNomeFuncionario(x.id) || 'Funcionário') + ' está de ' + x.ausencia.label + ' nesta data. Escolha outra pessoa ou data.').join(' ');
-        }
         function _sAtualizarFuncPrincipal() {
             const cont = document.getElementById('s_func_checkboxes');
             const hidden = document.getElementById('s_funcionario');
@@ -30588,7 +30233,6 @@ window._relPrefill = function(msg){
             const chkTodos = document.getElementById('s_func_todos');
             if (chkTodos) chkTodos.checked = todosMarcados;
             _sAtualizarDropdownRelatorioResponsavel();
-            _sAvisarDisponibilidade();
         }
         function _sToggleTodosFuncionarios(marcarTodos) {
             const cont = document.getElementById('s_func_checkboxes');
@@ -30818,7 +30462,8 @@ window._relPrefill = function(msg){
                 `;
             submitBtn.textContent = 'Criar Folha';
             overlay.classList.add('open');
-            // A assinatura só faz sentido quando a obra está mesmo a terminar. Na opção "Saída de Obra / OS" (Stand By) fica escondida — não pesa nem é preciso.
+            // A assinatura só faz sentido quando a obra está mesmo a terminar. No "Terminado por
+            // hoje" (Stand By) fica escondida — não pesa nem é preciso.
             const _mostraAssinatura = terminou !== false;
             const _assCont = document.getElementById('fo_assinatura_cont');
             if (_assCont) _assCont.style.display = _mostraAssinatura ? '' : 'none';
@@ -30928,7 +30573,7 @@ window._relPrefill = function(msg){
             submitBtn.textContent = 'Criar Folha';
             overlay.classList.add('open');
             // A assinatura só faz sentido quando a obra está mesmo a terminar (relatório final ao
-            // cliente). Na opção "Saída de Obra / OS" fica escondida — não pesa nem é preciso.
+            // cliente). No "Terminado por hoje" fica escondida — não pesa nem é preciso.
             const _mostraAssinatura = !_folhaOSPendente || _folhaOSPendente.terminou !== false;
             const _assCont = document.getElementById('fo_assinatura_cont');
             if (_assCont) _assCont.style.display = _mostraAssinatura ? '' : 'none';
@@ -31293,7 +30938,7 @@ window._relPrefill = function(msg){
 
         function _funcionarioAusenteEm(funcionarioId, data) {
             if (!funcionarioId || !data) return null;
-            const p = (dados.pedidos || []).find(x => x.funcionarioId === funcionarioId && ['aprovado', 'aprovado_ped'].includes(x.status) && x.dataInicio && x.dataFim && x.dataInicio <= data && x.dataFim >= data);
+            const p = (dados.pedidos || []).find(x => x.funcionarioId === funcionarioId && x.status === 'aprovado_ped' && x.dataInicio && x.dataFim && x.dataInicio <= data && x.dataFim >= data);
             if (!p) return null;
             if (p.tipo === 'ferias') return { tipo: 'ferias', label: 'férias', icon: 'fa-umbrella-beach', cor: '#0ea5e9' };
             if (p.tipo === 'falta') {
@@ -31497,20 +31142,13 @@ window._relPrefill = function(msg){
             // mesmo tempo (ex: entrada geral às 9h00 + entrada numa OS às 9h30).
             const hojePP = getDataHoje();
             const todosAbertos = (dados.ponto || []).filter(p => p.funcionarioId === usuarioLogado.id && p.data === hojePP && p.entrada && !p.saida);
-            // Os bloqueios abaixo protegem a SAÍDA geral. Uma entrada de obra antiga
-            // não pode impedir o início de um novo dia ou o regresso ao serviço.
-            const aberto = todosAbertos.find(p => !p.servicoId) || pontoAbertoHoje();
-            if (!aberto) {
-                abrirModalEntradaPonto();
-                return;
-            }
             const osAberta = todosAbertos.find(p => p.servicoId);
             if (osAberta) {
                 const osLigada = dados.servicos?.find(s => s.id === osAberta.servicoId);
                 alert('Tens uma entrada aberta na OS' + (osLigada?.numeroRegisto ? ' #' + osLigada.numeroRegisto : '') + (osLigada ? (' — "' + (osLigada.descricao || _nomeClienteOS(osLigada.clienteId)) + '"') : '') + '.\n\nTens de dar saída por lá primeiro (Agenda de Obras), antes de poderes fechar aqui o Registo de Ponto geral.');
                 return;
             }
-            const obraLongaAberta = (dados.obraPontoLonga || []).find(p => p.funcionarioId === usuarioLogado.id && p.data === hojePP && p.entrada && !p.saida);
+            const obraLongaAberta = (dados.obraPontoLonga || []).find(p => p.funcionarioId === usuarioLogado.id && p.entrada && !p.saida);
             if (obraLongaAberta) {
                 const obraLigada = dados.obras?.find(o => o.id === obraLongaAberta.obraId);
                 alert('Tens uma entrada aberta na obra' + (obraLigada ? (' "' + obraLigada.nome + '"') : '') + '.\n\nTens de dar saída por lá primeiro (Obras de Longa Duração), antes de poderes fechar aqui o Registo de Ponto geral.');
@@ -31521,9 +31159,10 @@ window._relPrefill = function(msg){
             // "a meio" dessa obra/OS, mesmo que o registo de ponto dela esteja tecnicamente fechado.
             const pausaPendente = _pausaAlmocoPendente();
             if (pausaPendente) {
-                alert('A última coisa que registaste foi uma pausa para almoço ' + (pausaPendente.tipo === 'os' ? 'numa OS' : 'numa obra') + ' ("' + pausaPendente.nome + '"). Tens de voltar lá e dar saída a sério (Saída de Obra / OS ou Concluir Obra / OS) antes de poderes fechar aqui o Registo de Ponto geral.');
+                alert('A última coisa que registaste foi uma pausa para almoço ' + (pausaPendente.tipo === 'os' ? 'numa OS' : 'numa obra') + ' ("' + pausaPendente.nome + '"). Tens de voltar lá e dar saída a sério (Não / Terminado por hoje / Sim) antes de poderes fechar aqui o Registo de Ponto geral.');
                 return;
             }
+            const aberto = todosAbertos.find(p => !p.servicoId) || pontoAbertoHoje();
             if (aberto) {
                 const resposta = await perguntarSaidaOuAlmoco('Vais dar saída às ' + new Date().toTimeString().slice(0, 5) + '.');
                 if (resposta == null) return;
@@ -32758,14 +32397,6 @@ window._relPrefill = function(msg){
         }
 
         async function restaurarSessaoAuth() {
-            const form = document.getElementById('tg-entrar');
-            const submit = form?.querySelector('button[type="submit"]');
-            const previousDisabled = submit?.disabled;
-            let status = document.getElementById('tg-session-restore');
-            if (form && !status) { status = document.createElement('p'); status.id = 'tg-session-restore'; status.setAttribute('role','status'); form.prepend(status); }
-            if (status) { status.hidden = false; status.textContent = 'A recuperar a sessão e a carregar os dados…'; }
-            form?.setAttribute('aria-busy','true');
-            if (submit) submit.disabled = true;
             try {
                 const { data } = await supa.auth.getSession();
                 if (data && data.session && data.session.user) {
@@ -32775,7 +32406,6 @@ window._relPrefill = function(msg){
                     if (ok) renderizarTudo();
                 }
             } catch (e) { console.warn('Restaurar sessão:', e); }
-            finally { if (status) status.hidden = true; form?.removeAttribute('aria-busy'); if (submit) submit.disabled = previousDisabled; }
         }
 
         // Verifica se um email já está registado (sem distinguir maiúsculas), em qualquer perfil.
@@ -32988,16 +32618,6 @@ window._relPrefill = function(msg){
             document.getElementById('onb_registo_previo_campo').style.display = 'none';
             document.getElementById('onb_registo_previo').value = '';
             document.getElementById('onb_cor').value = '#152A52';
-            let fiscal = document.getElementById('onb_nome_fiscal');
-            if (!fiscal) {
-                fiscal = document.createElement('input'); fiscal.id = 'onb_nome_fiscal'; fiscal.type = 'text';
-                fiscal.maxLength = 180; fiscal.placeholder = 'Denominação social / nome fiscal';
-                fiscal.style.cssText = 'display:block;width:100%;margin:8px 0;padding:10px;box-sizing:border-box';
-                const label = document.createElement('label'); label.htmlFor = fiscal.id; label.textContent = 'Nome fiscal (para os documentos)';
-                const target = document.getElementById('onb_cor')?.closest('.form-group') || document.getElementById('onb_cor')?.parentElement;
-                if (target) { target.after(label); label.after(fiscal); }
-            }
-            fiscal.value = adminAtual()?.nomeFiscal || '';
             document.getElementById('modalOnboardingOverlay')?.classList.add('open');
         }
         function onbAvancarStep3() {
@@ -33044,7 +32664,6 @@ window._relPrefill = function(msg){
             adm.numeroAnepc = temAnepc ? anepc : null;
             adm.numeroRegistoPrevio = temRegistoPrevio ? registoPrevio : null;
             adm.corCorporativa = cor || null;
-            if (usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin') adm.nomeFiscal = document.getElementById('onb_nome_fiscal')?.value.trim().slice(0,180) || null;
             const horaEnt = document.getElementById('onb_hora_entrada')?.value;
             const tolerAtraso = document.getElementById('onb_tolerancia_atraso')?.value;
             adm.horaEntradaHabitual = horaEnt || '09:00';
@@ -33247,7 +32866,6 @@ window._relPrefill = function(msg){
                 subPai.classList.add('aberto');
                 const btnPai = document.querySelector(`#tgSidebarNav .tg-nav-grupo-btn[data-grupo-btn="${subPai.getAttribute('data-grupo-sub')}"]`);
                 if (btnPai) btnPai.classList.add('aberto');
-                document.querySelectorAll('#tgSidebarNav .tg-nav-grupo-btn').forEach(b => b.setAttribute('aria-expanded', String(b.classList.contains('aberto'))));
             }
         }
         function _atualizarBreadcrumb(t) {
@@ -33257,7 +32875,7 @@ window._relPrefill = function(msg){
         let _ultimoUserSidebar = null;
         function construirSidebar() {
             const nav = document.getElementById('tgSidebarNav'); if (!nav) return;
-            if (!usuarioLogado || usuarioLogado.role === 'cliente') { nav.innerHTML = ''; delete nav.dataset.template; _ultimoUserSidebar = null; return; }
+            if (!usuarioLogado || usuarioLogado.role === 'cliente') { nav.innerHTML = ''; _ultimoUserSidebar = null; return; }
             if (usuarioLogado.id !== _ultimoUserSidebar) {
                 _ultimoUserSidebar = usuarioLogado.id;
                 _contextoAtual = '__inicio';
@@ -33281,7 +32899,7 @@ window._relPrefill = function(msg){
                     const grupoKey = grupo.getAttribute('data-grupo') || '';
                     const cards = [...grupo.querySelectorAll('.card-principal')].filter(c => !c.classList.contains('hidden-card') && !c.classList.contains('card-bloqueado'));
                     if (!cards.length) return;
-                    html += `<button type="button" class="tg-nav-grupo-btn" data-grupo-btn="${grupoKey}" aria-expanded="false" onclick="_focoAlternarGrupo('${grupoKey}')"><i class="${icone}"></i><span>${titulo}</span><i class="fas fa-chevron-right chev"></i></button>`;
+                    html += `<button type="button" class="tg-nav-grupo-btn" data-grupo-btn="${grupoKey}" onclick="_focoAlternarGrupo('${grupoKey}')"><i class="${icone}"></i><span>${titulo}</span><i class="fas fa-chevron-right chev"></i></button>`;
                     html += `<div class="tg-nav-submenu" data-grupo-sub="${grupoKey}">`;
                     cards.forEach(c => {
                         const sec = c.getAttribute('data-card');
@@ -33313,13 +32931,12 @@ window._relPrefill = function(msg){
                     });
                 });
             }
-            const menuMudou = nav.dataset.template !== html;
-            if (menuMudou) { nav.innerHTML = html; nav.dataset.template = html; }
+            nav.innerHTML = html;
             const fu = document.getElementById('tgSideUser');
             if (fu) fu.innerHTML = `<i class="fas fa-user-circle"></i> ${usuarioLogado.nome || ''}<div style="font-size:.72rem;color:#94a3b8;margin-top:2px;">${_papelLabel(usuarioLogado.role)}</div>`;
             const sb = document.getElementById('tgSideBrandNome');
             if (sb) sb.textContent = (usuarioLogado.role === 'superadmin') ? 'Total Gest' : (adminAtual()?.empresa || 'Total Gest');
-            if (menuMudou) _marcarNavAtivo(_contextoAtual || '__inicio');
+            _marcarNavAtivo(_contextoAtual || '__inicio');
             if (!_contextoAtual || _contextoAtual === '__inicio') { _mostrarInicioConteudo(); _atualizarBreadcrumb('Início'); }
         }
         // Acordeão do layout "Total Gest Foco" — clicar num grupo abre/fecha o submenu logo por
@@ -33333,7 +32950,6 @@ window._relPrefill = function(msg){
             document.querySelectorAll('#tgSidebarNav .tg-nav-submenu.aberto').forEach(s => s.classList.remove('aberto'));
             document.querySelectorAll('#tgSidebarNav .tg-nav-grupo-btn.aberto').forEach(b => b.classList.remove('aberto'));
             if (!jaAberto) { sub.classList.add('aberto'); btn.classList.add('aberto'); }
-            document.querySelectorAll('#tgSidebarNav .tg-nav-grupo-btn').forEach(b => b.setAttribute('aria-expanded', String(b.classList.contains('aberto'))));
         }
         function _focoFecharPainel() {
             // Mantido só por segurança, caso algum sítio ainda chame isto — o painel lateral já
@@ -34474,7 +34090,6 @@ window._relPrefill = function(msg){
             else _voltarMeuDia();
         }
         function abrirSecao(nome) {
-            if (nome === 'quiosque') { ativarModoQuiosque(); return; }
             if (['crm', 'assistencias'].includes(nome) && !window.TGModules.prepare(nome)) return;
             if (nome === 'exportar-dados') { abrirModalExportarImportar(); return; }
             _registarUsoSecao(nome);
@@ -34826,8 +34441,6 @@ window._relPrefill = function(msg){
                             <input type="file" id="perf_logo" accept="image/*" style="display:none;" onchange="previewPerfilLogo(event)" />
                             <div class="ff-hero-fields">
                                 <input type="text" id="perf_empresa" class="ff-nome-input" placeholder="Nome da empresa/negócio" value="${admin?.empresa || ''}" />
-                                <label for="perf_nome_fiscal">Nome fiscal / denominação social</label>
-                                <input type="text" id="perf_nome_fiscal" maxlength="180" class="ff-cargo-input" placeholder="Nome fiscal nos documentos" value="${String(admin?.nomeFiscal || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')}" />
                                 <input type="text" id="perf_nome" class="ff-cargo-input" placeholder="Nome do responsável *" value="${admin?.nome || ''}" required />
                             </div>
                         </div>
@@ -34885,9 +34498,7 @@ window._relPrefill = function(msg){
                             <input type="file" id="perf_logo" accept="image/*" style="display:none;" onchange="previewPerfilLogo(event)" />
                             <div class="ff-hero-fields">
                                 <input type="text" id="perf_empresa" class="ff-nome-input" placeholder="Nome da empresa" value="${admin?.empresa || ''}" />
-                                <label for="perf_nome_fiscal">Nome fiscal / denominação social</label>
-                                <input type="text" id="perf_nome_fiscal" maxlength="180" class="ff-cargo-input" placeholder="Nome fiscal nos documentos" value="${String(admin?.nomeFiscal || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')}" />
-                                <input type="text" id="perf_nome" class="ff-cargo-input" placeholder="Nome do responsável *" value="${String((usuarioLogado.role === 'subadmin' ? (func?.nome || usuarioLogado.nome) : (admin?.nome || usuarioLogado.nome)) || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')}" required />
+                                <input type="text" id="perf_nome" class="ff-cargo-input" placeholder="Nome do responsável *" value="${admin?.nome || ''}" required />
                             </div>
                         </div>
                         <div id="perf_logo_preview" style="display:none;"></div>
@@ -35102,6 +34713,16 @@ window._relPrefill = function(msg){
                             </div>
                         </div>
 
+                        <div class="ff-secao ff-tint-acesso">
+                            <div class="ff-secao-head"><i class="fas fa-bell"></i> Notificações</div>
+                            <div class="ff-secao-body">
+                                <div class="form-group ff-span2">
+                                    <div class="help-text" style="margin:-2px 0 8px;">Recebe um aviso no telemóvel se te esqueceres de picar o ponto, ou quando um pedido de férias/faltas for aprovado.</div>
+                                    <button type="button" class="btn btn-sm" style="background:#0ea5e9;color:#fff;" onclick="_ativarNotificacoesPush()"><i class="fas fa-bell"></i> Ativar notificações neste dispositivo</button>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="ff-secao ff-tint-contacto">
                             <div class="ff-secao-head"><i class="fas fa-address-book"></i> Contacto</div>
                             <div class="ff-secao-body">
@@ -35244,7 +34865,6 @@ window._relPrefill = function(msg){
                 const aplicarDist = (logoData) => {
                     admin.nome = nome;
                     admin.empresa = empresa;
-                    admin.nomeFiscal = document.getElementById('perf_nome_fiscal')?.value.trim().slice(0,180) || null;
                     admin.layout = document.getElementById('perf_layout')?.value || 'sidebar';
                     if (senha) admin.senha = senha;
                     if (logoData !== undefined) admin.logo = logoData;
@@ -35281,16 +34901,14 @@ window._relPrefill = function(msg){
                 const registoPrevioData = document.getElementById('perf_registo_previo_data')?.value || '';
                 const registoPrevioValidade = document.getElementById('perf_registo_previo_validade')?.value || '';
                 const nifEmpresa = document.getElementById('perf_nif')?.value.trim() || '';
-                const nomeFiscal = document.getElementById('perf_nome_fiscal')?.value.trim().slice(0,180) || null;
                 const cor = document.getElementById('perf_cor')?.value.trim() || '';
                 if (anepc && _numeroJaUsado('numeroAnepc', anepc, admin.id)) { alert('Já existe outra empresa registada com esse número de ANEPC.'); return; }
                 if (registoPrevio && _numeroJaUsado('numeroRegistoPrevio', registoPrevio, admin.id)) { alert('Já existe outra empresa com esse número de registo prévio.'); return; }
                 if (cor && !/^#[0-9a-fA-F]{6}$/.test(cor)) { alert('A cor deve estar no formato #RRGGBB (ex.: #152A52).'); return; }
                 const aplicar = (logoData) => {
-                    if (usuarioLogado.role === 'admin') admin.nome = nome;
+                    admin.nome = nome;
                     admin.empresa = empresa;
                     admin.nif = nifEmpresa || null;
-                    admin.nomeFiscal = nomeFiscal;
                     admin.layout = document.getElementById('perf_layout')?.value || 'sidebar';
                     admin.numeroAnepc = anepc || null;
                     admin.dataAnepc = anepcData || null;
@@ -35309,7 +34927,7 @@ window._relPrefill = function(msg){
                     admin.segurosAtivo = document.getElementById('perf_seguros_ativo')?.checked || false;
                     admin.shstAtivo = document.getElementById('perf_shst_ativo')?.checked || false;
                     admin.materiaisEntregaAtivo = document.getElementById('perf_materiais_entrega_ativo')?.checked || false;
-                    if (senha && usuarioLogado.role === 'admin') admin.senha = senha;
+                    if (senha) admin.senha = senha;
                     if (logoData !== undefined) admin.logo = logoData;
                     if (window._perfCertificadoraLogoRemover) { admin.certificadoraLogo = null; window._perfCertificadoraLogoRemover = false; }
                     if (window._perfCertificadoraLogoNova !== undefined) { admin.certificadoraLogo = window._perfCertificadoraLogoNova || null; window._perfCertificadoraLogoNova = undefined; }
@@ -35482,9 +35100,9 @@ window._relPrefill = function(msg){
     const script = document.createElement('script');
     script.id = 'tg-assistente-script';
     const base = new URL('.', document.currentScript.src);
-    script.src = new URL('tg-assistente.js?v=4.1.0-dock', base).href;
+    script.src = new URL('tg-assistente.js?v=4.0.0-teco', base).href;
     const engine = document.createElement('script');
-    engine.src = new URL('tg-smart-engine.js?v=3.1.0-stock', base).href;
+    engine.src = new URL('tg-smart-engine.js?v=3.0.0-teco', base).href;
     engine.onload = () => document.head.appendChild(script);
     engine.onerror = () => document.head.appendChild(script);
     document.head.appendChild(engine);

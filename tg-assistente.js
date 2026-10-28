@@ -5,7 +5,7 @@
   const base = new URL('.', document.currentScript.src);
   const asset = name => new URL('assets/' + name, base).href;
   const css = document.createElement('link');
-  css.rel = 'stylesheet'; css.href = new URL('tg-assistente.css?v=4.1.1-teco-controls', base).href;
+  css.rel = 'stylesheet'; css.href = new URL('tg-assistente.css?v=4.0.0-teco', base).href;
   document.head.append(css);
   const root = document.createElement('aside');
   root.id = 'tg-assistente'; root.hidden = true;
@@ -17,11 +17,11 @@
       <form class="tg-form"><label class="tg-sr" for="tg-question">O que precisas de encontrar?</label><input id="tg-question" maxlength="300" autocomplete="off" placeholder="Ex.: o que tenho hoje?"><button type="submit" aria-label="Enviar pedido">➜</button></form>
       <footer>Consulta dos dados carregados · sem IA paga</footer>
     </section>
-    <div class="tg-proactive" hidden><button type="button" class="tg-alert-open"></button><button type="button" class="tg-alert-dismiss" aria-label="Dispensar aviso">×</button></div><div class="tg-launcher"><button type="button" class="tg-minimize" aria-label="Minimizar mascote" title="Minimizar mascote">−</button><button type="button" class="tg-mascot" aria-label="Minimizar Teco" title="Minimizar Teco"><img alt="" width="124" height="132"></button><button type="button" class="tg-open" aria-label="Abrir assistente Teco" aria-expanded="false"><span>Precisas de ajuda?</span></button><button type="button" class="tg-badge" hidden title="Ver alertas"></button></div>`;
+    <div class="tg-proactive" hidden><button type="button" class="tg-alert-open"></button><button type="button" class="tg-alert-dismiss" aria-label="Dispensar aviso">×</button></div><div class="tg-launcher"><button type="button" class="tg-minimize" aria-label="Minimizar mascote" title="Minimizar mascote">−</button><button type="button" class="tg-open" aria-label="Abrir assistente Teco" aria-expanded="false"><img alt="" width="124" height="132"><span>Precisas de ajuda?</span><b class="tg-badge" hidden></b></button></div>`;
   document.body.append(root);
   const panel = root.querySelector('.tg-chat'), log = root.querySelector('.tg-messages');
   const input = root.querySelector('input'), toggle = root.querySelector('.tg-open');
-  const picture = root.querySelector('.tg-mascot img'), shortcuts = root.querySelector('.tg-shortcuts');
+  const picture = toggle.querySelector('img'), shortcuts = root.querySelector('.tg-shortcuts');
   const motion = matchMedia('(prefers-reduced-motion: reduce)');
   let identity = '', opened = false, minimized = false, imageTimer, replyTimer, stateTimer, hintTimer;
   let lastContext = '', lastAlertKey = '', mutedUntil = 0, lastHintAt = 0;
@@ -146,30 +146,14 @@
     if (value) { hint.hidden=true; quickLinks(); animate('wave'); input.focus({preventScroll:true}); log.scrollTop = log.scrollHeight; }
     else if (!root.hidden) toggle.focus({preventScroll:true});
   }
-  function setMinimized(value) {
-    if (opened) setOpen(false);
-    minimized = !!value;
-    root.classList.toggle('tg-compact', minimized);
-    const control = root.querySelector('.tg-minimize');
-    control.textContent = minimized ? '+' : '−';
-    control.setAttribute('aria-label', minimized ? 'Mostrar mascote' : 'Minimizar mascote');
-    control.title = minimized ? 'Mostrar mascote' : 'Minimizar mascote';
-  }
-  function syncDock() {
-    if (typeof document === 'undefined' || !document.body) return;
-    const docked = !!document.querySelector('.section-container.active');
-    if (root.classList.contains('tg-docked') !== docked) root.classList.toggle('tg-docked', docked);
-    if (document.body.classList.contains('tg-assistant-docked') !== docked) document.body.classList.toggle('tg-assistant-docked', docked);
-  }
   function sync() {
-    syncDock();
     const u = user();
     const key = u ? [u.id, u.adminId, u.tenant_id, u.role].join(':') : '';
     const kiosk = typeof _quiosqueDeveEstarAtivo === 'function' && _quiosqueDeveEstarAtivo();
     if (key !== identity) {
       identity = key; opened = false; panel.hidden = true; root.classList.remove('tg-is-open');
       toggle.setAttribute('aria-expanded', 'false'); toggle.setAttribute('aria-label', 'Abrir assistente Teco');
-      clearTimeout(replyTimer); clearTimeout(hintTimer); lastContext=''; lastAlertKey=''; mutedUntil=0; lastHintAt=0; hint.hidden=true; badge.hidden=true; root.querySelector('.tg-snooze').textContent='Silenciar 1 h'; input.disabled=false; root.querySelector('.tg-form button').disabled=false; input.value = ''; setMinimized(false); welcome();
+      clearTimeout(replyTimer); clearTimeout(hintTimer); lastContext=''; lastAlertKey=''; mutedUntil=0; lastHintAt=0; hint.hidden=true; badge.hidden=true; root.querySelector('.tg-snooze').textContent='Silenciar 1 h'; input.disabled=false; root.querySelector('.tg-form button').disabled=false; input.value = ''; minimized = false; root.classList.remove('tg-compact'); welcome();
     }
     root.hidden = !u || u.role === 'cliente' || !!kiosk;
     if (root.hidden) { input.disabled=false;root.querySelector('.tg-form button').disabled=false;panel.hidden = true; opened = false; root.classList.remove('tg-is-open'); toggle.setAttribute('aria-expanded', 'false'); clearTimeout(imageTimer); clearTimeout(stateTimer); clearTimeout(replyTimer); hint.hidden=true; picture.removeAttribute('src'); }
@@ -199,9 +183,13 @@
   }
   toggle.addEventListener('click', () => { sync(); if (!root.hidden) setOpen(!opened); });
   root.querySelector('.tg-close').addEventListener('click', () => setOpen(false));
-  root.querySelector('.tg-mascot').addEventListener('click', () => { sync(); if (!root.hidden) setMinimized(true); });
-  root.querySelector('.tg-minimize').addEventListener('click', () => { sync(); if (!root.hidden) setMinimized(!minimized); });
-  badge.addEventListener('click', () => { sync(); if (!root.hidden) { setOpen(true); answer('alertas'); } });
+  root.querySelector('.tg-minimize').addEventListener('click', e => {
+    minimized = !minimized; root.classList.toggle('tg-compact', minimized);
+    e.currentTarget.textContent = minimized ? '+' : '−';
+    e.currentTarget.setAttribute('aria-label', minimized ? 'Mostrar mascote' : 'Minimizar mascote');
+    e.currentTarget.title = minimized ? 'Mostrar mascote' : 'Minimizar mascote';
+    if (opened) setOpen(false);
+  });
   root.querySelector('form').addEventListener('submit', e => {
     e.preventDefault(); const raw=input.value.trim(); if(!raw)return;
     input.value=''; input.disabled=true; root.querySelector('.tg-form button').disabled=true; animate('thinking');
@@ -224,7 +212,6 @@
 
   root.addEventListener('keydown', e => { if (e.key === 'Escape' && opened) { e.stopPropagation(); setOpen(false); } });
   if (typeof ResizeObserver === 'function') new ResizeObserver(() => { if(opened)log.scrollTop=log.scrollHeight; }).observe(log);
-  if (typeof MutationObserver === 'function') new MutationObserver(syncDock).observe(document.body,{subtree:true,attributes:true,attributeFilter:['class']});
   window.TGAssistente = Object.freeze({sync});
   // A app notifica alterações da sessão/renderização. Atualização local a cada minuto, sem pedidos de rede nem histórico persistido.
   document.addEventListener('tg:interface-updated', sync);
