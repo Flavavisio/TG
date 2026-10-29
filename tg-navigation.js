@@ -97,7 +97,7 @@
         parent.querySelectorAll('.grupo-cards').forEach(group=>{group.hidden=![...group.querySelectorAll('.card-principal')].some(visible);});
         if(heading)heading.textContent='Visão Global';
     }
-    function entries(key) {return [...document.querySelectorAll(`#cardsGrid .grupo-cards[data-grupo="${key}"] .card-principal`)].filter(visible);}
+    function entries(key) { const group=groups.find(g=>g[0]===key); if(!group)return []; return group[3].map(id=>card(id)).filter(visible); }
     function openCard(id) {
         const el = card(id); if (!visible(el)) return false;
         $('tgnSettings')?.close(); el.click(); return false;
@@ -125,7 +125,7 @@
     }
     function mark(name) {current=name;document.querySelectorAll('#menuInferiorMobile [data-tgn-nav]').forEach(el=>{el.classList.toggle('ativo',el.dataset.tgnNav===name);el.setAttribute('aria-current',el.dataset.tgnNav===name?'page':'false');});}
     function more() {
-        if(!active()||legacyMobile())return;
+        if(!active()||(legacyMobile()&&!['admin','subadmin'].includes(user()?.role)))return;
         _fecharSecaoAbertaMobile();const panel=$('painelGrupoMobile'),content=$('painelGrupoMobileConteudo');if(!panel||!content)return;
         if($('omeudia'))$('omeudia').style.display='none';if($('tgHome'))$('tgHome').style.display='none';if($('cardsGrid'))$('cardsGrid').style.display='';
         if(typeof _ultimoGrupoMobileAberto!=='undefined')_ultimoGrupoMobileAberto=null;
@@ -136,6 +136,13 @@
             const button=document.createElement('button');button.type='button';button.className='btn btn-outline';button.dataset.tgnDashboard='';button.textContent='Dashboard Central';head.append(button);
         }
         returnToMore=true;mark('more');window.scrollTo({top:0,behavior:'smooth'});
+    }
+    function workMenu() {
+        if(!['admin','subadmin'].includes(user()?.role))return _abrirGrupoMobile('operacoes');
+        more();const content=$('painelGrupoMobileConteudo');if(!content)return;
+        const head=content.querySelector('.tgn-more-title');if(head)head.querySelector('h2').textContent='Obras e Serviços';
+        const body=content.querySelector('.tgn-menu-section')?.parentElement;
+        if(body)sectionList(body,['operacoes']);returnToMore=true;mark('work');
     }
     function agenda(preferred) {
         const target=calendars.find(([id])=>id===preferred&&permitted(card(id))) || calendars.find(([id])=>permitted(card(id)));
@@ -164,7 +171,8 @@
     }
     function mobile() {
         const nav=$('menuInferiorMobile');if(!nav)return;
-        if(!active()||legacyMobile()||!_ehPerfilMobile()){nav.classList.remove('tgn-mobile');return;}
+        const manager=['admin','subadmin'].includes(user()?.role);
+        if(!active()||(!manager&&legacyMobile())||(!manager&&!_ehPerfilMobile())){nav.classList.remove('tgn-mobile');return;}
         const items=[['home','fa-sun','O Meu Dia',true],['agenda','fa-calendar-days','Agenda',calendars.some(([id])=>permitted(card(id)))],['work','fa-briefcase','Trabalhos',entries('operacoes').length>0],['alerts','fa-bell','Alertas',true],['more','fa-bars','Mais',true]];
         nav.classList.add('tgn-mobile');nav.innerHTML=items.map(([id,icon,label,enabled])=>`<button type="button" class="menu-inf-item" data-tgn-nav="${id}" ${id==='home'?'id="menuInfHome"':''} ${enabled?'':'disabled'}><i class="fas ${icon}" aria-hidden="true"></i><span>${label}</span></button>`).join('');mark(current);
     }
@@ -271,7 +279,7 @@
         if(control.hasAttribute('data-tgn-dashboard')){returnToMore=true;return _abrirDashboardCentralMobile();}
         if(control.dataset.tgnCard)return openCard(control.dataset.tgnCard);
         if(control.dataset.tgnCalendar)return agenda(control.dataset.tgnCalendar);
-        switch(control.dataset.tgnNav){case 'home':return _voltarMeuDia();case 'agenda':return agenda();case 'work':returnToMore=false;return _abrirGrupoMobile('operacoes');case 'alerts':return alerts();case 'more':return more();}
+        switch(control.dataset.tgnNav){case 'home':return _voltarMeuDia();case 'agenda':return agenda();case 'work':returnToMore=false;return workMenu();case 'alerts':return alerts();case 'more':return more();}
     });
     document.addEventListener('tg:interface-updated',refresh);
     let resize;window.addEventListener('resize',()=>{clearTimeout(resize);resize=setTimeout(()=>{
