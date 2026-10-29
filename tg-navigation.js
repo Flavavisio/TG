@@ -12,12 +12,11 @@
     // A estrutura é comum a Admin e Sub-Admin; permissões apenas filtram acessos.
     const groups = [
         ['comercial','Comercial','fa-handshake-angle',['clientes','crm','contratos','distribuicao']],
-        ['equipa','Equipa','fa-users-gear',['funcionarios','encarregados','ponto','assiduidade','calendario-equipa','mapa-equipa','alertas-geofence','quiosque']],
-        ['gestao','Gestão','fa-clipboard-list',['agenda','pedidos','ferramentas']],
-        ['operacoes','Obras e Serviços','fa-gears',['obras-longa','servicos','assistencias','folhas','agenda-obras']],
+        ['equipa','Equipa','fa-users-gear',['funcionarios','encarregados','ponto','assiduidade','pedidos','calendario-equipa','mapa-equipa','alertas-geofence','quiosque']],
+        ['operacoes','Obras e Serviços','fa-gears',['obras-longa','servicos','assistencias','folhas','agenda-obras','agenda']],
         ['frota','Frota','fa-car',['frota']],
         ['rondas','Rondas','fa-route',['rondas']],
-        ['armazem','Armazém','fa-warehouse',['artigos','encomendas','fornecedores','requisicoes','levantamento-qr']],
+        ['armazem','Armazém','fa-warehouse',['artigos','encomendas','fornecedores','requisicoes','levantamento-qr','ferramentas']],
         ['financeiro','Financeiro','fa-landmark',['financeiro','despesas','dashboard-analitico']],
         ['relatorios','Relatórios','fa-file-lines',['relatorio-os']],
         ['configuracoes','Sistema e Suporte','fa-gear',['relatorios-personalizados','minha-licenca','auditoria','exportar-dados','guia','ajuda-peticoes']],
