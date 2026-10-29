@@ -28,7 +28,7 @@ test('worksheet fields are at least 16px before focus and restoration preserves 
 });
 test('avatar, wizard scale correction and refreshed CSS are included in both app entry points',()=>{
  const css=fs.readFileSync('tg-technician.css','utf8');assert(css.includes('.tgt-avatar'));assert(css.includes('animation:none!important;transform:none!important'));assert(source.includes('${avatarHTML()}</header>'));
- for(const file of ['index.html','login.html']){const html=fs.readFileSync(file,'utf8');assert(html.includes('tg-technician.js?v=1.7.0-fleet-actions'));assert(html.includes('tg-technician.css?v=1.7.0-fleet-actions'));const responsive=html.match(/responsive-device\.css\?v=\d+/)?.[0];assert(responsive&&fs.readFileSync('sw.js','utf8').includes(responsive));assert(!html.includes('user-scalable=no'));}
+ for(const file of ['index.html','login.html']){const html=fs.readFileSync(file,'utf8');assert(html.includes('tg-technician.js?v=1.7.1-leave-modals'));assert(html.includes('tg-technician.css?v=1.7.1-leave-modals'));const responsive=html.match(/responsive-device\.css\?v=\d+/)?.[0];assert(responsive&&fs.readFileSync('sw.js','utf8').includes(responsive));assert(!html.includes('user-scalable=no'));}
 });
 
 test('the intervention toolbar opens the installation passport directly without a notes dialog',()=>{
@@ -188,5 +188,28 @@ test('background refresh and Safari resize keep an unfinished vehicle form intac
   w.eval(fs.readFileSync('tg-navigation.js','utf8'));w.TGTechnician.fleet();const form=w.editFleet('manutencao');w.setFleet('description','Texto ainda por guardar');
   w.dispatchEvent(new w.Event('resize'));w.document.dispatchEvent(new w.Event('tg:interface-updated'));await new Promise(resolve=>w.setTimeout(resolve,230));
   assert.equal(w.document.getElementById('tgt-fleet-description').value,'Texto ainda por guardar');assert(w.document.getElementById('modalGenericoOverlay').classList.contains('open'));assert.equal(w.requests.length,0);
+ }finally{w.close();}
+});
+
+test('leave availability uses the existing balance including pending requests and refreshes without reopening the profile',()=>{
+ const w=fleetSetup();try{
+  w.document.getElementById('cardsGrid').insertAdjacentHTML('beforeend','<div class="card-principal" data-card="pedidos"></div>');
+  w.document.body.insertAdjacentHTML('beforeend','<section id="secao-pedidos"><div class="section-header"><h2>Férias e faltas</h2></div></section>');
+  const main=fs.readFileSync('app-principal.js','utf8');w.eval(main.slice(main.indexOf('        // ===== Férias: feriados nacionais'),main.indexOf('        function renderizarFuncionarios()')));
+  w.dados.funcionarios[0].diasFerias=25;
+  w.dados.pedidos=[{funcionarioId:'f',tipo:'ferias',status:'aprovado',dataInicio:'2026-10-26',dataFim:'2026-10-28'},{funcionarioId:'f',tipo:'ferias',status:'pendente_aprov',dataInicio:'2026-10-29',dataFim:'2026-10-29'},{funcionarioId:'f',tipo:'ferias',status:'rejeitado',dataInicio:'2026-11-02',dataFim:'2026-11-06'},{funcionarioId:'other',tipo:'ferias',status:'aprovado',dataInicio:'2026-10-26',dataFim:'2026-10-30'}];
+  w.TGTechnician.refresh();w.TGTechnician.more();
+  const balance=()=>w.document.querySelector('[data-tgt-leave-balance]').textContent;
+  assert.equal(balance(),'21 dias disponíveis');assert(w.document.getElementById('tgtLeaveBalance').textContent.includes('21 dias disponíveis'));
+  const profile=w.document.getElementById('painelGrupoMobileConteudo');w.dados.pedidos.push({funcionarioId:'f',tipo:'ferias',status:'aprovado',dataInicio:'2026-11-02',dataFim:'2026-11-02'});w.document.dispatchEvent(new w.Event('tg:interface-updated'));
+  assert.equal(balance(),'20 dias disponíveis');assert.equal(w.document.getElementById('painelGrupoMobileConteudo'),profile);assert.equal(w.document.querySelectorAll('#tgtLeaveBalance').length,1);
+ }finally{w.close();}
+});
+test('leave balance handles one or zero available days and never assumes a balance for a missing tenant profile',()=>{
+ const w=fleetSetup();try{
+  w.document.getElementById('cardsGrid').insertAdjacentHTML('beforeend','<div class="card-principal" data-card="pedidos"></div>');
+  w.feriasDisponiveis=(id,year)=>{assert.equal(id,'f');assert.equal(year,2026);return w.balance;};
+  for(const [balance,label] of [[1,'1 dia disponível'],[0,'0 dias disponíveis'],[-2,'0 dias disponíveis']]){w.balance=balance;w.TGTechnician.more();assert.equal(w.document.querySelector('[data-tgt-leave-balance]').textContent,label);}
+  w.dados.funcionarios=[{id:'f',adminId:'other',diasFerias:99}];w.TGTechnician.more();assert.equal(w.document.querySelector('[data-tgt-leave-balance]').textContent,'Saldo de férias indisponível');
  }finally{w.close();}
 });

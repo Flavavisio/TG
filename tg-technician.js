@@ -191,10 +191,26 @@
         if(focus)content.insertAdjacentHTML('beforeend',focusHTML(focus));
         content.insertAdjacentHTML('beforeend',list.length?list.map(job=>rowHTML(job)).join(''):'<p class="tgt-message">Sem obras ativas atribuídas a ti.</p>');menu();
     }
+    function leaveBalanceText() {
+        const person=rows(u()?.role==='encarregado'?'encarregados':'funcionarios').find(p=>p.id===u()?.id);
+        if(!enabled() || !_licencaValidaTenant() || !person || typeof feriasDisponiveis!=='function')return 'Saldo de férias indisponível';
+        const balance=Number(feriasDisponiveis(person.id,Number(today().slice(0,4))));
+        if(!Number.isFinite(balance))return 'Saldo de férias indisponível';
+        const days=Math.max(0,balance);return days.toLocaleString('pt-PT')+(days===1?' dia disponível':' dias disponíveis');
+    }
+    function updateLeaveBalance() {
+        const allowed=enabled() && permitted('pedidos');
+        const text=allowed?leaveBalanceText():'';
+        document.querySelectorAll('[data-tgt-leave-balance]').forEach(el=>{el.textContent=text;});
+        const section=$('secao-pedidos');let summary=$('tgtLeaveBalance');
+        if(!allowed){summary?.remove();return;}
+        if(section && !summary){summary=document.createElement('p');summary.id='tgtLeaveBalance';summary.className='tgt-leave-summary';const header=section.querySelector('.section-header');if(header)header.after(summary);else section.prepend(summary);}
+        if(summary)summary.textContent='Férias · '+today().slice(0,4)+' · '+text;
+    }
     function more() {
         view='more';const content=panel('O meu perfil');if(!content)return;
         const actions=document.createElement('div');actions.className='tgt-shortcuts';
-        actions.innerHTML=button(icon('user')+' Editar o meu perfil','profile')+(permitted('pedidos')?button(icon('umbrella-beach')+' Férias e faltas','leave'):'')+(attendance()&&permitted('ponto')?button(icon('clock')+' O meu registo de ponto','point'):'')+(permitted('folhas')?button(icon('clipboard-list')+' As minhas folhas de obra','sheets'):'');
+        actions.innerHTML=button(icon('user')+' Editar o meu perfil','profile')+(permitted('pedidos')?button(icon('umbrella-beach')+'<span>Férias e faltas<small data-tgt-leave-balance>'+esc(leaveBalanceText())+'</small></span>','leave'):'')+(attendance()&&permitted('ponto')?button(icon('clock')+' O meu registo de ponto','point'):'')+(permitted('folhas')?button(icon('clipboard-list')+' As minhas folhas de obra','sheets'):'');
         if(permitted('ferramentas')){const b=document.createElement('button');b.type='button';b.className='tgt-button';b.dataset.tgtCard='ferramentas';b.textContent='Equipamentos e QR';actions.append(b);}
         content.append(actions);menu();
     }
@@ -409,7 +425,7 @@
                 _montarMenuInferiorMobile();renderizarOMeuDia();
                 if(!document.querySelector('.section-container.active')&&view==='home')_mostrarInicioConteudo();
             }
-            wasEnabled=on;
+            updateLeaveBalance();wasEnabled=on;
         }finally{refreshing=false;}
     }
     function wrap(name,fn) {const original=window[name];if(typeof original==='function')window[name]=function(...args){return fn.call(this,original,args);};}
@@ -423,6 +439,7 @@
     wrap('picarPontoOS',function(original,args){if(enabled()&&args[1]==='entrada'&&!entryAllowed(args[0],'os'))return denyOtherDay();return original.apply(this,args);});
     wrap('obraLongaPicarEntrada',function(original,args){if(enabled()&&!entryAllowed(args[0],'obra'))return denyOtherDay();return original.apply(this,args);});
     wrap('renderizarOMeuDia',function(original,args){if(enabled())return renderHome();return original.apply(this,args);});
+    wrap('renderizarPedidosFunc',function(original,args){const result=original.apply(this,args);updateLeaveBalance();return result;});
     wrap('_mostrarInicioConteudo',function(original,args){if(enabled())return home();return original.apply(this,args);});
     wrap('_montarMenuInferiorMobile',function(original,args){const result=original.apply(this,args);if(enabled()){document.body.classList.add('tgt-active');menu();}return result;});
     wrap('_voltarMeuDia',function(original,args){if(enabled())return home();return original.apply(this,args);});

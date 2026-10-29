@@ -120,6 +120,8 @@ body.dark-mode .tgt-draft-card small{color:#f1d18e}
 .tgt-team .tgm-panel{margin:0 0 12px;padding:12px;box-shadow:none}
 .tgt-shortcuts{display:grid;gap:10px;margin-bottom:20px}
 .tgt-shortcuts button{justify-content:flex-start;text-align:left}
+.tgt-shortcuts [data-tgt-leave-balance]{display:block;margin-top:4px;font-size:13px;font-weight:600;color:var(--tgt-blue)}
+.tgt-leave-summary{padding:14px 16px;border:1px solid var(--tgt-line);border-radius:12px;background:var(--tgt-surface);color:var(--tgt-blue);font-size:15px;font-weight:700;text-align:left;margin:0 0 16px;overflow-wrap:anywhere}
 .tgt-empty{padding:28px 16px;background:var(--tgt-surface);border:1px solid var(--tgt-line);border-radius:16px;text-align:left}
 .tgt-empty>i{font-size:28px;color:var(--tgt-blue)}
 .tgt-empty h3{font-size:18px;color:var(--tgt-ink);margin:12px 0 8px}
@@ -193,6 +195,11 @@ body.dark-mode .tgt-draft-card small{color:#f1d18e}
 .tgt-active #modalPedidoOverlay .modal-actions{position:sticky;bottom:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;z-index:2;background:var(--tgt-surface);padding:12px 0 0;margin-top:18px;border-top:1px solid var(--tgt-line)}
 .tgt-active #modalPedidoOverlay .modal-actions button{min-width:0;min-height:48px;margin:0;font-size:14px;white-space:normal;justify-content:center;padding:10px 8px}
 @media(max-width:360px){.tgt-active #ped_horas_bloco>.form-group{flex-basis:100%!important}}
+
+/* Keep leave, fleet and worksheet dialogs centred, including narrow phone screens. */
+body.tgt-active :is(#modalPedidoOverlay,#modalOverlay,#modalFolhaObrigOverlay,#modalGenericoOverlay:has(.tgt-fleet-form),#modalVeiculoIntervOverlay,#modalVeiculoDocsOverlay,#modalVeiculoHistOverlay,#modalVeiculoSinistrosOverlay){align-items:center!important;justify-content:center!important;flex-wrap:nowrap!important;gap:0;padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left))!important;box-sizing:border-box;overflow:hidden}
+body.tgt-active :is(#modalPedidoOverlay,#modalOverlay,#modalFolhaObrigOverlay,#modalGenericoOverlay:has(.tgt-fleet-form),#modalVeiculoIntervOverlay,#modalVeiculoDocsOverlay,#modalVeiculoHistOverlay,#modalVeiculoSinistrosOverlay)>.modal{height:auto!important;min-height:0!important;max-height:calc(100dvh - max(12px,env(safe-area-inset-top)) - max(12px,env(safe-area-inset-bottom)))!important;width:min(100%,720px)!important;max-width:100%!important;margin:0!important;overflow-y:auto;overscroll-behavior:contain;box-sizing:border-box}
+body.tgt-active #modalPedidoOverlay>.modal{width:min(100%,540px)!important}
 
 /* Personal header and installation context for the phone workspace. */
 .tgt-home>.tgt-day-head{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:16px;align-items:center}
