@@ -338,7 +338,7 @@
     wrap('picarPontoOS',function(original,args){if(enabled()&&args[1]==='entrada'&&!entryAllowed(args[0],'os'))return denyOtherDay();return original.apply(this,args);});
     wrap('obraLongaPicarEntrada',function(original,args){if(enabled()&&!entryAllowed(args[0],'obra'))return denyOtherDay();return original.apply(this,args);});
     wrap('renderizarOMeuDia',function(original,args){if(enabled())return renderHome();return original.apply(this,args);});
-    wrap('_mostrarInicioConteudo',function(original,args){if(enabled()){view='home';prepareHome();renderHome();return;}return original.apply(this,args);});
+    wrap('_mostrarInicioConteudo',function(original,args){if(enabled())return home();return original.apply(this,args);});
     wrap('_montarMenuInferiorMobile',function(original,args){const result=original.apply(this,args);if(enabled()){document.body.classList.add('tgt-active');menu();}return result;});
     wrap('_voltarMeuDia',function(original,args){if(enabled())return home();return original.apply(this,args);});
     wrap('_abrirGrupoMobile',function(original,args){if(enabled()){view='group';prepareHome();}const result=original.apply(this,args);if(enabled())menu();return result;});

@@ -270,7 +270,15 @@
         switch(control.dataset.tgnNav){case 'home':return _voltarMeuDia();case 'agenda':return agenda();case 'work':returnToMore=false;return _abrirGrupoMobile('operacoes');case 'alerts':return alerts();case 'more':return more();}
     });
     document.addEventListener('tg:interface-updated',refresh);
-    let resize;window.addEventListener('resize',()=>{clearTimeout(resize);resize=setTimeout(()=>{_montarMenuInferiorMobile();if(active()&&!document.querySelector('.section-container.active')&&current==='home'&&typeof _mostrarInicioConteudo==='function')_mostrarInicioConteudo();refresh();},100);});
+    let resize;window.addEventListener('resize',()=>{clearTimeout(resize);resize=setTimeout(()=>{
+        _montarMenuInferiorMobile();
+        // Safari changes the viewport height as its toolbar expands on scroll.
+        // The technician workspace owns its active tab; a resize must never navigate.
+        const technician=!!window.TGTechnician?.enabled();
+        const panel=$('painelGrupoMobile'),panelOpen=panel && panel.style.display!=='none' && getComputedStyle(panel).display!=='none';
+        if(active()&&!technician&&!panelOpen&&!document.querySelector('.section-container.active')&&current==='home'&&typeof _mostrarInicioConteudo==='function')_mostrarInicioConteudo();
+        refresh();
+    },100);});
     window.TGNavigation={refresh,agenda,settings,more,openCard,entries,workContext};
     refresh();
 })();

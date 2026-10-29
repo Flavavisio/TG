@@ -5,7 +5,7 @@ function setup(){
  const w=new JSDOM(`<div id="cardsGrid"><div class="card-principal" data-card="servicos"></div></div><div id="modalGenericoOverlay"><h2 id="modalGenericoTitulo"></h2><form id="modalGenericoForm"><div id="modalGenericoCampos"></div><div class="modal-actions"><button class="btn-success">Guardar</button></div></form></div><div id="modalOverlay" class="open"><form id="modalForm"><div id="modalCampos"><div class="form-group"><textarea id="fo_descricao" required style="font-size:12px!important">Trabalho já escrito</textarea></div><div class="form-group"><input id="fo_data" type="date" value="2026-10-27" style="font-size:14px"></div><div class="form-group"><input id="check" type="checkbox"></div></div><button id="modalSubmitBtn">Guardar</button></form></div>`,{url:'https://example.com/Testetg/login.html',runScripts:'outside-only'}).window;
  w.innerWidth=390;w.usuarioLogado={id:'f',adminId:'a',role:'funcionario',nome:'Vanda Ribeiro'};
  w.dados={funcionarios:[{id:'f',adminId:'a',nome:'Vanda Ribeiro'}],encarregados:[],servicos:[{id:'os',adminId:'a',funcionariosIds:['f'],data:'2026-10-27',clienteId:'c',localId:'l',descricao:'Serviço'}],clientes:[{id:'c',adminId:'a',nome:'Cliente'}],ponto:[],obras:[],obraPontoLonga:[]};
- Object.assign(w,{expressAtivo:()=>false,adminDoUtilizador:()=>({id:'a'}),_licencaValidaTenant:()=>true,getDataHoje:()=> '2026-10-27',_pausaAlmocoPendente:()=>null});
+ Object.assign(w,{expressAtivo:()=>false,adminDoUtilizador:()=>({id:'a'}),_licencaValidaTenant:()=>true,getDataHoje:()=> '2026-10-27',_pausaAlmocoPendente:()=>null,_montarMenuInferiorMobile(){},_mostrarInicioConteudo(){}});
  w.entryCalls=[];w.errors=[];w.picarPontoOS=(...args)=>w.entryCalls.push(args);w.mostrarErro=msg=>w.errors.push(msg);
  w.allowed=true;w.opened=[];w.TGPassport={scope:(c,l)=>w.allowed?{customerId:c,localId:l}:null,open:(...args)=>w.opened.push(args)};
  const instrumented=source.replace('window.TGTechnician={refresh,jobs,todayJobs,weekJobs,enabled};refresh();','window.TGTechnician={refresh,home,workList,worksList,more,fleet,enabled,jobs,focusHTML,avatarHTML,notes,openPassport,protectFieldFont,installWizard,removeWizard,wizards};');
@@ -28,7 +28,7 @@ test('worksheet fields are at least 16px before focus and restoration preserves 
 });
 test('avatar, wizard scale correction and refreshed CSS are included in both app entry points',()=>{
  const css=fs.readFileSync('tg-technician.css','utf8');assert(css.includes('.tgt-avatar'));assert(css.includes('animation:none!important;transform:none!important'));assert(source.includes('${avatarHTML()}</header>'));
- for(const file of ['index.html','login.html']){const html=fs.readFileSync(file,'utf8');assert(html.includes('tg-technician.js?v=1.6.0-frota'));assert(html.includes('tg-technician.css?v=1.6.0-frota'));const responsive=html.match(/responsive-device\.css\?v=\d+/)?.[0];assert(responsive&&fs.readFileSync('sw.js','utf8').includes(responsive));assert(!html.includes('user-scalable=no'));}
+ for(const file of ['index.html','login.html']){const html=fs.readFileSync(file,'utf8');assert(html.includes('tg-technician.js?v=1.6.1-view'));assert(html.includes('tg-technician.css?v=1.6.0-frota'));const responsive=html.match(/responsive-device\.css\?v=\d+/)?.[0];assert(responsive&&fs.readFileSync('sw.js','utf8').includes(responsive));assert(!html.includes('user-scalable=no'));}
 });
 
 test('the intervention toolbar opens the installation passport directly without a notes dialog',()=>{
@@ -95,5 +95,24 @@ test('fleet escapes stored text, rejects executable document links and tolerates
   w.dados.veiculos[0].observacoes='<img src=x onerror=bad>';
   w.dados.veiculoDocumentos[0].ficheiro='javascript:alert(1)';w.dados.veiculoDocumentos[0].dataCriacao='invalid';
   w.TGTechnician.fleet();const panel=w.document.getElementById('painelGrupoMobileConteudo');assert.equal(panel.querySelector('img,a'),null);assert(panel.textContent.includes('<img src=x onerror=bad>'));assert(panel.textContent.includes('Ficheiro indisponível'));
+ }finally{w.close();}
+});
+
+test('Safari toolbar resize and background updates preserve every technician tab without showing home above it',async()=>{
+ const w=fleetSetup();try{
+  w.document.getElementById('cardsGrid').insertAdjacentHTML('beforeend','<div id="omeudia"></div>');
+  w.TGTechnician.refresh();w.eval(fs.readFileSync('tg-navigation.js','utf8'));
+  for(const [key,title] of [['jobs','Agenda da semana'],['works','Obras ativas'],['fleet','A minha viatura'],['more','O meu perfil']]){
+   w.document.querySelector('[data-tgt-nav='+key+']').click();
+   for(const height of [700,840]){
+    w.innerHeight=height;w.dispatchEvent(new w.Event('resize'));await new Promise(resolve=>w.setTimeout(resolve,230));
+    w.document.dispatchEvent(new w.Event('tg:interface-updated'));
+    assert.equal(w.getComputedStyle(w.document.getElementById('omeudia')).display,'none',key+' hides the initial menu');
+    assert.equal(w.document.querySelector('#painelGrupoMobileConteudo h2').textContent,title);
+    assert.equal(w.document.querySelector('[data-tgt-nav='+key+']').getAttribute('aria-current'),'page');
+   }
+  }
+  w._mostrarInicioConteudo();assert.equal(w.document.getElementById('painelGrupoMobile').style.display,'none');
+  assert.notEqual(w.getComputedStyle(w.document.getElementById('omeudia')).display,'none');
  }finally{w.close();}
 });
