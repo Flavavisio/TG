@@ -28,7 +28,7 @@ test('worksheet fields are at least 16px before focus and restoration preserves 
 });
 test('avatar, wizard scale correction and refreshed CSS are included in both app entry points',()=>{
  const css=fs.readFileSync('tg-technician.css','utf8');assert(css.includes('.tgt-avatar'));assert(css.includes('animation:none!important;transform:none!important'));assert(source.includes('${avatarHTML()}</header>'));
- for(const file of ['index.html','login.html']){const html=fs.readFileSync(file,'utf8');assert(html.includes('tg-technician.js?v=1.7.1-leave-modals'));assert(html.includes('tg-technician.css?v=1.7.1-leave-modals'));const responsive=html.match(/responsive-device\.css\?v=\d+/)?.[0];assert(responsive&&fs.readFileSync('sw.js','utf8').includes(responsive));assert(!html.includes('user-scalable=no'));}
+ for(const file of ['index.html','login.html']){const html=fs.readFileSync(file,'utf8');assert(html.includes('tg-technician.js?v=1.7.1-leave-modals'));assert(html.includes('tg-technician.css?v=1.7.2-fleet-buttons'));const responsive=html.match(/responsive-device\.css\?v=\d+/)?.[0];assert(responsive&&fs.readFileSync('sw.js','utf8').includes(responsive));assert(!html.includes('user-scalable=no'));}
 });
 
 test('the intervention toolbar opens the installation passport directly without a notes dialog',()=>{
