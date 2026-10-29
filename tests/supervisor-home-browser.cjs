@@ -36,7 +36,7 @@ const fn=name=>{const m=main.match(new RegExp('        (?:async )?function '+nam
    window._ultimoGrupoMobileAberto=null;window._calMesRef=new Date('2026-10-01T12:00:00');window.feriadosNacionais=()=>[];window.feriadoMunicipal=()=>null;
    window.opened=[];window.abrirVerOS=id=>opened.push(id);
   `});
-  await page.addScriptTag({content:['_estadoPresencaPessoa','obterLayout','_dispositivoEhMobile','_ehPerfilMobile','_montarMenuInferiorMobile','_fecharSecaoAbertaMobile','_voltarMeuDia','renderizarOMeuDia','renderizarCalendarioEquipa','_gerarLinhasCalendarioMes'].map(fn).join('\n')});
+  await page.addScriptTag({content:['_funcionarioAusenteEm','_estadoPresencaPessoa','obterLayout','_dispositivoEhMobile','_ehPerfilMobile','_montarMenuInferiorMobile','_fecharSecaoAbertaMobile','_voltarMeuDia','renderizarOMeuDia','renderizarCalendarioEquipa','_gerarLinhasCalendarioMes'].map(fn).join('\n')});
   await page.addScriptTag({content:fs.readFileSync('tg-supervisor-home.js','utf8')});
   await page.evaluate(()=>{renderizarOMeuDia();_montarMenuInferiorMobile();});
   assert.equal(await page.evaluate(()=>obterLayout()),'cards');assert.equal(await page.evaluate(()=>_ehPerfilMobile()),true);

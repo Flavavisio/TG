@@ -568,9 +568,15 @@
                 <p class="help-text" style="margin:-4px 0 10px;">Não precisas de escolher obra nem equipa agora — isso escolhe-se ao selecionares cada OS/Obra na agenda do quiosque.</p>
             </div>
             <div class="form-group">
+                <label for="qs_admin_pin">PIN de picagem do administrador</label>
+                <input type="password" id="qs_admin_pin" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" placeholder="4 números para picar o ponto" />
+                <div class="help-text">Permite ao administrador picar Entrada / Saída Geral e registar horas em Obras/OS neste aparelho. Deixa vazio se só os funcionários e encarregados vão picar. Cada um mantém o seu PIN individual.</div>
+                <label style="display:flex;align-items:center;gap:8px;margin-top:8px;"><input type="checkbox" id="qs_incluir_admin" checked style="width:auto;" /> Incluir o administrador na obra fixa</label>
+            </div>
+            <div class="form-group">
                 <label>Password para sair do Modo Quiosque *</label>
                 <input type="password" id="qs_password_saida" placeholder="Escolhe uma password (não é a tua password de login)" minlength="4" required />
-                <div class="help-text">Vais precisar dela para sair do Modo Quiosque neste aparelho.</div>
+                <div class="help-text">Esta password serve apenas para sair do quiosque. Para picar o ponto usa o PIN individual de 4 números.</div>
             </div>
             <div class="modal-actions">
                 <button type="button" class="btn" style="background:#e9edf2;" onclick="document.getElementById('modalQuiosqueSetupOverlay').classList.remove('open')">Cancelar</button>
@@ -2397,9 +2403,9 @@
 <script defer src="tg-smart-engine.js?v=3.1.1-assist"></script>
 <script defer id="tg-assistente-script" src="tg-assistente.js?v=4.1.1-teste"></script>
 <script src="tg-agenda-touch.js?v=1.0.0"></script>
-<script src="app-principal.js?v=production-20261029"></script>
+<script src="app-principal.js?v=kiosk-presence-20261029"></script>
 <link rel="stylesheet" href="tg-supervisor-home.css?v=1.0.0">
-<script src="tg-supervisor-home.js?v=1.0.0"></script>
+<script src="tg-supervisor-home.js?v=1.0.1-absences"></script>
 <script src="tg-push.js?v=1.2.3"></script>
 <link rel="stylesheet" href="tg-work-sheets.css?v=2.2.0-teste">
 <script src="tg-work-sheets.js?v=2.4.1-teste"></script>

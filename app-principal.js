@@ -2557,6 +2557,16 @@ function _assistEstado(value) {
         function _tenantQuiosque() {
             return usuarioLogado?.role === 'admin' ? usuarioLogado.id : (usuarioLogado?.adminId || null);
         }
+        function _quiosqueAdminPinKey() {
+            return 'tg_quiosque_admin_pin_' + _tenantQuiosque();
+        }
+        function _quiosqueAdminPessoa() {
+            const adminId = _tenantQuiosque();
+            const admin = (dados.administradores || []).find(a => a.id === adminId && a.ativo !== false);
+            let pin = '';
+            try { pin = localStorage.getItem(_quiosqueAdminPinKey()) || ''; } catch (e) {}
+            return admin && /^\d{4}$/.test(pin) ? { id: admin.id, adminId, nome: admin.nome || admin.empresa, pin, _tipo: 'admin' } : null;
+        }
         function _distanciaMetros(lat1, lng1, lat2, lng2) {
             const R = 6371000;
             const toRad = d => d * Math.PI / 180;
@@ -2579,6 +2589,10 @@ function _assistEstado(value) {
             _quiosqueGeoTemp = null;
             document.getElementById('qs_geo_status').textContent = 'Ainda não capturada.';
             document.getElementById('qs_password_saida').value = '';
+            const pinAdmin = document.getElementById('qs_admin_pin');
+            if (pinAdmin) {
+                try { pinAdmin.value = localStorage.getItem(_quiosqueAdminPinKey()) || ''; } catch (e) { pinAdmin.value = ''; }
+            }
             _quiosqueRenderPessoasSetup();
             document.getElementById('modalQuiosqueSetupOverlay').classList.add('open');
         }
@@ -2613,8 +2627,12 @@ function _assistEstado(value) {
             const modo = document.querySelector('input[name="qs_modo"]:checked')?.value || 'obra_fixa';
             const pass = document.getElementById('qs_password_saida').value;
             if (!pass || pass.length < 4) { alert('Escolhe uma password de saída com pelo menos 4 caracteres.'); return; }
+            const pinAdmin = document.getElementById('qs_admin_pin')?.value || '';
+            if (pinAdmin && !/^\d{4}$/.test(pinAdmin)) { alert('O PIN de picagem do administrador tem de ter exatamente 4 números.'); return; }
             if (modo === 'agenda') {
                 try {
+                    if (pinAdmin) localStorage.setItem(_quiosqueAdminPinKey(), pinAdmin);
+                    else localStorage.removeItem(_quiosqueAdminPinKey());
                     localStorage.setItem('tg_quiosque', _tenantQuiosque());
                     localStorage.setItem('tg_quiosque_modo', 'agenda');
                     localStorage.setItem('tg_quiosque_senha', pass);
@@ -2629,10 +2647,13 @@ function _assistEstado(value) {
             const obraId = document.getElementById('qs_obra').value;
             if (!obraId) { alert('Seleciona a obra desta obra/aparelho.'); return; }
             const selecionados = [...document.querySelectorAll('#qs_pessoas_lista input[data-qs-pessoa]:checked')].map(chk => chk.dataset.qsPessoa);
-            if (!selecionados.length) { alert('Seleciona pelo menos um funcionário/encarregado para esta obra.'); return; }
+            if (pinAdmin && document.getElementById('qs_incluir_admin')?.checked) selecionados.push(_tenantQuiosque());
+            if (!selecionados.length) { alert('Seleciona pelo menos uma pessoa para esta obra ou inclui o administrador com PIN.'); return; }
             if (!_quiosqueGeoTemp) { alert('Captura a localização atual antes de ativar (geofence).'); return; }
             const obra = dados.obras?.find(o => o.id === obraId);
             try {
+                if (pinAdmin) localStorage.setItem(_quiosqueAdminPinKey(), pinAdmin);
+                else localStorage.removeItem(_quiosqueAdminPinKey());
                 localStorage.setItem('tg_quiosque', _tenantQuiosque());
                 localStorage.setItem('tg_quiosque_modo', 'obra_fixa');
                 localStorage.setItem('tg_quiosque_obra', obraId);
@@ -2974,7 +2995,7 @@ function _assistEstado(value) {
                     <button type="button" onclick="_quiosqueAgendaNavegarDia(1)" style="width:48px;height:48px;border:none;border-radius:12px;background:#334155;color:#fff;font-size:1.1rem;cursor:pointer;flex-shrink:0;"><i class="fas fa-chevron-right"></i></button>
                 </div>
                 <div style="text-align:center;margin-bottom:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
-                    ${pontoAssiduidadeAtivo() ? `<button type="button" onclick="_quiosqueAgendaAbrirGeral()" style="background:#dc2626;border:1px solid #dc2626;color:#fff;padding:8px 18px;border-radius:100px;font-size:.82rem;font-weight:700;cursor:pointer;"><i class="fas fa-power-off"></i> Entrada / Saída de Serviço</button>` : ''}
+                    ${pontoAssiduidadeAtivo() ? `<button type="button" onclick="_quiosqueAgendaAbrirGeral()" style="background:#dc2626;border:1px solid #dc2626;color:#fff;padding:8px 18px;border-radius:100px;font-size:.82rem;font-weight:700;cursor:pointer;"><i class="fas fa-power-off"></i> Entrada / Saída Geral</button>` : ''}
                 </div>
                 <div style="display:grid;gap:14px;">
                     ${itens.length ? itens.map(it => {
@@ -3028,7 +3049,8 @@ function _assistEstado(value) {
             const adminId = _tenantQuiosque();
             const funcs = (dados.funcionarios || []).filter(f => f.adminId === adminId && f.role !== 'admin' && f.role !== 'superadmin' && !f.suspenso).map(f => ({ ...f, _tipo: 'funcionario' }));
             const encs = (dados.encarregados || []).filter(e => e.adminId === adminId && !e.suspenso).map(e => ({ ...e, _tipo: 'encarregado' }));
-            return [...funcs, ...encs];
+            const admin = _quiosqueAdminPessoa();
+            return [...funcs, ...encs, ...(admin ? [admin] : [])];
         }
         function _quiosqueAgendaSelecionarItem(tipo, id) {
             const painel = document.getElementById('tgqPainel');
@@ -3094,6 +3116,7 @@ function _assistEstado(value) {
                 <div style="text-align:center;color:#152a52;margin-bottom:14px;">
                     <div style="font-weight:700;"><i class="fas fa-${s.tipo === 'servico' ? 'wrench' : 'hard-hat'}"></i> ${escapeHtmlSimples(titulo || '')}</div>
                     <button type="button" onclick="_quiosqueAgendaSairSessao()" style="margin-top:8px;background:#f1f5f9;border:none;color:#334155;padding:7px 16px;border-radius:100px;font-size:.78rem;font-weight:600;cursor:pointer;"><i class="fas fa-arrow-left"></i> Voltar à agenda</button>
+                    ${pontoAssiduidadeAtivo() ? `<button type="button" onclick="_quiosqueAgendaAbrirGeral()" style="margin-top:8px;background:#dc2626;border:none;color:#fff;padding:7px 16px;border-radius:100px;font-size:.78rem;font-weight:600;cursor:pointer;"><i class="fas fa-clock"></i> Entrada / Saída Geral</button>` : ''}
                 </div>
                 <div class="tgq-grid" style="position:static;">
                     ${pessoas.map(p => `
@@ -3471,13 +3494,14 @@ function _assistEstado(value) {
             try { selecionados = JSON.parse(localStorage.getItem('tg_quiosque_pessoas') || '[]'); } catch (e) {}
             const funcs = (dados.funcionarios || []).filter(f => f.adminId === adminId && f.role !== 'admin' && f.role !== 'superadmin' && !f.suspenso && (!selecionados.length || selecionados.includes(f.id))).map(f => ({ ...f, _tipo: 'funcionario' }));
             const encs = (dados.encarregados || []).filter(e => e.adminId === adminId && !e.suspenso && (!selecionados.length || selecionados.includes(e.id))).map(e => ({ ...e, _tipo: 'encarregado' }));
-            return [...funcs, ...encs];
+            const admin = _quiosqueAdminPessoa();
+            return [...funcs, ...encs, ...(admin && (!selecionados.length || selecionados.includes(admin.id)) ? [admin] : [])];
         }
         function _quiosqueMostrarGrid() {
             _quiosquePinAtual = ''; _quiosquePessoaSelecionada = null;
             document.getElementById('tgqPainel').style.display = 'none';
             document.getElementById('tgqGrid').style.display = 'grid';
-            document.getElementById('tgqSubtitulo').innerHTML = pontoAssiduidadeAtivo() ? 'Toca no teu nome para picar o ponto<br><button type="button" onclick="_quiosqueFixaAbrirGeral()" style="margin-top:8px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.4);color:#fff;padding:6px 16px;border-radius:100px;font-size:.78rem;font-weight:600;cursor:pointer;"><i class="fas fa-clock"></i> Ponto Geral</button>' : 'Toca no teu nome para registar a entrada ou saída da obra';
+            document.getElementById('tgqSubtitulo').innerHTML = pontoAssiduidadeAtivo() ? 'Toca no teu nome para picar o ponto<br><button type="button" onclick="_quiosqueFixaAbrirGeral()" style="margin-top:8px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.4);color:#fff;padding:6px 16px;border-radius:100px;font-size:.78rem;font-weight:600;cursor:pointer;"><i class="fas fa-clock"></i> Entrada / Saída Geral</button>' : 'Toca no teu nome para registar a entrada ou saída da obra';
             const pessoas = _quiosquePessoas();
             document.getElementById('tgqGrid').innerHTML = pessoas.length ? pessoas.map(p => `
                 <div class="tgq-pessoa" onclick="quiosquePessoaClick('${p.id}','${p._tipo}')">
@@ -15541,6 +15565,8 @@ function _assistEstado(value) {
             const geral = (registos.ponto || []).filter(x => x.funcionarioId === funcionarioId && !x.servicoId && !x.obraId && x.data === hoje && x.entrada)
                 .sort((a, b) => String(b.entrada).localeCompare(String(a.entrada)) || String(b.dataCriacao || b.id || '').localeCompare(String(a.dataCriacao || a.id || '')))[0];
             if (geral && !geral.saida) return { label: 'Em serviço', cor: '#16a34a', ativo: true };
+            const ausencia = _funcionarioAusenteEm(funcionarioId, hoje, registos);
+            if (ausencia) return { label: 'De ' + ausencia.label, cor: ausencia.cor, ativo: false, ausente: true };
             if (geral) return { label: 'Terminou o dia', cor: '#f97316', ativo: false };
             return { label: 'Ainda não começou', cor: '#94a3b8', ativo: false };
         }
@@ -15560,7 +15586,7 @@ function _assistEstado(value) {
             const pontoGeralAberto = id => (dados.ponto || []).some(p => p.funcionarioId === id && !p.servicoId && !p.obraId && p.data === hoje && p.entrada);
             // No Express não há ponto — sem isto, toda a equipa aparecia sempre como "ainda não
             // picou", já que nunca há nenhuma picagem para encontrar.
-            const semPontoAinda = (!pontoAssiduidadeAtivo(admin) || agoraMin <= limiteMin) ? [] : equipa.filter(p => !pontoGeralAberto(p.id));
+            const semPontoAinda = (!pontoAssiduidadeAtivo(admin) || agoraMin <= limiteMin) ? [] : equipa.filter(p => !pontoGeralAberto(p.id) && !_funcionarioAusenteEm(p.id, hoje));
 
             const osAtrasadas = (dados.servicos || []).filter(s => s.adminId === adminId && s.data === hoje && s.hora && s.status !== 'concluído' && s.status !== 'cancelado' && s.status !== 'em andamento' && s.hora < new Date().toTimeString().slice(0, 5));
             const feriasPendentes = (dados.pedidos || []).filter(p => p.adminId === adminId && ['pendente', 'pendente_aprov'].includes(p.status));
@@ -31334,9 +31360,9 @@ window._relPrefill = function(msg){
             }
         }
 
-        function _funcionarioAusenteEm(funcionarioId, data) {
+        function _funcionarioAusenteEm(funcionarioId, data, registos = dados) {
             if (!funcionarioId || !data) return null;
-            const p = (dados.pedidos || []).find(x => x.funcionarioId === funcionarioId && ['aprovado', 'aprovado_ped'].includes(x.status) && x.dataInicio && x.dataFim && x.dataInicio <= data && x.dataFim >= data);
+            const p = (registos.pedidos || []).find(x => x.funcionarioId === funcionarioId && ['aprovado', 'aprovado_ped'].includes(x.status) && (x.tipo === 'ferias' || (x.tipo === 'falta' && ['baixa', 'licenca'].includes(x.classificacaoFalta))) && x.dataInicio && x.dataFim && x.dataInicio <= data && x.dataFim >= data);
             if (!p) return null;
             if (p.tipo === 'ferias') return { tipo: 'ferias', label: 'férias', icon: 'fa-umbrella-beach', cor: '#0ea5e9' };
             if (p.tipo === 'falta') {
