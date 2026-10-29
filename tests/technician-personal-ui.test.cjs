@@ -8,7 +8,7 @@ function setup(){
  Object.assign(w,{expressAtivo:()=>false,adminDoUtilizador:()=>({id:'a'}),_licencaValidaTenant:()=>true,getDataHoje:()=> '2026-10-27',_pausaAlmocoPendente:()=>null});
  w.entryCalls=[];w.errors=[];w.picarPontoOS=(...args)=>w.entryCalls.push(args);w.mostrarErro=msg=>w.errors.push(msg);
  w.allowed=true;w.opened=[];w.TGPassport={scope:(c,l)=>w.allowed?{customerId:c,localId:l}:null,open:(...args)=>w.opened.push(args)};
- const instrumented=source.replace('window.TGTechnician={refresh,jobs,todayJobs,weekJobs,enabled};refresh();','window.TGTechnician={refresh,home,workList,worksList,more,enabled,jobs,focusHTML,avatarHTML,notes,openPassport,protectFieldFont,installWizard,removeWizard,wizards};');
+ const instrumented=source.replace('window.TGTechnician={refresh,jobs,todayJobs,weekJobs,enabled};refresh();','window.TGTechnician={refresh,home,workList,worksList,more,fleet,enabled,jobs,focusHTML,avatarHTML,notes,openPassport,protectFieldFont,installWizard,removeWizard,wizards};');
  assert.notEqual(source,instrumented);w.eval(instrumented);return w;
 }
 test('header uses first name and last surname initials, including accents and a single name',()=>{
@@ -28,14 +28,14 @@ test('worksheet fields are at least 16px before focus and restoration preserves 
 });
 test('avatar, wizard scale correction and refreshed CSS are included in both app entry points',()=>{
  const css=fs.readFileSync('tg-technician.css','utf8');assert(css.includes('.tgt-avatar'));assert(css.includes('animation:none!important;transform:none!important'));assert(source.includes('${avatarHTML()}</header>'));
- for(const file of ['index.html','login.html']){const html=fs.readFileSync(file,'utf8');assert(html.includes('tg-technician.js?v=1.5.0-teste'));assert(html.includes('tg-technician.css?v=1.5.0-teste'));const responsive=html.match(/responsive-device\.css\?v=\d+/)?.[0];assert(responsive&&fs.readFileSync('sw.js','utf8').includes(responsive));assert(!html.includes('user-scalable=no'));}
+ for(const file of ['index.html','login.html']){const html=fs.readFileSync(file,'utf8');assert(html.includes('tg-technician.js?v=1.6.0-frota'));assert(html.includes('tg-technician.css?v=1.6.0-frota'));const responsive=html.match(/responsive-device\.css\?v=\d+/)?.[0];assert(responsive&&fs.readFileSync('sw.js','utf8').includes(responsive));assert(!html.includes('user-scalable=no'));}
 });
 
 test('the intervention toolbar opens the installation passport directly without a notes dialog',()=>{
  const w=setup();try{const job=w.TGTechnician.jobs()[0];job.open={entrada:'09:00',data:'2026-10-27'};const host=w.document.createElement('div');host.innerHTML=w.TGTechnician.focusHTML(job);w.document.body.append(host);const b=host.querySelector('[data-tgt-action=passport]');assert(b);assert(b.textContent.includes('Passaporte'));assert.equal(host.querySelector('[data-tgt-action=notes]'),null);b.click();assert.deepEqual(w.opened,[['c','l']]);assert(!w.document.getElementById('modalGenericoOverlay').classList.contains('open'));w.allowed=false;assert(!w.TGTechnician.focusHTML(job).includes('data-tgt-action="passport"'));}finally{w.close();}
 });
 
-test('employee has the same home, four navigation items, works and profile on phone and PC',()=>{
+test('employee has the same home, five navigation items, works and profile on phone and PC',()=>{
  const snapshots=[];
  for(const width of [390,1440]){const w=setup();try{
   w.innerWidth=width;w.document.getElementById('modalOverlay').classList.remove('open');
@@ -44,7 +44,7 @@ test('employee has the same home, four navigation items, works and profile on ph
   Object.assign(w,{_fecharSecaoAbertaMobile(){},pontoAssiduidadeAtivo:()=>false,scrollTo(){}});
   w.dados.obras=[{id:'obra',adminId:'a',nome:'Obra atribuída',responsaveisIds:['f'],estado:'ativa'}];
   w.TGTechnician.refresh();w.eval(fs.readFileSync('tg-navigation.js','utf8'));w.TGNavigation.refresh();assert.equal(w.document.querySelectorAll('[data-tgn-nav]').length,0);assert(w.TGTechnician.enabled());assert(w.document.body.classList.contains('tgt-active'));
-  const nav=[...w.document.querySelectorAll('[data-tgt-nav]')].map(b=>b.textContent.trim());assert.deepEqual(nav,['Hoje','Trabalhos','Obras','Perfil']);
+  const nav=[...w.document.querySelectorAll('[data-tgt-nav]')].map(b=>b.textContent.trim());assert.deepEqual(nav,['Hoje','Trabalhos','Obras','Frota','Perfil']);
   const home=w.document.getElementById('omeudia').innerHTML;
   w.TGTechnician.workList();const week=w.document.getElementById('painelGrupoMobileConteudo').innerHTML;
   w.TGTechnician.worksList();const works=w.document.getElementById('painelGrupoMobileConteudo').textContent;
@@ -56,4 +56,44 @@ test('employee has the same home, four navigation items, works and profile on ph
 });
 test('desktop management roles keep their existing UI and Express remains separate',()=>{
  const w=setup();try{w.innerWidth=1440;for(const role of ['admin','subadmin','encarregado','cliente','superadmin']){w.usuarioLogado.role=role;assert.equal(w.TGTechnician.enabled(),false,role);}w.usuarioLogado.role='encarregado';w.innerWidth=390;assert(w.TGTechnician.enabled());w.usuarioLogado.role='funcionario';w.innerWidth=1440;assert(w.TGTechnician.enabled());w.expressAtivo=()=>true;assert.equal(w.TGTechnician.enabled(),false);}finally{w.close();}
+});
+
+function fleetSetup(){
+ const w=setup();
+ w.document.body.insertAdjacentHTML('beforeend','<div id="menuInferiorMobile"></div><div id="painelGrupoMobile"><div id="painelGrupoMobileConteudo"></div></div>');
+ Object.assign(w,{_fecharSecaoAbertaMobile(){},pontoAssiduidadeAtivo:()=>false,scrollTo(){},moduloFrotaAtivo:()=>true});
+ w.dados.funcionarios[0].veiculoId='car';
+ w.dados.veiculos=[{id:'car',adminId:'a',matricula:'12-AB-34',marcaModelo:'Renault Kangoo',ano:2024,combustivel:'Gasóleo',km:12345,kmData:'2026-10-28',inspecaoValidade:'2027-01-10',seguroValidade:'2027-02-11',seguroSeguradora:'Seguro Teste',observacoes:'Kit de ferramentas'},{id:'other-car',adminId:'a',matricula:'SEGREDO'},{id:'foreign',adminId:'b',matricula:'OUTRA EMPRESA'}];
+ w.dados.veiculoDocumentos=[{id:'doc',adminId:'a',veiculoId:'car',nome:'Seguro.pdf',ficheiro:'https://example.com/seguro.pdf',dataCriacao:1},{id:'foreign-doc',adminId:'b',veiculoId:'car',nome:'Documento secreto'}];
+ w.dados.veiculoIntervencoes=[{adminId:'a',veiculoId:'car',tipo:'manutencao',data:'2026-10-20',km:12000,descricao:'Óleo e filtros',custo:150,proximaData:'2027-10-20',proximaKm:25000},{adminId:'a',veiculoId:'other-car',descricao:'Manutenção secreta'}];
+ w.dados.veiculoSinistros=[{adminId:'a',veiculoId:'car',data:'2026-09-01',descricao:'Vidro partido',estado:'Resolvido',seguradora:'Seguro Teste'}];
+ return w;
+}
+test('fleet tab opens the assigned vehicle with details, documents, maintenance and incidents',()=>{
+ const w=fleetSetup();try{
+  w.TGTechnician.refresh();const nav=w.document.querySelector('[data-tgt-nav=fleet]');assert(nav.querySelector('.fa-car'));nav.click();
+  const panel=w.document.getElementById('painelGrupoMobileConteudo'),text=panel.textContent;
+  for(const value of ['12-AB-34','Renault Kangoo','Gasóleo','10/01/2027','Seguro.pdf','Óleo e filtros','Vidro partido','Kit de ferramentas'])assert(text.includes(value),value);
+  for(const value of ['SEGREDO','OUTRA EMPRESA','Documento secreto','Manutenção secreta'])assert(!text.includes(value),value);
+  assert.equal(nav.getAttribute('aria-current'),'page');assert.equal(panel.querySelector('a').href,'https://example.com/seguro.pdf');
+  assert.equal(panel.querySelector('input,button'),null,'vehicle information is read-only');
+ }finally{w.close();}
+});
+test('fleet clears revoked assignments, denies cross-tenant vehicles and unavailable licensing',()=>{
+ const w=fleetSetup();try{
+  w.TGTechnician.refresh();w.TGTechnician.fleet();w.dados.funcionarios[0].veiculoId=null;w.TGTechnician.refresh();
+  const content=()=>w.document.getElementById('painelGrupoMobileConteudo').textContent;
+  assert(content().includes('Não tens nenhuma viatura atribuída'));assert(!content().includes('12-AB-34'));
+  w.dados.funcionarios[0].veiculoId='foreign';w.TGTechnician.fleet();assert(!content().includes('OUTRA EMPRESA'));
+  w.dados.funcionarios[0].veiculoId='car';w.moduloFrotaAtivo=()=>false;w.TGTechnician.fleet();assert(content().includes('não está disponível'));assert(!content().includes('12-AB-34'));
+  w.moduloFrotaAtivo=()=>true;w._licencaValidaTenant=()=>false;w.TGTechnician.fleet();assert(!content().includes('12-AB-34'));
+  w._licencaValidaTenant=()=>true;w.TGTechnician.fleet();w.usuarioLogado.id='different';w.TGTechnician.refresh();assert(!content().includes('12-AB-34'));
+ }finally{w.close();}
+});
+test('fleet escapes stored text, rejects executable document links and tolerates invalid dates',()=>{
+ const w=fleetSetup();try{
+  w.dados.veiculos[0].observacoes='<img src=x onerror=bad>';
+  w.dados.veiculoDocumentos[0].ficheiro='javascript:alert(1)';w.dados.veiculoDocumentos[0].dataCriacao='invalid';
+  w.TGTechnician.fleet();const panel=w.document.getElementById('painelGrupoMobileConteudo');assert.equal(panel.querySelector('img,a'),null);assert(panel.textContent.includes('<img src=x onerror=bad>'));assert(panel.textContent.includes('Ficheiro indisponível'));
+ }finally{w.close();}
 });

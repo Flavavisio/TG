@@ -44,7 +44,7 @@ ${doc.querySelector('#secao-pedidos').outerHTML}${doc.querySelector('#modalPedid
  await page.addScriptTag({url:'https://technician.test/tg-supervisor-home.js'});
  await page.addScriptTag({url:'https://technician.test/tg-technician.js'});
  await page.evaluate(()=>resetUser('funcionario'));
- assert.deepEqual(await page.locator('#menuInferiorMobile [data-tgt-nav]').allTextContents(),['Hoje','Trabalhos','Obras','Perfil']);
+ assert.deepEqual(await page.locator('#menuInferiorMobile [data-tgt-nav]').allTextContents(),['Hoje','Trabalhos','Obras','Frota','Perfil']);
  assert.equal(await page.locator('.tgt-steps').count(),0,'Day design has no intervention timeline');
  await page.locator('.tgt-record-card').click();assert.equal(await page.evaluate(()=>calls.at(-1)),'section:folhas');await page.locator('[data-tgt-nav=home]').click();
  assert.deepEqual(await page.evaluate(()=>TGTechnician.jobs().map(j=>j.id).sort()),['mine','w']);

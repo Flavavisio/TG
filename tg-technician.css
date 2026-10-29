@@ -6,7 +6,16 @@ body.dark-mode.tgt-active{--tgt-surface:#19283d;--tgt-soft:#203d43;--tgt-ink:#ed
 .tgt-active #cardsGrid{display:block!important}
 .tgt-active #cardsGrid:has(.section-container.active) #omeudia{display:none!important}
 .tgt-active #omeudia{grid-template-columns:1fr!important;grid-template-areas:none!important;margin:0!important;width:100%;min-width:0}
-.tgt-active #menuInferiorMobile.tgt-nav{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));overflow:visible;gap:0;background:var(--tgt-surface);border-color:var(--tgt-line);padding:5px 5px env(safe-area-inset-bottom,0px)}
+.tgt-active #menuInferiorMobile.tgt-nav{display:grid!important;grid-template-columns:repeat(var(--tgt-nav-columns,4),minmax(0,1fr));overflow:visible;gap:0;background:var(--tgt-surface);border-color:var(--tgt-line);padding:5px 5px env(safe-area-inset-bottom,0px)}
+.tgt-fleet-card{padding:16px;margin:14px 0;background:var(--tgt-surface);border:1px solid var(--tgt-line);border-radius:14px;overflow-wrap:anywhere}
+.tgt-fleet-card h3{font-size:18px;margin:0 0 12px;color:var(--tgt-ink)}
+.tgt-fleet-details{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:14px 0}
+.tgt-fleet-details dt,.tgt-fleet-list small{font-size:12px;color:var(--tgt-muted)}
+.tgt-fleet-details dd{margin:4px 0 0;font-size:14px;color:var(--tgt-ink)}
+.tgt-fleet-list{list-style:none;padding:0;margin:0}
+.tgt-fleet-list li{padding:14px 0;border-bottom:1px solid var(--tgt-line)}
+.tgt-fleet-list li:last-child{border-bottom:0}
+.tgt-fleet-list strong,.tgt-fleet-list small{display:block;margin-bottom:8px}
 .tgt-active #menuInferiorMobile.tgt-nav .menu-inf-item{background:transparent;color:var(--tgt-muted);border:0;font:inherit;min-width:0;min-height:59px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:6px;cursor:pointer;box-shadow:none}
 .tgt-active #menuInferiorMobile.tgt-nav .menu-inf-item.ativo{color:var(--tgt-blue);font-weight:700;background:var(--tgt-soft)}
 .tgt-active .tgt-nav .menu-inf-item span{font-size:12px}
