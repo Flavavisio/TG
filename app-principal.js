@@ -33311,17 +33311,34 @@ window._relPrefill = function(msg){
         function obraAddCliente() { _ncTargetSelect = 'ob_cliente'; _abrirNovoClienteModal(); }
         function _espelharLuzesSidebar() {
             const nav = document.getElementById('tgSidebarNav'); if (!nav) return;
+            const cores = ['vermelho', 'amarelo', 'verde'];
+            const classes = [...cores.map(cor => 'tg-luz-' + cor), 'tg-luz-pisca'];
+            nav.querySelectorAll('.tg-nav-item,.tg-nav-grupo-btn').forEach(item => item.classList.remove(...classes));
             document.querySelectorAll('#cardsGrid .card-principal').forEach(c => {
+                if (c.hidden || c.style.display === 'none' || c.classList.contains('hidden-card') || c.classList.contains('card-bloqueado') || c.hasAttribute('data-tgn-secondary')) return;
                 const sec = c.getAttribute('data-card');
                 const item = nav.querySelector('.tg-nav-item[data-secao="' + sec + '"]'); if (!item) return;
                 const cl = c.classList;
-                item.classList.remove('tg-luz-vermelho', 'tg-luz-amarelo', 'tg-luz-verde', 'tg-luz-pisca');
                 let cor = '';
                 if (cl.contains('pisca-vermelho') || cl.contains('fixo-vermelho')) cor = 'vermelho';
                 else if (cl.contains('pisca-amarelo') || cl.contains('fixo-amarelo')) cor = 'amarelo';
                 else if (cl.contains('pisca-verde') || cl.contains('fixo-verde')) cor = 'verde';
                 const pisca = cl.contains('pisca-vermelho') || cl.contains('pisca-amarelo') || cl.contains('pisca-verde');
                 if (cor) { item.classList.add('tg-luz-' + cor); if (pisca) item.classList.add('tg-luz-pisca'); }
+            });
+            nav.querySelectorAll('.tg-nav-grupo-btn[data-grupo-btn]').forEach(botao => {
+                const submenu = [...nav.querySelectorAll('.tg-nav-submenu[data-grupo-sub]')].find(sub => sub.dataset.grupoSub === botao.dataset.grupoBtn);
+                const itens = submenu ? [...submenu.querySelectorAll('.tg-nav-item')] : [];
+                const cor = cores.find(c => itens.some(item => item.classList.contains('tg-luz-' + c)));
+                const titulo = botao.querySelector('span')?.textContent.trim() || '';
+                if (cor) {
+                    botao.classList.add('tg-luz-' + cor);
+                    if (itens.some(item => item.classList.contains('tg-luz-pisca'))) botao.classList.add('tg-luz-pisca');
+                }
+                itens.forEach(item => item.classList.remove('tg-luz-pisca'));
+                const aviso = cor ? ' — ' + ({vermelho:'Alertas urgentes',amarelo:'Assuntos pendentes',verde:'Atualizações disponíveis'})[cor] : '';
+                botao.title = titulo + aviso;
+                botao.setAttribute('aria-label', titulo + aviso);
             });
         }
         function _papelLabel(r) { return r === 'superadmin' ? 'Super Admin' : r === 'admin' ? 'Administrador' : r === 'subadmin' ? 'Sub-Admin' : r === 'encarregado' ? 'Encarregado' : r === 'funcionario' ? 'Funcionário' : ''; }
@@ -33416,6 +33433,7 @@ window._relPrefill = function(msg){
             if (sb) sb.textContent = (usuarioLogado.role === 'superadmin') ? 'Total Gest' : (adminAtual()?.empresa || 'Total Gest');
             if (menuMudou) _marcarNavAtivo(_contextoAtual || '__inicio');
             if (!_contextoAtual || _contextoAtual === '__inicio') { _mostrarInicioConteudo(); _atualizarBreadcrumb('Início'); }
+            if (typeof _espelharLuzesSidebar === 'function') _espelharLuzesSidebar();
         }
         // Acordeão do layout "Total Gest Foco" — clicar num grupo abre/fecha o submenu logo por
         // baixo dele (fecha os outros que estejam abertos, só um de cada vez), em vez do antigo
