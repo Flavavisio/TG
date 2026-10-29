@@ -171,10 +171,17 @@
     }
     function mobile() {
         const nav=$('menuInferiorMobile');if(!nav)return;
-        const managerMobile=['admin','subadmin'].includes(user()?.role) && innerWidth<=900;
-        if(!active()||(!managerMobile&&legacyMobile())||(!managerMobile&&!_ehPerfilMobile())){nav.classList.remove('tgn-mobile');return;}
+        const managerMobile=active()&&['admin','subadmin'].includes(user()?.role)&&innerWidth<=900;
+        document.body.classList.toggle('tgn-manager-sidebar-mobile',managerMobile);
+        if(managerMobile){
+            // Admin e Sub-Admin usam o menu lateral Nexus, nunca a barra inferior.
+            nav.classList.remove('tgn-mobile');
+            nav.style.display='none';
+            return;
+        }
+        nav.style.removeProperty('display');
+        if(!active()||legacyMobile()||!_ehPerfilMobile()){nav.classList.remove('tgn-mobile');return;}
         const items=[['home','fa-sun','O Meu Dia',true],['agenda','fa-calendar-days','Agenda',calendars.some(([id])=>permitted(card(id)))],['work','fa-briefcase','Trabalhos',entries('operacoes').length>0],['alerts','fa-bell','Alertas',true],['more','fa-bars','Mais',true]];
-        if(managerMobile)nav.style.display='flex';
         nav.classList.add('tgn-mobile');nav.innerHTML=items.map(([id,icon,label,enabled])=>`<button type="button" class="menu-inf-item" data-tgn-nav="${id}" ${id==='home'?'id="menuInfHome"':''} ${enabled?'':'disabled'}><i class="fas ${icon}" aria-hidden="true"></i><span>${label}</span></button>`).join('');mark(current);
     }
     function decorateSidebar() {
