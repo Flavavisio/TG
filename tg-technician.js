@@ -198,6 +198,90 @@
         if(permitted('ferramentas')){const b=document.createElement('button');b.type='button';b.className='tgt-button';b.dataset.tgtCard='ferramentas';b.textContent='Equipamentos e QR';actions.append(b);}
         content.append(actions);menu();
     }
+    let fleetEditor=null;
+    function fleetVehicle() {
+        if(!enabled() || u()?.role!=='funcionario' || !_licencaValidaTenant() || typeof moduloFrotaAtivo!=='function' || !moduloFrotaAtivo(adminDoUtilizador()))return null;
+        const person=rows('funcionarios').find(p=>p.id===u().id);
+        return person?.veiculoId ? rows('veiculos').find(v=>v.id===person.veiculoId) || null : null;
+    }
+    function fleetEditorCurrent(editor) {
+        return fleetEditor===editor && editor.owner===JSON.stringify([u()?.id,tenant()]) && fleetVehicle()?.id===editor.vehicleId;
+    }
+    function fleetRemember(collection,record) {
+        const list=dados[collection] || (dados[collection]=[]),index=list.findIndex(row=>row.id===record.id && row.adminId===record.adminId);
+        if(index<0)list.push(record);else list[index]=record;
+        // Direct confirmed writes must not be re-sent by the general data synchroniser.
+        if(typeof _snap!=='undefined' && typeof M!=='undefined' && M[collection]){
+            _snap[collection] ||= new Map();_snap[collection].set(record.id,JSON.stringify(M[collection].to(record)));
+        }
+    }
+    function fleetEdit(kind) {
+        const vehicle=fleetVehicle();if(!vehicle || !['km','manutencao','inspecao','documento','sinistro'].includes(kind))return;
+        const overlay=$('modalGenericoOverlay'),form=$('modalGenericoForm'),fields=$('modalGenericoCampos');if(!overlay || !form || !fields)return;
+        const names={km:'Atualizar quilómetros',manutencao:'Registar manutenção',inspecao:'Registar inspeção',documento:'Carregar documento',sinistro:'Comunicar sinistro'};
+        const editor={owner:JSON.stringify([u().id,tenant()]),personId:u().id,tenantId:tenant(),vehicleId:vehicle.id,kind,id:gerarId(),created:Date.now(),busy:false,saved:false};fleetEditor=editor;
+        const input=(id,label,type,value='',required=false)=>`<div class="form-group"><label for="tgt-fleet-${id}">${label}</label><input id="tgt-fleet-${id}" type="${type}" value="${esc(value)}" ${required?'required':''} ${type==='number'?'min="0" step="any" inputmode="decimal"':''}></div>`;
+        const description='<div class="form-group"><label for="tgt-fleet-description">Descrição</label><textarea id="tgt-fleet-description" rows="3" required></textarea></div>';
+        let body='';
+        if(kind==='documento')body='<div class="form-group"><label for="tgt-fleet-file">Documento ou fotografia</label><input id="tgt-fleet-file" type="file" accept="application/pdf,image/jpeg,image/png,image/webp" required></div>';
+        else if(kind==='km')body=input('km','Quilómetros atuais','number',vehicle.km??0,true);
+        else if(kind==='sinistro')body=input('date','Data','date',today(),true)+description+input('insurer','Seguradora','text',vehicle.seguroSeguradora||'')+'<div class="form-group"><label for="tgt-fleet-state">Estado</label><select id="tgt-fleet-state"><option value="aberto">Aberto</option><option value="em_processo">Em processo</option><option value="resolvido">Resolvido</option></select></div>';
+        else body=input('date','Data','date',today(),true)+input('km','Quilómetros','number',vehicle.km??0)+description+input('cost','Custo (€)','number')+input('next-date',kind==='inspecao'?'Próxima inspeção':'Próxima manutenção (data)','date','',kind==='inspecao')+(kind==='manutencao'?input('next-km','Próxima manutenção (km)','number'):'');
+        $('modalGenericoTitulo').textContent=names[kind];
+        fields.innerHTML=`<div class="tgt-fleet-form"><p class="tgt-message">${esc(vehicle.matricula)} · ${esc(vehicle.marcaModelo||'')}</p>${body}<p id="tgt-fleet-feedback" role="status" aria-live="polite"></p></div>`;
+        const actions=$('modalGenericoAcoes') || form.querySelector('.modal-actions');
+        if(actions)actions.innerHTML='<button type="button" class="tgt-button" data-tgt-action="fleet-cancel">Cancelar</button><button type="submit" class="tgt-button tgt-primary">Guardar</button>';
+        form.onsubmit=event=>{event.preventDefault();return fleetSave(editor,form);};
+        overlay.classList.add('open');
+    }
+    async function fleetSave(editor,form) {
+        if(editor.busy || !fleetEditorCurrent(editor) || !form.reportValidity())return;
+        const value=id=>$('tgt-fleet-'+id)?.value || '';
+        const numeric=id=>{const raw=value(id);if(raw==='')return null;const n=Number(raw);if(!Number.isFinite(n)||n<0)throw new Error('Indica valores numéricos válidos, iguais ou superiores a zero.');return n;};
+        const feedback=message=>{if(fleetEditor===editor && $('tgt-fleet-feedback'))$('tgt-fleet-feedback').textContent=message;};
+        const guard=()=>{if(!fleetEditorCurrent(editor))throw new Error('A sessão ou a atribuição da viatura mudou. Volta a abrir a Frota.');};
+        const buttons=[...form.querySelectorAll('button')];editor.busy=true;buttons.forEach(b=>b.disabled=true);feedback('A guardar…');
+        try {
+            guard();
+            let record,collection,table,patch;
+            const vehicle=fleetVehicle();
+            if(editor.kind==='documento'){
+                const file=$('tgt-fleet-file')?.files?.[0];if(!file)throw new Error('Seleciona um documento.');
+                if(!['application/pdf','image/jpeg','image/png','image/webp'].includes(file.type))throw new Error('Escolhe um PDF ou uma imagem JPG, PNG ou WebP.');
+                const encoded=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(new Error('Não foi possível ler o ficheiro.'));reader.readAsDataURL(file);});guard();
+                collection='veiculoDocumentos';table='veiculo_documentos';record={id:editor.id,adminId:editor.tenantId,veiculoId:editor.vehicleId,nome:file.name,ficheiro:encoded,dataCriacao:editor.created};
+            }else if(editor.kind==='sinistro'){
+                collection='veiculoSinistros';table='veiculo_sinistros';record={id:editor.id,adminId:editor.tenantId,veiculoId:editor.vehicleId,condutorId:editor.personId,data:value('date'),descricao:value('description').trim(),seguradora:value('insurer').trim(),estado:value('state'),dataCriacao:editor.created};
+            }else if(editor.kind==='km'){
+                const km=numeric('km');if(km===null)throw new Error('Indica os quilómetros atuais.');patch={km,km_data:today()};
+            }else{
+                collection='veiculoIntervencoes';table='veiculo_intervencoes';const km=numeric('km');
+                record={id:editor.id,adminId:editor.tenantId,veiculoId:editor.vehicleId,tipo:editor.kind,data:value('date'),km,descricao:value('description').trim(),custo:numeric('cost'),proximaData:value('next-date')||null,proximaKm:editor.kind==='manutencao'?numeric('next-km'):null,dataCriacao:editor.created};
+                patch={};if(km!==null && km>Number(vehicle.km||0)){patch.km=km;patch.km_data=record.data;}
+                if(editor.kind==='inspecao')patch.inspecao_validade=record.proximaData;
+            }
+            // Re-read the persisted assignment before writing, even if the local list is stale.
+            const assignment=await supa.from('funcionarios').select('id,admin_id,veiculo_id').eq('id',editor.personId).eq('admin_id',editor.tenantId).single();guard();
+            if(assignment.error)throw assignment.error;
+            if(assignment.data?.veiculo_id!==editor.vehicleId || assignment.data?.admin_id!==editor.tenantId || assignment.data?.id!==editor.personId)throw new Error('Esta viatura já não te está atribuída. Atualiza a Frota.');
+            if(record){
+                const payload=M[collection].to(record);
+                const result=await supa.from(table).upsert(payload,{onConflict:'id'}).select('*').single();
+                if(result.error)throw result.error;
+                if(result.data?.id!==editor.id || result.data?.admin_id!==editor.tenantId || result.data?.veiculo_id!==editor.vehicleId)throw new Error('O servidor não confirmou o registo.');
+                editor.saved=true;guard();fleetRemember(collection,M[collection].from(result.data));
+            }
+            if(patch && Object.keys(patch).length){
+                guard();const result=await supa.from('veiculos').update(patch).eq('id',editor.vehicleId).eq('admin_id',editor.tenantId).select('*').single();
+                if(result.error)throw result.error;
+                if(result.data?.id!==editor.vehicleId || result.data?.admin_id!==editor.tenantId)throw new Error('O servidor não confirmou a atualização da viatura.');
+                guard();fleetRemember('veiculos',M.veiculos.from(result.data));
+            }
+            guard();fleetEditor=null;$('modalGenericoOverlay').classList.remove('open');fleet();
+            if(typeof _guardarCacheLocal==='function')void Promise.resolve(_guardarCacheLocal()).catch(()=>{});
+        }catch(error){feedback((editor.saved?'O registo foi guardado, mas a atualização da viatura não ficou concluída. Podes voltar a guardar sem duplicar. ':'Não foi possível guardar. ')+(error.message||'Verifica a ligação e tenta novamente.'));}
+        finally{editor.busy=false;buttons.forEach(b=>b.disabled=false);}
+    }
     function fleet() {
         if(!enabled() || u()?.role!=='funcionario')return;
         view='fleet';const content=panel('A minha viatura');if(!content)return;
@@ -214,7 +298,7 @@
         const linked=key=>rows(key).filter(row=>row.veiculoId===vehicle.id);
         const documents=linked('veiculoDocumentos'),history=linked('veiculoIntervencoes').sort((a,b)=>String(b.data||'').localeCompare(String(a.data||''))),incidents=linked('veiculoSinistros').sort((a,b)=>String(b.data||'').localeCompare(String(a.data||'')));
         const safeFile=value=>/^(https?:\/\/)/i.test(String(value||'')) || /^data:(?:application\/pdf|image\/(?:png|jpe?g|webp));base64,[a-z0-9+/=\s]+$/i.test(String(value||''))?String(value):'';
-        content.insertAdjacentHTML('beforeend',section(`${icon('car')} ${esc(vehicle.matricula || 'Viatura atribuída')}`,`<p class="tgt-message">${esc(vehicle.marcaModelo || 'Marca / modelo por indicar')}</p><dl class="tgt-fleet-details">${detail('Ano',vehicle.ano)}${detail('Combustível',vehicle.combustivel)}${detail('Quilómetros',number(vehicle.km)+' km')}${detail('Último registo de km',date(vehicle.kmData))}${detail('Inspeção válida até',date(vehicle.inspecaoValidade))}${detail('Seguro válido até',date(vehicle.seguroValidade))}${detail('Seguradora',vehicle.seguroSeguradora)}</dl>${vehicle.observacoes?`<h4>Observações</h4><p class="tgt-note-text">${esc(vehicle.observacoes)}</p>`:''}`)
+        content.insertAdjacentHTML('beforeend',`<div class="tgt-fleet-actions">${[['km','gauge-high','Atualizar km'],['manutencao','screwdriver-wrench','Manutenção'],['inspecao','clipboard-check','Inspeção'],['documento','file-arrow-up','Documento'],['sinistro','car-burst','Sinistro']].map(([kind,ico,label])=>button(icon(ico)+' '+label,'fleet-'+kind)).join('')}</div>`+section(`${icon('car')} ${esc(vehicle.matricula || 'Viatura atribuída')}`,`<p class="tgt-message">${esc(vehicle.marcaModelo || 'Marca / modelo por indicar')}</p><dl class="tgt-fleet-details">${detail('Ano',vehicle.ano)}${detail('Combustível',vehicle.combustivel)}${detail('Quilómetros',number(vehicle.km)+' km')}${detail('Último registo de km',date(vehicle.kmData))}${detail('Inspeção válida até',date(vehicle.inspecaoValidade))}${detail('Seguro válido até',date(vehicle.seguroValidade))}${detail('Seguradora',vehicle.seguroSeguradora)}</dl>${vehicle.observacoes?`<h4>Observações</h4><p class="tgt-note-text">${esc(vehicle.observacoes)}</p>`:''}`)
             +section('Documentos',documents.length?`<ul class="tgt-fleet-list">${documents.map(doc=>{const url=safeFile(doc.ficheiro);return `<li><strong>${esc(doc.nome || 'Documento')}</strong><small>${esc(date(doc.dataCriacao))}</small>${url?`<a class="tgt-button" href="${esc(url)}" target="_blank" rel="noopener noreferrer">${icon('file-arrow-down')} Abrir documento</a>`:'<small>Ficheiro indisponível</small>'}</li>`;}).join('')}</ul>`:'<p class="tgt-message">Sem documentos registados.</p>')
             +section('Inspeções e manutenções',history.length?`<ul class="tgt-fleet-list">${history.map(item=>`<li><strong>${esc(item.tipo==='inspecao'?'Inspeção':item.tipo==='manutencao'?'Manutenção':item.tipo || 'Intervenção')}</strong><small>${esc(date(item.data))} · ${esc(number(item.km))} km</small><p class="tgt-note-text">${esc(item.descricao || 'Sem descrição')}</p><dl class="tgt-fleet-details">${detail('Custo',item.custo==null?'Por indicar':number(item.custo)+' €')}${detail('Próxima data',date(item.proximaData))}${detail('Próximos quilómetros',item.proximaKm==null?'Por indicar':number(item.proximaKm)+' km')}</dl></li>`).join('')}</ul>`:'<p class="tgt-message">Sem inspeções ou manutenções registadas.</p>')
             +section('Sinistros',incidents.length?`<ul class="tgt-fleet-list">${incidents.map(item=>`<li><strong>${esc(date(item.data))} · ${esc(item.estado || 'Estado por indicar')}</strong><p class="tgt-note-text">${esc(item.descricao || 'Sem descrição')}</p><small>${esc(item.seguradora || 'Seguradora por indicar')}</small></li>`).join('')}</ul>`:'<p class="tgt-message">Sem sinistros registados.</p>'));
@@ -314,6 +398,7 @@
         if(refreshing)return;refreshing=true;
         try {
             const on=enabled(),key=JSON.stringify([u()?.id,u()?.adminId,u()?.role]);
+            if(fleetEditor && !fleetEditorCurrent(fleetEditor)){fleetEditor=null;$('modalGenericoOverlay')?.classList.remove('open');}
             if((key!==identity || !on) && view==='fleet'){$('painelGrupoMobileConteudo')?.replaceChildren();if($('painelGrupoMobile'))$('painelGrupoMobile').style.display='none';}
             if(key!==identity){identity=key;view='home';selected='';weekDay='';wizards.forEach(removeWizard);}
             document.body.classList.toggle('tgt-active',on);
@@ -355,6 +440,8 @@
     document.addEventListener('click',event=>{
         const control=event.target.closest('[data-tgt-nav],[data-tgt-action],[data-tgt-card],[data-tgt-step],[data-tgt-travel],[data-tgt-day]');
         if(!control||!enabled())return;
+        if(control.dataset.tgtAction==='fleet-cancel'){if(!fleetEditor?.busy){fleetEditor=null;$('modalGenericoOverlay')?.classList.remove('open');}return;}
+        if(control.dataset.tgtAction?.startsWith('fleet-'))return fleetEdit(control.dataset.tgtAction.slice(6));
         if(control.dataset.tgtDay){if(weekDays().some(day=>day.date===control.dataset.tgtDay)){weekDay=control.dataset.tgtDay;workList();document.querySelector('[data-tgt-day="'+weekDay+'"]')?.focus({preventScroll:true});}return;}
         if(control.dataset.tgtAction==='weekly-details'){const job=weekJobs().find(job=>job.id===control.dataset.tgtId);if(job)return details(job);return;}
         if(control.dataset.tgtTravel){const job=jobs().find(j=>j.kind==='os'&&j.id===control.dataset.tgtTravel);if(job&&typeof _registarKmViagemOS==='function')_registarKmViagemOS(job.id);return;}

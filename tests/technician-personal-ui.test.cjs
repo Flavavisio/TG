@@ -28,7 +28,7 @@ test('worksheet fields are at least 16px before focus and restoration preserves 
 });
 test('avatar, wizard scale correction and refreshed CSS are included in both app entry points',()=>{
  const css=fs.readFileSync('tg-technician.css','utf8');assert(css.includes('.tgt-avatar'));assert(css.includes('animation:none!important;transform:none!important'));assert(source.includes('${avatarHTML()}</header>'));
- for(const file of ['index.html','login.html']){const html=fs.readFileSync(file,'utf8');assert(html.includes('tg-technician.js?v=1.6.1-view'));assert(html.includes('tg-technician.css?v=1.6.0-frota'));const responsive=html.match(/responsive-device\.css\?v=\d+/)?.[0];assert(responsive&&fs.readFileSync('sw.js','utf8').includes(responsive));assert(!html.includes('user-scalable=no'));}
+ for(const file of ['index.html','login.html']){const html=fs.readFileSync(file,'utf8');assert(html.includes('tg-technician.js?v=1.7.0-fleet-actions'));assert(html.includes('tg-technician.css?v=1.7.0-fleet-actions'));const responsive=html.match(/responsive-device\.css\?v=\d+/)?.[0];assert(responsive&&fs.readFileSync('sw.js','utf8').includes(responsive));assert(!html.includes('user-scalable=no'));}
 });
 
 test('the intervention toolbar opens the installation passport directly without a notes dialog',()=>{
@@ -76,7 +76,7 @@ test('fleet tab opens the assigned vehicle with details, documents, maintenance 
   for(const value of ['12-AB-34','Renault Kangoo','Gasóleo','10/01/2027','Seguro.pdf','Óleo e filtros','Vidro partido','Kit de ferramentas'])assert(text.includes(value),value);
   for(const value of ['SEGREDO','OUTRA EMPRESA','Documento secreto','Manutenção secreta'])assert(!text.includes(value),value);
   assert.equal(nav.getAttribute('aria-current'),'page');assert.equal(panel.querySelector('a').href,'https://example.com/seguro.pdf');
-  assert.equal(panel.querySelector('input,button'),null,'vehicle information is read-only');
+  assert.equal(panel.querySelectorAll('.tgt-fleet-actions button').length,5,'employee can register vehicle activity');
  }finally{w.close();}
 });
 test('fleet clears revoked assignments, denies cross-tenant vehicles and unavailable licensing',()=>{
@@ -114,5 +114,79 @@ test('Safari toolbar resize and background updates preserve every technician tab
   }
   w._mostrarInicioConteudo();assert.equal(w.document.getElementById('painelGrupoMobile').style.display,'none');
   assert.notEqual(w.getComputedStyle(w.document.getElementById('omeudia')).display,'none');
+ }finally{w.close();}
+});
+
+function fleetWriteSetup(){
+ const w=fleetSetup(),main=fs.readFileSync('app-principal.js','utf8');
+ const maps=['veiculos','veiculoDocumentos','veiculoIntervencoes','veiculoSinistros'].map(name=>{const start=main.indexOf('            '+name+': {');return main.slice(start,main.indexOf('\n            },',start)+15);}).join('\n');
+ w.eval('var isoToMs=v=>v?Date.parse(v):null,msToISO=v=>v?new Date(v).toISOString():null,nn=v=>v==null||v===\'\'?null:v;var M={'+maps+'};var _snap={};window.fleetMaps=M;');
+ w.sequence=0;w.gerarId=()=> 'entry-'+(++w.sequence);w.requests=[];w.serverAssignment={id:'f',admin_id:'a',veiculo_id:'car'};w.savedRows=new Map();w.serverCar=w.fleetMaps.veiculos.to(w.dados.veiculos[0]);
+ w.supa={from(table){let action='select',payload;const filters={};return {select(){return this},eq(key,value){filters[key]=value;return this},upsert(row){action='upsert';payload=row;return this},update(row){action='update';payload=row;return this},async single(){
+  w.requests.push({table,action,payload,filters});
+  if(table==='funcionarios'){if(w.waitAssignment)await w.waitAssignment;return {data:w.serverAssignment,error:null};}
+  if(w.failTable===table)return {data:null,error:{message:'Sem ligação'}};
+  if(table==='veiculos'){Object.assign(w.serverCar,payload);return {data:{...w.serverCar},error:null};}
+  w.savedRows.set(table+':'+payload.id,{...payload});return {data:{...payload},error:null};
+ }}}};
+ w.TGTechnician.refresh();w.TGTechnician.fleet();
+ w.editFleet=kind=>{w.document.querySelector('[data-tgt-action=fleet-'+kind+']').click();return w.document.getElementById('modalGenericoForm');};
+ w.setFleet=(id,value)=>w.document.getElementById('tgt-fleet-'+id).value=value;
+ w.saveFleet=form=>form.onsubmit(new w.Event('submit',{cancelable:true}));
+ return w;
+}
+test('employee maintenance is confirmed once, updates mileage and uses the existing fleet mappings and snapshots',async()=>{
+ const w=fleetWriteSetup();try{
+  const form=w.editFleet('manutencao');w.setFleet('description','Óleo e filtros');w.setFleet('km','13000');w.setFleet('cost','145.50');w.setFleet('next-km','28000');
+  await Promise.all([w.saveFleet(form),w.saveFleet(form)]);
+  const writes=w.requests.filter(r=>r.action==='upsert');assert.equal(writes.length,1);assert.equal(writes[0].table,'veiculo_intervencoes');assert.equal(writes[0].payload.veiculo_id,'car');assert.equal(writes[0].payload.admin_id,'a');
+  assert.equal(w.dados.veiculoIntervencoes.filter(r=>r.id==='entry-1').length,1);assert.equal(w.dados.veiculoIntervencoes.find(r=>r.id==='entry-1').custo,145.5);assert.equal(w.dados.veiculos[0].km,13000);
+  assert(w._snap.veiculoIntervencoes.has('entry-1'));assert(w._snap.veiculos.has('car'));assert(!w.document.getElementById('modalGenericoOverlay').classList.contains('open'));
+ }finally{w.close();}
+});
+test('employee inspection records the next validity date and incident fixes the driver to the signed-in person',async()=>{
+ const w=fleetWriteSetup();try{
+  let form=w.editFleet('inspecao');w.setFleet('description','IPO aprovada');w.setFleet('next-date','2028-01-10');await w.saveFleet(form);
+  assert.equal(w.dados.veiculos[0].inspecaoValidade,'2028-01-10');assert.equal(w.dados.veiculoIntervencoes.find(r=>r.id==='entry-1').tipo,'inspecao');
+  form=w.editFleet('sinistro');w.setFleet('description','Vidro danificado');await w.saveFleet(form);
+  const row=w.savedRows.get('veiculo_sinistros:entry-2');assert.equal(row.condutor_id,'f');assert.equal(row.veiculo_id,'car');assert.equal(row.estado,'aberto');
+ }finally{w.close();}
+});
+test('server failure keeps the form and does not invent a saved maintenance record; retry uses the same identifier',async()=>{
+ const w=fleetWriteSetup();try{
+  const form=w.editFleet('manutencao');w.setFleet('description','Revisão');w.failTable='veiculo_intervencoes';await w.saveFleet(form);
+  assert(!w.dados.veiculoIntervencoes.some(r=>r.id==='entry-1'));assert(w.document.getElementById('modalGenericoOverlay').classList.contains('open'));assert(w.document.getElementById('tgt-fleet-feedback').textContent.includes('Não foi possível guardar'));assert.equal(w.document.getElementById('tgt-fleet-description').value,'Revisão');
+  w.failTable=null;await w.saveFleet(form);assert.equal(w.savedRows.size,1);assert(w.savedRows.has('veiculo_intervencoes:entry-1'));
+ }finally{w.close();}
+});
+test('partial vehicle-update failure preserves the confirmed record and a retry never creates a duplicate',async()=>{
+ const w=fleetWriteSetup();try{
+  const form=w.editFleet('inspecao');w.setFleet('description','Inspeção');w.setFleet('next-date','2028-01-10');w.failTable='veiculos';await w.saveFleet(form);
+  assert(w.savedRows.has('veiculo_intervencoes:entry-1'));assert.equal(w.dados.veiculos[0].inspecaoValidade,'2027-01-10');assert(w.document.getElementById('tgt-fleet-feedback').textContent.includes('sem duplicar'));
+  w.failTable=null;await w.saveFleet(form);assert.equal(w.savedRows.size,1);assert.equal(w.dados.veiculoIntervencoes.filter(r=>r.id==='entry-1').length,1);assert.equal(w.dados.veiculos[0].inspecaoValidade,'2028-01-10');
+ }finally{w.close();}
+});
+test('stale persisted assignments, local revocations and session changes block all employee fleet writes',async()=>{
+ for(const change of ['server','local','session']){const w=fleetWriteSetup();try{
+  const form=w.editFleet('km');w.setFleet('km','14000');
+  if(change==='server')w.serverAssignment.veiculo_id='other-car';
+  if(change==='local')w.dados.funcionarios[0].veiculoId='other-car';
+  let release;if(change==='session')w.waitAssignment=new Promise(resolve=>release=resolve);
+  const save=w.saveFleet(form);if(change==='session'){w.usuarioLogado={id:'different',adminId:'b',role:'funcionario'};release();}await save;
+  assert.equal(w.requests.filter(r=>r.action!=='select').length,0,change);assert.equal(w.dados.veiculos[0].km,12345);
+ }finally{w.close();}}
+});
+test('employee can update mileage and upload a PDF into the assigned vehicle documents',async()=>{
+ const w=fleetWriteSetup();try{
+  let form=w.editFleet('km');w.setFleet('km','13500');await w.saveFleet(form);assert.equal(w.dados.veiculos[0].km,13500);
+  form=w.editFleet('documento');const file=new w.File(['documento'],'fatura.pdf',{type:'application/pdf'});const field=w.document.getElementById('tgt-fleet-file');Object.defineProperty(field,'files',{value:[file]});field.required=false;
+  await w.saveFleet(form);const row=w.savedRows.get('veiculo_documentos:entry-2');assert(row);assert.equal(row.veiculo_id,'car');assert.equal(row.nome,'fatura.pdf');assert(row.ficheiro.startsWith('data:application/pdf;base64,'));
+ }finally{w.close();}
+});
+test('background refresh and Safari resize keep an unfinished vehicle form intact',async()=>{
+ const w=fleetWriteSetup();try{
+  w.eval(fs.readFileSync('tg-navigation.js','utf8'));w.TGTechnician.fleet();const form=w.editFleet('manutencao');w.setFleet('description','Texto ainda por guardar');
+  w.dispatchEvent(new w.Event('resize'));w.document.dispatchEvent(new w.Event('tg:interface-updated'));await new Promise(resolve=>w.setTimeout(resolve,230));
+  assert.equal(w.document.getElementById('tgt-fleet-description').value,'Texto ainda por guardar');assert(w.document.getElementById('modalGenericoOverlay').classList.contains('open'));assert.equal(w.requests.length,0);
  }finally{w.close();}
 });
