@@ -9,14 +9,18 @@
     const card = id => [...document.querySelectorAll('#cardsGrid .card-principal[data-card]')].find(el => el.dataset.card === id);
     const permitted = el => active() && el && !el.hidden && !el.classList.contains('hidden-card') && !el.classList.contains('card-bloqueado') && el.style.display !== 'none';
     const visible = el => permitted(el) && !el.hasAttribute('data-tgn-secondary');
+    // A estrutura é comum a Admin e Sub-Admin; permissões apenas filtram acessos.
     const groups = [
-        ['operacoes','Operações','fa-gears',['obras-longa','servicos','assistencias','folhas','agenda-obras','agenda','rondas','ferramentas']],
-        ['comercial','Clientes e Comercial','fa-handshake-angle',['clientes','crm','contratos','distribuicao']],
-        ['equipa','Equipa','fa-users-gear',['funcionarios','encarregados','ponto','assiduidade','pedidos','calendario-equipa','mapa-equipa','frota','alertas-geofence','quiosque']],
+        ['comercial','Comercial','fa-handshake-angle',['clientes','crm','contratos','distribuicao']],
+        ['equipa','Equipa','fa-users-gear',['funcionarios','encarregados','ponto','assiduidade','calendario-equipa','mapa-equipa','alertas-geofence','quiosque']],
+        ['gestao','Gestão','fa-clipboard-list',['agenda','pedidos','ferramentas']],
+        ['operacoes','Obras e Serviços','fa-gears',['obras-longa','servicos','assistencias','folhas','agenda-obras']],
+        ['frota','Frota','fa-car',['frota']],
+        ['rondas','Rondas','fa-route',['rondas']],
         ['armazem','Armazém','fa-warehouse',['artigos','encomendas','fornecedores','requisicoes','levantamento-qr']],
         ['financeiro','Financeiro','fa-landmark',['financeiro','despesas','dashboard-analitico']],
         ['relatorios','Relatórios','fa-file-lines',['relatorio-os']],
-        ['configuracoes','Configurações','fa-gear',['relatorios-personalizados','minha-licenca','auditoria','exportar-dados','guia','ajuda-peticoes']],
+        ['configuracoes','Sistema e Suporte','fa-gear',['relatorios-personalizados','minha-licenca','auditoria','exportar-dados','guia','ajuda-peticoes']],
         ['sistema','Administração do Sistema','fa-shield-halved',['superadmin','reports','analytics','licencas','licencas-vencer','pedidos-renovacao','licencas-distribuidor','historico-licencas','uso-cards','online-admins','contactos']]
     ];
     const calendars = [['agenda-obras','Planeamento'],['calendario-equipa','Equipa'],['agenda','Prazos e vencimentos']];
