@@ -238,6 +238,9 @@
 </style>
 <link rel="stylesheet" href="tg-integrated-modules.css?v=1.1.0">
 <script src="tg-module-embed.js?v=1.0.0"></script>
+<script src="tg-planner.js?v=1.0.1"></script>
+<link id="tg-form-focus-style" rel="stylesheet" href="tg-form-focus.css?v=1.2.1">
+<script src="tg-form-focus.js?v=1.2.1"></script>
 </head>
 <body>
 
@@ -277,7 +280,7 @@
                 <div id="secao-dashboard" class="secao-crm ativa">
                     <div class="stat-row">
                         <div class="stat-card"><div class="lbl">Assistências abertas</div><div class="val" id="assistDashAbertas">0</div></div>
-                        <div class="stat-card warn"><div class="lbl">Em atendimento</div><div class="val" id="assistDashAndamento">0</div></div>
+                        <div class="stat-card warn"><div class="lbl">Abertas atribuídas</div><div class="val" id="assistDashAndamento">0</div></div>
                         <div class="stat-card good"><div class="lbl">Resolvidas (30 dias)</div><div class="val" id="assistDashResolvidas">0</div></div>
                         <div class="stat-card"><div class="lbl">OS geradas (30 dias)</div><div class="val" id="assistDashOsGeradas">0</div></div>
                         <div class="stat-card"><div class="lbl">Tempo médio de resolução</div><div class="val" id="assistDashTempoMedio">—</div></div>
@@ -305,9 +308,9 @@
                         <select id="assistFiltroEstado" onchange="renderizarAssistencias()" style="max-width:200px;">
                             <option value="">Todos os estados</option>
                             <option value="aberta">Aberta</option>
-                            <option value="andamento">Em atendimento</option>
+
                             <option value="resolvida">Resolvida</option>
-                            <option value="fechada">Fechada</option>
+
                         </select>
                         <select id="assistFiltroPrioridade" onchange="renderizarAssistencias()" style="max-width:180px;">
                             <option value="">Todas as prioridades</option>
@@ -453,8 +456,8 @@
             },
             assistencias: {
                 tabela: 'assistencias',
-                from: r => ({ id: r.id, adminId: r.admin_id, numero: r.numero, clienteId: r.cliente_id, localId: r.local_id || null, origem: r.origem || null, assunto: r.assunto, descricao: r.descricao, prioridade: r.prioridade || 'normal', estado: r.estado || 'aberta', atribuidoId: r.atribuido_id || null, criadoPor: r.criado_por || null, osGeradaId: r.os_gerada_id || null, notas: Array.isArray(r.notas) ? r.notas : (r.notas ? JSON.parse(r.notas) : []), dataCriacao: isoToMs(r.data_criacao), dataModificacao: isoToMs(r.data_modificacao) }),
-                to:   o => ({ id: o.id, admin_id: o.adminId, numero: o.numero || null, cliente_id: o.clienteId || null, local_id: o.localId || null, origem: o.origem || null, assunto: o.assunto || null, descricao: o.descricao || null, prioridade: o.prioridade || 'normal', estado: o.estado || 'aberta', atribuido_id: o.atribuidoId || null, criado_por: o.criadoPor || null, os_gerada_id: o.osGeradaId || null, notas: o.notas || [], data_criacao: msToISO(o.dataCriacao), data_modificacao: msToISO(o.dataModificacao) })
+                from: r => ({ id: r.id, adminId: r.admin_id, numero: r.numero, clienteId: r.cliente_id, localId: r.local_id || null, origem: r.origem || null, assunto: r.assunto, descricao: r.descricao, prioridade: r.prioridade || 'normal', estado: _assistEstado(r.estado), atribuidoId: r.atribuido_id || null, criadoPor: r.criado_por || null, osGeradaId: r.os_gerada_id || null, notas: Array.isArray(r.notas) ? r.notas : (r.notas ? JSON.parse(r.notas) : []), dataCriacao: isoToMs(r.data_criacao), dataModificacao: isoToMs(r.data_modificacao) }),
+                to:   o => ({ id: o.id, admin_id: o.adminId, numero: o.numero || null, cliente_id: o.clienteId || null, local_id: o.localId || null, origem: o.origem || null, assunto: o.assunto || null, descricao: o.descricao || null, prioridade: o.prioridade || 'normal', estado: _assistEstado(o.estado), atribuido_id: o.atribuidoId || null, criado_por: o.criadoPor || null, os_gerada_id: o.osGeradaId || null, notas: o.notas || [], data_criacao: msToISO(o.dataCriacao), data_modificacao: msToISO(o.dataModificacao) })
             },
         };
 
@@ -489,8 +492,18 @@
             const adminRec = dados.administradores?.find(a => a.id === adminId);
             return [
                 ...(adminRec ? [{ id: adminRec.id, nome: adminRec.nome + ' (Admin)' }] : []),
-                ...getFuncionariosByAdmin(adminId)
+                ..._equipaParaAtribuir(adminId)
             ];
+        }
+        function _equipaParaAtribuir(adminId) {
+            // Encarregados live in a separate collection. Reconcile by ID, never by name.
+            const equipa = new Map();
+            for (const pessoa of [...getFuncionariosByAdmin(adminId), ...(dados.encarregados || []).filter(e => e.adminId === adminId)]) {
+                if (!pessoa.id || pessoa.id === adminId || ['admin', 'superadmin'].includes(pessoa.role)) continue;
+                equipa.set(pessoa.id, pessoa);
+            }
+            return [...equipa.values()].filter(p => !p.suspenso && p.ativo !== false)
+                .sort((a, b) => String(a.nome || '').localeCompare(String(b.nome || ''), 'pt', { sensitivity: 'base' }));
         }
         function obterNomeFuncionario(id) {
             if (!id) return '—';
@@ -680,8 +693,11 @@
         }
 
         // ===================== Assistências =====================
+function _assistEstado(value) {
+    return ['resolvida', 'fechada', 'concluida', 'concluido', 'terminada', 'terminado'].includes(String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim()) ? 'resolvida' : 'aberta';
+}
         const ASSIST_PRIORIDADES = { baixa: { label: 'Baixa', cor: '#64748b' }, normal: { label: 'Normal', cor: '#2456d8' }, alta: { label: 'Alta', cor: '#b0650a' }, urgente: { label: 'Urgente', cor: '#d1342f' } };
-        const ASSIST_ESTADOS = { aberta: { label: 'Aberta', cor: '#2456d8', bg: 'var(--blue-bg)' }, andamento: { label: 'Em atendimento', cor: '#b0650a', bg: 'var(--yellow-bg)' }, resolvida: { label: 'Resolvida', cor: '#178a4c', bg: 'var(--green-bg)' }, fechada: { label: 'Fechada', cor: '#828ba3', bg: 'var(--border-soft)' } };
+        const ASSIST_ESTADOS = { aberta: { label: 'Aberta', cor: '#2456d8', bg: 'var(--blue-bg)' }, resolvida: { label: 'Resolvida', cor: '#178a4c', bg: 'var(--green-bg)' } };
         function gerarNumeroAssistencia() {
             const iniciais = _empresaIniciais((dados.administradores?.find(a => a.id === _tenantId())?.empresa) || (dados.administradores?.find(a => a.id === _tenantId())?.nome) || '');
             const agora = new Date();
@@ -695,14 +711,14 @@
             const tid = _tenantId();
             const lista = (dados.assistencias || []).filter(a => a.adminId === tid).sort((a, b) => (b.dataCriacao || 0) - (a.dataCriacao || 0));
             const trintaDias = Date.now() - 30 * 24 * 60 * 60 * 1000;
-            const emAberto = lista.filter(a => a.estado === 'aberta' || a.estado === 'andamento');
-            document.getElementById('assistDashAbertas').textContent = lista.filter(a => a.estado === 'aberta').length;
-            document.getElementById('assistDashAndamento').textContent = lista.filter(a => a.estado === 'andamento').length;
-            document.getElementById('assistDashResolvidas').textContent = lista.filter(a => (a.estado === 'resolvida' || a.estado === 'fechada') && (a.dataModificacao || a.dataCriacao || 0) >= trintaDias).length;
+            const emAberto = lista.filter(a => _assistEstado(a.estado) === 'aberta');
+            document.getElementById('assistDashAbertas').textContent = lista.filter(a => _assistEstado(a.estado) === 'aberta').length;
+            document.getElementById('assistDashAndamento').textContent = lista.filter(a => _assistEstado(a.estado) === 'aberta' && !!a.atribuidoId).length;
+            document.getElementById('assistDashResolvidas').textContent = lista.filter(a => (_assistEstado(a.estado) === 'resolvida') && (a.dataModificacao || a.dataCriacao || 0) >= trintaDias).length;
             document.getElementById('assistDashOsGeradas').textContent = lista.filter(a => a.osGeradaId && (a.dataCriacao || 0) >= trintaDias).length;
 
             // Tempo médio de resolução (últimos 30 dias)
-            const resolvidasRecentes = lista.filter(a => ['resolvida', 'fechada'].includes(a.estado) && a.dataModificacao && a.dataCriacao && a.dataModificacao >= trintaDias);
+            const resolvidasRecentes = lista.filter(a => (_assistEstado(a.estado) === 'resolvida') && a.dataModificacao && a.dataCriacao && a.dataModificacao >= trintaDias);
             const tempoMedioH = resolvidasRecentes.length ? resolvidasRecentes.reduce((s, a) => s + (a.dataModificacao - a.dataCriacao), 0) / resolvidasRecentes.length / 3600000 : null;
             document.getElementById('assistDashTempoMedio').textContent = tempoMedioH == null ? '—' : (tempoMedioH < 24 ? Math.round(tempoMedioH) + 'h' : Math.round(tempoMedioH / 24) + ' dias');
 
@@ -730,7 +746,7 @@
             const recentes = lista.slice(0, 8);
             document.getElementById('emptyDashAssist').style.display = recentes.length ? 'none' : 'block';
             document.getElementById('tabelaDashAssist').innerHTML = recentes.map(a => {
-                const est = ASSIST_ESTADOS[a.estado] || ASSIST_ESTADOS.aberta;
+                const est = ASSIST_ESTADOS[_assistEstado(a.estado)] || ASSIST_ESTADOS.aberta;
                 const pri = ASSIST_PRIORIDADES[a.prioridade] || ASSIST_PRIORIDADES.normal;
                 return `<tr style="cursor:pointer;" onclick="mudarTabCRM('assistencias');setTimeout(()=>abrirModalAssistencia('${a.id}'),60);">
                     <td>${escapeHtmlSimples(a.numero || '—')}</td>
@@ -767,14 +783,14 @@
             const filtroEstado = document.getElementById('assistFiltroEstado')?.value || '';
             const filtroPrioridade = document.getElementById('assistFiltroPrioridade')?.value || '';
             let lista = (dados.assistencias || []).filter(a => a.adminId === tid);
-            if (filtroEstado) lista = lista.filter(a => a.estado === filtroEstado);
+            if (filtroEstado) lista = lista.filter(a => _assistEstado(a.estado) === filtroEstado);
             if (filtroPrioridade) lista = lista.filter(a => a.prioridade === filtroPrioridade);
             lista.sort((a, b) => (b.dataCriacao || 0) - (a.dataCriacao || 0));
             document.getElementById('emptyAssistencias').style.display = lista.length ? 'none' : 'block';
             document.getElementById('tabelaAssistencias').innerHTML = lista.map(a => {
-                const est = ASSIST_ESTADOS[a.estado] || ASSIST_ESTADOS.aberta;
+                const est = ASSIST_ESTADOS[_assistEstado(a.estado)] || ASSIST_ESTADOS.aberta;
                 const pri = ASSIST_PRIORIDADES[a.prioridade] || ASSIST_PRIORIDADES.normal;
-                const foraSla = !['resolvida', 'fechada'].includes(a.estado) && (Date.now() - (a.dataCriacao || Date.now())) >= 48 * 3600000;
+                const foraSla = !(_assistEstado(a.estado) === 'resolvida') && (Date.now() - (a.dataCriacao || Date.now())) >= 48 * 3600000;
                 return `<tr>
                     <td>${escapeHtmlSimples(a.numero || '—')}${foraSla ? ' <i class="fas fa-triangle-exclamation" style="color:#d1342f;" title="Aberta há mais de 48h"></i>' : ''}</td>
                     <td>${escapeHtmlSimples(obterNomeCliente(a.clienteId))}</td>
@@ -785,7 +801,7 @@
                     <td>${a.dataCriacao ? new Date(a.dataCriacao).toLocaleDateString('pt-PT') : '—'}</td>
                     <td style="white-space:nowrap;">
                         <button class="btn btn-sm btn-outline" onclick="abrirModalAssistencia('${a.id}')" title="Ver/editar"><i class="fas fa-pen"></i></button>
-                        ${a.estado !== 'fechada' && !a.osGeradaId ? `<button class="btn btn-sm" style="background:#dbeafe;color:#1d4ed8;" onclick="criarOSDeAssistencia('${a.id}')" title="Criar OS"><i class="fas fa-hard-hat"></i></button>` : ''}
+                        ${_assistEstado(a.estado) !== 'resolvida' && !a.osGeradaId ? `<button class="btn btn-sm" style="background:#dbeafe;color:#1d4ed8;" onclick="criarOSDeAssistencia('${a.id}')" title="Criar OS"><i class="fas fa-hard-hat"></i></button>` : ''}
                         ${a.osGeradaId ? `<span class="badge" style="background:var(--green-bg);color:var(--green);" title="OS já criada"><i class="fas fa-check"></i> OS criada</span>` : ''}
                         <button class="btn btn-sm btn-outline" style="color:var(--red);" onclick="excluirAssistencia('${a.id}')" title="Eliminar"><i class="fas fa-trash"></i></button>
                     </td>
@@ -870,11 +886,58 @@
         function clienteBuscaEsconder(inputId) {
             setTimeout(() => { const dd = document.getElementById(inputId + '_dd'); if (dd) dd.style.display = 'none'; }, 200);
         }
+        // Recomendações explicáveis: só preenchem os controlos existentes; guardar continua manual.
+        function _tgAssistSugestao(tipo) {
+            if (tipo !== 'os') return;
+            if (!window.TGPlanner || !usuarioLogado) return alert('Motor de planeamento indisponível.');
+            const tid = _tenantId();
+            const isOS = tipo === 'os';
+            const data = document.getElementById(isOS ? 'assistOsData' : 'assist_plan_data')?.value;
+            const hora = document.getElementById(isOS ? 'assistOsHora' : 'assist_plan_hora')?.value;
+            const duracao = Number(document.getElementById(isOS ? 'assistOsDuracao' : 'assist_plan_duracao')?.value);
+            if (!data || !hora || !Number.isFinite(duracao) || duracao < 15 || duracao > 720) return alert('Indica a data, hora e duração prevista (15 a 720 minutos).');
+            const inicio = new Date(data + 'T' + hora + ':00');
+            if (!Number.isFinite(inicio.getTime())) return alert('Data ou hora inválida.');
+            const fim = new Date(inicio.getTime() + duracao * 60000);
+            const tecnicos = _equipaParaAtribuir(tid).map(p => ({ id:p.id, name:p.nome, tenantId:tid, active:true,
+                skills:Array.isArray(p.competencias) ? p.competencias : [] }));
+            const compromissos = (dados.servicos || []).filter(os => os.adminId === tid && os.data && os.hora)
+                .flatMap(os => {
+                    const d = new Date(os.data + 'T' + os.hora + ':00');
+                    if (!Number.isFinite(d.getTime())) return [];
+                    // Duração histórica desconhecida: intervalo conservador de 90 min, assinalado ao utilizador.
+                    const minutos = Number(os.duracaoMinutos || os.duracaoPrevista || 90);
+                    const ids = Array.isArray(os.funcionariosIds) && os.funcionariosIds.length ? os.funcionariosIds : [os.funcionarioId];
+                    return ids.filter(Boolean).map(tecnicoId => ({
+                        id:os.id,tenantId:tid,technicianId:tecnicoId,start:d.toISOString(),
+                        end:new Date(d.getTime() + (minutos > 0 && minutos <= 1440 ? minutos : 90) * 60000).toISOString(),
+                        status:os.status
+                    }));
+                });
+            // Sem registos de férias validados, não afirmar disponibilidade definitiva.
+            const lista = window.TGPlanner.recommend({tenantId:tid,technicians:tecnicos,appointments:compromissos,
+                job:{start:inicio.toISOString(),end:fim.toISOString()},limit:50});
+            const elegiveis = lista.filter(t=>t.eligible);
+            if (!elegiveis.length) return alert('Não foram encontrados técnicos sem sobreposição detetada. Confirma férias e disponibilidade manualmente.');
+            const resumo = elegiveis.slice(0,8).map((p,i)=>(i+1)+'. '+p.name).join('\n');
+            const escolhido = elegiveis[0];
+            if (!confirm('Sugestão: '+escolhido.name+'\n\nOutras opções sem conflito identificado:\n'+resumo+
+                '\n\nAtenção: esta é uma sugestão preliminar. As férias e as deslocações não estão totalmente validadas; alguns serviços antigos não têm duração. Confirma com o técnico.\n\nSelecionar '+escolhido.name+'?')) return;
+            if (isOS) {
+                const check = [...document.querySelectorAll('.assist-os-func-chk')].find(el=>el.value===escolhido.id);
+                if (!check) return alert('Técnico indisponível na lista deste serviço.');
+                check.checked = true;
+            } else {
+                const select = document.getElementById('assist_atribuido');
+                if (![...select.options].some(o=>o.value===escolhido.id)) return alert('Técnico indisponível na lista.');
+                select.value = escolhido.id;
+                select.dispatchEvent(new Event('change',{bubbles:true}));
+            }
+        }
         function abrirModalAssistencia(id) {
             const tid = _tenantId();
             const item = id ? dados.assistencias?.find(a => a.id === id) : null;
             _preencherDatalistClientes();
-            const pessoas = _pessoasParaAtribuir(tid);
             const cliente = item?.clienteId ? dados.clientes?.find(c => c.id === item.clienteId) : null;
             document.getElementById('modalGenericoTitulo').innerHTML = item ? `<i class="fas fa-headset"></i> ${escapeHtmlSimples(item.numero || 'Assistência')}` : '<i class="fas fa-headset"></i> Nova Assistência';
             document.getElementById('modalGenericoCampos').innerHTML = `
@@ -895,12 +958,10 @@
                         <select id="assist_prioridade">${Object.entries(ASSIST_PRIORIDADES).map(([k, v]) => `<option value="${k}" ${(item?.prioridade || 'normal') === k ? 'selected' : ''}>${v.label}</option>`).join('')}</select>
                     </div>
                     <div class="form-group" style="flex:1;"><label>Estado</label>
-                        <select id="assist_estado">${Object.entries(ASSIST_ESTADOS).map(([k, v]) => `<option value="${k}" ${(item?.estado || 'aberta') === k ? 'selected' : ''}>${v.label}</option>`).join('')}</select>
+                        <select id="assist_estado">${Object.entries(ASSIST_ESTADOS).map(([k, v]) => `<option value="${k}" ${_assistEstado(item?.estado) === k ? 'selected' : ''}>${v.label}</option>`).join('')}</select>
                     </div>
                 </div>
-                <div class="form-group"><label>Atribuído a</label>
-                    <select id="assist_atribuido"><option value="">— Por atribuir —</option>${pessoas.map(p => `<option value="${p.id}" ${item?.atribuidoId === p.id ? 'selected' : ''}>${escapeHtmlSimples(p.nome)}</option>`).join('')}</select>
-                </div>
+                <p class="help-text">O técnico é escolhido ao criar a ordem de serviço.</p>
                 ${item?.osGeradaId ? `<div class="help-text" style="color:var(--green);"><i class="fas fa-check-circle"></i> Já tem uma OS criada a partir desta assistência.</div>` : ''}
                 ${item ? _assistNotasHTML(item) : ''}
             `;
@@ -910,7 +971,7 @@
         // SLA visual: quantas horas está aberta, com aviso se passar de 48h sem resolver
         function _assistBadgeSLA(item) {
             const portal = item.origem === 'portal' ? '<div style="padding:8px 12px;background:#e0f2fe;color:#075985;border-radius:8px;margin-bottom:8px;">Pedido recebido pelo Portal do Cliente</div>' : '';
-            if (['resolvida', 'fechada'].includes(item.estado)) {
+            if ((_assistEstado(item.estado) === 'resolvida')) {
                 const horas = item.dataModificacao ? Math.round((item.dataModificacao - item.dataCriacao) / 3600000) : null;
                 return portal + (horas != null ? `<div class="help-text" style="margin-bottom:10px;"><i class="fas fa-check-circle" style="color:var(--green);"></i> Resolvida em ${horas < 24 ? horas + 'h' : Math.round(horas / 24) + ' dia(s)'}.</div>` : '');
             }
@@ -989,15 +1050,9 @@
             item.assunto = assunto;
             item.descricao = document.getElementById('assist_descricao').value.trim() || null;
             item.prioridade = document.getElementById('assist_prioridade').value;
-            item.estado = document.getElementById('assist_estado').value;
-            const atribuidoNovo = document.getElementById('assist_atribuido').value || null;
-            const atribuidoMudou = item.atribuidoId !== atribuidoNovo;
-            item.atribuidoId = atribuidoNovo;
+            item.estado = _assistEstado(document.getElementById('assist_estado').value);
+            if (novo) item.atribuidoId = null;
             item.dataModificacao = Date.now();
-
-            if ((novo || atribuidoMudou) && item.atribuidoId) {
-                await _crmNotificar(item.atribuidoId, '🎧 Assistência atribuída', `Foste atribuído à assistência ${item.numero} — "${item.assunto}".`);
-            }
 
             document.getElementById('modalGenericoOverlay').classList.remove('open');
             try { await guardarDados(dados, ['assistencias', 'notificacoes']); mostrarStatusCRM('✅ Assistência guardada.'); }
@@ -1048,7 +1103,7 @@
             const tid = _tenantId();
             const cliente = a.clienteId ? dados.clientes?.find(c => c.id === a.clienteId) : null;
             const clientesTenant = (dados.clientes || []).filter(c => c.adminId === tid);
-            const funcionariosTenant = (dados.funcionarios || []).filter(f => f.adminId === tid && !f.suspenso);
+            const funcionariosTenant = _equipaParaAtribuir(tid);
             document.getElementById('modalGenericoTitulo').innerHTML = '<i class="fas fa-hard-hat"></i> Criar OS a partir da assistência';
             document.getElementById('modalGenericoCampos').innerHTML = `
                 <div class="form-group"><label>Cliente</label>
@@ -1058,11 +1113,13 @@
                 <div class="form-group"><label>Data</label><input type="date" id="assistOsData" value="${getDataHoje()}"></div>
                 <div class="form-group"><label>Hora</label><input type="time" id="assistOsHora" value="09:00"></div>
                 <div class="form-group"><label>Descrição</label><textarea id="assistOsDescricao" rows="3">${escapeHtmlSimples((a.assunto || '') + (a.descricao ? ' — ' + a.descricao : ''))}</textarea></div>
-                <div class="form-group ff-span2"><label>Funcionários atribuídos</label>
+                <div class="form-group"><label>Duração prevista (minutos)</label><input type="number" id="assistOsDuracao" min="15" max="720" value="90"></div>
+                <div class="form-group"><button type="button" class="btn btn-outline" onclick="_tgAssistSugestao('os')">Sugerir técnico para esta OS</button><small class="help-text">Apenas preenche a seleção, sem guardar nem notificar.</small></div>
+                <div class="form-group ff-span2"><label>Funcionários e encarregados atribuídos</label>
                     <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;">
                         ${funcionariosTenant.map(f => `<label style="display:flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--border);border-radius:20px;cursor:pointer;font-size:.85rem;">
                             <input type="checkbox" class="assist-os-func-chk" value="${f.id}" ${a.atribuidoId === f.id ? 'checked' : ''} style="width:auto;"> ${escapeHtmlSimples(f.nome)}
-                        </label>`).join('') || '<span class="help-text">Sem funcionários disponíveis.</span>'}
+                        </label>`).join('') || '<span class="help-text">Sem funcionários ou encarregados disponíveis.</span>'}
                     </div>
                 </div>
             `;
@@ -1091,6 +1148,7 @@
             if (!dados.servicos) dados.servicos = [];
             dados.servicos.push(novaOS);
             a.osGeradaId = novaOS.id;
+            a.atribuidoId = funcionariosIds[0] || null;
             a.dataModificacao = Date.now();
 
             const clienteNomeOS = clienteIdEscolhido ? (dados.clientes?.find(c => c.id === clienteIdEscolhido)?.nome || '') : '';

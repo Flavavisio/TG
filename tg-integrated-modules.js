@@ -3,7 +3,7 @@
     'use strict';
     const modules = {
         crm: { title: 'CRM Comercial', page: 'TOTALGEST_CRM.html', roles: ['admin','subadmin','vendedor'] },
-        assistencias: { title: 'Assistências', page: 'TOTALGEST_ASSIST.html', roles: ['admin','subadmin'] }
+        assistencias: { title: 'Assistências', page: 'TOTALGEST_ASSIST.html', version: '1.0.1-encarregados', roles: ['admin','subadmin'] }
     };
     const frames = new Map();
     let pending = null;
@@ -22,6 +22,10 @@
             alert('Este módulo não está disponível no pack/licença desta empresa ou para o seu perfil.');
             return false;
         }
+        if (name === 'assistencias') {
+            const id = pending?.name === name ? pending.id : null; pending = null;
+            return !!window.TGAssistNative?.prepare(id);
+        }
         const mod = modules[name];
         let section = document.getElementById('secao-' + name);
         if (!section) {
@@ -34,7 +38,7 @@
             back.textContent = 'Voltar ao início'; back.addEventListener('click', () => irParaInicio());
             head.append(title, back); section.appendChild(head); document.body.appendChild(section);
         }
-        const params = new URLSearchParams({embedded:'1', v:'1.0.0'});
+        const params = new URLSearchParams({embedded:'1', v:mod.version || '1.0.0'});
         if (name === 'assistencias' && pending?.name === name && pending.id) params.set('criarOS', pending.id);
         pending = null;
         const src = mod.page + '?' + params;
@@ -58,10 +62,12 @@
         if (!allowed(name)) { prepare(name); return false; }
         pending = { name, id: typeof id === 'string' ? id : '' };
         if (document.getElementById('wsClienteOverlay')?.classList.contains('open')) _wsClienteFechar();
+        if (!prepare(name)) return false;
         abrirSecao(name);
         return false;
     }
     function validate() {
+        window.TGAssistNative?.validate();
         for (const [name, state] of frames) {
             if (!allowed(name) || state.identity !== identity()) {
                 state.frame.remove(); frames.delete(name);

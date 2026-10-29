@@ -1735,10 +1735,12 @@ body.tem-menu-inferior .alerta-chev { color: var(--tgm-text-mute); }
     #tgSidebarNav .tg-nav-grupo-btn.aberto .chev { transform: rotate(90deg); }
     #tgSidebarNav .tg-nav-submenu {
         max-height: 0;
+        visibility: hidden;
+        pointer-events: none;
         overflow: hidden;
         transition: max-height .2s ease;
     }
-    #tgSidebarNav .tg-nav-submenu.aberto { max-height: 800px; }
+    #tgSidebarNav .tg-nav-submenu.aberto { max-height: 800px; visibility: visible; pointer-events: auto; }
     #tgSidebarNav .tg-nav-submenu .tg-nav-item {
         padding-left: 34px !important;
         font-weight: 500 !important;
@@ -1747,3 +1749,58 @@ body.tem-menu-inferior .alerta-chev { color: var(--tgm-text-mute); }
 
 
 /* Nexus is defined in tg-nexus.css; the saved layout key remains aurora. */
+
+/* Kiosk scroll fix: allow long employee and agenda lists on desktop and touch devices.
+   Flex children must not shrink to fit a fixed-height fullscreen overlay. */
+#tgQuiosqueOverlay.aberto {
+    box-sizing:border-box;
+    overflow-x:hidden !important;
+    overflow-y:auto !important;
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior-y:contain;
+    touch-action:pan-y;
+    justify-content:flex-start !important;
+    align-items:center;
+    min-height:0;
+}
+#tgQuiosqueOverlay.aberto > .tgq-header,
+#tgQuiosqueOverlay.aberto > #tgqGrid,
+#tgQuiosqueOverlay.aberto > #tgqPainel,
+#tgQuiosqueOverlay.aberto > #tgQuiosqueSair {
+    flex-shrink:0 !important;
+}
+#tgQuiosqueOverlay.aberto #tgqGrid {
+    height:auto !important;
+    max-height:none !important;
+    min-height:min-content;
+    overflow:visible;
+    align-content:start;
+    padding-bottom:12px;
+}
+#tgQuiosqueOverlay.aberto #tgQuiosqueSair {padding-bottom:20px;}
+@media(max-width:600px){
+    #tgQuiosqueOverlay.aberto{padding:16px 12px 26px !important;}
+    #tgQuiosqueOverlay.aberto #tgqGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+}
+
+/* Legibilidade do nome fiscal no perfil da empresa */
+#perf_nome_fiscal { color: #142337 !important; -webkit-text-fill-color: #142337 !important; background-color: #fff !important; }
+#perf_nome_fiscal::placeholder { color: #49566a !important; opacity: 1 !important; }
+label[for="perf_nome_fiscal"] { color: #fff !important; text-shadow: 0 1px 2px rgba(0,0,0,.5); font-weight: 600; }
+
+/* Worksite overview for company managers. */
+.obras-estado-contadores{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin:18px 0}
+#obrasLongaContadores[hidden],#obrasLongaDataCriacaoTh[hidden]{display:none!important}
+.obras-estado-contador{display:flex;flex-direction:column;align-items:flex-start;gap:7px;padding:16px;border:1px solid #d8e3ee;border-radius:12px;background:#fff;color:#24384f;text-align:left;font:inherit;cursor:pointer;min-height:96px}
+.obras-estado-contador strong{font-size:26px;line-height:1.1;font-variant-numeric:tabular-nums}
+.obras-estado-contador span{font-size:13px;line-height:1.4}
+.obras-estado-contador[aria-pressed="true"]{border-color:#087b9d;background:#edf9fd;box-shadow:inset 0 0 0 1px #087b9d}
+.obras-estado-contador:focus-visible{outline:3px solid #087b9d;outline-offset:2px}
+.obra-data-criacao{white-space:nowrap;font-variant-numeric:tabular-nums}
+body.dark-mode .obras-estado-contador{background:#1a2436;color:#e2e8f0;border-color:#52647e}
+body.dark-mode .obras-estado-contador[aria-pressed="true"]{background:#183b4d;border-color:#70cce7}
+@media(max-width:850px){.obras-estado-contadores{grid-template-columns:repeat(2,minmax(0,1fr))}.obras-estado-contador:first-child{grid-column:1/-1}}
+
+/* OS: mesmos contadores das obras, em quatro grupos. */
+#servicosContadores{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media(max-width:850px){#servicosContadores{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}#servicosContadores .obras-estado-contador{grid-column:auto;min-height:82px;padding:12px 8px}#servicosContadores .obras-estado-contador span{font-size:12px}}

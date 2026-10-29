@@ -15,7 +15,7 @@
  const round=v=>Math.round(v*1000)/1000;
  const date=v=>{if(!v)return ''; if(typeof v==='string' && /^\d{4}-\d{2}-\d{2}/.test(v))return v.slice(0,10);const d=new Date(v);return Number.isNaN(d.getTime())?'':`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
  const assigned=s=>s.funcionariosIds?.length?s.funcionariosIds:[s.funcionarioId].filter(Boolean);
- const done=s=>['concluido','concluida','fechada'].includes(norm(s));
+ const done=s=>['concluido','concluida','fechada','resolvida'].includes(norm(s));
  const cancelled=s=>['cancelado','cancelada'].includes(norm(s));
  function scope(data,user,options={}){
   const empty={tenant:null,allowed:[],os:[],clients:[],locals:[],people:[],sheets:[],assistance:[],works:[],articles:[],movements:[],contracts:[],maintenance:[]};
@@ -35,7 +35,7 @@
   const people=[...own('funcionarios'),...own('encarregados'),...(data.administradores||[]).filter(x=>x.id===tenant)].filter(p=>management||p.id===user.id||staff.funcionariosIds?.includes(p.id));
   return {tenant,management,allowed,os,clients,locals:own('locais').filter(l=>clientIds.has(l.clienteId)),people:[...new Map(people.map(p=>[p.id,p])).values()],
    sheets:own('folhasObra').filter(f=>management?(!f.servicoId||ids.has(f.servicoId)):ids.has(f.servicoId)),
-   assistance:management&&sections.includes('assistencias')?own('assistencias').filter(a=>!a.apagadoSuperAdmin):[],
+   assistance:management&&sections.includes('assistencias')?own('assistencias').filter(a=>!a.apagadoSuperAdmin).map(a=>({...a,estado:['resolvida','fechada','concluida','concluido','terminada','terminado'].includes(norm(a.estado).trim())?'resolvida':'aberta'})):[],
    works:management&&sections.includes('obras-longa')?own('obras'):[],articles:management&&sections.includes('artigos')?own('artigos'):[],
    movements:management&&sections.includes('artigos')?own('movimentosStock'):[],contracts:management&&sections.includes('contratos')?own('contratos'):[],
    maintenance:management&&sections.includes('contratos')?own('registosManutencao'):[]};
@@ -71,7 +71,7 @@
   if(type==='assistencias'){
    const list=s.assistance.filter(x=>common(x)&&person(x)&&state(x.estado||'aberta')&&period(x.dataCriacao)&&(!use(f.urgency)||x.prioridade===f.urgency)&&(!use(f.origin)||(f.origin==='interna'?x.origem!=='portal':x.origem===f.origin)));
    table('Assistências',['Nº','Criação','Cliente','Local','Urgência','Origem','Estado','Responsável','Problema','OS'],list.map(x=>[x.numero||x.id,date(x.dataCriacao)||'—',client(x.clienteId),local(x),x.prioridade||'normal',x.origem==='portal'?'Portal do cliente':'Interna',x.estado||'aberta',name(x.atribuidoId),x.assunto||x.descricao||'—',s.os.find(o=>o.id===x.osGeradaId)?.numeroRegisto||'Sem OS']));
-   metric('Total',list.length);metric('Por tratar / realizar',list.filter(x=>!done(x.estado)&&!cancelled(x.estado)).length);metric('Concluídas',list.filter(x=>done(x.estado)).length);metric('Do portal',list.filter(x=>x.origem==='portal').length);
+   metric('Total',list.length);metric('Abertas',list.filter(x=>!done(x.estado)&&!cancelled(x.estado)).length);metric('Resolvidas',list.filter(x=>done(x.estado)).length);metric('Do portal',list.filter(x=>x.origem==='portal').length);
   }
   if(type==='clientes'){
    const sites=s.clients.filter(c=>!use(f.client)||c.id===f.client).flatMap(c=>[{clienteId:c.id,localId:null,morada:c.morada},...s.locals.filter(l=>l.clienteId===c.id).map(l=>({...l,localId:l.id}))]).filter(common);
@@ -101,9 +101,9 @@
   if(type==='stock'){
    const list=s.articles.filter(x=>!use(f.article)||x.id===f.article);
    const balance=a=>round(number(a.stockInicial)+s.movements.filter(x=>x.artigoId===a.id).reduce((v,m)=>v+(m.tipo==='saida'?-number(m.quantidade):['entrada','devolucao','ajuste'].includes(m.tipo)?number(m.quantidade):0),0));
-   const low=a=>a.stockMinimo!=null&&balance(a)<number(a.stockMinimo);
+   const low=a=>balance(a)<0||(a.stockMinimo!=null&&a.stockMinimo!==''&&balance(a)<=number(a.stockMinimo));
    const arts=list.filter(x=>!use(f.state)||f.state==='baixo'&&low(x)||f.state==='normal'&&!low(x));
-   table('Saldo atual',['Referência','Artigo','Unidade','Stock atual','Mínimo','Situação'],arts.map(x=>[x.referencia||'—',x.nome||'—',x.unidade||'un',balance(x),x.stockMinimo??'—',low(x)?'Abaixo do mínimo':'Normal']));
+   table('Saldo atual',['Referência','Artigo','Unidade','Stock atual','Mínimo','Situação'],arts.map(x=>[x.referencia||'—',x.nome||'—',x.unidade||'un',balance(x),x.stockMinimo??'—',balance(x)<0?'Stock negativo — regularizar':low(x)?'No mínimo ou abaixo':'Normal']));
    const ids=new Set(arts.map(x=>x.id));const moves=s.movements.filter(x=>ids.has(x.artigoId)&&period(x.data)&&(!use(f.movement)||x.tipo===f.movement));
    table('Movimentos no período',['Data','Artigo','Tipo','Quantidade','Unidade','Obra / serviço','Nota'],moves.map(x=>{const a=arts.find(a=>a.id===x.artigoId);return [x.data||'—',a.nome||'—',x.tipo,number(x.quantidade),a.unidade||'un',s.works.find(w=>w.id===x.obraId)?.nome||s.os.find(o=>o.id===x.origemId)?.numeroRegisto||x.origemTipo||'—',x.nota||'—'];}));
    metric('Artigos',arts.length);metric('Abaixo do mínimo',arts.filter(low).length);metric('Movimentos',moves.length);

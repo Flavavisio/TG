@@ -1,6 +1,6 @@
 // Service Worker — Total Gest PWA
-const CACHE = 'totalgest-v47-nexus-default';
-const ASSETS = ['./tg-equipment-reports.js?v=1.1.1', './tg-contract-maintenance.js?v=1.4.0', './tg-passport.js?v=1.2.1', './tg-passport.css?v=1.0.0', './tg-client-history.js?v=1.0.0', './tg-client-history.css?v=1.0.0', './tg-integrated-modules.js?v=1.0.0', './tg-module-embed.js?v=1.0.0', './tg-integrated-modules.css?v=1.1.0', './app-principal.js?v=nexus-default-1', './tg-nexus.css?v=1.1.1', './tg-nexus.js?v=1.1.0', './tg-reports.css?v=1.0.0', './tg-reports-engine.js?v=1.0.0', './tg-reports-ui.js?v=1.0.0', './responsive-device.css?v=2', './login.html', './access.css', './app-entry.js', './pwa-service-worker.js', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
+const CACHE = 'totalgest-production-promocao-20261029';
+const ASSETS = ['./tg-assist-contracts.js?v=1.2.0', './tg-assist-native.js?v=1.6.0', './tg-assist-native.css?v=1.6.0', './tg-agenda-touch.js?v=1.0.0', './tg-form-focus.css?v=1.2.1', './tg-form-focus.js?v=1.2.1', './tg-technician.js?v=1.5.0-teste', './tg-technician.css?v=1.5.0-teste', './tg-navigation.js?v=1.0.2-teste', './tg-navigation.css?v=1.0.0-teste', './tg-supervisor-home.js?v=1.0.0', './tg-supervisor-home.css?v=1.0.0', './tg-push.js?v=1.2.3', './tg-work-sheets.css?v=2.2.0-teste', './tg-work-sheets.js?v=2.4.1-teste', './tg-satisfaction.js?v=1.0.1', './tg-satisfaction.css?v=1.0.3', './styles.css?v=os-standby-20261028', './tg-assistente.js?v=4.1.1-teste', './tg-assistente.css?v=4.1.0-dock', './tg-smart-engine.js?v=3.1.1-assist', './tg-planner.js?v=1.0.2', './tg-os-planning-ui.js?v=1.0.0', './tg-offline.js', './tg-equipment-reports.js?v=1.1.1', './tg-contract-maintenance.js?v=1.10.0', './tg-passport.js?v=1.3.0', './tg-passport.css?v=1.0.0', './tg-client-history.js?v=1.0.2', './tg-client-history.css?v=1.0.0', './tg-integrated-modules.js?v=native-assist-20261028', './tg-module-embed.js?v=1.0.0', './tg-integrated-modules.css?v=1.1.0', './app-principal.js?v=production-20261029', './tg-nexus.css?v=1.1.4-teste', './tg-nexus.js?v=1.1.3-teste', './tg-reports.css?v=1.0.0', './tg-reports-engine.js?v=1.0.2', './tg-reports-ui.js?v=1.0.0', './responsive-device.css?v=5', './login.html', './access.css', './app-entry.js', './pwa-service-worker.js?v=push-stable-20261023', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS).catch(() => {})));
@@ -34,28 +34,19 @@ self.addEventListener('message', e => {
   }
 });
 
+// Only static shell files are eligible for caching. Never cache data/API responses.
+const staticPaths = new Set(ASSETS.map(p => new URL(p, self.registration.scope).pathname));
 self.addEventListener('fetch', e => {
-  const req = e.request;
-  if (req.method !== 'GET') return;
-
-  e.respondWith(
-    fetch(req).then(res => {
-      try {
-        if (new URL(req.url).origin === location.origin && res && res.ok) {
-          const copy = res.clone();
-          caches.open(CACHE).then(c => c.put(req, copy)).catch(() => {});
-        }
-      } catch (err) {}
-      return res;
-    }).catch(() => {
-      // só usa o fallback de navegação (index.html) para pedidos de navegação (o utilizador a abrir/mudar de página).
-      // Para tudo o resto (imagens, scripts, chamadas à API) tenta a cache desse recurso específico; se não houver, falha normalmente.
-      if (req.mode === 'navigate') {
-        return caches.match(req).then(hit => hit || caches.match(new URL(req.url).pathname.endsWith('/login.html') ? './login.html' : './index.html'));
-      }
-      return caches.match(req);
-    })
-  );
+  const req=e.request;
+  if(req.method!=='GET')return;
+  const u=new URL(req.url);
+  if(u.origin!==self.location.origin || !staticPaths.has(u.pathname) || u.searchParams.has('access_token') || u.searchParams.has('token') || req.headers.has('authorization'))return;
+  e.respondWith(fetch(req).then(res=>{
+    if(res.ok && res.type==='basic' && !res.headers.has('set-cookie') && !/private|no-store/i.test(res.headers.get('cache-control')||'')){
+      const copy=res.clone();e.waitUntil(caches.open(CACHE).then(c=>c.put(req,copy)).catch(()=>{}));
+    }
+    return res;
+  }).catch(()=>caches.match(req).then(hit=>hit||Response.error())));
 });
 
 // ===== Notificações push =====

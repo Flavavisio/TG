@@ -19,7 +19,7 @@
     const esc = value => String(value || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     let opener = null, selection = 0, scope = '', observerPending = false;
     function allowed(card) {
-        return card && !card.classList.contains('hidden-card') && !card.classList.contains('card-bloqueado') && !card.hidden && card.style.display !== 'none';
+        return card && !card.hasAttribute('data-tgn-secondary') && !card.classList.contains('hidden-card') && !card.classList.contains('card-bloqueado') && !card.hidden && card.style.display !== 'none';
     }
     function entries() {
         if (!active() || (typeof _licencaValidaTenant === 'function' && !_licencaValidaTenant())) return [];
@@ -137,6 +137,7 @@
         });
     }
     function refresh() {
+        document.body.classList.toggle('tg-favoritos-ocultos', ['admin', 'subadmin'].includes(user()?.role));
         const enabled = active();
         document.body.classList.toggle('tg-nexus', enabled);
         if (!enabled) {
@@ -234,7 +235,7 @@
     // Session/layout changes can also happen without a home render.
     new MutationObserver(() => {
         if (observerPending) return;
-        observerPending = true; queueMicrotask(() => { observerPending = false; if (active() !== document.body.classList.contains('tg-nexus')) refresh(); });
+        observerPending = true; queueMicrotask(() => { observerPending = false; if (typeof document === 'undefined' || !document.body) return; if (active() !== document.body.classList.contains('tg-nexus')) refresh(); });
     }).observe(document.body, {attributes:true,attributeFilter:['class']});
     window.TGNexus = {refresh, open, close};
     refresh();
