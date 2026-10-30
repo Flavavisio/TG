@@ -8742,12 +8742,24 @@ function _assistEstado(value) {
             if (admin.assistPlano) lista.push({ label: 'Total Gest Assist', preco: admin.assistPlano === 'demo' ? 0 : (admin.assistPlano === 'anual' ? PRECO_ASSIST_ANUAL : PRECO_ASSIST_MENSAL), cor: '#0e7490' });
             if (moduloErpAtivo(admin)) lista.push({ label: 'Integração ERP', preco: admin.erpPlano === 'demo' ? 0 : (admin.erpPlano === 'anual' ? PRECO_ERP_ANUAL : PRECO_ERP_MENSAL), cor: '#0891b2' });
             if (moduloRondasAtivo(admin)) lista.push({ label: 'Rondas', preco: 0, cor: '#0f766e' }); // grátis por agora (fase de lançamento)
+            // O Pro+ já inclui CRM, Assist, Contratos, Frota e Armazém.
+            // Estes módulos não podem ser faturados novamente como add-ons.
+            if (packDoAdmin(admin) === 'pro_plus') {
+                return lista.filter(a => !['CRM Comercial', 'Total Gest Assist', 'Contratos', 'Frota', 'Armazém'].includes(a.label));
+            }
             return lista;
         }
         function _valorTotalLicenca(admin) {
             if (!admin || !admin.licenca) return 0;
+            const pack = packDoAdmin(admin);
+            if (pack === 'pro_plus') {
+                const escalao = admin.packEscalao === '50+' ? '50' : String(admin.packEscalao || '5');
+                const base = PACK_PRECOS.pro_plus[escalao] || PACK_PRECOS.pro_plus[5];
+                const blocos = Math.max(0, Number(admin.packBlocos) || 0);
+                return base + blocos * PACK_PRECO_BLOCO_5 + _addonsAtivosDe(admin).reduce((n, a) => n + a.preco, 0);
+            }
             const valorBase = parseFloat(getValorPlano(admin.licenca.plano)) || 0;
-            return valorBase + _addonsAtivosDe(admin).reduce((s, a) => s + a.preco, 0);
+            return valorBase + _addonsAtivosDe(admin).reduce((n, a) => n + a.preco, 0);
         }
         function abrirCardObrasLonga() {
             const adminRef = usuarioLogado?.role === 'admin' ? adminAtual() : adminDoUtilizador();
