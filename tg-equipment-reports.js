@@ -1,9 +1,9 @@
 /* Equipment-specific specialty reports. Historic OS keep their original requirements. */
 (function(){
  'use strict';
- const types={REX:'Extintores',RBI:'Bocas de incêndio',RSI:'Sistemas de incêndio',RCM:'Central de incêndio',RIE:'Iluminação de emergência',RCP:'Portas corta-fogo',RCCTV:'CCTV',RIN:'Intrusão',RDI:'Declaração de instalação'};
+ const types={REX:'Extintores',RBI:'Bocas de incêndio',RSI:'Sistemas de incêndio',RCM:'Central de incêndio',RIE:'Iluminação de emergência',RCP:'Portas corta-fogo',RCCTV:'CCTV',RIN:'Intrusão',RDI:'Declaração de instalação',RAVAC:'Intervenção e Manutenção AVAC',RELE:'Intervenção e Verificação Elétrica',RLIM:'Limpeza e Desinfeção'};
  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
- const options=value=>`<option value="__choose__" ${value==null?'selected':''} disabled>Escolher relatório ou Sem relatório</option><option value="" ${value===''?'selected':''}>Sem relatório</option>`+Object.entries(types).map(([id,label])=>`<option value="${id}" ${value===id?'selected':''}>${id} — ${esc(label)}</option>`).join('');
+ const options=value=>`<option value="__choose__" ${value==null?'selected':''} disabled>Escolher relatório ou Sem relatório</option><option value="" ${value===''?'selected':''}>Sem relatório</option>`+Object.entries(types).filter(([id])=>!['RAVAC','RELE','RLIM'].includes(id)||(window.TGSpecialtyCatalog?.available()||[]).some(c=>c.type===id)).map(([id,label])=>`<option value="${id}" ${value===id?'selected':''}>${id} — ${esc(label)}</option>`).join('');
  function validate(value){if(value!==''&&!Object.hasOwn(types,value))throw Error('Indica o relatório de especialidade do equipamento ou escolhe Sem relatório.');return value;}
  function snapshot(os,equipments){
   for(const e of equipments){try{validate(e.fichaTecnica?.relatorioEspecialidade);}catch(_){throw Error('Define o relatório do equipamento '+(e.fichaTecnica?.nome || e.marca || e.id)+' ou escolhe Sem relatório.');}}
@@ -11,11 +11,17 @@
   os.planoManutencao={...os.planoManutencao,relatoriosEquipamentos};
   os.tiposTrabalho=[...new Set([...(os.tiposTrabalho||[]).filter(t=>!Object.hasOwn(types,t)),...relatoriosEquipamentos.map(r=>r.tipo)])];
  }
+ const avacTypes=['Manutenção de ar condicionado','Instalação','Recarga de gás refrigerante','Limpeza de filtros/condutas','Diagnóstico de avaria'];
+ function avacEnabled(){try{const a=typeof adminDoUtilizador==='function'?adminDoUtilizador():null;const areas=a?.areasNegocio??a?.areas_negocio??[];return Array.isArray(areas)&&areas.some(v=>String(v).toLowerCase()==='avac')}catch(_){return false}}
+ function avacWork(os){const codes=['Manutenção AC','Instalação AVAC','Recarga de gás','Limpeza de filtros','Diagnóstico AVAC'];return avacEnabled()&&(os?.tiposTrabalho||[]).some(t=>codes.includes(String(t))||avacTypes.some(label=>label.toLocaleLowerCase('pt-PT')===String(t).toLocaleLowerCase('pt-PT')))}
  function requirements(os){
-  if(Array.isArray(os?.planoManutencao?.relatoriosEquipamentos))return os.planoManutencao.relatoriosEquipamentos.filter(r=>r&&Object.hasOwn(types,r.tipo)&&r.equipamentoId);
-  return (os?.tiposTrabalho||[]).filter(t=>Object.hasOwn(types,t)).map(tipo=>({tipo,equipamentoId:null,equipamentoNome:''}));
+  const native=(window.TGSpecialtyCatalog?.available()||[]).filter(c=>c.matches(os)).map(c=>({tipo:c.type,equipamentoId:null,equipamentoNome:c.title}));
+  const security=Array.isArray(os?.planoManutencao?.relatoriosEquipamentos)
+   ?os.planoManutencao.relatoriosEquipamentos.filter(r=>r&&Object.hasOwn(types,r.tipo)&&r.equipamentoId)
+   :(os?.tiposTrabalho||[]).filter(t=>Object.hasOwn(types,t)).map(tipo=>({tipo,equipamentoId:null,equipamentoNome:''}));
+  return [...security,...native.filter(n=>!security.some(r=>r.tipo===n.tipo))];
  }
- function matches(r,os,req){return r.adminId===os.adminId&&r.servicoId===os.id&&r.tipo===req.tipo&&(r.campos?.equipamentoId||null)===(req.equipamentoId||null);}
+ function matches(r,os,req){return r.adminId===os.adminId&&r.servicoId===os.id&&(window.TGSpecialtyCatalog?.canonical(r.tipo)||r.tipo)===(window.TGSpecialtyCatalog?.canonical(req.tipo)||req.tipo)&&(r.campos?.equipamentoId||null)===(req.equipamentoId||null);}
  function pending(os){return requirements(os).filter(req=>!(dados.relatoriosEspecialidade||[]).some(r=>matches(r,os,req)&&!r.rascunho));}
  function resolve(os,tipo,id){return id?requirements(os).find(r=>r.tipo===tipo&&r.equipamentoId===id):pending(os).find(r=>r.tipo===tipo)||requirements(os).find(r=>r.tipo===tipo);}
  const periods={semanal:'Semanal',quinzenal:'Quinzenal',mensal:'Mensal',trimestral:'Trimestral',semestral:'Semestral',anual:'Anual'};
@@ -36,5 +42,5 @@
  }
  function equipmentField(e){return `<label style="font-size:.8rem">Relatório de especialidade<select data-equipment-report="${esc(e.id)}" aria-label="Relatório de ${esc(e.fichaTecnica?.nome || e.marca || e.id)}">${options(e.fichaTecnica?.relatorioEspecialidade)}</select></label>`;}
  document.addEventListener('change',e=>{const el=e.target.closest('[data-equipment-report]');if(!el)return;const eq=(dados.equipamentos||[]).find(x=>x.id===el.dataset.equipmentReport&&x.adminId===(usuarioLogado?.adminId||usuarioLogado?.id));if(!eq||!['admin','subadmin'].includes(usuarioLogado?.role))return;try{eq.fichaTecnica={...eq.fichaTecnica,relatorioEspecialidade:validate(el.value)};}catch(err){alert(err.message);}});
- window.TGEquipmentReports={types,options,validate,periods,maintenanceValidate,maintenanceValue,maintenanceFields,snapshot,requirements,matches,pending,resolve,equipmentField};
+ window.TGEquipmentReports={avacWork,avacTypes,types,options,validate,periods,maintenanceValidate,maintenanceValue,maintenanceFields,snapshot,requirements,matches,pending,resolve,equipmentField};
 })();
