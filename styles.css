@@ -759,6 +759,17 @@
 .su-escalao-btn.active{background:var(--orange,#f4520e);border-color:var(--orange,#f4520e);color:#fff}
 .ren-pack-btn{border:1px solid #cbd5e1;background:#fff;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:600;color:#5a6781;transition:.2s}
 .ren-pack-btn.active{background:#1e40af;border-color:#1e40af;color:#fff}
+.my-license-functions{margin-top:24px;padding-top:18px;border-top:1px solid #dbe4f2;text-align:left}
+.my-license-functions>h4{margin:0 0 16px;font-size:1rem}
+.my-license-function-groups{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 32px;align-items:start}
+.my-license-function-group{min-width:0}
+.my-license-function-group h5{margin:0 0 8px;color:#526681;font-size:.76rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+.my-license-function-group ul{list-style:none;padding:0;margin:0}
+.my-license-function-group li{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid #e5ebf4;font-size:.85rem;line-height:1.45;overflow-wrap:anywhere}
+.my-license-function-group small{font-size:.78rem;color:#526681;text-align:right;max-width:48%;flex-shrink:0}
+body.dark-mode .my-license-functions,body.dark-mode .my-license-function-group li{border-color:#35445e}
+body.dark-mode .my-license-function-group h5,body.dark-mode .my-license-function-group small{color:#b0c0d6}
+@media(max-width:700px){.my-license-function-groups{grid-template-columns:minmax(0,1fr);gap:20px}.my-license-function-group li{font-size:.82rem}}
 #renPackOverlay .ren-pack-dialog{width:min(1120px,calc(100vw - 40px));max-width:1120px;max-height:calc(100dvh - 40px);text-align:left;overflow-y:auto}
 .ren-pack-columns{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:24px;align-items:start}
 .ren-pack-form{min-width:0}

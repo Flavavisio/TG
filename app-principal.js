@@ -4536,6 +4536,44 @@ function _assistEstado(value) {
                 </div>` : `<div style="margin-top:10px;font-size:.78rem;color:#9a3412;">Ainda não trouxeste nenhuma empresa.</div>`}
             </div>`;
         }
+        function _minhaLicencaFuncionalidadesHtml(admin) {
+            const pack = packDoAdmin(admin);
+            const grupos = tgPackFeatureComparison(null, pack || 'express').map(g => ({
+                nome: g.name,
+                funcoes: g.features.filter(f => f.value).map(f => ({
+                    nome: f.label,
+                    detalhe: f.label === 'Relatórios de especialidade' ? 'Conforme a área de negócio' : !pack && f.label === 'Relatórios personalizados' ? 'Ilimitados' : typeof f.value === 'string' ? f.value : '',
+                })),
+            })).filter(g => g.funcoes.length);
+            const existentes = new Set(grupos.flatMap(g => g.funcoes.map(f => f.nome)));
+            const adicionais = [];
+            const adicionar = (nome, ativo) => {
+                if (ativo && !existentes.has(nome)) { adicionais.push({ nome, detalhe: '' }); existentes.add(nome); }
+            };
+            // Contas anteriores aos packs e subscrições adicionais mantêm as funções ativas.
+            adicionar('Contratos de manutenção', moduloContratosAtivo(admin));
+            adicionar('Frota', moduloFrotaAtivo(admin));
+            adicionar('Armazém / Stock / Gestão de Obras', moduloArmazemAtivo(admin) && !existentes.has('Stock / Artigos'));
+            adicionar('CRM Comercial', moduloCrmAtivo(admin));
+            adicionar('Assistências', moduloAssistAtivo(admin));
+            adicionar('Portal do Cliente', (!pack || admin.portalPlano) && moduloPortalAtivo(admin));
+            adicionar('Opções de integração ERP (sujeitas a compatibilidade)', moduloErpAtivo(admin));
+            adicionar('Rondas / Vigilância', moduloRondasAtivo(admin));
+            if (moduloNotificacoesAtivo(admin)) grupos[0].funcoes.push({ nome: 'Notificações', detalhe: '' });
+            if (!pack) {
+                adicionar('Relatórios de especialidade', admin.segurancaAtivo);
+                adicionar('Painel TV', admin.painelTvAtivo);
+                if (!admin.expressAtivo) ['Ponto / Assiduidade', 'GPS nas picagens', 'Férias e faltas', 'Mapa da Equipa'].forEach(nome => adicionar(nome, true));
+            }
+            if (adicionais.length) grupos.push({ nome: 'Outras funcionalidades da licença', funcoes: adicionais });
+            return `<section class="my-license-functions" aria-labelledby="myLicenseFunctionsTitle">
+                <h4 id="myLicenseFunctionsTitle">Funcionalidades incluídas${pack ? ' no Pack ' + PACKS[pack].nome : ' na tua licença'}</h4>
+                <div class="my-license-function-groups">${grupos.map(g => `<section class="my-license-function-group">
+                    <h5>${escapeHtmlSimples(g.nome)}</h5>
+                    <ul>${g.funcoes.map(f => `<li><span>${escapeHtmlSimples(f.nome)}</span>${f.detalhe ? `<small>${escapeHtmlSimples(f.detalhe)}</small>` : ''}</li>`).join('')}</ul>
+                </section>`).join('')}</div>
+            </section>`;
+        }
         function renderizarMinhaLicenca() {
             const container = document.getElementById('minhaLicencaContent');
             if (!usuarioLogado || usuarioLogado.role !== 'admin' && usuarioLogado.role !== 'subadmin') {
@@ -4562,7 +4600,7 @@ function _assistEstado(value) {
             }
             const diasRest = calcularDiasRestantes(admin.licenca.dataExpiracao);
             const valida = isLicencaValida(admin.licenca.dataExpiracao);
-            const planoLabel = PLANOS[admin.licenca.plano]?.label || admin.licenca.plano;
+            const planoLabel = packDoAdmin(admin) ? packDescricao(admin) : (PLANOS[admin.licenca.plano]?.label || admin.licenca.plano);
             const isDemo = ehPlanoDemo(admin.licenca.plano);
             const dataExpiracao = new Date(admin.licenca.dataExpiracao).toLocaleDateString('pt-PT');
             const valor = _valorTotalLicenca(admin).toFixed(2);
@@ -4580,7 +4618,7 @@ function _assistEstado(value) {
             }
             const totalFunc = contarFuncionarios(admin.id);
             const maxFunc = admin.licenca.maxFuncionarios;
-            const pedidoBasePend = (dados.pedidosRenovacao || []).find(p => p.adminId === admin.id && p.status === 'pendente' && (p.tipo === 'alteracao' || p.tipo === 'renovacao'));
+            const pedidoBasePend = (dados.pedidosRenovacao || []).find(p => p.adminId === admin.id && p.status === 'pendente' && (p.tipo === 'pack' || p.tipo === 'alteracao' || p.tipo === 'renovacao'));
             const _doisAnosMs = 2 * 365 * 24 * 60 * 60 * 1000;
             const _contaAntiga = admin.dataCriacao && (Date.now() - admin.dataCriacao) >= _doisAnosMs;
             const fb = admin.licencaFeedback;
@@ -4590,113 +4628,8 @@ function _assistEstado(value) {
                 : fb === 'vermelho'
                 ? `<div style="margin-bottom:14px; padding:12px; background:#fee2e2; border-radius:8px; color:#991b1b;"><i class="fas fa-times-circle"></i> O seu último pedido de licença foi <strong>recusado</strong>.</div>`
                 : '';
-            // Cartão de um módulo de licença — badge (Ativo/Inativo) como 1ª linha, nome +
-            // preço logo a seguir, e só depois o aviso relevante (a vencer, pedido pendente, ou
-            // como ativar). Uma função só para os 4 add-ons pagos manterem sempre o mesmo layout.
-            function _licencaCardModulo(o) {
-                const badgeCor = o.ativo ? '#16a34a' : (o.corInativo || '#94a3b8');
-                const badgeTexto = o.ativo ? 'Ativo' : (o.badgeInativo || 'Inativo');
-                const expTxt = (o.ativo && o.expiracaoMs) ? ` até ${new Date(o.expiracaoMs).toLocaleDateString('pt-PT')}` : '';
-                const precoTxt = o.precoMensal != null ? `<span style="color:#64748b;font-weight:400;font-size:.85rem;"> — ${o.precoMensal.toFixed(2)} €/mês${_IVA_INC}</span>` : (o.precoTexto ? `<span style="color:#64748b;font-weight:400;font-size:.85rem;"> — ${o.precoTexto}</span>` : '');
-                let aviso = '';
-                if (o.ativo && o.expiracaoMs && calcularDiasRestantes(o.expiracaoMs) <= 10) {
-                    aviso = o.pedidoPendente
-                        ? `<div style="margin-top:8px; padding:8px; background:#fef3c7; border-radius:6px; color:#92400e; font-size:13px;"><i class="fas fa-clock"></i> Renovação pedida — a aguardar confirmação.</div>`
-                        : `<div style="margin-top:8px; padding:8px; background:#eff6ff; border-radius:6px; color:#1e40af; font-size:13px;"><i class="fas fa-circle-info"></i> A vencer em breve — usa "Renovar tudo" ou "Alterar Plano" no topo desta página.</div>`;
-                } else if (!o.ativo) {
-                    aviso = o.pedidoPendente
-                        ? `<div style="margin-top:8px; padding:8px; background:#fef3c7; border-radius:6px; color:#92400e; font-size:13px;"><i class="fas fa-clock"></i> Pedido enviado — os dados de pagamento estão no resumo, mais abaixo.</div>`
-                        : (o.descricaoInativo ? `<div style="margin-top:8px; font-size:13px; color:#475569;">${o.descricaoInativo}</div>` : '');
-                }
-                return `<div style="margin-top:14px; padding:12px; background:#f1f5f9; border-radius:8px; text-align:left;">
-                    <div><span class="badge" style="background:${badgeCor};color:#fff;">${badgeTexto}${expTxt}</span></div>
-                    <div style="margin-top:6px;"><i class="fas ${o.icone}" style="width:18px;color:#64748b;"></i> <strong>${o.nome}</strong>${precoTxt}</div>
-                    ${aviso}
-                </div>`;
-            }
-            const modAtivo = moduloContratosAtivo(admin);
-            const contratoPedidoPend = (dados.pedidosRenovacao || []).find(p => p.adminId === admin.id && p.status === 'pendente' && (p.tipo || '').startsWith('contrato'));
-            const modBloco = _licencaCardModulo({
-                nome: 'Contratos de Manutenção', icone: 'fa-file-signature', ativo: modAtivo,
-                expiracaoMs: admin.contratosExpiracao, precoMensal: PRECO_CONTRATOS_MENSAL, pedidoPendente: contratoPedidoPend,
-                descricaoInativo: 'Ative o módulo para gerir contratos de manutenção, em "Alterar Plano" no topo desta página. A ativação é feita pelo Super Admin após confirmação do pagamento.'
-            });
-            const frotaAtivo = moduloFrotaAtivo(admin);
-            const frotaPedidoPend = (dados.pedidosRenovacao || []).find(p => p.adminId === admin.id && p.status === 'pendente' && (p.tipo || '').startsWith('frota'));
-            const frotaBloco = _licencaCardModulo({
-                nome: 'Frota', icone: 'fa-truck', ativo: frotaAtivo,
-                expiracaoMs: admin.frotaExpiracao, precoMensal: PRECO_FROTA_MENSAL, pedidoPendente: frotaPedidoPend,
-                descricaoInativo: 'Ative o módulo para gerir a frota de veículos, em "Alterar Plano" no topo desta página. A ativação é feita pelo Super Admin após confirmação do pagamento.'
-            });
-            const armazemAtivo = moduloArmazemAtivo(admin);
-            const armazemPedidoPend = (dados.pedidosRenovacao || []).find(p => p.adminId === admin.id && p.status === 'pendente' && (p.tipo || '').startsWith('armazem'));
-            const armazemBloco = _licencaCardModulo({
-                nome: 'Armazém / Stock / Gestão de Obras', icone: 'fa-warehouse', ativo: armazemAtivo,
-                expiracaoMs: admin.armazemExpiracao, precoMensal: PRECO_ARMAZEM_MENSAL, pedidoPendente: armazemPedidoPend,
-                descricaoInativo: 'Add-on de gestão de stock: artigos, fornecedores, obras, encomendas e planos de materiais. Ative em "Alterar Plano" no topo desta página. A ativação é feita pelo Super Admin após confirmação do pagamento.'
-            });
-            const portalBloco = `<div style="margin-top:14px; padding:12px; background:#f1f5f9; border-radius:8px; text-align:left;">
-                <div><span class="badge" style="background:#16a34a;color:#fff;">Incluído</span></div>
-                <div style="margin-top:6px;"><i class="fas fa-user-group" style="width:18px;color:#64748b;"></i> <strong>Portal do Cliente</strong><span style="color:#64748b;font-weight:400;font-size:.85rem;"> — incluído na licença base</span></div>
-            </div>`;
-            const notificacoesBloco = `<div style="margin-top:14px; padding:12px; background:#f1f5f9; border-radius:8px; text-align:left;">
-                <div><span class="badge" style="background:#16a34a;color:#fff;">Incluído</span></div>
-                <div style="margin-top:6px;"><i class="fas fa-bell" style="width:18px;color:#64748b;"></i> <strong>Notificações</strong><span style="color:#64748b;font-weight:400;font-size:.85rem;"> — incluído na licença base</span></div>
-            </div>`;
-            const crmAtivo = moduloCrmAtivo(admin);
-            const crmPedidoPend = (dados.pedidosRenovacao || []).find(p => p.adminId === admin.id && p.status === 'pendente' && (p.tipo || '').startsWith('crm'));
-            const crmBloco = _licencaCardModulo({
-                nome: 'CRM Comercial', icone: 'fa-handshake', ativo: crmAtivo, corInativo: '#7c3aed',
-                expiracaoMs: admin.crmExpiracao, precoMensal: PRECO_CRM_MENSAL, pedidoPendente: crmPedidoPend,
-                descricaoInativo: 'Gestão do ciclo comercial completo — leads, pipeline, propostas, mapa de visitas e conversão automática em cliente/contrato assim que um negócio é ganho. Ative em "Alterar Plano" no topo desta página. A ativação é feita pelo Super Admin após confirmação do pagamento.'
-            });
-            const assistAtivo = moduloAssistAtivo(admin);
-            const assistPedidoPend = (dados.pedidosRenovacao || []).find(p => p.adminId === admin.id && p.status === 'pendente' && (p.tipo || '').startsWith('assist'));
-            const assistBloco = _licencaCardModulo({
-                nome: 'Total Gest Assist', icone: 'fa-headset', ativo: assistAtivo, corInativo: '#0e7490',
-                expiracaoMs: admin.assistExpiracao, precoMensal: PRECO_ASSIST_MENSAL, pedidoPendente: assistPedidoPend,
-                descricaoInativo: 'Pedidos de assistência técnica dos clientes, com criação direta de Ordem de Serviço a partir de cada pedido. Ative em "Alterar Plano" no topo desta página. A ativação é feita pelo Super Admin após confirmação do pagamento.'
-            });
-            const erpBloco = `<div style="margin-top:14px; padding:12px; background:#f1f5f9; border-radius:8px; text-align:left; opacity:.85;">
-                        <strong>Integração com ERP's</strong> <span class="badge" style="background:#0891b2;color:#fff;">Em breve</span>
-                        <div style="margin-top:8px; font-size:13px; color:#475569;">Emite faturas diretamente na Moloni (e futuramente noutros ERPs) a partir das Ordens de Serviço concluídas — cliente, valor e descrição enviados automaticamente. Fala com a Total Gest se quiseres ser dos primeiros a testar.</div>
-                    </div>`;
-            const rondasAtivo = moduloRondasAtivo(admin);
-            const rondasPedidoPend = (dados.pedidosRenovacao || []).find(p => p.adminId === admin.id && p.status === 'pendente' && (p.tipo || '').startsWith('rondas'));
-            const rondasBloco = _licencaCardModulo({
-                nome: 'Rondas / Vigilância', icone: 'fa-shield-halved', ativo: rondasAtivo, corInativo: '#0f766e',
-                badgeInativo: 'Novo — Grátis temporário',
-                expiracaoMs: admin.rondasExpiracao, precoTexto: 'grátis (fase de lançamento)', pedidoPendente: rondasPedidoPend,
-                descricaoInativo: 'Gestão de rondas de segurança: postos com QR/NFC, rotas com horário e SLA, execução com scanner no telemóvel e alertas automáticos de postos saltados ou fora de horário. Grátis por agora, fase de lançamento. Ative em "Alterar Plano" no topo desta página.'
-            });
-            // Cartão de destaque do pack (modelo novo) — só aparece se a conta tiver um pack.
-            // Mostra o pack, o escalão e o preço, mais a lista do que inclui. As contas antigas
-            // (sem pack) não veem isto e continuam a ver só os add-ons individuais como antes.
-            const _packAtual = packDoAdmin(admin);
-            let _packCardHtml = '';
-            if (_packAtual) {
-                const def = PACKS[_packAtual];
-                const esc = admin.packEscalao || '5';
-                const escLabel = esc === '50+' ? 'Mais de 50 (blocos de +5)' : `Até ${esc} funcionários`;
-                const precoBase = PACK_PRECOS[_packAtual]?.[esc === '50+' ? 50 : esc];
-                const inclui = [];
-                if (def.flags?.expressAtivo) inclui.push('Menu simplificado (Express)');
-                if (def.flags?.segurancaAtivo) inclui.push('Relatórios de especialidade');
-                (def.planos || []).forEach(p => {
-                    const nome = { contratosPlano: 'Contratos de Manutenção', frotaPlano: 'Frota', armazemPlano: 'Armazém / Obras', crmPlano: 'CRM Comercial', assistPlano: 'Assist', erpPlano: 'Integração ERP', rondasPlano: 'Rondas', portalPlano: 'Portal do Cliente' }[p];
-                    if (nome) inclui.push(nome);
-                });
-                _packCardHtml = `
-                    <div class="report-card" style="border-left-color:#1e40af;background:linear-gradient(135deg,#eff6ff,#fff);">
-                        <h4><i class="fas fa-box-open"></i> Pack ${def.nome}</h4>
-                        <div class="report-item"><span>Escalão</span><span>${escLabel}</span></div>
-                        ${precoBase ? `<div class="report-item"><span>Preço de catálogo atual</span><span>${precoBase.toFixed(2)} €/mês${_IVA_INC}</span></div>` : ''}
-                        <div style="margin-top:10px;font-size:.85rem;color:#334155;"><strong>Inclui:</strong> Base (OS, folhas, clientes, contratos, relatórios personalizados)${inclui.length ? ', ' + inclui.join(', ') : ''}.</div>
-                    </div>`;
-            }
             container.innerHTML = `
                     ${fbBanner}
-                    ${_packCardHtml}
                     <div class="report-card ${fbClasse}" style="border-left-color: ${valida ? '#16a34a' : '#dc2626'};">
                         <h4><i class="fas fa-id-card"></i> ${admin.nome}</h4>
                         <div class="report-item"><span>Empresa</span><span>${admin.empresa || '-'}</span></div>
@@ -4710,11 +4643,11 @@ function _assistEstado(value) {
                         ${pedidoBasePend
                             ? `<div style="margin-top:16px; padding:12px; background:#fef3c7; border-radius:8px; color:#92400e;">
                                 <i class="fas fa-clock"></i> <strong>Pedido de licença enviado</strong> — a aguardar aprovação do Super Admin.
-                                <div style="margin-top:4px; font-size:13px;">Plano pedido: ${PLANOS[pedidoBasePend.planoPedido]?.label || pedidoBasePend.planoPedido}</div>
+                                <div style="margin-top:4px; font-size:13px;">${pedidoBasePend.tipo === 'pack' ? 'Pack pedido: ' + (PACKS[pedidoBasePend.packPedido]?.nome || pedidoBasePend.packPedido) : 'Plano pedido: ' + (PLANOS[pedidoBasePend.planoPedido]?.label || pedidoBasePend.planoPedido)}</div>
                             </div>`
                             : (!isDemo ? `
                             <div style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap;">
-                                <button class="btn btn-sm btn-renovar" onclick="abrirModalRenovacao('renovacao')"><i class="fas fa-sync-alt"></i> Pedir Renovação / Alteração ao seu Plano</button>
+                                <button class="btn btn-sm btn-renovar" onclick="abrirModalRenovacao('renovacao')"><i class="fas fa-sync-alt"></i> ${packDoAdmin(admin) ? 'Renovar ou alterar pack' : 'Pedir renovação / alteração do plano'}</button>
                             </div>
                         ` : `
                             <div style="margin-top:16px; padding:12px; background:#fef3c7; border-radius:8px; color:#92400e;">
@@ -4725,11 +4658,11 @@ function _assistEstado(value) {
                             </div>
                         `)}
                         ${(() => {
-                            const _pendentesTodos = [pedidoBasePend, contratoPedidoPend, frotaPedidoPend, armazemPedidoPend, crmPedidoPend].filter(Boolean);
+                            const _pendentesTodos = (dados.pedidosRenovacao || []).filter(p => p.adminId === admin.id && p.status === 'pendente' && p.tipo !== 'cancelamento');
                             if (!_pendentesTodos.length) return ''; // sem nada pendente, não há resumo nenhum a mostrar
                             const _totalPend = _pendentesTodos.reduce((s, p) => s + valorDoPedido(p), 0);
                             const _nomesTipo = { contrato: 'Contratos de Manutenção', frota: 'Frota', armazem: 'Armazém / Stock / Gestão de Obras', crm: 'CRM Comercial', assist: 'Total Gest Assist' };
-                            const _nomeLinha = (p) => (p.tipo === 'renovacao' || p.tipo === 'alteracao') ? (PLANOS[p.planoPedido]?.label || 'Licença base') : (_nomesTipo[(p.tipo || '').split('_')[0]] || p.tipo);
+                            const _nomeLinha = (p) => p.tipo === 'pack' ? 'Pack ' + (PACKS[p.packPedido]?.nome || p.packPedido) : (p.tipo === 'renovacao' || p.tipo === 'alteracao') ? (PLANOS[p.planoPedido]?.label || 'Licença base') : (_nomesTipo[(p.tipo || '').split('_')[0]] || p.tipo);
                             return `
                             <div style="margin-top:16px;padding:14px 16px;background:#f0fdfa;border:1px solid #99f6e4;border-radius:10px;">
                                 <div style="font-weight:700;color:#0f766e;margin-bottom:8px;"><i class="fas fa-receipt"></i> Resumo do pedido${_pendentesTodos.length > 1 ? ' conjunto' : ''}</div>
@@ -4738,20 +4671,7 @@ function _assistEstado(value) {
                                 ${blocoInstrucoesPagamentoGrupo(_pendentesTodos)}
                             </div>`;
                         })()}
-                        ${(!isDemo && (!modAtivo || !frotaAtivo || !armazemAtivo || !crmAtivo)) ? `
-                        <div style="margin-top:16px;text-align:left;">
-                            <button class="btn btn-sm" style="background:#0f766e;color:#fff;" onclick="_ativAddonsAbrir()"><i class="fas fa-puzzle-piece"></i> Ativar Add-ons</button>
-                        </div>
-                        ` : ''}
-                        ${portalBloco}
-                        ${notificacoesBloco}
-                        ${modBloco}
-                        ${frotaBloco}
-                        ${armazemBloco}
-                        ${crmBloco}
-                        ${assistBloco}
-                        ${rondasBloco}
-                        ${''/* erpBloco escondido de momento, ver pedido do utilizador */}
+                        ${_minhaLicencaFuncionalidadesHtml(admin)}
                         ${_referenciaBlocoHTML(admin)}
                         <div style="margin-top:20px; padding:14px 16px; background:#eff6ff; border-radius:10px; border:1px solid #bfdbfe;">
                             <div style="font-weight:700; color:#152a52; margin-bottom:4px;"><i class="fas fa-box-archive"></i> Os teus dados são teus</div>
