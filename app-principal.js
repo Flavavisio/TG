@@ -24468,6 +24468,37 @@ async function salvarAdmin(e) {
         function _renPackFuncMax() {
             return parseInt(_renPack.escalao, 10) + _renPack.blocos * 5;
         }
+        function _renPackFuncionalidadesHtml(admin) {
+            const atual = packDoAdmin(admin);
+            const groups = tgPackFeatureComparison(atual, _renPack.pack);
+            const features = groups.flatMap(g => g.features);
+            const gains = features.filter(f => ['added', 'increased'].includes(f.change)).length;
+            const losses = features.filter(f => ['removed', 'reduced'].includes(f.change)).length;
+            const badges = { added: 'Nova função', increased: 'Limite superior', removed: 'Deixa de incluir', reduced: 'Limite inferior' };
+            return `<aside class="ren-pack-features" aria-labelledby="renPackFeaturesTitle">
+                <div class="ren-pack-features-heading">
+                    <span class="ren-pack-eyebrow">Funcionalidades do pack selecionado</span>
+                    <h4 id="renPackFeaturesTitle" aria-live="polite">Pack ${PACKS[_renPack.pack].nome}</h4>
+                    <p>${atual === _renPack.pack ? 'Estas são as funções do teu pack atual.' : atual ? `Comparação com o teu Pack ${PACKS[atual].nome}.` : 'Consulta tudo o que este pack inclui.'}</p>
+                    <div class="ren-pack-change-summary">
+                        ${gains ? `<span class="ren-pack-gains">${gains} melhoria${gains === 1 ? '' : 's'} face ao pack atual</span>` : ''}
+                        ${losses ? `<span class="ren-pack-losses">${losses} ${losses === 1 ? 'função ou limite reduzido' : 'funções ou limites reduzidos'}</span>` : ''}
+                    </div>
+                </div>
+                <div class="ren-pack-feature-groups">
+                    ${gains ? `<section class="ren-pack-differences ren-pack-differences-gains"><h5>O que ganhas</h5><ul>${features.filter(f => ['added', 'increased'].includes(f.change)).map(f => `<li>${escapeHtmlSimples(f.label)}${typeof f.value === 'string' ? ` — ${escapeHtmlSimples(f.value)} (antes: ${escapeHtmlSimples(f.previous)})` : ''}</li>`).join('')}</ul></section>` : ''}
+                    ${losses ? `<section class="ren-pack-differences ren-pack-differences-losses"><h5>O que deixa de estar incluído ou diminui</h5><ul>${features.filter(f => ['removed', 'reduced'].includes(f.change)).map(f => `<li>${escapeHtmlSimples(f.label)}${f.change === 'reduced' ? ` — ${escapeHtmlSimples(f.value)} (antes: ${escapeHtmlSimples(f.previous)})` : ''}</li>`).join('')}</ul></section>` : ''}
+                    ${groups.map(g => `<section class="ren-pack-feature-group">
+                    <h5>${escapeHtmlSimples(g.name)}</h5>
+                    <ul>${g.features.map(f => `<li class="ren-pack-feature ${f.value ? 'is-included' : 'is-excluded'}" data-change="${f.change}">
+                        <i class="fas ${f.value ? 'fa-check' : 'fa-minus'}" aria-hidden="true"></i>
+                        <div><span>${escapeHtmlSimples(f.label)}</span>${typeof f.value === 'string' ? `<small>${escapeHtmlSimples(f.value)}${['increased', 'reduced'].includes(f.change) ? ` · antes: ${escapeHtmlSimples(f.previous)}` : ''}</small>` : ''}
+                        ${badges[f.change] ? `<span class="ren-pack-feature-badge">${badges[f.change]}</span>` : ''}</div>
+                    </li>`).join('')}</ul>
+                </section>`).join('')}</div>
+                <p class="ren-pack-feature-note">Selecionar um pack permite comparar. A alteração só é pedida ao carregar em «Pedir».</p>
+            </aside>`;
+        }
         function _renPackRender() {
             const admin = adminAtual();
             const c = _renPackCalcular();
@@ -24483,19 +24514,21 @@ async function salvarAdmin(e) {
             const _limRel = PACKS[_renPack.pack]?.limites?.relatoriosPersonalizados ?? Infinity;
             const _relExistentes = (dados.tiposTrabalhoCustom || []).filter(t => t.adminId === admin.id).length;
             const _avisoDescida = (_perdas.length || _relExistentes > _limRel) ? `
-                <div style="background:#fff7ed;border:1px solid #fdba74;border-radius:8px;padding:12px;color:#9a3412;font-size:.84rem;margin-bottom:8px;">
+                <div class="ren-pack-warning-note" style="background:#fff7ed;border:1px solid #fdba74;border-radius:8px;padding:12px;color:#9a3412;font-size:.84rem;margin-bottom:8px;">
                     <div style="font-weight:700;margin-bottom:4px;"><i class="fas fa-triangle-exclamation"></i> Ao passar para o ${PACKS[_renPack.pack].nome}:</div>
                     ${_perdas.length ? `<div>Deixas de ter acesso a: <strong>${_perdas.join(', ')}</strong>.</div>` : ''}
                     ${_relExistentes > _limRel ? `<div>Tens ${_relExistentes} modelos de relatório personalizado e este pack permite ${_limRel}: os que já tens ficam, mas não podes criar novos.</div>` : ''}
                     <div style="margin-top:4px;color:#7c2d12;">Os teus dados não são apagados — só deixas de ter acesso a estes módulos.</div>
                 </div>` : '';
             const overlay = document.getElementById('renPackOverlay');
+            const observacoes = document.getElementById('ren_pack_obs')?.value || '';
             overlay.innerHTML = `
-                <div class="modal" style="max-width:600px;">
+                <div class="modal ren-pack-dialog" role="dialog" aria-modal="true" aria-labelledby="renPackTitle">
                     <div style="display:flex;align-items:center;justify-content:space-between;">
-                        <h3><i class="fas fa-box-open"></i> O meu pack</h3>
-                        <button class="close-modal" onclick="document.getElementById('renPackOverlay').classList.remove('open')">&times;</button>
+                        <h3 id="renPackTitle"><i class="fas fa-box-open"></i> O meu pack</h3>
+                        <button type="button" class="close-modal" aria-label="Fechar alteração de pack" onclick="document.getElementById('renPackOverlay').classList.remove('open')">&times;</button>
                     </div>
+                    <div class="ren-pack-columns"><div class="ren-pack-form">
                     <div class="form-group">
                         <label>Pack</label>
                         <div style="display:flex;gap:6px;flex-wrap:wrap;">
@@ -24507,7 +24540,7 @@ async function salvarAdmin(e) {
                         <div style="display:flex;gap:6px;flex-wrap:wrap;">
                             ${['5','10','25','50'].map(e => `<button type="button" class="ren-pack-btn ${_renPack.escalao === e ? 'active' : ''}" onclick="_renPackSet('escalao','${e}')">Até ${e}</button>`).join('')}
                         </div>
-                        <div style="margin-top:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 12px;">
+                        <div class="ren-pack-capacity-box" style="margin-top:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 12px;">
                             <div style="font-size:.82rem;margin-bottom:6px;">Precisa de mais? Junte blocos de +5 funcionários (5 €/mês cada), até 100 no total:</div>
                             <div style="display:flex;align-items:center;gap:12px;">
                                 <button type="button" onclick="_renPackBloco(-1)" style="width:32px;height:32px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;font-size:1.1rem;">−</button>
@@ -24524,7 +24557,7 @@ async function salvarAdmin(e) {
                             <button type="button" class="ren-pack-btn ${_renPack.periodo === 'anual' ? 'active' : ''}" onclick="_renPackSet('periodo','anual')">Anual (−10%)</button>
                         </div>
                     </div>
-                    <div style="background:#eff6ff;border-radius:10px;padding:14px 16px;margin:8px 0;">
+                    <div class="ren-pack-price-box" style="background:#eff6ff;border-radius:10px;padding:14px 16px;margin:8px 0;">
                         <div style="display:flex;justify-content:space-between;align-items:baseline;">
                             <span style="font-weight:600;">Pack ${PACKS[_renPack.pack].nome} · ${_renPackFuncMax()} func.</span>
                             <span style="font-size:1.3rem;font-weight:700;color:#0b1f3a;">${_renPackFmt(c.total)}<span style="font-size:.8rem;font-weight:400;color:#64748b;">${c.sufixo}${_IVA_INC}</span></span>
@@ -24534,13 +24567,14 @@ async function salvarAdmin(e) {
                     </div>
                     ${_avisoDescida}
                     ${janela24h
-                        ? `<div style="background:#fef3c7;border-radius:8px;padding:12px;color:#92400e;font-size:.85rem;margin-bottom:8px;"><i class="fas fa-clock"></i> A licença fica <strong>ativa já</strong>, e tens <strong>24 horas</strong> para o pagamento ser confirmado. Se não for confirmado nesse prazo, a licença fica suspensa até ao pagamento.</div>`
-                        : `<div style="background:#d1fae5;border-radius:8px;padding:12px;color:#065f46;font-size:.85rem;margin-bottom:8px;"><i class="fas fa-check-circle"></i> Como a tua licença ainda é válida, esta mudança fica ativa sem prazo de 24h — os dias que faltam somam-se.</div>`}
+                        ? `<div class="ren-pack-warning-note" style="background:#fef3c7;border-radius:8px;padding:12px;color:#92400e;font-size:.85rem;margin-bottom:8px;"><i class="fas fa-clock"></i> A licença fica <strong>ativa já</strong>, e tens <strong>24 horas</strong> para o pagamento ser confirmado. Se não for confirmado nesse prazo, a licença fica suspensa até ao pagamento.</div>`
+                        : `<div class="ren-pack-positive-note" style="background:#d1fae5;border-radius:8px;padding:12px;color:#065f46;font-size:.85rem;margin-bottom:8px;"><i class="fas fa-check-circle"></i> Como a tua licença ainda é válida, esta mudança fica ativa sem prazo de 24h — os dias que faltam somam-se.</div>`}
                     <div class="form-group">
                         <label>Observações (opcional)</label>
-                        <textarea id="ren_pack_obs" rows="2" placeholder="Algo que queiras dizer-nos sobre este pedido..."></textarea>
+                        <textarea id="ren_pack_obs" rows="2" placeholder="Algo que queiras dizer-nos sobre este pedido...">${escapeHtmlSimples(observacoes)}</textarea>
                     </div>
                     <button type="button" class="btn btn-primary" style="width:100%;" onclick="_renPackEnviar()"><i class="fas fa-paper-plane"></i> Pedir ${PACKS[_renPack.pack].nome} — ${_renPackFmt(c.total)}${c.sufixo}</button>
+                    </div>${_renPackFuncionalidadesHtml(admin)}</div>
                 </div>`;
         }
         function _renPackSet(campo, valor) {
