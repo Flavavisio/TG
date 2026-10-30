@@ -8243,7 +8243,7 @@ function _assistEstado(value) {
                 flags: Object.keys(a.flags || {}).filter(k => !(k in (b.flags || {}))),
             };
         }
-        function aplicarPackAoAdmin(admin, nomePack, validadeMs) {
+        function aplicarPackAoAdmin(admin, nomePack, validadeMs, periodo = 'mensal') {
             const def = PACKS[nomePack];
             if (!admin || !def) return false;
             // Descida (ou qualquer mudança de pack): desliga primeiro o que o pack anterior dava e
@@ -8257,7 +8257,7 @@ function _assistEstado(value) {
             admin.packAtual = nomePack;
             Object.entries(def.flags || {}).forEach(([k, v]) => { admin[k] = v; });
             (def.planos || []).forEach(planoKey => {
-                admin[planoKey] = 'mensal';
+                admin[planoKey] = periodo === 'anual' ? 'anual' : 'mensal';
                 const expKey = planoKey.replace('Plano', 'Expiracao');
                 admin[expKey] = validadeMs || (Date.now() + 30 * 24 * 60 * 60 * 1000);
             });
@@ -25130,7 +25130,7 @@ async function salvarAdmin(e) {
                 const novaValidade = _baseRenov(admin.licenca?.dataExpiracao) + dias * 86400000;
                 const _difDescida = packDiferencaAoMudar(admin.packAtual, pedido.packPedido);
                 const _desativados = [..._difDescida.planos, ..._difDescida.flags].map(k => PACK_MODULO_NOME[k]).filter(Boolean);
-                aplicarPackAoAdmin(admin, pedido.packPedido, novaValidade);
+                aplicarPackAoAdmin(admin, pedido.packPedido, novaValidade, pedido.periodoPedido);
                 admin.packEscalao = pedido.escalaoPedido;
                 admin.packBlocos = pedido.blocosPedido || 0;
                 // Licença base: soma o período ao que falta, e ajusta o máximo de funcionários.
