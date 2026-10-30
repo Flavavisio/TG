@@ -8175,6 +8175,13 @@ function _assistEstado(value) {
                 planos: ['assistPlano', 'portalPlano', 'contratosPlano', 'frotaPlano', 'armazemPlano'],
                 limites: { relatoriosPersonalizados: 40, camposPorRelatorio: 40 },
             },
+            pro_plus: {
+                nome: 'Pro+',
+                ordem: 3.5,
+                flags: { segurancaAtivo: true, obrasAvancadoAtivo: true, materiaisEntregaAtivo: true, painelTvAtivo: true },
+                planos: ['assistPlano', 'portalPlano', 'contratosPlano', 'frotaPlano', 'armazemPlano', 'crmPlano'],
+                limites: { relatoriosPersonalizados: 40, camposPorRelatorio: 40 },
+            },
             supreme: {
                 nome: 'Supreme',
                 ordem: 4,
@@ -8190,6 +8197,7 @@ function _assistEstado(value) {
             express: { 5: 42.49, 10: 47.49, 25: 62.49, 50: 102.49 },
             expert:  { 5: 52.49, 10: 57.49, 25: 72.49, 50: 112.49 },
             pro:     { 5: 72.49, 10: 77.49, 25: 92.49, 50: 132.49 },
+            pro_plus: { 5: 82.48, 10: 87.48, 25: 102.48, 50: 142.48 },
             supreme: { 5: 102.49, 10: 107.49, 25: 122.49, 50: 162.49 },
         };
         // Acima de 50 funcionários: blocos de +5, a 5€/bloco/mês, iguais em todos os packs.
@@ -8204,7 +8212,7 @@ function _assistEstado(value) {
         // (Infinity), para o modelo antigo continuar a funcionar exatamente como antes.
         // O Passaporte pertence ao pack da empresa, incluindo os seus técnicos.
         function moduloPassaporteAtivo(admin) {
-            return ['expert', 'pro', 'supreme'].includes(packDoAdmin(admin));
+            return ['expert', 'pro', 'pro_plus', 'supreme'].includes(packDoAdmin(admin));
         }
         function packLimite(admin, chaveLimite) {
             const p = packDoAdmin(admin);
@@ -22549,6 +22557,7 @@ async function salvarEncarregado(e) {
                                 <option value="express">Express</option>
                                 <option value="expert">Expert</option>
                                 <option value="pro">Pro</option>
+                                <option value="pro_plus">Pro+</option>
                                 <option value="supreme">Supreme</option>
                             </select>
                             <select id="admin_pack_escalao" style="width:130px;">
@@ -23845,6 +23854,7 @@ async function salvarAdmin(e) {
                                 <option value="express" ${admin.packAtual === 'express' ? 'selected' : ''}>Express</option>
                                 <option value="expert" ${admin.packAtual === 'expert' ? 'selected' : ''}>Expert</option>
                                 <option value="pro" ${admin.packAtual === 'pro' ? 'selected' : ''}>Pro</option>
+                                <option value="pro_plus" ${admin.packAtual === 'pro_plus' ? 'selected' : ''}>Pro+</option>
                                 <option value="supreme" ${admin.packAtual === 'supreme' ? 'selected' : ''}>Supreme</option>
                             </select>
                             <select id="edit_admin_pack_escalao" style="width:130px;">
@@ -24335,7 +24345,7 @@ async function salvarAdmin(e) {
                     <div class="form-group">
                         <label>Pack</label>
                         <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                            ${['express','expert','pro','supreme'].map(p => `<button type="button" class="ren-pack-btn ${_renPack.pack === p ? 'active' : ''}" onclick="_renPackSet('pack','${p}')">${PACKS[p].nome}</button>`).join('')}
+                            ${['express','expert','pro','pro_plus','supreme'].map(p => `<button type="button" class="ren-pack-btn ${_renPack.pack === p ? 'active' : ''}" onclick="_renPackSet('pack','${p}')">${PACKS[p].nome}</button>`).join('')}
                         </div>
                     </div>
                     <div class="form-group">
