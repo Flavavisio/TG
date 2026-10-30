@@ -1426,7 +1426,7 @@ body.dark-mode .alerta-s { color: var(--tgm-text-sub); }
 .tgm-equipa-linha { display:flex; align-items:center; gap:8px; padding:7px 4px; border-bottom:1px solid #f4f6fa; }
 .tgm-equipa-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
 .tgm-equipa-nome { font-size:.82rem; color:#152a52; font-weight:600; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:left; }
-.tgm-equipa-estado { font-size:.74rem; font-weight:600; text-align:right; flex-shrink:0; max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.tgm-equipa-estado { font-size:.74rem; font-weight:600; text-align:right; flex:1; min-width:0; max-width:60%; overflow-wrap:anywhere; white-space:normal; }
 .tgm-admin-rodape { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:14px; padding-top:12px; border-top:1px solid #f0f2f6; flex-wrap:wrap; }
 .tgm-admin-valor { font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:1.3rem; color:#152a52; }
 .tgm-admin-sub { font-size:.72rem; color:#5a6781; }
@@ -1804,3 +1804,19 @@ body.dark-mode .obras-estado-contador[aria-pressed="true"]{background:#183b4d;bo
 /* OS: mesmos contadores das obras, em quatro grupos. */
 #servicosContadores{grid-template-columns:repeat(4,minmax(0,1fr))}
 @media(max-width:850px){#servicosContadores{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}#servicosContadores .obras-estado-contador{grid-column:auto;min-height:82px;padding:12px 8px}#servicosContadores .obras-estado-contador span{font-size:12px}}
+
+/* Tempo pessoal da intervenção, sem recalcular ou gravar registos de ponto. */
+.tg-tempo-servico { display:block; font-size:.8rem; line-height:1.5; color:var(--tgm-cian, #0f766e); }
+.tg-tempo-servico strong { font-variant-numeric:tabular-nums; white-space:nowrap; }
+.tgt-focus > .tg-tempo-servico { margin:8px 0 16px; font-size:.95rem; font-weight:600; }
+.tgm-resumo-txt { min-width:0; overflow-wrap:anywhere; text-align:left; }
+.tgm-resumo-pessoas { flex:1; min-width:0; display:flex; flex-direction:column; gap:6px; text-align:right; font-size:.82rem; overflow-wrap:anywhere; }
+.tgm-resumo-pessoa { display:block; }
+.tgm-resumo-estado { display:flex; flex-direction:column; align-items:flex-end; gap:2px; }
+@media (max-width:600px) {
+    .tgm-resumo-linha { display:grid; grid-template-columns:44px minmax(0,1fr) auto; }
+    .tgm-resumo-hora { grid-column:1; grid-row:1; }
+    .tgm-resumo-txt { grid-column:2; grid-row:1; }
+    .tgm-resumo-pessoas { grid-column:2 / 4; grid-row:2; }
+    .tgm-resumo-estado { grid-column:3; grid-row:1; }
+}

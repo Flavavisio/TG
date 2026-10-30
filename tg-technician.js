@@ -111,6 +111,7 @@
             ${job.address?`<div class="tgt-location">${icon('location-dot')}<span>${esc(job.address)}</span></div>`:''}
             ${job.row.observacoes?`<div class="tgt-access">${icon('circle-info')}<p>${esc(job.row.observacoes)}</p></div>`:''}
             ${info?`<p class="tgt-focus-info">${esc(info)}</p>`:''}
+            ${open && typeof _tempoServicoHTML==='function'?_tempoServicoHTML(job.open,job.kind==='obra'?'Em serviço nesta obra há':'Em serviço neste cliente há'):''}
             ${open?`<div class="tgt-tools">${job.kind==='os'?button(icon('camera')+' Fotografias','photos',job):''}${button(icon('boxes-stacked')+' Materiais','materials',job)}${passportTarget(job)?button(icon('id-card')+' Passaporte','passport',job):''}</div>`:''}
             <div class="tgt-focus-actions">${button(startLabel+' '+icon('arrow-right'),open?'exit':'start',job,true)}<div class="tgt-detail-actions">${button('Ver '+(job.kind==='os'?'ordem de serviço':'obra'),'details',job)}${mapLink}</div></div></section>`;
     }

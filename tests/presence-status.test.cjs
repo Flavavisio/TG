@@ -22,7 +22,7 @@ test('approved holidays and medical leave explain inactivity on both interval bo
   for (const status of ['aprovado', 'aprovado_ped']) for (const tipo of ['ferias', 'baixa']) {
     const { dados, estado } = setup();
     dados.pedidos = [ausencia({ status, dataInicio: '2026-10-20', dataFim: hoje, ...(tipo === 'baixa' ? {tipo:'falta', classificacaoFalta:'baixa'} : {}) })];
-    assert.equal(estado().label, tipo === 'ferias' ? 'De férias' : 'De baixa médica');
+    assert.equal(estado().label, tipo === 'ferias' ? 'De férias até dia 21/10/2026' : 'De baixa médica até dia 21/10/2026');
     assert.equal(estado().ativo, false);
     dados.pedidos[0].dataInicio = hoje; dados.pedidos[0].dataFim = '2026-10-22';
     assert.equal(estado().ausente, true);
@@ -46,7 +46,7 @@ test('scoped presence reads the supplied requests and never falls back to anothe
   const ctx = vm.createContext({dados,obterNomeCliente:()=>''});
   vm.runInContext(fn('_funcionarioAusenteEm') + '\n' + fn('_estadoPresencaPessoa'), ctx);
   assert.equal(ctx._estadoPresencaPessoa('f',hoje,{pedidos:[]}).label,'Ainda não começou');
-  assert.equal(ctx._estadoPresencaPessoa('f',hoje,{pedidos:[ausencia({tipo:'falta',classificacaoFalta:'baixa'})]}).label,'De baixa médica');
+  assert.equal(ctx._estadoPresencaPessoa('f',hoje,{pedidos:[ausencia({tipo:'falta',classificacaoFalta:'baixa'})]}).label,'De baixa médica até dia 21/10/2026');
 });
 test('approved absences appear in the admin panel without a missing clock-in alert', () => {
   const dados = {administradores:[{id:'a'}],funcionarios:[{id:'f',adminId:'a',nome:'Ana'}],pedidos:[ausencia()]};

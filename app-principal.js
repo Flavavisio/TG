@@ -15604,6 +15604,30 @@ function _assistEstado(value) {
         // Painel do admin em "O Meu Dia" — alertas do dia, estado da equipa em tempo real,
         // ações rápidas e resumo financeiro. Pensado para gerir, não para trabalho de campo.
         // Estado de presença partilhado pelos dois painéis; apenas consulta as picagens.
+        // O contador é apenas visual: usa a picagem guardada e nunca altera horas/custos.
+        function _inicioTempoServico(p) {
+            if (!p || p.saida || !/^\d{4}-\d{2}-\d{2}$/.test(p.data || '') || !/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/.test(p.entrada || '')) return null;
+            const inicio = new Date(p.data + 'T' + p.entrada);
+            return Number.isFinite(inicio.getTime()) ? inicio.getTime() : null;
+        }
+        function _formatarTempoServico(inicio, agora = Date.now()) {
+            const segundos = Math.max(0, Math.floor((agora - inicio) / 1000));
+            const pad = n => String(n).padStart(2, '0');
+            return pad(Math.floor(segundos / 3600)) + 'h ' + pad(Math.floor(segundos / 60) % 60) + 'm ' + pad(segundos % 60) + 's';
+        }
+        function _tempoServicoHTML(p, texto = 'Em serviço neste cliente há') {
+            const inicio = _inicioTempoServico(p);
+            if (inicio === null) return '';
+            return `<span class="tg-tempo-servico">${escapeHtmlSimples(texto)} <strong data-tempo-servico="${inicio}">${_formatarTempoServico(inicio)}</strong></span>`;
+        }
+        function _atualizarTemposServico() {
+            if (document.hidden) return;
+            const agora = Date.now();
+            document.querySelectorAll('[data-tempo-servico]').forEach(el => {
+                const inicio = Number(el.dataset.tempoServico);
+                if (Number.isFinite(inicio)) el.textContent = _formatarTempoServico(inicio, agora);
+            });
+        }
         function _estadoPresencaPessoa(funcionarioId, hoje, registos = dados, nomeCliente = obterNomeCliente) {
             const emOS = (registos.ponto || []).find(x => x.funcionarioId === funcionarioId && x.servicoId && x.data === hoje && x.entrada && !x.saida);
             if (emOS) {
@@ -15619,7 +15643,7 @@ function _assistEstado(value) {
                 .sort((a, b) => String(b.entrada).localeCompare(String(a.entrada)) || String(b.dataCriacao || b.id || '').localeCompare(String(a.dataCriacao || a.id || '')))[0];
             if (geral && !geral.saida) return { label: 'Em serviço', cor: '#16a34a', ativo: true };
             const ausencia = _funcionarioAusenteEm(funcionarioId, hoje, registos);
-            if (ausencia) return { label: 'De ' + ausencia.label, cor: ausencia.cor, ativo: false, ausente: true };
+            if (ausencia) return { label: 'De ' + ausencia.label + (ausencia.dataFim ? ' até dia ' + ausencia.dataFim.split('-').reverse().join('/') : ''), cor: ausencia.cor, ativo: false, ausente: true };
             if (geral) return { label: 'Terminou o dia', cor: '#f97316', ativo: false };
             return { label: 'Ainda não começou', cor: '#94a3b8', ativo: false };
         }
@@ -15653,7 +15677,7 @@ function _assistEstado(value) {
             const estadoPessoa = p => _estadoPresencaPessoa(p.id, hoje);
             const linhasEquipa = equipa.slice(0, 12).map(p => {
                 const e = estadoPessoa(p);
-                return `<div class="tgm-equipa-linha"><span class="tgm-equipa-dot" style="background:${e.cor};"></span><span class="tgm-equipa-nome">${escapeHtmlSimples(p.nome)}</span><span class="tgm-equipa-estado" style="color:${e.cor};">${e.label}</span></div>`;
+                return `<div class="tgm-equipa-linha"><span class="tgm-equipa-dot" style="background:${e.cor};"></span><span class="tgm-equipa-nome">${escapeHtmlSimples(p.nome)}</span><span class="tgm-equipa-estado" style="color:${e.cor};">${escapeHtmlSimples(e.label)}</span></div>`;
             }).join('');
 
             // --- Resumo financeiro do dia ---
@@ -15693,16 +15717,29 @@ function _assistEstado(value) {
         function _htmlResumoEquipaHoje(adminId, hoje) {
             const todasOS = (dados.servicos || []).filter(s => s.adminId === adminId && s.data === hoje && s.status !== 'cancelado')
                 .sort((a, b) => (a.hora || '99:99').localeCompare(b.hora || '99:99'));
-            const linha = s => {
-                const idsAtrib = (s.funcionariosIds && s.funcionariosIds.length) ? s.funcionariosIds : [s.funcionarioId].filter(Boolean);
-                const nomes = idsAtrib.length ? idsAtrib.map(id => obterNomeFuncionario(id)).join(', ') : 'Sem ninguém atribuído';
-                const corEstado = s.status === 'concluído' ? '#16a34a' : s.status === 'em andamento' ? '#f59e0b' : s.status === 'stand by' ? '#94a3b8' : '#64748b';
-                const labelEstado = s.status === 'concluído' ? 'Concluído' : s.status === 'em andamento' ? 'Em andamento' : s.status === 'stand by' ? 'Stand By' : 'Pendente';
-                const kmOS = _kmPercorridosOS(s.id);
-                return `<div class="tgm-resumo-linha" onclick="abrirVerOS('${s.id}')">
-                    <span class="tgm-mono tgm-resumo-hora">${s.hora || '--:--'}</span>
-                    <span class="tgm-resumo-txt"><strong>${escapeHtmlSimples(obterNomeCliente(s.clienteId) || 'OS')}</strong> — ${escapeHtmlSimples(nomes)}</span>
-                    <span style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;">
+            const obrasEmCurso = (dados.obras || []).filter(o => o.adminId === adminId &&
+                (dados.obraPontoLonga || []).some(p => p.obraId === o.id && p.adminId === adminId && p.entrada && !p.saida));
+            const linha = (s, obra = false) => {
+                const pontos = (obra ? dados.obraPontoLonga : dados.ponto) || [];
+                const abertos = pontos.filter(p => p.adminId === adminId && (obra ? p.obraId === s.id : p.servicoId === s.id) && p.entrada && !p.saida)
+                    .sort((a, b) => (b.data + b.entrada).localeCompare(a.data + a.entrada));
+                const atribuidos = obra ? ((s.responsaveisIds?.length ? s.responsaveisIds : [s.responsavelId]).filter(Boolean))
+                    : ((s.funcionariosIds?.length ? s.funcionariosIds : [s.funcionarioId]).filter(Boolean));
+                const ids = [...new Set([...atribuidos, ...abertos.map(p => p.funcionarioId)])];
+                const pessoas = ids.length ? ids.map(id => {
+                    const ponto = abertos.find(p => p.funcionarioId === id);
+                    return `<span class="tgm-resumo-pessoa"><span>${escapeHtmlSimples(obterNomeFuncionario(id))}</span>${ponto ? _tempoServicoHTML(ponto, obra ? 'Em obra há' : 'Em OS há') : ''}</span>`;
+                }).join('') : 'Sem ninguém atribuído';
+                const estado = obra ? 'em andamento' : s.status;
+                const corEstado = estado === 'concluído' ? '#16a34a' : estado === 'em andamento' ? '#f59e0b' : estado === 'stand by' ? '#94a3b8' : '#64748b';
+                const labelEstado = estado === 'concluído' ? 'Concluído' : estado === 'em andamento' ? 'Em andamento' : estado === 'stand by' ? 'Stand By' : 'Pendente';
+                const kmOS = obra ? 0 : _kmPercorridosOS(s.id);
+                const titulo = obra ? s.nome : obterNomeCliente(s.clienteId) || 'OS';
+                return `<div class="tgm-resumo-linha" onclick="${obra ? 'abrirObraLongaDetalhe' : 'abrirVerOS'}('${s.id}')">
+                    <span class="tgm-mono tgm-resumo-hora">${obra ? 'Obra' : s.hora || '--:--'}</span>
+                    <span class="tgm-resumo-txt"><strong>${escapeHtmlSimples(titulo)}</strong></span>
+                    <span class="tgm-resumo-pessoas">${pessoas}</span>
+                    <span class="tgm-resumo-estado">
                         <span class="tgm-resumo-badge" style="background:${corEstado};">${labelEstado}</span>
                         ${kmOS > 0 ? `<span style="font-size:.68rem;color:#0ea5e9;font-weight:600;"><i class="fas fa-road"></i> ${kmOS.toLocaleString('pt-PT')} km</span>` : ''}
                     </span>
@@ -15712,7 +15749,7 @@ function _assistEstado(value) {
                 <div class="tgm-panel tgm-panel--equipa">
                     <div class="tgm-eyebrow">Toda a equipa</div>
                     <div class="tgm-title tgm-title--sm"><i class="fas fa-users"></i> Resumo do Dia</div>
-                    ${todasOS.length ? `<div class="tgm-resumo-lista">${todasOS.map(linha).join('')}</div>` : '<p class="tgm-vazio">Sem OS marcadas para hoje.</p>'}
+                    ${todasOS.length || obrasEmCurso.length ? `<div class="tgm-resumo-lista">${todasOS.map(s => linha(s)).join('')}${obrasEmCurso.map(o => linha(o, true)).join('')}</div>` : '<p class="tgm-vazio">Sem OS marcadas para hoje.</p>'}
                 </div>
             `;
         }
@@ -31437,10 +31474,10 @@ window._relPrefill = function(msg){
             if (!funcionarioId || !data) return null;
             const p = (registos.pedidos || []).find(x => x.funcionarioId === funcionarioId && ['aprovado', 'aprovado_ped'].includes(x.status) && (x.tipo === 'ferias' || (x.tipo === 'falta' && ['baixa', 'licenca'].includes(x.classificacaoFalta))) && x.dataInicio && x.dataFim && x.dataInicio <= data && x.dataFim >= data);
             if (!p) return null;
-            if (p.tipo === 'ferias') return { tipo: 'ferias', label: 'férias', icon: 'fa-umbrella-beach', cor: '#0ea5e9' };
+            if (p.tipo === 'ferias') return { dataFim: p.dataFim, tipo: 'ferias', label: 'férias', icon: 'fa-umbrella-beach', cor: '#0ea5e9' };
             if (p.tipo === 'falta') {
-                if (p.classificacaoFalta === 'baixa') return { tipo: 'baixa', label: 'baixa médica', icon: 'fa-briefcase-medical', cor: '#dc2626' };
-                if (p.classificacaoFalta === 'licenca') return { tipo: 'licenca', label: 'licença', icon: 'fa-baby', cor: '#7c3aed' };
+                if (p.classificacaoFalta === 'baixa') return { dataFim: p.dataFim, tipo: 'baixa', label: 'baixa médica', icon: 'fa-briefcase-medical', cor: '#dc2626' };
+                if (p.classificacaoFalta === 'licenca') return { dataFim: p.dataFim, tipo: 'licenca', label: 'licença', icon: 'fa-baby', cor: '#7c3aed' };
             }
             return null;
         }
@@ -34891,6 +34928,7 @@ window._relPrefill = function(msg){
         let relogioInterval;
 
         function atualizarRelogio() {
+            _atualizarTemposServico();
             const el = document.getElementById('pontoHoraAtual');
             if (el) {
                 const agora = new Date();

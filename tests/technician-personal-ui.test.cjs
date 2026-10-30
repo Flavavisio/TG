@@ -28,7 +28,7 @@ test('worksheet fields are at least 16px before focus and restoration preserves 
 });
 test('avatar, wizard scale correction and refreshed CSS are included in both app entry points',()=>{
  const css=fs.readFileSync('tg-technician.css','utf8');assert(css.includes('.tgt-avatar'));assert(css.includes('animation:none!important;transform:none!important'));assert(source.includes('${avatarHTML()}</header>'));
- for(const file of ['index.html','login.html']){const html=fs.readFileSync(file,'utf8');assert(html.includes('tg-technician.js?v=1.7.1-leave-modals'));assert(html.includes('tg-technician.css?v=1.7.2-fleet-buttons'));const responsive=html.match(/responsive-device\.css\?v=\d+/)?.[0];assert(responsive&&fs.readFileSync('sw.js','utf8').includes(responsive));assert(!html.includes('user-scalable=no'));}
+ for(const file of ['index.html','login.html']){const html=fs.readFileSync(file,'utf8');assert(html.includes('tg-technician.js?v=1.8.0-service-time'));assert(html.includes('tg-technician.css?v=1.7.2-fleet-buttons'));const responsive=html.match(/responsive-device\.css\?v=\d+/)?.[0];assert(responsive&&fs.readFileSync('sw.js','utf8').includes(responsive));assert(!html.includes('user-scalable=no'));}
 });
 
 test('the intervention toolbar opens the installation passport directly without a notes dialog',()=>{
@@ -211,5 +211,18 @@ test('leave balance handles one or zero available days and never assumes a balan
   w.feriasDisponiveis=(id,year)=>{assert.equal(id,'f');assert.equal(year,2026);return w.balance;};
   for(const [balance,label] of [[1,'1 dia disponível'],[0,'0 dias disponíveis'],[-2,'0 dias disponíveis']]){w.balance=balance;w.TGTechnician.more();assert.equal(w.document.querySelector('[data-tgt-leave-balance]').textContent,label);}
   w.dados.funcionarios=[{id:'f',adminId:'other',diasFerias:99}];w.TGTechnician.more();assert.equal(w.document.querySelector('[data-tgt-leave-balance]').textContent,'Saldo de férias indisponível');
+ }finally{w.close();}
+});
+
+test('employee focus renders the personal running clock for OS and works and removes it on exit',()=>{
+ const w=setup();try{
+  const main=fs.readFileSync('app-principal.js','utf8');
+  w.pontoAssiduidadeAtivo=()=>false;
+  w.escapeHtmlSimples=s=>String(s).replace(/[<>]/g,c=>c==='<'?'&lt;':'&gt;');
+  for(const name of ['_inicioTempoServico','_formatarTempoServico','_tempoServicoHTML'])w.eval(main.match(new RegExp('        function '+name+'\\([^]*?\\n        \\}'))[0]);
+  const job=w.TGTechnician.jobs()[0];job.open={entrada:'09:00',data:'2026-10-27'};
+  assert.match(w.TGTechnician.focusHTML(job),/Em serviço neste cliente há.*data-tempo-servico=/);
+  job.kind='obra';assert.match(w.TGTechnician.focusHTML(job),/Em serviço nesta obra há.*data-tempo-servico=/);
+  job.open=null;assert(!w.TGTechnician.focusHTML(job).includes('data-tempo-servico'));
  }finally{w.close();}
 });
