@@ -38,3 +38,10 @@ test('FAQ e SEO identificam CRM no Pro+ e Supreme', () => {
     assert.match(planos, /O CRM Comercial está incluído nos packs Pro\+ e Supreme\./);
     assert.match(planos, /"name": "Pro\+ — até 5 funcionários"/);
 });
+
+test('aprovação de pack respeita mensal/anual nos módulos incluídos', () => {
+    const app = fs.readFileSync(path.join(root, 'app-principal.js'), 'utf8');
+    assert.match(app, /function aplicarPackAoAdmin\(admin, nomePack, validadeMs, periodo = 'mensal'\)/);
+    assert.match(app, /admin\[planoKey\] = periodo === 'anual' \? 'anual' : 'mensal'/);
+    assert.match(app, /aplicarPackAoAdmin\(admin, pedido\.packPedido, novaValidade, pedido\.periodoPedido\)/);
+});
