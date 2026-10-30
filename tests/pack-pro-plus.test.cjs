@@ -29,3 +29,12 @@ test('o Pro+ mostra CRM incluído na tabela comparativa', () => {
 test('preços do Pro+ presentes na tabela pública', () => {
     for (const price of expected) assert.ok(planos.includes(price.toFixed(2).replace('.', ',') + ' €'));
 });
+
+test('calculadora recomenda Pro+ para CRM e evita ativação sem backend', () => {
+    assert.match(landing, /necessidades\.includes\('crm'\) && nivel <= 3 \? 'pro_plus'/);
+    assert.match(landing, /anual \|\| r\.pack === 'pro_plus'/);
+});
+test('FAQ e SEO identificam CRM no Pro+ e Supreme', () => {
+    assert.match(planos, /O CRM Comercial está incluído nos packs Pro\+ e Supreme\./);
+    assert.match(planos, /"name": "Pro\+ — até 5 funcionários"/);
+});
