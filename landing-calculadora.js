@@ -143,7 +143,7 @@ function _tcwCalcularResultado() {
         '<p>Até ' + r.capacidade + ' funcionários · ' + (r.blocos ? 'escalão ' + r.escalao + ' + ' + r.blocos + ' bloco(s) de +5' : 'escalão ' + r.escalao) + '</p>' +
         '<div class="tg-recommended-price">' + _packFmtEuro(total) + '<small>/' + (anual ? 'ano' : 'mês') + ' · IVA incluído</small></div>' +
         '<p>' + PACK_LIMITES_TXT[r.pack] + '. Pode consultar a comparação completa antes de decidir.</p>' +
-        (anual || r.pack === 'pro_plus' ? '<a class="btn btn-orange" href="' + tgPropostaUrl(r.pack,r.capacidade,r.mensal,anual) + '" target="_blank" rel="noopener">Pedir proposta ' + (anual ? 'anual' : 'Pro+') + '</a>' : '<button type="button" class="btn btn-orange" onclick="_tcwIniciarTeste()">Experimentar este pack</button>') +
+        (anual ? '<a class="btn btn-orange" href="' + tgPropostaUrl(r.pack,r.capacidade,r.mensal,true) + '" target="_blank" rel="noopener">Pedir proposta anual</a>' : '<button type="button" class="btn btn-orange" onclick="_tcwIniciarTeste()">Experimentar este pack</button>') +
         '<button type="button" class="btn btn-ghost" onclick="_tcwComparar()">Comparar funcionalidades</button>' +
         '<p class="tcw-sub">' + (anual ? 'O pagamento anual tem 10% de desconto. A equipa confirma consigo a proposta.' : '14 dias grátis. O preço indicado aplica-se após o teste.') + '</p>';
     _tgRegistarEvento('wizard_calc_resultado', r.pack);
@@ -168,6 +168,7 @@ const SU_PACKS = {
     express: { nome: 'Express' },
     expert:  { nome: 'Expert' },
     pro:     { nome: 'Pro' },
+    pro_plus: { nome: 'Pro+' },
     supreme: { nome: 'Supreme' },
 };
 // Escalões-base de funcionários (o preço vem de PACK_PRECOS_SITE, por pack). A partir daqui,
@@ -631,7 +632,7 @@ function _packVerDetalhes(pack) {
                     <tbody>${corpo}</tbody>
                 </table>
             </div>
-            <a class="btn btn-orange" href="#tg-precos" data-pack-start="${pack}" onclick="return tgEscolherPack(event,'${pack}')" style="margin-top:14px;display:${pack === 'pro_plus' ? 'none' : 'inline-block'};">Experimentar grátis</a>
+            <a class="btn btn-orange" href="#tg-precos" data-pack-start="${pack}" onclick="return tgEscolherPack(event,'${pack}')" style="margin-top:14px;display:inline-block;">Experimentar grátis</a>
         </div>
     `;
     tgAtualizarPrecos();
