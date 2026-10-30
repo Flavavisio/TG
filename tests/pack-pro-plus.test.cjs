@@ -1,0 +1,31 @@
+// Testes de contrato comercial do Pack Pro+.
+// Executar: node --test tests/pack-pro-plus.test.cjs
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+
+const root = path.join(__dirname, '..');
+const landing = fs.readFileSync(path.join(root, 'landing-calculadora.js'), 'utf8');
+const index = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+const planos = fs.readFileSync(path.join(root, 'planos.html'), 'utf8');
+
+const base = [72.49, 77.49, 92.49, 132.49];
+const expected = [82.48, 87.48, 102.48, 142.48];
+
+test('Pro+ custa Pro + 9,99 euros em cada escalão', () => {
+    assert.deepEqual(base.map(v => Math.round((v + 9.99) * 100) / 100), expected);
+    assert.match(landing, /PACK_PRECOS_SITE\.pro_plus\s*=\s*Object\.fromEntries/);
+});
+test('site exibe o pack Pro+ mas não permite contratar sem backend', () => {
+    assert.match(index, /data-pack="pro_plus"/);
+    assert.match(index, /data-pack-details="pro_plus"/);
+    assert.doesNotMatch(index, /data-pack-start="pro_plus"/);
+    assert.match(planos, /id="pro-plus"/);
+});
+test('o Pro+ mostra CRM incluído na tabela comparativa', () => {
+    assert.match(landing, /p === 'pro_plus' && l\[0\] === 'CRM Comercial'/);
+});
+test('preços do Pro+ presentes na tabela pública', () => {
+    for (const price of expected) assert.ok(planos.includes(price.toFixed(2).replace('.', ',') + ' €'));
+});
