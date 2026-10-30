@@ -57,7 +57,7 @@ function tgEscolherPack(event, pack) {
 function tgCalcularPack(func, necessidades) {
     if (!Number.isInteger(func) || func < 1 || func > 10000) return null;
     const nivel = Math.max(0, ...necessidades.map(n => TCW_NEEDS[n] || 0));
-    const pack = TCW_PACK_ORDER[nivel];
+    const pack = necessidades.includes('crm') && nivel <= 3 ? 'pro_plus' : TCW_PACK_ORDER[nivel];
     if (func > SU_MAX_FUNCIONARIOS) return {pack, funcionarios: func, proposta: true};
     const opcoes = SU_ESCALOES.map(e => {
         const blocos = Math.max(0, Math.ceil((func - Number(e.key)) / 5));
@@ -143,7 +143,7 @@ function _tcwCalcularResultado() {
         '<p>Até ' + r.capacidade + ' funcionários · ' + (r.blocos ? 'escalão ' + r.escalao + ' + ' + r.blocos + ' bloco(s) de +5' : 'escalão ' + r.escalao) + '</p>' +
         '<div class="tg-recommended-price">' + _packFmtEuro(total) + '<small>/' + (anual ? 'ano' : 'mês') + ' · IVA incluído</small></div>' +
         '<p>' + PACK_LIMITES_TXT[r.pack] + '. Pode consultar a comparação completa antes de decidir.</p>' +
-        (anual ? '<a class="btn btn-orange" href="' + tgPropostaUrl(r.pack,r.capacidade,r.mensal,true) + '" target="_blank" rel="noopener">Pedir proposta anual</a>' : '<button type="button" class="btn btn-orange" onclick="_tcwIniciarTeste()">Experimentar este pack</button>') +
+        (anual || r.pack === 'pro_plus' ? '<a class="btn btn-orange" href="' + tgPropostaUrl(r.pack,r.capacidade,r.mensal,anual) + '" target="_blank" rel="noopener">Pedir proposta ' + (anual ? 'anual' : 'Pro+') + '</a>' : '<button type="button" class="btn btn-orange" onclick="_tcwIniciarTeste()">Experimentar este pack</button>') +
         '<button type="button" class="btn btn-ghost" onclick="_tcwComparar()">Comparar funcionalidades</button>' +
         '<p class="tcw-sub">' + (anual ? 'O pagamento anual tem 10% de desconto. A equipa confirma consigo a proposta.' : '14 dias grátis. O preço indicado aplica-se após o teste.') + '</p>';
     _tgRegistarEvento('wizard_calc_resultado', r.pack);
