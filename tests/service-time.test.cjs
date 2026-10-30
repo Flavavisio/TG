@@ -56,3 +56,14 @@ test('elapsed time handles midnight, long sessions, future and invalid entries w
 test('rendering and ticking never mutate attendance or write to the server',()=>{
  const t=setup();try{t.dados.ponto=[entry('v','15:55')];const before=JSON.stringify(t.dados);for(let i=0;i<5;i++){t.document.getElementById('panel').innerHTML=t.ctx._htmlResumoEquipaHoje('a','2026-10-30');t.advance(1000);t.ctx.atualizarRelogio();}assert.equal(JSON.stringify(t.dados),before);}finally{t.close();}
 });
+
+test('a visible team row switches to red Faltou when the entry tolerance expires without a data reload',()=>{
+ const t=setup();try{
+  t.ctx.getDataHoje=()=> '2026-10-30';
+  for(const name of ['_funcionarioAusenteEm','_estadoPresencaPessoa'])vm.runInContext(src.match(new RegExp('        function '+name+'\\([^]*?\\n        \\}'))[0],t.ctx);
+  t.dados.administradores=[{id:'a',horaEntradaHabitual:'16:00',toleranciaAtrasoMin:15}];t.dados.funcionarios=[{id:'v',adminId:'a'}];
+  t.document.getElementById('panel').innerHTML='<div data-presenca-funcionario="v"><span class="tgm-equipa-dot"></span><span class="tgm-equipa-estado"></span></div>';
+  t.ctx.atualizarRelogio();assert.equal(t.document.querySelector('.tgm-equipa-estado').textContent,'Ainda não começou');
+  t.advance(16*60000);t.ctx.atualizarRelogio();assert.equal(t.document.querySelector('.tgm-equipa-estado').textContent,'Faltou');assert.equal(t.document.querySelector('.tgm-equipa-estado').style.color,'rgb(220, 38, 38)');
+ }finally{t.close();}
+});

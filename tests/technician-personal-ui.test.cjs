@@ -28,7 +28,7 @@ test('worksheet fields are at least 16px before focus and restoration preserves 
 });
 test('avatar, wizard scale correction and refreshed CSS are included in both app entry points',()=>{
  const css=fs.readFileSync('tg-technician.css','utf8');assert(css.includes('.tgt-avatar'));assert(css.includes('animation:none!important;transform:none!important'));assert(source.includes('${avatarHTML()}</header>'));
- for(const file of ['index.html','login.html']){const html=fs.readFileSync(file,'utf8');assert(html.includes('tg-technician.js?v=1.8.0-service-time'));assert(html.includes('tg-technician.css?v=1.7.2-fleet-buttons'));const responsive=html.match(/responsive-device\.css\?v=\d+/)?.[0];assert(responsive&&fs.readFileSync('sw.js','utf8').includes(responsive));assert(!html.includes('user-scalable=no'));}
+ for(const file of ['index.html','login.html']){const html=fs.readFileSync(file,'utf8');assert(html.includes('tg-technician.js?v=1.8.0-service-time'));assert(html.includes('tg-technician.css?v=1.8.0-exit-centered'));const responsive=html.match(/responsive-device\.css\?v=\d+/)?.[0];assert(responsive&&fs.readFileSync('sw.js','utf8').includes(responsive));assert(!html.includes('user-scalable=no'));}
 });
 
 test('the intervention toolbar opens the installation passport directly without a notes dialog',()=>{
@@ -224,5 +224,21 @@ test('employee focus renders the personal running clock for OS and works and rem
   assert.match(w.TGTechnician.focusHTML(job),/Em serviço neste cliente há.*data-tempo-servico=/);
   job.kind='obra';assert.match(w.TGTechnician.focusHTML(job),/Em serviço nesta obra há.*data-tempo-servico=/);
   job.open=null;assert(!w.TGTechnician.focusHTML(job).includes('data-tempo-servico'));
+ }finally{w.close();}
+});
+
+test('the OS exit choice opens a centered dialog and preserves the lunch and cancellation responses',async()=>{
+ const w=setup();try{
+  w.document.body.classList.add('tgt-active');
+  w.document.body.insertAdjacentHTML('beforeend','<div id="modalSimNaoOverlay" class="modal-overlay"><div class="modal"><p id="modalSimNaoTexto"></p><button id="modalSimNaoNaoBtn"></button><button id="modalSimNaoAlmocoBtn"></button><button id="modalSimNaoHojeBtn"></button><span id="modalSimNaoSimTexto"></span></div></div>');
+  const css=fs.readFileSync('tg-technician.css','utf8');
+  const centerRules=css.split('\n').filter(line=>line.startsWith('body.tgt-active :is(')&&line.includes('#modalSimNaoOverlay')).join('\n');assert(centerRules);
+  const style=w.document.createElement('style');style.textContent=centerRules;w.document.head.append(style);
+  const main=fs.readFileSync('app-principal.js','utf8');w._modalSimNaoResolve=null;
+  for(const name of ['perguntarSaidaObra','_modalSimNaoResponder'])w.eval(main.match(new RegExp('        function '+name+'\\([^]*?\\n        \\}'))[0]);
+  const response=w.perguntarSaidaObra('Terminaste a OS?'),overlay=w.document.getElementById('modalSimNaoOverlay');
+  assert(overlay.classList.contains('open'));assert.equal(w.getComputedStyle(overlay).alignItems,'center');assert.equal(w.getComputedStyle(overlay).justifyContent,'center');assert.equal(w.getComputedStyle(overlay.querySelector('.modal')).height,'auto');
+  w._modalSimNaoResponder('almoco');assert.equal(await response,'almoco');assert(!overlay.classList.contains('open'));
+  const canceled=w.perguntarSaidaObra('Terminaste a OS?');w._modalSimNaoResponder(null);assert.equal(await canceled,null);
  }finally{w.close();}
 });

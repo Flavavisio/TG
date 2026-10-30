@@ -29,7 +29,7 @@ test('approved holidays and medical leave explain inactivity on both interval bo
   }
 });
 test('pending, rejected, unrelated and out-of-range requests do not report an absence', () => {
-  for (const extra of [{status:'pendente_aprov'}, {status:'rejeitado'}, {funcionarioId:'other'}, {dataInicio:'2026-10-22',dataFim:'2026-10-23'}, {dataInicio:'2026-10-19',dataFim:'2026-10-20'}, {tipo:'falta',classificacaoFalta:'injustificada'}]) {
+  for (const extra of [{status:'pendente_aprov'}, {status:'rejeitado'}, {funcionarioId:'other'}, {dataInicio:'2026-10-22',dataFim:'2026-10-23'}, {dataInicio:'2026-10-19',dataFim:'2026-10-20'}]) {
     const { dados, estado } = setup(); dados.pedidos = [ausencia(extra)];
     assert.equal(estado().label, 'Ainda não começou');
   }
@@ -124,4 +124,41 @@ test('Admin sheet linked through OS counts once in worksite hours', () => {
   assert.equal(ctx.totalHorasObra('obra'), 4);
   delete ctx.dados.folhasObra[0].obraId;
   assert.equal(ctx.totalHorasObra('obra'), 4);
+});
+
+function attendanceState({time='2026-10-30T10:00:00',date='2026-10-30',extra={},admin={},ponto=[]}={}) {
+  class Now extends Date {constructor(...args){super(...(args.length?args:[time]));}}
+  const dados={administradores:[{id:'a',horaEntradaHabitual:'09:00',toleranciaAtrasoMin:15,...admin}],funcionarios:[{id:'f',adminId:'a'}],ponto,...extra};
+  const ctx=vm.createContext({dados,Date:Now,obterNomeCliente:()=> 'Cliente',feriadosNacionais:()=>['2026-12-01'],feriadoMunicipal:()=>null});
+  vm.runInContext(fn('_funcionarioAusenteEm')+'\n'+fn('_estadoPresencaPessoa'),ctx);
+  return ctx._estadoPresencaPessoa('f',date);
+}
+test('missing attendance becomes red Faltou only after expected entry and tolerance',()=>{
+  for(const time of ['08:00:00','09:00:00','09:15:00'])assert.equal(attendanceState({time:'2026-10-30T'+time}).label,'Ainda não começou');
+  const result=attendanceState({time:'2026-10-30T09:15:01'});assert.equal(result.label,'Faltou');assert.equal(result.cor,'#dc2626');assert.equal(result.ausente,true);
+});
+test('actual attendance including a finished OS or work prevents a false missing attendance',()=>{
+  for(const extra of [{ponto:[{funcionarioId:'f',data:'2026-10-30',entrada:'09:00',saida:'09:30',servicoId:'os'}]}, {obraPontoLonga:[{funcionarioId:'f',data:'2026-10-30',entrada:'09:00',saida:'09:30',obraId:'w'}]}])assert.notEqual(attendanceState({extra}).label,'Faltou');
+});
+test('approved holiday and medical leave remain distinct from a missing attendance',()=>{
+  for(const fields of [{tipo:'ferias'},{tipo:'falta',classificacaoFalta:'baixa'}]){
+    const state=attendanceState({extra:{pedidos:[{funcionarioId:'f',status:'aprovado',dataInicio:'2026-10-30',dataFim:'2026-11-03',...fields}]}});
+    assert.match(state.label,/até dia 03\/11\/2026/);assert.notEqual(state.label,'Faltou');
+  }
+});
+test('without general attendance, an assigned scheduled OS determines when attendance is overdue',()=>{
+  const admin={testePontoAssiduidadeAtivo:false},extra={servicos:[{id:'os',adminId:'a',funcionarioId:'f',data:'2026-10-30',hora:'11:00',status:'pendente'}]};
+  assert.equal(attendanceState({admin,extra}).label,'Ainda não começou');assert.equal(attendanceState({admin,extra,time:'2026-10-30T11:16:00'}).label,'Faltou');assert.equal(attendanceState({admin}).label,'Ainda não começou');
+  extra.servicos[0].funcionarioId='other';assert.equal(attendanceState({admin,extra,time:'2026-10-30T12:00:00'}).label,'Ainda não começou');
+});
+test('weekends, holidays and future shifts do not create automatic absences',()=>{
+  for(const date of ['2026-10-31','2026-12-01'])assert.equal(attendanceState({date,time:date+'T12:00:00'}).label,'Ainda não começou');
+  assert.equal(attendanceState({date:'2026-11-02'}).label,'Ainda não começou');
+  assert.equal(attendanceState({date:'2026-10-31',time:'2026-10-31T12:00:00',extra:{servicos:[{adminId:'a',data:'2026-10-31',hora:'10:00',funcionarioId:'f'}]}}).label,'Faltou');
+});
+test('approved full-day absence is red while pending and partial requests do not invent a full-day absence',()=>{
+  const request={funcionarioId:'f',tipo:'falta',status:'aprovado',dataInicio:'2026-10-30',dataFim:'2026-10-30',classificacaoFalta:'injustificada'};
+  const admin={testePontoAssiduidadeAtivo:false};
+  assert.equal(attendanceState({admin,extra:{pedidos:[request]}}).label,'Faltou');
+  for(const change of [{status:'pendente_aprov'},{diaInteiro:false},{funcionarioId:'other'}])assert.equal(attendanceState({admin,extra:{pedidos:[{...request,...change}]}}).label,'Ainda não começou');
 });

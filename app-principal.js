@@ -15627,6 +15627,13 @@ function _assistEstado(value) {
                 const inicio = Number(el.dataset.tempoServico);
                 if (Number.isFinite(inicio)) el.textContent = _formatarTempoServico(inicio, agora);
             });
+            document.querySelectorAll('[data-presenca-funcionario]').forEach(linha => {
+                const estado = _estadoPresencaPessoa(linha.dataset.presencaFuncionario, getDataHoje());
+                const texto = linha.querySelector('.tgm-equipa-estado');
+                const dot = linha.querySelector('.tgm-equipa-dot');
+                if (texto) { texto.textContent = estado.label; texto.style.color = estado.cor; }
+                if (dot) dot.style.background = estado.cor;
+            });
         }
         function _estadoPresencaPessoa(funcionarioId, hoje, registos = dados, nomeCliente = obterNomeCliente) {
             const emOS = (registos.ponto || []).find(x => x.funcionarioId === funcionarioId && x.servicoId && x.data === hoje && x.entrada && !x.saida);
@@ -15645,6 +15652,30 @@ function _assistEstado(value) {
             const ausencia = _funcionarioAusenteEm(funcionarioId, hoje, registos);
             if (ausencia) return { label: 'De ' + ausencia.label + (ausencia.dataFim ? ' até dia ' + ausencia.dataFim.split('-').reverse().join('/') : ''), cor: ausencia.cor, ativo: false, ausente: true };
             if (geral) return { label: 'Terminou o dia', cor: '#f97316', ativo: false };
+            // Só assinala falta se ainda não houve qualquer comparência neste dia.
+            const compareceu = [...(registos.ponto || []), ...(registos.obraPontoLonga || [])]
+                .some(p => p.funcionarioId === funcionarioId && p.data === hoje && p.entrada);
+            if (!compareceu) {
+                const faltaRegistada = (registos.pedidos || []).some(p => p.funcionarioId === funcionarioId &&
+                    ['aprovado', 'aprovado_ped'].includes(p.status) && p.tipo === 'falta' && p.diaInteiro !== false &&
+                    !['baixa', 'licenca'].includes(p.classificacaoFalta) && p.dataInicio <= hoje && p.dataFim >= hoje);
+                const pessoa = [...(registos.funcionarios || []), ...(registos.encarregados || [])].find(p => p.id === funcionarioId);
+                const admin = (registos.administradores || []).find(a => a.id === pessoa?.adminId);
+                const agora = new Date();
+                const dia = new Date(hoje + 'T00:00:00');
+                const osHoje = (registos.servicos || []).filter(s => s.adminId === pessoa?.adminId && s.data === hoje && s.status !== 'cancelado' &&
+                    (s.funcionariosIds?.length ? s.funcionariosIds : [s.funcionarioId]).includes(funcionarioId) && /^([01]\d|2[0-3]):[0-5]\d$/.test(s.hora || ''));
+                const horarioOS = osHoje.map(s => s.hora).sort()[0];
+                const feriado = typeof feriadosNacionais === 'function' && feriadosNacionais(dia.getFullYear()).includes(hoje);
+                const municipal = admin && typeof feriadoMunicipal === 'function' ? feriadoMunicipal(dia.getFullYear(), admin.concelho) : null;
+                const diaUtil = ![0, 6].includes(dia.getDay()) && !feriado && municipal?.data !== hoje;
+                const temPontoGeral = admin && admin.testePontoAssiduidadeAtivo !== false && admin.expressAtivo !== true;
+                const horario = temPontoGeral && diaUtil ? (admin.horaEntradaHabitual || '09:00') : horarioOS;
+                const tolerancia = Math.max(0, Number(admin?.toleranciaAtrasoMin ?? 15) || 0);
+                const limite = horario ? new Date(hoje + 'T' + horario).getTime() + tolerancia * 60000 : NaN;
+                if (faltaRegistada || (admin && Number.isFinite(limite) && agora.getTime() > limite))
+                    return { label: 'Faltou', cor: '#dc2626', ativo: false, ausente: true };
+            }
             return { label: 'Ainda não começou', cor: '#94a3b8', ativo: false };
         }
         function _htmlPainelAdminHoje(adminId, hoje) {
@@ -15677,7 +15708,7 @@ function _assistEstado(value) {
             const estadoPessoa = p => _estadoPresencaPessoa(p.id, hoje);
             const linhasEquipa = equipa.slice(0, 12).map(p => {
                 const e = estadoPessoa(p);
-                return `<div class="tgm-equipa-linha"><span class="tgm-equipa-dot" style="background:${e.cor};"></span><span class="tgm-equipa-nome">${escapeHtmlSimples(p.nome)}</span><span class="tgm-equipa-estado" style="color:${e.cor};">${escapeHtmlSimples(e.label)}</span></div>`;
+                return `<div class="tgm-equipa-linha" data-presenca-funcionario="${escapeHtmlSimples(p.id)}"><span class="tgm-equipa-dot" style="background:${e.cor};"></span><span class="tgm-equipa-nome">${escapeHtmlSimples(p.nome)}</span><span class="tgm-equipa-estado" style="color:${e.cor};">${escapeHtmlSimples(e.label)}</span></div>`;
             }).join('');
 
             // --- Resumo financeiro do dia ---
