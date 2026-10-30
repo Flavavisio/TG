@@ -592,21 +592,22 @@ function _packVerDetalhes(pack) {
     if (alvo.dataset.packAberto === pack) { alvo.innerHTML = ''; alvo.dataset.packAberto = ''; document.querySelectorAll('[data-pack-details]').forEach(b => b.setAttribute('aria-expanded','false')); document.querySelector('[data-pack-details="' + pack + '"]')?.focus(); return; }
     alvo.dataset.packAberto = pack;
     document.querySelectorAll('[data-pack-details]').forEach(b => b.setAttribute('aria-expanded',String(b.dataset.packDetails === pack)));
-    const escolhido = PACK_IDX[pack];
-    const cabecalho = ['express','expert','pro','supreme'].map(p =>
+    const packsComparacao = ['express','expert','pro','pro_plus','supreme'];
+    const cabecalho = packsComparacao.map(p =>
         `<th scope="col" class="${p === pack ? 'pack-col-destaque' : ''}">${PACK_NOMES[p]}</th>`).join('');
     const corpo = PACK_FUNCS.map(g => `
-        <tr class="pack-grupo-linha"><td colspan="5">${g.grupo}</td></tr>
+        <tr class="pack-grupo-linha"><td colspan="6">${g.grupo}</td></tr>
         ${g.linhas.map(l => `
             <tr>
                 <td class="pack-func-nome">${l[0]}</td>
-                ${[1,2,3,4].map(i => {
-                    const v = l[i];
-                    // Valor pode ser 1 (✓), 0 (—) ou texto (ex.: limite de relatórios por pack).
-                    const conteudo = (typeof v === 'string')
+                ${packsComparacao.map(p => {
+                    // Pro+ inclui precisamente as funcionalidades Pro, mais CRM Comercial.
+                    const pos = PACK_IDX[p];
+                    const v = p === 'pro_plus' && l[0] === 'CRM Comercial' ? 1 : l[pos];
+                    const conteudo = typeof v === 'string'
                         ? `<span class="pack-valor-txt">${v}</span>`
                         : (v ? '<span class="pack-sim">✓</span>' : '<span class="pack-nao">—</span>');
-                    return `<td class="pack-cel ${i === escolhido ? 'pack-col-destaque' : ''}">${conteudo}</td>`;
+                    return `<td class="pack-cel ${p === pack ? 'pack-col-destaque' : ''}">${conteudo}</td>`;
                 }).join('')}
             </tr>
         `).join('')}
@@ -622,7 +623,7 @@ function _packVerDetalhes(pack) {
                     <tbody>${corpo}</tbody>
                 </table>
             </div>
-            <a class="btn btn-orange" href="#tg-precos" data-pack-start="${pack}" onclick="return tgEscolherPack(event,'${pack}')" style="margin-top:14px;display:inline-block;">Experimentar grátis</a>
+            <a class="btn btn-orange" href="#tg-precos" data-pack-start="${pack}" onclick="return tgEscolherPack(event,'${pack}')" style="margin-top:14px;display:${pack === 'pro_plus' ? 'none' : 'inline-block'};">Experimentar grátis</a>
         </div>
     `;
     tgAtualizarPrecos();
