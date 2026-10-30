@@ -759,6 +759,58 @@
 .su-escalao-btn.active{background:var(--orange,#f4520e);border-color:var(--orange,#f4520e);color:#fff}
 .ren-pack-btn{border:1px solid #cbd5e1;background:#fff;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:600;color:#5a6781;transition:.2s}
 .ren-pack-btn.active{background:#1e40af;border-color:#1e40af;color:#fff}
+#renPackOverlay .ren-pack-dialog{width:min(1120px,calc(100vw - 40px));max-width:1120px;max-height:calc(100dvh - 40px);text-align:left;overflow-y:auto}
+.ren-pack-columns{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:24px;align-items:start}
+.ren-pack-form{min-width:0}
+.ren-pack-features{min-width:0;border:1px solid #dbe4f2;border-radius:14px;background:#f8faff;overflow:hidden;position:sticky;top:0;color:#152a52}
+.ren-pack-features-heading{padding:18px 18px 14px;border-bottom:1px solid #dbe4f2;background:#eff5ff}
+.ren-pack-eyebrow{font-size:.7rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#526681}
+.ren-pack-features h4{margin:5px 0;font-size:1.15rem;color:inherit}
+.ren-pack-features-heading p,.ren-pack-feature-note{font-size:.8rem;line-height:1.5;margin:6px 0;color:#526681}
+.ren-pack-change-summary{display:flex;flex-wrap:wrap;gap:6px}
+.ren-pack-gains,.ren-pack-losses{display:inline-block;margin-top:6px;padding:4px 8px;border-radius:6px;font-size:.73rem;font-weight:600}
+.ren-pack-gains{background:#dcfce7;color:#166534}
+.ren-pack-losses{background:#ffedd5;color:#9a3412}
+.ren-pack-feature-groups{padding:0 18px;max-height:54dvh;overflow-y:auto;overscroll-behavior:contain}
+.ren-pack-feature-group h5{margin:18px 0 6px;font-size:.75rem;text-transform:uppercase;letter-spacing:.03em;color:#526681}
+.ren-pack-differences{padding:12px;border-radius:8px;margin:14px 0;background:#eafbf0;color:#166534}
+.ren-pack-differences h5{font-size:.8rem;margin:0 0 8px;color:inherit}
+.ren-pack-differences ul{margin:0;padding-left:18px;font-size:.8rem;line-height:1.5}
+.ren-pack-differences li+li{margin-top:5px}
+.ren-pack-differences-losses{background:#fff3e8;color:#9a3412}
+.ren-pack-feature-group ul{list-style:none;padding:0;margin:0}
+.ren-pack-feature{display:flex;gap:9px;align-items:flex-start;padding:8px 0;border-bottom:1px solid #e5ebf4;font-size:.81rem;line-height:1.4}
+.ren-pack-feature>i{flex:0 0 14px;margin-top:3px;color:#15803d}
+.ren-pack-feature>div{min-width:0;overflow-wrap:anywhere}
+.ren-pack-feature small{display:block;font-size:.74rem;color:#526681}
+.ren-pack-feature.is-excluded,.ren-pack-feature.is-excluded>i{color:#7a8699}
+.ren-pack-feature[data-change="added"],.ren-pack-feature[data-change="increased"]{color:#166534;font-weight:600}
+.ren-pack-feature[data-change="removed"],.ren-pack-feature[data-change="reduced"]{color:#9a3412}
+.ren-pack-feature[data-change="removed"]>i,.ren-pack-feature[data-change="reduced"]>i{color:#c2410c}
+.ren-pack-feature-badge{display:inline-block;margin:3px 0 0 6px;padding:2px 6px;font-size:.65rem;border-radius:4px;background:#dcfce7;color:#166534;vertical-align:middle}
+.ren-pack-feature[data-change="removed"] .ren-pack-feature-badge,.ren-pack-feature[data-change="reduced"] .ren-pack-feature-badge{background:#ffedd5;color:#9a3412}
+.ren-pack-feature-note{padding:12px 18px;margin:0;border-top:1px solid #dbe4f2}
+body.dark-mode .ren-pack-features{background:#142033;border-color:#35445e;color:#e2e8f0}
+body.dark-mode .ren-pack-features-heading{background:#1c2d48;border-color:#35445e}
+body.dark-mode .ren-pack-eyebrow,body.dark-mode .ren-pack-features-heading p,body.dark-mode .ren-pack-feature-note,body.dark-mode .ren-pack-feature-group h5,body.dark-mode .ren-pack-feature small{color:#b0c0d6}
+body.dark-mode .ren-pack-feature,body.dark-mode .ren-pack-feature-note{border-color:#35445e}
+body.dark-mode .ren-pack-feature.is-excluded,body.dark-mode .ren-pack-feature.is-excluded>i{color:#94a3b8}
+body.dark-mode .ren-pack-feature[data-change="added"],body.dark-mode .ren-pack-feature[data-change="increased"],body.dark-mode .ren-pack-feature>i{color:#86efac}
+body.dark-mode .ren-pack-feature[data-change="removed"],body.dark-mode .ren-pack-feature[data-change="reduced"],body.dark-mode .ren-pack-feature[data-change="removed"]>i{color:#fdba74}
+body.dark-mode .ren-pack-differences-gains{background:#12372c;color:#a7f3d0}
+body.dark-mode .ren-pack-differences-losses{background:#4a2a11;color:#fed7aa}
+body.dark-mode .ren-pack-capacity-box,body.dark-mode .ren-pack-price-box{background:#142033!important;border-color:#35445e!important;color:#e2e8f0}
+body.dark-mode .ren-pack-price-box span{color:inherit!important}
+body.dark-mode .ren-pack-positive-note{background:#12372c!important;color:#a7f3d0!important}
+body.dark-mode .ren-pack-warning-note{background:#4a2a11!important;color:#fed7aa!important}
+body.dark-mode .ren-pack-warning-note *{color:inherit!important}
+@media(max-width:900px){
+  #renPackOverlay{padding:8px;align-items:center}
+  #renPackOverlay .ren-pack-dialog{width:100%;max-height:calc(100dvh - 16px);padding:18px}
+  .ren-pack-columns{grid-template-columns:minmax(0,1fr);gap:20px}
+  .ren-pack-features{position:static}
+  .ren-pack-feature-groups{max-height:none;overflow:visible}
+}
 /* Workspace do Cliente — separadores (Resumo, Locais, OS, ...) */
 .ws-cliente-aba-btn{border:1px solid #cbd5e1;background:#fff;border-radius:8px;padding:8px 14px;font-size:.84rem;font-weight:600;color:#334155;cursor:pointer;white-space:nowrap;transition:.15s;}
 .ws-cliente-aba-btn:hover{background:#f8fafc;border-color:#94a3b8;}

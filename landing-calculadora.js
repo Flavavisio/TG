@@ -499,62 +499,9 @@ PACK_PRECOS_SITE.pro_plus = Object.fromEntries(
         [escalao, Math.round((Number(preco) + 9.99) * 100) / 100]
     )
 );
-// Detalhe de cada pack — o que ganhas ao subir de nível fica agrupado, para o cliente perceber
-// logo "o que é que este pack me traz a mais". Cumulativo: cada um inclui tudo o do anterior.
-// Mapa completo de funcionalidades por pack (igual ao Excel). Agrupado por área para se ler bem.
-// ✓ = incluído nesse pack. A ordem segue a lógica cumulativa Express → Expert → Pro → Supreme.
-const PACK_FUNCS = [
-    { grupo: 'Base', linhas: [
-        ['Clientes', 1,1,1,1],
-        ['Instalações do cliente', 1,1,1,1],
-        ['Passaporte de Instalação', 0,1,1,1],
-        ['Ordens de Serviço', 1,1,1,1],
-        ['Folha de Obra / Intervenção', 1,1,1,1],
-        ['PDF Folha de Obra — Cliente', 1,1,1,1],
-        ['Manutenções', 1,1,1,1],
-        ['Agenda de Obras (calendário de OS)', 1,1,1,1],
-        ['Funcionários', 1,1,1,1],
-        ['Calendário da equipa', 1,1,1,1],
-        ['Relatórios personalizados', '5 modelos','15 modelos','40 modelos','Ilimitados'],
-    ]},
-    { grupo: 'Equipa no terreno', linhas: [
-        ['Ponto / Assiduidade', 0,1,1,1],
-        ['GPS nas picagens', 0,1,1,1],
-        ['Férias e faltas', 0,1,1,1],
-        ['Portal do Cliente', 0,1,1,1],
-        ['Contratos de manutenção', 0,1,1,1],
-        ['Frota', 0,1,1,1],
-        ['Relatórios de especialidade', 0,'REX, RBI, RSI, RCM, RIE, RCP, CCTV, Intrusão','REX, RBI, RSI, RCM, RIE, RCP, CCTV, Intrusão','REX, RBI, RSI, RCM, RIE, RCP, CCTV, Intrusão'],
-        ['Mapa da Equipa', 0,1,1,1],
-        ['Painel TV', 0,1,1,1],
-    ]},
-    { grupo: 'Operação (obras, stock, assistências)', linhas: [
-        ['Folha de Obra — Custos Internos', 0,0,1,1],
-        ['Custos de mão de obra', 0,0,1,1],
-        ['Custos dos materiais', 0,0,1,1],
-        ['Obras', 0,0,1,1],
-        ['Picagem entrada/saída em obra', 0,0,1,1],
-        ['Stock / Artigos', 0,0,1,1],
-        ['Armazéns', 0,0,1,1],
-        ['Requisições', 0,0,1,1],
-        ['Encomendas', 0,0,1,1],
-        ['Fornecedores', 0,0,1,1],
-        ['Ferramentas / QR', 0,0,1,1],
-        ['Assistências', 0,0,1,1],
-        ['Financeiro / Despesas', 0,0,1,1],
-    ]},
-    { grupo: 'Topo de gama', linhas: [
-        ['CRM Comercial', 0,0,0,1],
-        ['Dashboard Analítico', 0,0,0,1],
-        ['Geofence / histórico GPS', 0,0,0,1],
-        ['Opções de integração ERP (sujeitas a compatibilidade)', 0,0,0,1],
-        ['Rondas / Vigilância', 0,0,0,1],
-        ['Auditoria avançada', 0,0,0,1],
-    ]},
-];
+// Catálogo de funcionalidades partilhado com a licença: tg-pack-features.js.
 const PACK_LIMITES_TXT = { express: 'Até 5 modelos de relatório personalizado', expert: 'Até 15 modelos', pro: 'Até 40 modelos', pro_plus: 'Até 40 modelos e CRM Comercial', supreme: 'Modelos ilimitados' };
 const PACK_NOMES = { express: 'Express', expert: 'Expert', pro: 'Pro', pro_plus: 'Pro+', supreme: 'Supreme' };
-const PACK_IDX = { express: 1, expert: 2, pro: 3, pro_plus: 3, supreme: 4 };
 let _packEscalaoAtual = '5';
 function _packFmtEuro(v) { return v.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'; }
 function _packMudarEscalao(escalao) {
