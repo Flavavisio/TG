@@ -487,6 +487,7 @@ const PACK_PRECOS_SITE = typeof PACK_PRECOS !== 'undefined' ? PACK_PRECOS : {
     express: { 5: 42.49, 10: 47.49, 25: 62.49, 50: 102.49 },
     expert:  { 5: 52.49, 10: 57.49, 25: 72.49, 50: 112.49 },
     pro:     { 5: 72.49, 10: 77.49, 25: 92.49, 50: 132.49 },
+    pro_plus: { 5: 82.48, 10: 87.48, 25: 102.48, 50: 142.48 },
     supreme: { 5: 102.49, 10: 107.49, 25: 122.49, 50: 162.49 },
 };
 // Detalhe de cada pack — o que ganhas ao subir de nível fica agrupado, para o cliente perceber
@@ -542,9 +543,9 @@ const PACK_FUNCS = [
         ['Auditoria avançada', 0,0,0,1],
     ]},
 ];
-const PACK_LIMITES_TXT = { express: 'Até 5 modelos de relatório personalizado', expert: 'Até 15 modelos', pro: 'Até 40 modelos', supreme: 'Modelos ilimitados' };
-const PACK_NOMES = { express: 'Express', expert: 'Expert', pro: 'Pro', supreme: 'Supreme' };
-const PACK_IDX = { express: 1, expert: 2, pro: 3, supreme: 4 };
+const PACK_LIMITES_TXT = { express: 'Até 5 modelos de relatório personalizado', expert: 'Até 15 modelos', pro: 'Até 40 modelos', pro_plus: 'Até 40 modelos e CRM Comercial', supreme: 'Modelos ilimitados' };
+const PACK_NOMES = { express: 'Express', expert: 'Expert', pro: 'Pro', pro_plus: 'Pro+', supreme: 'Supreme' };
+const PACK_IDX = { express: 1, expert: 2, pro: 3, pro_plus: 3, supreme: 4 };
 let _packEscalaoAtual = '5';
 function _packFmtEuro(v) { return v.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'; }
 function _packMudarEscalao(escalao) {
@@ -563,7 +564,8 @@ function tgAtualizarPrecos() {
         b.setAttribute('aria-pressed', String(b.dataset.mode === _tgBilling));
     });
     document.querySelectorAll('#packGrid .plan').forEach(card => {
-        const mensal = PACK_PRECOS_SITE[card.dataset.pack][_packEscalaoAtual];
+        const precos = card.dataset.pack === 'pro_plus' ? { 5: 82.48, 10: 87.48, 25: 102.48, 50: 142.48 } : PACK_PRECOS_SITE[card.dataset.pack];
+        const mensal = precos[_packEscalaoAtual];
         const totalAnual = Math.round(mensal * 12 * 0.9 * 100) / 100;
         card.querySelector('.amt').textContent = _packFmtEuro(anual ? totalAnual : mensal);
         card.querySelector('.per').textContent = anual ? 'por ano · IVA incluído · equivalente a ' + _packFmtEuro(totalAnual / 12) + '/mês' : 'por mês · IVA incluído';
