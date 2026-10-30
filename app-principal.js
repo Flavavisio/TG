@@ -12601,9 +12601,20 @@ function _assistEstado(value) {
             if (s.propostaId || s.origem === 'proposta') return 'Instalação';
             return 'OS';
         }
+        // A saída sem almoço conclui a participação do colega nesse dia, não a OS da equipa.
+        // Derivado das picagens guardadas, mantém o estado ao reabrir a app e cobre o histórico.
+        function _osConcluidaParaFuncionario(os, funcionarioId, registos = dados) {
+            const ids = os?.funcionariosIds?.length ? os.funcionariosIds : [os?.funcionarioId].filter(Boolean);
+            if (!os || !funcionarioId || ids.length < 2 || !ids.includes(funcionarioId) || !os.relatorioResponsavelId || os.relatorioResponsavelId === funcionarioId) return false;
+            const pontos = (registos.ponto || []).filter(p => p.servicoId === os.id && p.funcionarioId === funcionarioId &&
+                p.adminId === os.adminId && p.entrada && p.data === (os.data || getDataHoje()))
+                .sort((a, b) => b.entrada.localeCompare(a.entrada));
+            if (pontos.some(p => !p.saida)) return false;
+            return !!(pontos[0]?.saida && !pontos[0].pausaAlmoco);
+        }
         function _cardOSAgenda(s, optPessoas, conflitos, readOnly) {
             const cliente = _nomeClienteOS(s.clienteId);
-            const estado = s.status || 'pendente';
+            const estado = usuarioLogado?.role === 'funcionario' && _osConcluidaParaFuncionario(s, usuarioLogado.id) ? 'concluído' : s.status || 'pendente';
             const cls = _estadoClasseAg(estado);
             const emConf = conflitos && conflitos.has(s.id);
             const bloqueada = _osBloqueada(s);
@@ -15266,7 +15277,7 @@ function _assistEstado(value) {
             // OS de hoje — só as que o próprio está associado (dar entrada é uma ação pessoal, não
             // faz sentido admin/sub-admin verem entrada disponível numa OS que não é deles; a
             // visão geral da empresa já existe à parte, no resumo da equipa mais abaixo).
-            const minhasOS = (dados.servicos || []).filter(s => s.adminId === adminId && s.data === hoje && s.status !== 'concluído' && s.status !== 'cancelado'
+            const minhasOS = (dados.servicos || []).filter(s => s.adminId === adminId && s.data === hoje && s.status !== 'concluído' && s.status !== 'cancelado' && !_osConcluidaParaFuncionario(s, usuarioLogado.id)
                 && (((s.funcionariosIds && s.funcionariosIds.length) ? s.funcionariosIds : [s.funcionarioId].filter(Boolean)).includes(meuId)))
                 .sort((a, b) => (a.hora || '99:99').localeCompare(b.hora || '99:99')); // sem hora fica sempre no fim
 
@@ -15620,6 +15631,24 @@ function _assistEstado(value) {
             if (inicio === null) return '';
             return `<span class="tg-tempo-servico">${escapeHtmlSimples(texto)} <strong data-tempo-servico="${inicio}">${_formatarTempoServico(inicio)}</strong></span>`;
         }
+        function _tempoAcumuladoServicoHTML(pontos, funcionarioId, texto = 'Tempo na OS:') {
+            const registos = pontos.filter(p => p.funcionarioId === funcionarioId && p.entrada);
+            if (!registos.length) return '';
+            const agora = Date.now();
+            let total = 0, aberto = false;
+            for (const p of registos) {
+                const inicio = _inicioTempoServico({ ...p, saida: null });
+                if (inicio === null) continue;
+                if (!p.saida) { total += Math.max(0, agora - inicio); aberto = true; }
+                else {
+                    if (!/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/.test(p.saida)) continue;
+                    const fim = new Date(p.data + 'T' + p.saida).getTime();
+                    if (Number.isFinite(fim) && fim >= inicio) total += fim - inicio;
+                }
+            }
+            // O almoço não é somado: cada intervalo termina na saída e retoma numa nova entrada.
+            return `<span class="tg-tempo-servico">${escapeHtmlSimples(texto)} <strong${aberto ? ` data-tempo-servico="${agora - total}"` : ''}>${_formatarTempoServico(0, total)}</strong></span>`;
+        }
         function _atualizarTemposServico() {
             if (document.hidden) return;
             const agora = Date.now();
@@ -15752,14 +15781,12 @@ function _assistEstado(value) {
                 (dados.obraPontoLonga || []).some(p => p.obraId === o.id && p.adminId === adminId && p.entrada && !p.saida));
             const linha = (s, obra = false) => {
                 const pontos = (obra ? dados.obraPontoLonga : dados.ponto) || [];
-                const abertos = pontos.filter(p => p.adminId === adminId && (obra ? p.obraId === s.id : p.servicoId === s.id) && p.entrada && !p.saida)
-                    .sort((a, b) => (b.data + b.entrada).localeCompare(a.data + a.entrada));
+                const registos = pontos.filter(p => p.adminId === adminId && (obra ? p.obraId === s.id : p.servicoId === s.id) && p.entrada);
                 const atribuidos = obra ? ((s.responsaveisIds?.length ? s.responsaveisIds : [s.responsavelId]).filter(Boolean))
                     : ((s.funcionariosIds?.length ? s.funcionariosIds : [s.funcionarioId]).filter(Boolean));
-                const ids = [...new Set([...atribuidos, ...abertos.map(p => p.funcionarioId)])];
+                const ids = [...new Set([...atribuidos, ...registos.map(p => p.funcionarioId)])];
                 const pessoas = ids.length ? ids.map(id => {
-                    const ponto = abertos.find(p => p.funcionarioId === id);
-                    return `<span class="tgm-resumo-pessoa"><span>${escapeHtmlSimples(obterNomeFuncionario(id))}</span>${ponto ? _tempoServicoHTML(ponto, obra ? 'Em obra há' : 'Em OS há') : ''}</span>`;
+                    return `<span class="tgm-resumo-pessoa"><span>${escapeHtmlSimples(obterNomeFuncionario(id))}</span>${_tempoAcumuladoServicoHTML(registos, id, obra ? 'Tempo em obra:' : 'Tempo na OS:')}</span>`;
                 }).join('') : 'Sem ninguém atribuído';
                 const estado = obra ? 'em andamento' : s.status;
                 const corEstado = estado === 'concluído' ? '#16a34a' : estado === 'em andamento' ? '#f59e0b' : estado === 'stand by' ? '#94a3b8' : '#64748b';
@@ -28443,6 +28470,7 @@ async function salvarAdmin(e) {
             if (usuarioLogado?.role !== 'funcionario' && usuarioLogado?.role !== 'encarregado' && usuarioLogado?.role !== 'vendedor' && usuarioLogado?.role !== 'admin' && usuarioLogado?.role !== 'subadmin') return;
             const _atribuidos = (os.funcionariosIds && os.funcionariosIds.length) ? os.funcionariosIds : [os.funcionarioId].filter(Boolean);
             if (!_atribuidos.includes(usuarioLogado.id)) { alert('Só quem está atribuído a esta OS pode picar o ponto aqui.'); return; }
+            if (tipo === 'entrada' && _osConcluidaParaFuncionario(os, usuarioLogado.id)) { alert('A tua participação nesta OS já está concluída. O responsável irá finalizar a documentação.'); return; }
             if (tipo === 'entrada' && os.status === 'concluído') { alert('Esta OS já está Concluída — não é possível dar entrada. Fala com o admin/encarregado se for preciso reabrir.'); return; }
             const hoje = getDataHoje();
             const hora = new Date().toTimeString().slice(0, 5);
@@ -28533,7 +28561,16 @@ async function salvarAdmin(e) {
                     if (typeof renderizarPonto === 'function') renderizarPonto();
                     return;
                 }
-                guardarDados(dados);
+                if (kmSai != null) aberto.kmFim = kmSai;
+                try { await guardarDados(dados); }
+                catch (erro) {
+                    aberto.saida = null;
+                    aberto.latSaida = null;
+                    aberto.lngSaida = null;
+                    alert('Não foi possível confirmar a saída no servidor. Tenta novamente.');
+                    renderizarTudo();
+                    return;
+                }
                 if (resposta === false) {
                     if (kmSai != null) aberto.kmFim = kmSai;
                     _checklistSaidaVerificar(adminId, () => {
@@ -28548,7 +28585,8 @@ async function salvarAdmin(e) {
                 const souResponsavelFolha = idsAtribOS.length <= 1 || !os.relatorioResponsavelId || os.relatorioResponsavelId === usuarioLogado.id;
                 if (!souResponsavelFolha) {
                     _checklistSaidaVerificar(adminId, () => {
-                        alert('✅ Saída picada às ' + hora + '.\n\nNão precisas de preencher nada — ' + obterNomeFuncionario(os.relatorioResponsavelId) + ' está responsável por preencher o relatório e a folha de obra desta OS.');
+                        alert('✅ A tua participação nesta OS ficou concluída às ' + hora + '.\n\nNão precisas de preencher nada — ' + obterNomeFuncionario(os.relatorioResponsavelId) + ' está responsável por preencher o relatório e a folha de obra desta OS.');
+                        renderizarTudo();
                         renderizarAgendaObras();
                         if (typeof renderizarPonto === 'function') renderizarPonto();
                     }, { tipo: 'servico', id: os.id });
@@ -28566,7 +28604,7 @@ async function salvarAdmin(e) {
                 if (adminObjSai?.kmPorOsAtivo) {
                     _kmPedirRegisto(usuarioLogado.id, 'Saída de OS', (km) => _prosseguirSaidaOS(km));
                 } else {
-                    _prosseguirSaidaOS(null);
+                    await _prosseguirSaidaOS(null);
                 }
                 return;
             }

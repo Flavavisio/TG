@@ -80,7 +80,7 @@
         document.body.classList.remove('com-sidebar');
         const groups=$('dashboardGrupos')||document.querySelector('#cardsGrid .dashboard-grupos');if(groups)groups.style.display='none';
     }
-    const completed = job => done(job.kind==='os'?job.row.status:job.row.estado);
+    const completed = job => done(job.kind==='os'?job.row.status:job.row.estado) || (job.kind==='os' && typeof _osConcluidaParaFuncionario==='function' && _osConcluidaParaFuncionario(job.row,u()?.id));
     function todayJobs(list=jobs()) {
         return list.filter(job=>job.kind==='os'&&job.date===today())
             .sort((a,b)=>(a.hour||'99:99').localeCompare(b.hour||'99:99')||a.title.localeCompare(b.title,'pt'));
@@ -98,6 +98,7 @@
     }
     function focusHTML(job) {
         if (!job) return `<section class="tgt-empty">${icon('circle-check')}<h3>Sem OS por iniciar</h3><p>Consulta as OS de hoje abaixo ou a agenda da semana em Trabalhos.</p>${button('Ver a agenda da semana','jobs')}</section>`;
+        if (completed(job) && !job.open) return `<section class="tgt-empty"><h3>Participação concluída</h3><p>A tua participação nesta OS terminou. O responsável trata da documentação.</p>${button('Ver ordem de serviço','details',job)}</section>`;
         const open=!!job.open, clock=!!personalClock();
         let map=null;
         if (typeof _osMapaInfo==='function')map=_osMapaInfo(job.row.clienteId,job.address,job.row.localId);
@@ -436,7 +437,7 @@
     wrap('_obraLongaPontoAbertoQualquer',function(original,args){return enabled()?rows('obraPontoLonga').find(p=>p.funcionarioId===u().id&&p.entrada&&!p.saida)||null:original.apply(this,args);});
     // The same guards cover entry actions reached from old cards or a stale modal.
     function entryAllowed(id,kind) {return jobs().some(job=>job.kind===kind&&job.id===id&&!completed(job)&&(kind!=='os'||job.date===today()));}
-    function denyOtherDay() {const text='Só podes iniciar os trabalhos atribuídos para hoje.';if(typeof mostrarErro==='function')mostrarErro(text);else alert(text);}
+    function denyOtherDay() {const text='Só podes iniciar os trabalhos atribuídos para hoje que ainda não concluíste.';if(typeof mostrarErro==='function')mostrarErro(text);else alert(text);}
     wrap('picarPontoOS',function(original,args){if(enabled()&&args[1]==='entrada'&&!entryAllowed(args[0],'os'))return denyOtherDay();return original.apply(this,args);});
     wrap('obraLongaPicarEntrada',function(original,args){if(enabled()&&!entryAllowed(args[0],'obra'))return denyOtherDay();return original.apply(this,args);});
     wrap('renderizarOMeuDia',function(original,args){if(enabled())return renderHome();return original.apply(this,args);});

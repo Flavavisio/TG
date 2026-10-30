@@ -7,7 +7,7 @@ function setup(active=true,lunch=false){
  const admin={id:'a',testePontoAssiduidadeAtivo:active};
  const c=vm.createContext({admin,usuarioLogado:{id:'f',adminId:'a',role:'funcionario'},dados:{administradores:[admin],ponto:[],obraPontoLonga:[],servicos:[{id:'os',adminId:'a',funcionariosIds:['f'],descricao:'OS teste'}],obras:[{id:'w',adminId:'a',nome:'Obra teste'}]},_picandoEntradaObraLonga:false,
  Date,Promise,console,expressAtivo:()=>false,adminDoUtilizador:()=>admin,adminAtual:()=>admin,getDataHoje:()=> '2026-10-26',_tenantId:()=> 'a',_tenantIdAtual:()=> 'a',_gpsPontoAtivo:()=>false,_obraLongaPontoAbertoQualquer:()=>null,_pausaAlmocoPendente:()=>null,gerarId:()=>Math.random().toString(),guardarDados:async()=>{},renderizarTudo:()=>{},_refrescarModalObraLongaSeAberto:()=>{},_mostrarCarregando:()=>{},_esconderCarregando:()=>{},_checklistEntradaVerificar:(id,cb)=>cb(),_nomeClienteOS:()=> 'Cliente',alert:()=>{},avisarPicarPontoPrimeiro:()=>{c.blocked=true;},abrirSliderConfirmacao:(a,b,cb)=>{c.confirm=cb;}});
- vm.runInContext(['pontoAssiduidadeAtivo','pontoAbertoHoje','obraLongaPicarEntrada','picarPontoOS','_quiosqueGarantirEntradaGeral','guardarRegistosTempoTeste'].map(fn).join('\n'),c);
+ vm.runInContext(['_osConcluidaParaFuncionario','pontoAssiduidadeAtivo','pontoAbertoHoje','obraLongaPicarEntrada','picarPontoOS','_quiosqueGarantirEntradaGeral','guardarRegistosTempoTeste'].map(fn).join('\n'),c);
  return c;
 }
 for(const type of ['os','obra']){
@@ -72,7 +72,7 @@ for(const active of [true,false])for(const mode of ['agenda','fixed']){
 test('phone focus offers direct intervention without attendance prerequisite',()=>{
  const tech=fs.readFileSync('tg-technician.js','utf8');
  const focus=tech.match(/    function focusHTML\([^]*?\n    \}/)[0];
- const c=vm.createContext({passportTarget:()=>true,attendance:()=>false,personalClock:()=>null,resumingLunch:()=>false,icon:()=>'',esc:x=>x,button:label=>label,label:()=> 'OS'});
+ const c=vm.createContext({completed:()=>false,passportTarget:()=>true,attendance:()=>false,personalClock:()=>null,resumingLunch:()=>false,icon:()=>'',esc:x=>x,button:label=>label,label:()=> 'OS'});
  vm.runInContext(focus,c);
  const html=c.focusHTML({kind:'os',id:'os',row:{},title:'Serviço',client:'Cliente'});
  assert(html.includes('Iniciar intervenção'));assert(!html.includes('Picar entrada no dia'));assert(!html.includes('Regista primeiro'));

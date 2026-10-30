@@ -8,7 +8,7 @@ function setup(){
  Object.assign(w,{expressAtivo:()=>false,adminDoUtilizador:()=>({id:'a'}),_licencaValidaTenant:()=>true,getDataHoje:()=> '2026-10-27',_pausaAlmocoPendente:()=>null,_montarMenuInferiorMobile(){},_mostrarInicioConteudo(){}});
  w.entryCalls=[];w.errors=[];w.picarPontoOS=(...args)=>w.entryCalls.push(args);w.mostrarErro=msg=>w.errors.push(msg);
  w.allowed=true;w.opened=[];w.TGPassport={scope:(c,l)=>w.allowed?{customerId:c,localId:l}:null,open:(...args)=>w.opened.push(args)};
- const instrumented=source.replace('window.TGTechnician={refresh,jobs,todayJobs,weekJobs,enabled};refresh();','window.TGTechnician={refresh,home,workList,worksList,more,fleet,enabled,jobs,focusHTML,avatarHTML,notes,openPassport,protectFieldFont,installWizard,removeWizard,wizards};');
+ const instrumented=source.replace('window.TGTechnician={refresh,jobs,todayJobs,weekJobs,enabled};refresh();','window.TGTechnician={refresh,home,workList,worksList,more,fleet,enabled,jobs,completed,jobState,rowHTML,focusHTML,avatarHTML,notes,openPassport,protectFieldFont,installWizard,removeWizard,wizards};');
  assert.notEqual(source,instrumented);w.eval(instrumented);return w;
 }
 test('header uses first name and last surname initials, including accents and a single name',()=>{
@@ -28,7 +28,7 @@ test('worksheet fields are at least 16px before focus and restoration preserves 
 });
 test('avatar, wizard scale correction and refreshed CSS are included in both app entry points',()=>{
  const css=fs.readFileSync('tg-technician.css','utf8');assert(css.includes('.tgt-avatar'));assert(css.includes('animation:none!important;transform:none!important'));assert(source.includes('${avatarHTML()}</header>'));
- for(const file of ['index.html','login.html']){const html=fs.readFileSync(file,'utf8');assert(html.includes('tg-technician.js?v=1.8.0-service-time'));assert(html.includes('tg-technician.css?v=1.8.0-exit-centered'));const responsive=html.match(/responsive-device\.css\?v=\d+/)?.[0];assert(responsive&&fs.readFileSync('sw.js','utf8').includes(responsive));assert(!html.includes('user-scalable=no'));}
+ for(const file of ['index.html','login.html']){const html=fs.readFileSync(file,'utf8');assert(html.includes('tg-technician.js?v=1.9.0-individual-os'));assert(html.includes('tg-technician.css?v=1.8.0-exit-centered'));const responsive=html.match(/responsive-device\.css\?v=\d+/)?.[0];assert(responsive&&fs.readFileSync('sw.js','utf8').includes(responsive));assert(!html.includes('user-scalable=no'));}
 });
 
 test('the intervention toolbar opens the installation passport directly without a notes dialog',()=>{
@@ -240,5 +240,16 @@ test('the OS exit choice opens a centered dialog and preserves the lunch and can
   assert(overlay.classList.contains('open'));assert.equal(w.getComputedStyle(overlay).alignItems,'center');assert.equal(w.getComputedStyle(overlay).justifyContent,'center');assert.equal(w.getComputedStyle(overlay.querySelector('.modal')).height,'auto');
   w._modalSimNaoResponder('almoco');assert.equal(await response,'almoco');assert(!overlay.classList.contains('open'));
   const canceled=w.perguntarSaidaObra('Terminaste a OS?');w._modalSimNaoResponder(null);assert.equal(await canceled,null);
+ }finally{w.close();}
+});
+
+test('a non-responsible employee sees a completed OS with read-only details after exit, while lunch remains available',()=>{
+ const w=setup();try{
+  const main=fs.readFileSync('app-principal.js','utf8');w.eval(main.match(/        function _osConcluidaParaFuncionario\([^]*?\n        \}/)[0]);
+  const os=w.dados.servicos[0];os.funcionariosIds=['f','responsavel'];os.relatorioResponsavelId='responsavel';os.status='em andamento';
+  w.dados.ponto=[{id:'p',adminId:'a',servicoId:os.id,funcionarioId:'f',data:os.data,entrada:'09:00',saida:'12:00'}];
+  let job=w.TGTechnician.jobs()[0];assert(w.TGTechnician.completed(job));assert.equal(w.TGTechnician.jobState(job)[1],'Concluído');assert.match(w.TGTechnician.rowHTML(job),/data-tgt-action="details"/);assert(!w.TGTechnician.focusHTML(job).includes('data-tgt-action="start"'));
+  w.picarPontoOS(os.id,'entrada');assert.equal(w.entryCalls.length,0);
+  w.dados.ponto[0].pausaAlmoco=true;job=w.TGTechnician.jobs()[0];assert(!w.TGTechnician.completed(job));w.picarPontoOS(os.id,'entrada');assert.equal(w.entryCalls.length,1);
  }finally{w.close();}
 });
