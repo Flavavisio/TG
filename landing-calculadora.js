@@ -57,7 +57,7 @@ function tgEscolherPack(event, pack) {
 function tgCalcularPack(func, necessidades) {
     if (!Number.isInteger(func) || func < 1 || func > 10000) return null;
     const nivel = Math.max(0, ...necessidades.map(n => TCW_NEEDS[n] || 0));
-    const pack = TCW_PACK_ORDER[nivel];
+    const pack = necessidades.includes('crm') && nivel <= 3 ? 'pro_plus' : TCW_PACK_ORDER[nivel];
     if (func > SU_MAX_FUNCIONARIOS) return {pack, funcionarios: func, proposta: true};
     const opcoes = SU_ESCALOES.map(e => {
         const blocos = Math.max(0, Math.ceil((func - Number(e.key)) / 5));
@@ -168,6 +168,7 @@ const SU_PACKS = {
     express: { nome: 'Express' },
     expert:  { nome: 'Expert' },
     pro:     { nome: 'Pro' },
+    pro_plus: { nome: 'Pro+' },
     supreme: { nome: 'Supreme' },
 };
 // Escalões-base de funcionários (o preço vem de PACK_PRECOS_SITE, por pack). A partir daqui,
@@ -487,8 +488,17 @@ const PACK_PRECOS_SITE = typeof PACK_PRECOS !== 'undefined' ? PACK_PRECOS : {
     express: { 5: 42.49, 10: 47.49, 25: 62.49, 50: 102.49 },
     expert:  { 5: 52.49, 10: 57.49, 25: 72.49, 50: 112.49 },
     pro:     { 5: 72.49, 10: 77.49, 25: 92.49, 50: 132.49 },
+    pro_plus: { 5: 82.48, 10: 87.48, 25: 102.48, 50: 142.48 },
     supreme: { 5: 102.49, 10: 107.49, 25: 122.49, 50: 162.49 },
 };
+// Pro+ é sempre o Pro no mesmo escalão + 9,99 €/mês.
+// Recalcular a partir do preço real do Pro evita divergências entre a landing
+// e a tabela da aplicação quando houver alterações futuras aos preços.
+PACK_PRECOS_SITE.pro_plus = Object.fromEntries(
+    Object.entries(PACK_PRECOS_SITE.pro).map(([escalao, preco]) =>
+        [escalao, Math.round((Number(preco) + 9.99) * 100) / 100]
+    )
+);
 // Detalhe de cada pack — o que ganhas ao subir de nível fica agrupado, para o cliente perceber
 // logo "o que é que este pack me traz a mais". Cumulativo: cada um inclui tudo o do anterior.
 // Mapa completo de funcionalidades por pack (igual ao Excel). Agrupado por área para se ler bem.
@@ -542,9 +552,9 @@ const PACK_FUNCS = [
         ['Auditoria avançada', 0,0,0,1],
     ]},
 ];
-const PACK_LIMITES_TXT = { express: 'Até 5 modelos de relatório personalizado', expert: 'Até 15 modelos', pro: 'Até 40 modelos', supreme: 'Modelos ilimitados' };
-const PACK_NOMES = { express: 'Express', expert: 'Expert', pro: 'Pro', supreme: 'Supreme' };
-const PACK_IDX = { express: 1, expert: 2, pro: 3, supreme: 4 };
+const PACK_LIMITES_TXT = { express: 'Até 5 modelos de relatório personalizado', expert: 'Até 15 modelos', pro: 'Até 40 modelos', pro_plus: 'Até 40 modelos e CRM Comercial', supreme: 'Modelos ilimitados' };
+const PACK_NOMES = { express: 'Express', expert: 'Expert', pro: 'Pro', pro_plus: 'Pro+', supreme: 'Supreme' };
+const PACK_IDX = { express: 1, expert: 2, pro: 3, pro_plus: 3, supreme: 4 };
 let _packEscalaoAtual = '5';
 function _packFmtEuro(v) { return v.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'; }
 function _packMudarEscalao(escalao) {
@@ -563,7 +573,8 @@ function tgAtualizarPrecos() {
         b.setAttribute('aria-pressed', String(b.dataset.mode === _tgBilling));
     });
     document.querySelectorAll('#packGrid .plan').forEach(card => {
-        const mensal = PACK_PRECOS_SITE[card.dataset.pack][_packEscalaoAtual];
+        const precos = PACK_PRECOS_SITE[card.dataset.pack];
+        const mensal = precos[_packEscalaoAtual];
         const totalAnual = Math.round(mensal * 12 * 0.9 * 100) / 100;
         card.querySelector('.amt').textContent = _packFmtEuro(anual ? totalAnual : mensal);
         card.querySelector('.per').textContent = anual ? 'por ano · IVA incluído · equivalente a ' + _packFmtEuro(totalAnual / 12) + '/mês' : 'por mês · IVA incluído';
@@ -590,21 +601,22 @@ function _packVerDetalhes(pack) {
     if (alvo.dataset.packAberto === pack) { alvo.innerHTML = ''; alvo.dataset.packAberto = ''; document.querySelectorAll('[data-pack-details]').forEach(b => b.setAttribute('aria-expanded','false')); document.querySelector('[data-pack-details="' + pack + '"]')?.focus(); return; }
     alvo.dataset.packAberto = pack;
     document.querySelectorAll('[data-pack-details]').forEach(b => b.setAttribute('aria-expanded',String(b.dataset.packDetails === pack)));
-    const escolhido = PACK_IDX[pack];
-    const cabecalho = ['express','expert','pro','supreme'].map(p =>
+    const packsComparacao = ['express','expert','pro','pro_plus','supreme'];
+    const cabecalho = packsComparacao.map(p =>
         `<th scope="col" class="${p === pack ? 'pack-col-destaque' : ''}">${PACK_NOMES[p]}</th>`).join('');
     const corpo = PACK_FUNCS.map(g => `
-        <tr class="pack-grupo-linha"><td colspan="5">${g.grupo}</td></tr>
+        <tr class="pack-grupo-linha"><td colspan="6">${g.grupo}</td></tr>
         ${g.linhas.map(l => `
             <tr>
                 <td class="pack-func-nome">${l[0]}</td>
-                ${[1,2,3,4].map(i => {
-                    const v = l[i];
-                    // Valor pode ser 1 (✓), 0 (—) ou texto (ex.: limite de relatórios por pack).
-                    const conteudo = (typeof v === 'string')
+                ${packsComparacao.map(p => {
+                    // Pro+ inclui precisamente as funcionalidades Pro, mais CRM Comercial.
+                    const pos = PACK_IDX[p];
+                    const v = p === 'pro_plus' && l[0] === 'CRM Comercial' ? 1 : l[pos];
+                    const conteudo = typeof v === 'string'
                         ? `<span class="pack-valor-txt">${v}</span>`
                         : (v ? '<span class="pack-sim">✓</span>' : '<span class="pack-nao">—</span>');
-                    return `<td class="pack-cel ${i === escolhido ? 'pack-col-destaque' : ''}">${conteudo}</td>`;
+                    return `<td class="pack-cel ${p === pack ? 'pack-col-destaque' : ''}">${conteudo}</td>`;
                 }).join('')}
             </tr>
         `).join('')}

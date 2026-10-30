@@ -1239,6 +1239,27 @@ function _assistEstado(value) {
             }
             return null;
         }
+        // Uma sessão antiga não deve reescrever validades/pack só por atualizar o logótipo,
+        // atividade ou outra definição. Nas contas existentes enviamos apenas campos alterados.
+        async function _guardarAdministradoresAlterados(rows) {
+            const data = [];
+            for (const row of rows) {
+                const anteriorJson = _snap.administradores.get(row.id);
+                let result;
+                if (!anteriorJson) {
+                    result = await supa.from('administradores').upsert(row, { onConflict: 'id' }).select('id');
+                } else {
+                    const anterior = JSON.parse(anteriorJson);
+                    const patch = Object.fromEntries(Object.entries(row).filter(([k, v]) => k !== 'id' && JSON.stringify(v) !== JSON.stringify(anterior[k])));
+                    if (!Object.keys(patch).length) { data.push({ id: row.id }); continue; }
+                    result = await supa.from('administradores').update(patch).eq('id', row.id).select('id');
+                }
+                if (result.error) return { data, error: result.error };
+                if (!(result.data || []).some(r => r.id === row.id)) return { data, error: { message: 'A alteração da conta não foi confirmada pelo servidor.' } };
+                data.push({ id: row.id });
+            }
+            return { data, error: null };
+        }
         async function _sincronizar() {
             if (!navigator.onLine) {
                 mostrarStatusOffline();
@@ -1285,7 +1306,9 @@ function _assistEstado(value) {
                         // escreveu nenhuma linha — sem o .select(), nunca saberíamos a diferença entre
                         // "gravou tudo" e "não gravou nada", e ficávamos a marcar coisas como
                         // sincronizadas quando não estavam.
-                        const { data: linhasGravadas, error } = await supa.from(meta.tabela).upsert(loteRows, { onConflict: 'id' }).select('id');
+                        const { data: linhasGravadas, error } = col === 'administradores'
+                            ? await _guardarAdministradoresAlterados(loteRows)
+                            : await supa.from(meta.tabela).upsert(loteRows, { onConflict: 'id' }).select('id');
                         if (error) {
                             console.error('upsert ' + meta.tabela + ' (lote ' + (i / TAMANHO_LOTE + 1) + '):', error.message);
                             const colunaFalta = _colunaEmFalta(error);
@@ -1618,7 +1641,7 @@ function _assistEstado(value) {
         }
         function valorBaseCobradoDe(admin) {
             if (!admin || !admin.licenca) return 0;
-            let valorCatalogo = parseFloat(getValorPlano(admin.licenca.plano)) || 0;
+            let valorCatalogo = packValorBase(admin) ?? (parseFloat(getValorPlano(admin.licenca.plano)) || 0);
             if (admin.precoFundador) valorCatalogo = +(valorCatalogo * 0.9).toFixed(2); // Preço Fundador: -10% permanente
             if (!admin.distribuidorId) return valorCatalogo;
             const distribuidor = dados.administradores?.find(a => a.id === admin.distribuidorId);
@@ -3989,7 +4012,7 @@ function _assistEstado(value) {
                 const aguardaPagamento = admin.licenca && admin.licenca.ativa === true && admin.licenca.aguardaPagamento === true;
                 const statusLabel = admin.ativo ? (pendentePagamento ? 'Pendente de Pagamento' : (aguardaPagamento ? 'Ativo e aguarda pagamento' : (valida ? 'Ativo' : 'Licença Expirada'))) : 'Desativado';
                 const statusClass = admin.ativo ? (pendentePagamento ? 'badge-demo' : (aguardaPagamento ? 'badge-demo' : (valida ? 'badge-ativo' : 'badge-expirado'))) : 'badge-inativo';
-                const planoLabel = admin.licenca ? PLANOS[admin.licenca.plano]?.label || admin.licenca.plano : 'Sem licença';
+                const planoLabel = packDescricao(admin);
                 const valorBase = admin.licenca ? valorBaseCobradoDe(admin) : 0;
                 const _addons = _addonsAtivosDe(admin);
                 const valorTotal = valorBase + _addons.reduce((s, a) => s + a.preco, 0);
@@ -4130,7 +4153,7 @@ function _assistEstado(value) {
             empty.style.display = 'none';
             tbody.innerHTML = admins.map(admin => {
                 const diasRest = calcularDiasRestantes(admin.licenca.dataExpiracao);
-                const planoLabel = PLANOS[admin.licenca.plano]?.label || admin.licenca.plano;
+                const planoLabel = packDescricao(admin);
                 const valor = ehDistrib ? (admin.precoDistribuidorCobrado != null ? admin.precoDistribuidorCobrado : getValorPlano(admin.licenca.plano)) : getValorPlano(admin.licenca.plano);
                 // Um distribuidor não tem permissão para as ações de Super Admin (renovar/alterar
                 // plano diretamente) — é encaminhado para o modal próprio dele em "Distribuição".
@@ -4542,7 +4565,7 @@ function _assistEstado(value) {
             const planoLabel = PLANOS[admin.licenca.plano]?.label || admin.licenca.plano;
             const isDemo = ehPlanoDemo(admin.licenca.plano);
             const dataExpiracao = new Date(admin.licenca.dataExpiracao).toLocaleDateString('pt-PT');
-            const valor = getValorPlano(admin.licenca.plano);
+            const valor = _valorTotalLicenca(admin).toFixed(2);
             let statusColor = 'licenca-ativa';
             let statusText = 'Ativa';
             if (admin.licenca.ativa === false) {
@@ -8175,6 +8198,13 @@ function _assistEstado(value) {
                 planos: ['assistPlano', 'portalPlano', 'contratosPlano', 'frotaPlano', 'armazemPlano'],
                 limites: { relatoriosPersonalizados: 40, camposPorRelatorio: 40 },
             },
+            pro_plus: {
+                nome: 'Pro+',
+                ordem: 3.5,
+                flags: { segurancaAtivo: true, obrasAvancadoAtivo: true, materiaisEntregaAtivo: true, painelTvAtivo: true },
+                planos: ['assistPlano', 'portalPlano', 'contratosPlano', 'frotaPlano', 'armazemPlano', 'crmPlano'],
+                limites: { relatoriosPersonalizados: 40, camposPorRelatorio: 40 },
+            },
             supreme: {
                 nome: 'Supreme',
                 ordem: 4,
@@ -8190,6 +8220,7 @@ function _assistEstado(value) {
             express: { 5: 42.49, 10: 47.49, 25: 62.49, 50: 102.49 },
             expert:  { 5: 52.49, 10: 57.49, 25: 72.49, 50: 112.49 },
             pro:     { 5: 72.49, 10: 77.49, 25: 92.49, 50: 132.49 },
+            pro_plus: { 5: 82.48, 10: 87.48, 25: 102.48, 50: 142.48 },
             supreme: { 5: 102.49, 10: 107.49, 25: 122.49, 50: 162.49 },
         };
         // Acima de 50 funcionários: blocos de +5, a 5€/bloco/mês, iguais em todos os packs.
@@ -8200,11 +8231,30 @@ function _assistEstado(value) {
             const p = admin?.packAtual;
             return (p && PACKS[p]) ? p : null;
         }
+        function packPeriodo(admin) {
+            if (ehPlanoDemo(admin?.licenca?.plano)) return 'demo';
+            return Number(admin?.licenca?.dias) === 365 ? 'anual' : 'mensal';
+        }
+        function packModuloIncluido(admin, plano) {
+            return (PACKS[packDoAdmin(admin)]?.planos || []).includes(plano);
+        }
+        function packValorBase(admin) {
+            const p = packDoAdmin(admin);
+            if (!p) return null;
+            if (packPeriodo(admin) === 'demo') return 0;
+            const esc = admin.packEscalao === '50+' ? '50' : String(admin.packEscalao || '5');
+            const mensal = (PACK_PRECOS[p][esc] || PACK_PRECOS[p][5]) + Math.max(0, Number(admin.packBlocos) || 0) * PACK_PRECO_BLOCO_5;
+            return packPeriodo(admin) === 'anual' ? +(mensal * 12 * 0.9).toFixed(2) : +mensal.toFixed(2);
+        }
+        function packDescricao(admin) {
+            const p = packDoAdmin(admin);
+            return p ? `Pack ${PACKS[p].nome} — ${packPeriodo(admin) === 'anual' ? 'Anual' : packPeriodo(admin) === 'demo' ? 'Teste' : 'Mensal'} (${admin.licenca?.maxFuncionarios || admin.packEscalao || 5} func.)` : (PLANOS[admin?.licenca?.plano]?.label || admin?.licenca?.plano || 'Sem licença');
+        }
         // Limite de uma funcionalidade para o pack da conta. Sem pack (conta antiga) → sem limite
         // (Infinity), para o modelo antigo continuar a funcionar exatamente como antes.
         // O Passaporte pertence ao pack da empresa, incluindo os seus técnicos.
         function moduloPassaporteAtivo(admin) {
-            return ['expert', 'pro', 'supreme'].includes(packDoAdmin(admin));
+            return ['expert', 'pro', 'pro_plus', 'supreme'].includes(packDoAdmin(admin));
         }
         function packLimite(admin, chaveLimite) {
             const p = packDoAdmin(admin);
@@ -8235,7 +8285,7 @@ function _assistEstado(value) {
                 flags: Object.keys(a.flags || {}).filter(k => !(k in (b.flags || {}))),
             };
         }
-        function aplicarPackAoAdmin(admin, nomePack, validadeMs) {
+        function aplicarPackAoAdmin(admin, nomePack, validadeMs, periodo = 'mensal') {
             const def = PACKS[nomePack];
             if (!admin || !def) return false;
             // Descida (ou qualquer mudança de pack): desliga primeiro o que o pack anterior dava e
@@ -8249,7 +8299,7 @@ function _assistEstado(value) {
             admin.packAtual = nomePack;
             Object.entries(def.flags || {}).forEach(([k, v]) => { admin[k] = v; });
             (def.planos || []).forEach(planoKey => {
-                admin[planoKey] = 'mensal';
+                admin[planoKey] = ['anual', 'demo'].includes(periodo) ? periodo : 'mensal';
                 const expKey = planoKey.replace('Plano', 'Expiracao');
                 admin[expKey] = validadeMs || (Date.now() + 30 * 24 * 60 * 60 * 1000);
             });
@@ -8272,6 +8322,8 @@ function _assistEstado(value) {
                 return;
             }
             const def = PACKS[pack];
+            const adminEditado = prefixo === 'edit_admin' ? dados.administradores?.find(a => a.id === document.getElementById('edit_admin_id')?.value) : null;
+            const periodo = adminEditado && packPeriodo(adminEditado) === 'anual' ? 'anual' : 'mensal';
             const mapaPlanos = { contratosPlano: '_contratos', frotaPlano: '_frota', armazemPlano: '_armazem', crmPlano: '_crm', assistPlano: '_assist', erpPlano: '_erp', rondasPlano: '_rondas', portalPlano: '_portal' };
             Object.values(mapaPlanos).forEach(sufixo => {
                 const el = document.getElementById(prefixo + sufixo);
@@ -8279,14 +8331,14 @@ function _assistEstado(value) {
             });
             (def.planos || []).forEach(planoKey => {
                 const el = document.getElementById(prefixo + (mapaPlanos[planoKey] || ''));
-                if (el) el.value = 'mensal';
+                if (el) el.value = periodo;
             });
             // A licença base (o plano "30 dias - X func." de sempre) é o que dá acesso à app em
             // si — um pack não a substitui, só decide o que vem incluído. Por isso continua a
             // ser preciso um plano válido lá por trás; a diferença é que, com um pack escolhido,
             // preenche-se sozinho a partir do escalão — deixa de pedir para escolher outra vez.
             const escalao = document.getElementById(prefixo + '_pack_escalao')?.value || '5';
-            const planoEquivalente = '30_' + (escalao === '50+' ? '100' : escalao);
+            const planoEquivalente = (periodo === 'anual' ? '365_' : '30_') + (escalao === '50+' ? '100' : escalao);
             if (campoLicenca && PLANOS[planoEquivalente]) { campoLicenca.value = planoEquivalente; campoLicenca.required = false; }
             if (blocoLicenca) blocoLicenca.style.display = 'none';
             if (info) {
@@ -8734,12 +8786,13 @@ function _assistEstado(value) {
             if (admin.assistPlano) lista.push({ label: 'Total Gest Assist', preco: admin.assistPlano === 'demo' ? 0 : (admin.assistPlano === 'anual' ? PRECO_ASSIST_ANUAL : PRECO_ASSIST_MENSAL), cor: '#0e7490' });
             if (moduloErpAtivo(admin)) lista.push({ label: 'Integração ERP', preco: admin.erpPlano === 'demo' ? 0 : (admin.erpPlano === 'anual' ? PRECO_ERP_ANUAL : PRECO_ERP_MENSAL), cor: '#0891b2' });
             if (moduloRondasAtivo(admin)) lista.push({ label: 'Rondas', preco: 0, cor: '#0f766e' }); // grátis por agora (fase de lançamento)
-            return lista;
+            const incluidos = PACKS[packDoAdmin(admin)]?.planos || [];
+            const planoPorLabel = { 'Frota': 'frotaPlano', 'Armazém': 'armazemPlano', 'Contratos': 'contratosPlano', 'CRM Comercial': 'crmPlano', 'Total Gest Assist': 'assistPlano', 'Integração ERP': 'erpPlano', 'Rondas': 'rondasPlano' };
+            return lista.filter(a => !incluidos.includes(planoPorLabel[a.label]));
         }
         function _valorTotalLicenca(admin) {
             if (!admin || !admin.licenca) return 0;
-            const valorBase = parseFloat(getValorPlano(admin.licenca.plano)) || 0;
-            return valorBase + _addonsAtivosDe(admin).reduce((s, a) => s + a.preco, 0);
+            return +(valorBaseCobradoDe(admin) + _addonsAtivosDe(admin).reduce((n, a) => n + a.preco, 0)).toFixed(2);
         }
         function abrirCardObrasLonga() {
             const adminRef = usuarioLogado?.role === 'admin' ? adminAtual() : adminDoUtilizador();
@@ -9022,7 +9075,7 @@ function _assistEstado(value) {
             const admin = dados.administradores?.find(a => a.id === adminId);
             if (!admin) return;
             if (!admin.email) { alert('Este cliente não tem email registado.'); return; }
-            const planoLabel = admin.licenca ? (PLANOS[admin.licenca.plano]?.label || admin.licenca.plano) : 'Sem licença base';
+            const planoLabel = packDescricao(admin);
             const valorBase = admin.licenca ? valorBaseCobradoDe(admin) : 0;
             const addonsAtivos = _addonsAtivosDe(admin); // já só conta add-ons pagos — demo/teste fica a 0€
             const itens = [planoLabel, ...addonsAtivos.map(a => a.label + (a.preco > 0 ? ` (${a.preco.toFixed(2)} €)` : ' (em teste, grátis)'))];
@@ -19675,22 +19728,22 @@ function _assistEstado(value) {
                 const funcs = (dados.funcionarios || []).filter(f => f.adminId === a.id && f.role !== 'admin' && f.role !== 'superadmin').length;
                 const enc = (dados.encarregados || []).filter(e => e.adminId === a.id).length;
                 const valor = ativo(a) ? valorBaseCobradoDe(a) : 0;
-                const vCon = moduloContratosAtivo(a) ? (a.contratosPlano === 'anual' ? PRECO_CONTRATOS_ANUAL : PRECO_CONTRATOS_MENSAL) : 0;
-                const vFro = moduloFrotaAtivo(a) ? (a.frotaPlano === 'anual' ? PRECO_FROTA_ANUAL : PRECO_FROTA_MENSAL) : 0;
-                const vArm = moduloArmazemAtivo(a) ? (a.armazemPlano === 'anual' ? PRECO_ARMAZEM_ANUAL : PRECO_ARMAZEM_MENSAL) : 0;
-                const vCrm = moduloCrmAtivo(a) ? (a.crmPlano === 'anual' ? PRECO_CRM_ANUAL : PRECO_CRM_MENSAL) : 0;
+                const vCon = moduloContratosAtivo(a) && !packModuloIncluido(a, 'contratosPlano') ? (a.contratosPlano === 'anual' ? PRECO_CONTRATOS_ANUAL : PRECO_CONTRATOS_MENSAL) : 0;
+                const vFro = moduloFrotaAtivo(a) && !packModuloIncluido(a, 'frotaPlano') ? (a.frotaPlano === 'anual' ? PRECO_FROTA_ANUAL : PRECO_FROTA_MENSAL) : 0;
+                const vArm = moduloArmazemAtivo(a) && !packModuloIncluido(a, 'armazemPlano') ? (a.armazemPlano === 'anual' ? PRECO_ARMAZEM_ANUAL : PRECO_ARMAZEM_MENSAL) : 0;
+                const vCrm = moduloCrmAtivo(a) && !packModuloIncluido(a, 'crmPlano') ? (a.crmPlano === 'anual' ? PRECO_CRM_ANUAL : PRECO_CRM_MENSAL) : 0;
                 const vAss = 0; // o Assist já vem incluído no valor do CRM (vCrm) — não soma à parte, para não duplicar receita
-                const vErp = moduloErpAtivo(a) ? (a.erpPlano === 'anual' ? PRECO_ERP_ANUAL : PRECO_ERP_MENSAL) : 0;
+                const vErp = moduloErpAtivo(a) && !packModuloIncluido(a, 'erpPlano') ? (a.erpPlano === 'anual' ? PRECO_ERP_ANUAL : PRECO_ERP_MENSAL) : 0;
                 return [a.empresa || '-', a.nome || '-', (a.licenca ? (PLANOS[a.licenca.plano]?.label || a.licenca.plano) : 'Sem licenca'), String(funcs), String(enc), moduloContratosAtivo(a) ? 'Sim' : '-', moduloFrotaAtivo(a) ? 'Sim' : '-', moduloArmazemAtivo(a) ? 'Sim' : '-', moduloCrmAtivo(a) ? 'Sim' : '-', moduloErpAtivo(a) ? 'Sim' : '-', (valor + vCon + vFro + vArm + vCrm + vAss + vErp).toFixed(2)];
             });
             let recBase = 0; admins.forEach(a => { if (ativo(a)) recBase += valorBaseCobradoDe(a); });
-            const recContr = admins.filter(a => moduloContratosAtivo(a)).reduce((s, a) => s + (a.contratosPlano === 'anual' ? PRECO_CONTRATOS_ANUAL : PRECO_CONTRATOS_MENSAL), 0);
-            const recFrota = admins.filter(a => moduloFrotaAtivo(a)).reduce((s, a) => s + (a.frotaPlano === 'anual' ? PRECO_FROTA_ANUAL : PRECO_FROTA_MENSAL), 0);
-            const recArm = admins.filter(a => moduloArmazemAtivo(a)).reduce((s, a) => s + (a.armazemPlano === 'anual' ? PRECO_ARMAZEM_ANUAL : PRECO_ARMAZEM_MENSAL), 0);
-            const recCrm = admins.filter(a => moduloCrmAtivo(a)).reduce((s, a) => s + (a.crmPlano === 'anual' ? PRECO_CRM_ANUAL : PRECO_CRM_MENSAL), 0);
+            const recContr = admins.filter(a => moduloContratosAtivo(a) && !packModuloIncluido(a, 'contratosPlano')).reduce((s, a) => s + (a.contratosPlano === 'anual' ? PRECO_CONTRATOS_ANUAL : PRECO_CONTRATOS_MENSAL), 0);
+            const recFrota = admins.filter(a => moduloFrotaAtivo(a) && !packModuloIncluido(a, 'frotaPlano')).reduce((s, a) => s + (a.frotaPlano === 'anual' ? PRECO_FROTA_ANUAL : PRECO_FROTA_MENSAL), 0);
+            const recArm = admins.filter(a => moduloArmazemAtivo(a) && !packModuloIncluido(a, 'armazemPlano')).reduce((s, a) => s + (a.armazemPlano === 'anual' ? PRECO_ARMAZEM_ANUAL : PRECO_ARMAZEM_MENSAL), 0);
+            const recCrm = admins.filter(a => moduloCrmAtivo(a) && !packModuloIncluido(a, 'crmPlano')).reduce((s, a) => s + (a.crmPlano === 'anual' ? PRECO_CRM_ANUAL : PRECO_CRM_MENSAL), 0);
             const recAssist = 0; // incluído no CRM (recCrm) — não é receita à parte
-            const recErp = admins.filter(a => moduloErpAtivo(a)).reduce((s, a) => s + (a.erpPlano === 'anual' ? PRECO_ERP_ANUAL : PRECO_ERP_MENSAL), 0);
-            const recTotal = recBase + recContr + recFrota + recArm + recCrm + recAssist + recErp;
+            const recErp = admins.filter(a => moduloErpAtivo(a) && !packModuloIncluido(a, 'erpPlano')).reduce((s, a) => s + (a.erpPlano === 'anual' ? PRECO_ERP_ANUAL : PRECO_ERP_MENSAL), 0);
+            const recTotal = admins.filter(ativo).reduce((s, a) => s + _valorTotalLicenca(a), 0);
             let y = _pdfCartoesResumo(doc, 33, [
                 { valor: admins.length, label: 'Empresas' },
                 { valor: admins.filter(ativo).length, label: 'Licenças ativas' },
@@ -20153,7 +20206,7 @@ function _assistEstado(value) {
                 const _totEnc = (dados.encarregados || []).length;
                 const _addons = _emp.filter(a => moduloContratosAtivo(a)).length + _emp.filter(a => moduloFrotaAtivo(a)).length + _emp.filter(a => moduloArmazemAtivo(a)).length + _emp.filter(a => moduloCrmAtivo(a)).length + _emp.filter(a => moduloAssistAtivo(a)).length + _emp.filter(a => moduloErpAtivo(a)).length;
                 let _recT = 0;
-                _emp.forEach(a => { if (_ativo(a)) _recT += valorBaseCobradoDe(a); if (moduloContratosAtivo(a)) _recT += (a.contratosPlano === 'anual' ? PRECO_CONTRATOS_ANUAL : PRECO_CONTRATOS_MENSAL); if (moduloFrotaAtivo(a)) _recT += (a.frotaPlano === 'anual' ? PRECO_FROTA_ANUAL : PRECO_FROTA_MENSAL); if (moduloArmazemAtivo(a)) _recT += (a.armazemPlano === 'anual' ? PRECO_ARMAZEM_ANUAL : PRECO_ARMAZEM_MENSAL); if (moduloCrmAtivo(a)) _recT += (a.crmPlano === 'anual' ? PRECO_CRM_ANUAL : PRECO_CRM_MENSAL); if (a.assistPlano === 'mensal' || a.assistPlano === 'anual') _recT += (a.assistPlano === 'anual' ? PRECO_ASSIST_ANUAL : PRECO_ASSIST_MENSAL); /* só conta o Assist se for mesmo uma compra própria (a.assistPlano) — contas antigas com Assist só por vir grátis com o CRM (moduloAssistAtivo) já estão contadas no preço do CRM, não pode somar as duas */ if (moduloErpAtivo(a)) _recT += (a.erpPlano === 'anual' ? PRECO_ERP_ANUAL : PRECO_ERP_MENSAL); });
+                _emp.forEach(a => { if (_ativo(a)) _recT += _valorTotalLicenca(a); });
                 const _kpi = (lbl, val, cor, ic) => `<div style="border:1px solid #e6eaf2;border-left:4px solid ${cor};border-radius:10px;padding:12px 14px;background:#fff;"><div style="font-size:.78rem;color:#64748b;"><i class="fas ${ic}" style="color:${cor};"></i> ${lbl}</div><div style="font-size:1.2rem;font-weight:800;color:#0f172a;margin-top:4px;">${val}</div></div>`;
                 let html = `<div style="display:flex;justify-content:flex-end;margin-bottom:10px;"><button class="btn btn-outline" onclick="relSuperAdminPDF()"><i class="fas fa-file-pdf"></i> Exportar PDF</button></div>`;
                 html += `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px;margin-bottom:16px;">
@@ -20186,19 +20239,19 @@ function _assistEstado(value) {
                         const valor = admin.licenca && admin.ativo ? valorBaseCobradoDe(admin) : 0;
                         const temContratos = moduloContratosAtivo(admin);
                         const temFrota = moduloFrotaAtivo(admin);
-                        const valorContratos = temContratos ? (admin.contratosPlano === 'anual' ? PRECO_CONTRATOS_ANUAL : PRECO_CONTRATOS_MENSAL) : 0;
-                        const valorFrota = temFrota ? (admin.frotaPlano === 'anual' ? PRECO_FROTA_ANUAL : PRECO_FROTA_MENSAL) : 0;
+                        const valorContratos = temContratos && !packModuloIncluido(admin, 'contratosPlano') ? (admin.contratosPlano === 'anual' ? PRECO_CONTRATOS_ANUAL : PRECO_CONTRATOS_MENSAL) : 0;
+                        const valorFrota = temFrota && !packModuloIncluido(admin, 'frotaPlano') ? (admin.frotaPlano === 'anual' ? PRECO_FROTA_ANUAL : PRECO_FROTA_MENSAL) : 0;
                         const temArmazem = moduloArmazemAtivo(admin);
-                        const valorArmazem = temArmazem ? (admin.armazemPlano === 'anual' ? PRECO_ARMAZEM_ANUAL : PRECO_ARMAZEM_MENSAL) : 0;
+                        const valorArmazem = temArmazem && !packModuloIncluido(admin, 'armazemPlano') ? (admin.armazemPlano === 'anual' ? PRECO_ARMAZEM_ANUAL : PRECO_ARMAZEM_MENSAL) : 0;
                         const temCrm = moduloCrmAtivo(admin);
-                        const valorCrm = temCrm ? (admin.crmPlano === 'anual' ? PRECO_CRM_ANUAL : PRECO_CRM_MENSAL) : 0;
+                        const valorCrm = temCrm && !packModuloIncluido(admin, 'crmPlano') ? (admin.crmPlano === 'anual' ? PRECO_CRM_ANUAL : PRECO_CRM_MENSAL) : 0;
                         const temErp = moduloErpAtivo(admin);
-                        const valorErp = temErp ? (admin.erpPlano === 'anual' ? PRECO_ERP_ANUAL : PRECO_ERP_MENSAL) : 0;
+                        const valorErp = temErp && !packModuloIncluido(admin, 'erpPlano') ? (admin.erpPlano === 'anual' ? PRECO_ERP_ANUAL : PRECO_ERP_MENSAL) : 0;
                         // Rondas: grátis por agora (fase de lançamento) — a soma já está pronta para
                         // quando passar a ter preço, só é preciso mudar PRECO_RONDAS_MENSAL/ANUAL.
                         const temRondas = moduloRondasAtivo(admin);
                         const valorRondas = temRondas ? (admin.rondasPlano === 'anual' ? PRECO_RONDAS_ANUAL : PRECO_RONDAS_MENSAL) : 0;
-                        const valorEmpresa = valor + valorContratos + valorFrota + valorArmazem + valorCrm + valorErp + valorRondas;
+                        const valorEmpresa = admin.licenca && admin.ativo ? _valorTotalLicenca(admin) : 0;
                         const dataExp = admin.licenca ? new Date(admin.licenca.dataExpiracao).toLocaleDateString(
                             'pt-PT') : '-';
                         const planoLabel = admin.licenca ? PLANOS[admin.licenca.plano]?.label || admin.licenca.plano :
@@ -20250,7 +20303,7 @@ function _assistEstado(value) {
                 const comContratos = admins.filter(a => a.contratosPlano && a.contratosExpiracao && a.contratosExpiracao > Date.now());
                 const mensais = comContratos.filter(a => a.contratosPlano === 'mensal').length;
                 const anuais = comContratos.filter(a => a.contratosPlano === 'anual').length;
-                const receitaManut = mensais * PRECO_CONTRATOS_MENSAL + anuais * PRECO_CONTRATOS_ANUAL;
+                const receitaManut = admins.filter(a => !packModuloIncluido(a, 'contratosPlano')).reduce((v, a) => v + (a.contratosPlano === 'anual' ? PRECO_CONTRATOS_ANUAL : a.contratosPlano === 'mensal' ? PRECO_CONTRATOS_MENSAL : 0), 0);
                 html += `<div class="report-card">
                             <h4><i class="fas fa-file-signature"></i> Licenças de Contratos de Manutenção</h4>
                             <div class="report-item"><span>Empresas com módulo ativo</span><span>${comContratos.length}</span></div>
@@ -20262,7 +20315,7 @@ function _assistEstado(value) {
                 const comFrota = admins.filter(a => a.frotaPlano && a.frotaExpiracao && a.frotaExpiracao > Date.now());
                 const frotaMensais = comFrota.filter(a => a.frotaPlano === 'mensal').length;
                 const frotaAnuais = comFrota.filter(a => a.frotaPlano === 'anual').length;
-                const receitaFrota = frotaMensais * PRECO_FROTA_MENSAL + frotaAnuais * PRECO_FROTA_ANUAL;
+                const receitaFrota = admins.filter(a => !packModuloIncluido(a, 'frotaPlano')).reduce((v, a) => v + (a.frotaPlano === 'anual' ? PRECO_FROTA_ANUAL : a.frotaPlano === 'mensal' ? PRECO_FROTA_MENSAL : 0), 0);
                 html += `<div class="report-card">
                             <h4><i class="fas fa-car"></i> Licenças de Frota</h4>
                             <div class="report-item"><span>Empresas com módulo ativo</span><span>${comFrota.length}</span></div>
@@ -20275,7 +20328,7 @@ function _assistEstado(value) {
                 const armMensais = comArmazem.filter(a => a.armazemPlano === 'mensal').length;
                 const armAnuais = comArmazem.filter(a => a.armazemPlano === 'anual').length;
                 const armDemos = comArmazem.filter(a => a.armazemPlano === 'demo').length;
-                const receitaArmazem = armMensais * PRECO_ARMAZEM_MENSAL + armAnuais * PRECO_ARMAZEM_ANUAL;
+                const receitaArmazem = admins.filter(a => !packModuloIncluido(a, 'armazemPlano')).reduce((v, a) => v + (a.armazemPlano === 'anual' ? PRECO_ARMAZEM_ANUAL : a.armazemPlano === 'mensal' ? PRECO_ARMAZEM_MENSAL : 0), 0);
                 html += `<div class="report-card">
                             <h4><i class="fas fa-boxes"></i> Licenças de Armazém</h4>
                             <div class="report-item"><span>Empresas com módulo ativo</span><span>${comArmazem.length}</span></div>
@@ -20303,7 +20356,7 @@ function _assistEstado(value) {
                 const crmMensais = comCrm.filter(a => a.crmPlano === 'mensal').length;
                 const crmAnuais = comCrm.filter(a => a.crmPlano === 'anual').length;
                 const crmDemos = comCrm.filter(a => a.crmPlano === 'demo').length;
-                const receitaCrm = crmMensais * PRECO_CRM_MENSAL + crmAnuais * PRECO_CRM_ANUAL;
+                const receitaCrm = admins.filter(a => !packModuloIncluido(a, 'crmPlano')).reduce((v, a) => v + (a.crmPlano === 'anual' ? PRECO_CRM_ANUAL : a.crmPlano === 'mensal' ? PRECO_CRM_MENSAL : 0), 0);
                 html += `<div class="report-card">
                             <h4><i class="fas fa-bullseye"></i> Licenças de CRM Comercial</h4>
                             <div class="report-item"><span>Empresas com módulo ativo</span><span>${comCrm.length}</span></div>
@@ -20319,7 +20372,7 @@ function _assistEstado(value) {
                 const assistMensais = comAssist.filter(a => a.assistPlano === 'mensal').length;
                 const assistAnuais = comAssist.filter(a => a.assistPlano === 'anual').length;
                 const assistDemos = comAssist.filter(a => a.assistPlano === 'demo').length;
-                const receitaAssist = assistMensais * PRECO_ASSIST_MENSAL + assistAnuais * PRECO_ASSIST_ANUAL;
+                const receitaAssist = admins.filter(a => !packModuloIncluido(a, 'assistPlano')).reduce((v, a) => v + (a.assistPlano === 'anual' ? PRECO_ASSIST_ANUAL : a.assistPlano === 'mensal' ? PRECO_ASSIST_MENSAL : 0), 0);
                 html += `<div class="report-card">
                             <h4><i class="fas fa-headset"></i> Licenças de Total Gest Assist</h4>
                             <div class="report-item"><span>Empresas com módulo ativo (compra própria)</span><span>${comAssist.length}</span></div>
@@ -20333,7 +20386,7 @@ function _assistEstado(value) {
                 let recBase = 0; _adm.forEach(a => { if (a.licenca && a.ativo !== false && a.licenca.dataExpiracao > Date.now()) recBase += valorBaseCobradoDe(a); });
                 const mods = [{ l: 'Licenças base', v: recBase, c: '#2563eb' }, { l: 'Contratos', v: receitaManut, c: '#16a34a' }, { l: 'Frota', v: receitaFrota, c: '#0ea5e9' }, { l: 'Armazém', v: receitaArmazem, c: '#b45309' }, { l: 'Notificações', v: receitaNotif, c: '#e11d48' }, { l: 'CRM', v: receitaCrm, c: '#7c3aed' }, { l: 'Assist', v: receitaAssist, c: '#0e7490' }];
                 const maxMod = Math.max(1, ...mods.map(m => m.v));
-                const recTot = recBase + receitaManut + receitaFrota + receitaArmazem + receitaNotif + receitaCrm;
+                const recTot = _adm.filter(a => a.licenca && a.ativo !== false && isLicencaValida(a.licenca.dataExpiracao)).reduce((s, a) => s + _valorTotalLicenca(a), 0);
                 let barras = '';
                 mods.forEach(m => { barras += `<div style="margin:8px 0;"><div style="display:flex;justify-content:space-between;font-size:.85rem;"><span>${m.l}</span><strong>${m.v.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</strong></div><div style="background:#eef2f7;border-radius:6px;height:10px;overflow:hidden;margin-top:3px;"><div style="height:100%;width:${Math.round(m.v / maxMod * 100)}%;background:${m.c};"></div></div></div>`; });
                 html += `<div class="report-card"><h4><i class="fas fa-coins"></i> Receita por módulo</h4>${barras}<div class="report-item" style="font-weight:bold;border-top:1px solid #e2e8f0;padding-top:8px;margin-top:6px;"><span>Total</span><span>${recTot.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €</span></div></div>`;
@@ -22549,6 +22602,7 @@ async function salvarEncarregado(e) {
                                 <option value="express">Express</option>
                                 <option value="expert">Expert</option>
                                 <option value="pro">Pro</option>
+                                <option value="pro_plus">Pro+</option>
                                 <option value="supreme">Supreme</option>
                             </select>
                             <select id="admin_pack_escalao" style="width:130px;">
@@ -22741,7 +22795,7 @@ async function salvarAdmin(e) {
             // o pack em si + as flags que não são "licença" (expressAtivo, segurancaAtivo, etc.).
             const packSelCriar = document.getElementById('admin_pack')?.value || '';
             if (packSelCriar && PACKS[packSelCriar]) {
-                admin.packAtual = packSelCriar;
+                aplicarPackAoAdmin(admin, packSelCriar, admin.licenca.dataExpiracao, packPeriodo(admin));
                 admin.packEscalao = document.getElementById('admin_pack_escalao')?.value || '5';
                 Object.entries(PACKS[packSelCriar].flags || {}).forEach(([k, v]) => { admin[k] = v; });
             }
@@ -22759,6 +22813,11 @@ async function salvarAdmin(e) {
             if (erpSel === 'mensal' || erpSel === 'anual') { itensLic.push('Integração com ERP\'s (' + (erpSel === 'anual' ? 'Anual' : 'Mensal') + ')'); totalLic += (erpSel === 'anual' ? PRECO_ERP_ANUAL : PRECO_ERP_MENSAL); }
             if (notifSel === 'mensal' || notifSel === 'anual') { itensLic.push('Notificações (' + (notifSel === 'anual' ? 'Anual' : 'Mensal') + ')'); totalLic += (notifSel === 'anual' ? PRECO_NOTIFICACOES_ANUAL : PRECO_NOTIFICACOES_MENSAL); }
             if (rondasSel === 'mensal' || rondasSel === 'anual') { itensLic.push('Rondas / Vigilância (' + (rondasSel === 'anual' ? 'Anual' : 'Mensal') + ' — grátis)'); }
+            if (packDoAdmin(admin)) {
+                itensLic.length = 0;
+                itensLic.push(packDescricao(admin), ..._addonsAtivosDe(admin).map(a => a.label));
+                totalLic = _valorTotalLicenca(admin);
+            }
             if (!dados.funcionarios) dados.funcionarios = [];
             dados.funcionarios.push({
                 id: admin.id,
@@ -22815,7 +22874,7 @@ async function salvarAdmin(e) {
             // resumo do distribuidor (o que ele já está a pagar/deve à Total Gest por add-ons).
             let total = 0;
             ADDONS_DISTRIBUICAO.forEach(ad => {
-                if (ad.ativo(c)) total += (c[ad.campoPlano] === 'anual' ? ad.precoA() : ad.precoM());
+                if (ad.ativo(c) && !(PACKS[packDoAdmin(c)]?.planos || []).includes(ad.campoPlano)) total += (c[ad.campoPlano] === 'anual' ? ad.precoA() : ad.precoM());
             });
             return total;
         }
@@ -23588,7 +23647,7 @@ async function salvarAdmin(e) {
             // dele — não o preço de catálogo cheio. E o valor tem de incluir os add-ons que o
             // distribuidor lhe atribuiu, não só a licença base (bug corrigido: faltavam aqui).
             const distribuidor = admin.distribuidorId ? dados.administradores?.find(a => a.id === admin.distribuidorId) : null;
-            const valorLicencaCatalogo = parseFloat(getValorPlano(admin.licenca.plano));
+            const valorLicencaCatalogo = packValorBase(admin) ?? parseFloat(getValorPlano(admin.licenca.plano));
             const valorAddonsCatalogo = _distValorAddonsCliente(admin);
             const valorCatalogo = valorLicencaCatalogo + valorAddonsCatalogo;
             const desconto = distribuidor?.distribuidorDesconto || 0;
@@ -23663,13 +23722,18 @@ async function salvarAdmin(e) {
                     <input type="date" id="_venc_nova_data" value="${dataAtualStr}" />
                 </div>
             `;
-            document.getElementById('modalGenericoForm').onsubmit = (ev) => {
+            document.getElementById('modalGenericoForm').onsubmit = async (ev) => {
                 ev.preventDefault();
                 const novaStr = document.getElementById('_venc_nova_data').value;
                 if (!novaStr) { alert('Escolhe uma data.'); return; }
                 const novaMs = new Date(novaStr + 'T23:59:59').getTime();
                 def.setMs(admin, novaMs);
-                guardarDados(dados, ['administradores']);
+                try {
+                    await guardarDados(dados);
+                } catch (err) {
+                    alert('Não foi possível confirmar a nova validade no servidor. A alteração continua pendente; tente guardar novamente.');
+                    return;
+                }
                 document.getElementById('modalGenericoOverlay').classList.remove('open');
                 renderizarAdmins();
             };
@@ -23699,6 +23763,7 @@ async function salvarAdmin(e) {
             const baseDate = admin.licenca.dataExpiracao > now ? admin.licenca.dataExpiracao : now;
             const novaExpiracao = baseDate + (plano.dias * 24 * 60 * 60 * 1000);
             admin.licenca.dataExpiracao = novaExpiracao;
+            if (packDoAdmin(admin)) aplicarPackAoAdmin(admin, admin.packAtual, novaExpiracao, packPeriodo(admin));
             admin.licenca.dataInicio = now;
             admin.licenca.ativa = true;
             admin.licenca.aguardaPagamento = false;
@@ -23845,6 +23910,7 @@ async function salvarAdmin(e) {
                                 <option value="express" ${admin.packAtual === 'express' ? 'selected' : ''}>Express</option>
                                 <option value="expert" ${admin.packAtual === 'expert' ? 'selected' : ''}>Expert</option>
                                 <option value="pro" ${admin.packAtual === 'pro' ? 'selected' : ''}>Pro</option>
+                                <option value="pro_plus" ${admin.packAtual === 'pro_plus' ? 'selected' : ''}>Pro+</option>
                                 <option value="supreme" ${admin.packAtual === 'supreme' ? 'selected' : ''}>Supreme</option>
                             </select>
                             <select id="edit_admin_pack_escalao" style="width:130px;">
@@ -24014,6 +24080,8 @@ async function salvarAdmin(e) {
                 const novoPlano = document.getElementById('edit_admin_plano')?.value;
                 const _renovarMesmoPlano = document.getElementById('edit_admin_plano_renovar')?.checked;
                 const _recomecarDoZero = document.getElementById('edit_admin_recomecar')?.checked;
+                const packSelecionado = document.getElementById('edit_admin_pack')?.value;
+                const soMudaCapacidadePack = PACKS[packSelecionado] && admin.licenca && !_renovarMesmoPlano && !_recomecarDoZero;
                 if (novoPlano && PLANOS[novoPlano] && (admin.licenca?.plano !== novoPlano || _renovarMesmoPlano || _recomecarDoZero)) {
                     const p = PLANOS[novoPlano];
                     const now = Date.now();
@@ -24026,7 +24094,7 @@ async function salvarAdmin(e) {
                         codigo: admin.licenca?.codigo || gerarCodigoLicenca(),
                         plano: novoPlano,
                         dataInicio: _recomecarDoZero ? now : (admin.licenca?.dataInicio || now),
-                        dataExpiracao: baseDateEdit + p.dias * 24 * 60 * 60 * 1000,
+                        dataExpiracao: soMudaCapacidadePack ? admin.licenca.dataExpiracao : baseDateEdit + p.dias * 24 * 60 * 60 * 1000,
                         dias: p.dias,
                         maxFuncionarios: p.funcionarios,
                         ativa: true
@@ -24161,6 +24229,7 @@ async function salvarAdmin(e) {
                 if (admin.packAtual && admin.packAtual !== packSelE) {
                     packDiferencaAoMudar(admin.packAtual, packSelE).flags.forEach(k => { admin[k] = false; });
                 }
+                if (admin.packAtual !== packSelE) aplicarPackAoAdmin(admin, packSelE, admin.licenca?.dataExpiracao, packPeriodo(admin));
                 admin.packAtual = packSelE;
                 admin.packEscalao = document.getElementById('edit_admin_pack_escalao')?.value || '5';
                 Object.entries(PACKS[packSelE].flags || {}).forEach(([k, v]) => { admin[k] = v; });
@@ -24282,7 +24351,7 @@ async function salvarAdmin(e) {
                 pack: atual || 'expert',
                 escalao: (admin.packEscalao && admin.packEscalao !== '50+') ? admin.packEscalao : '5',
                 blocos: admin.packBlocos || 0,
-                periodo: 'mensal',
+                periodo: packPeriodo(admin) === 'anual' ? 'anual' : 'mensal',
             };
             let overlay = document.getElementById('renPackOverlay');
             if (!overlay) { overlay = document.createElement('div'); overlay.id = 'renPackOverlay'; overlay.className = 'modal-overlay'; document.body.appendChild(overlay); }
@@ -24335,7 +24404,7 @@ async function salvarAdmin(e) {
                     <div class="form-group">
                         <label>Pack</label>
                         <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                            ${['express','expert','pro','supreme'].map(p => `<button type="button" class="ren-pack-btn ${_renPack.pack === p ? 'active' : ''}" onclick="_renPackSet('pack','${p}')">${PACKS[p].nome}</button>`).join('')}
+                            ${['express','expert','pro','pro_plus','supreme'].map(p => `<button type="button" class="ren-pack-btn ${_renPack.pack === p ? 'active' : ''}" onclick="_renPackSet('pack','${p}')">${PACKS[p].nome}</button>`).join('')}
                         </div>
                     </div>
                     <div class="form-group">
@@ -25081,7 +25150,8 @@ async function salvarAdmin(e) {
         // uma etiqueta com o que foi aprovado, para esse resumo final poder ser montado.
         function aprovarPedidoRenovacao(pedidoId, silencioso) {
             const pedido = dados.pedidosRenovacao?.find(p => p.id === pedidoId);
-            if (!pedido) return null;
+            if (!pedido || pedido.status !== 'pendente') return null;
+            if (pedido.tipo === 'pack' && !PACKS[pedido.packPedido]) return null;
             const admin = dados.administradores?.find(a => a.id === pedido.adminId);
             if (!admin) {
                 if (!silencioso) alert('Administrador não encontrado.');
@@ -25108,13 +25178,16 @@ async function salvarAdmin(e) {
                 const novaValidade = _baseRenov(admin.licenca?.dataExpiracao) + dias * 86400000;
                 const _difDescida = packDiferencaAoMudar(admin.packAtual, pedido.packPedido);
                 const _desativados = [..._difDescida.planos, ..._difDescida.flags].map(k => PACK_MODULO_NOME[k]).filter(Boolean);
-                aplicarPackAoAdmin(admin, pedido.packPedido, novaValidade);
+                aplicarPackAoAdmin(admin, pedido.packPedido, novaValidade, pedido.periodoPedido);
                 admin.packEscalao = pedido.escalaoPedido;
                 admin.packBlocos = pedido.blocosPedido || 0;
                 // Licença base: soma o período ao que falta, e ajusta o máximo de funcionários.
                 if (admin.licenca) {
                     admin.licenca.dataExpiracao = _baseRenov(admin.licenca.dataExpiracao) + dias * 86400000;
                     admin.licenca.maxFuncionarios = pedido.funcMax;
+                    admin.licenca.dias = dias;
+                    admin.licenca.plano = `${dias}_${[5,10,25,50,100].find(n => n >= pedido.funcMax) || 100}`;
+                    admin.licenca.aguardaPagamento = false;
                     admin.licenca.ativa = true;
                     admin.licenca.pendente24h = false;
                     admin.licenca.limite24hMs = null;
@@ -34378,11 +34451,11 @@ window._relPrefill = function(msg){
 
                 graf += _tgBarras('Receita por módulo (mensal)', [
                     { lbl: 'Licenças base', val: +recBase.toFixed(2), cor: '#2563eb' },
-                    { lbl: 'Contratos', val: +(admins.filter(a => moduloContratosAtivo(a)).reduce((s, a) => s + (a.contratosPlano === 'anual' ? PRECO_CONTRATOS_ANUAL / 12 : PRECO_CONTRATOS_MENSAL), 0)).toFixed(2), cor: '#16a34a' },
-                    { lbl: 'Frota', val: +(admins.filter(a => moduloFrotaAtivo(a)).reduce((s, a) => s + (a.frotaPlano === 'anual' ? PRECO_FROTA_ANUAL / 12 : PRECO_FROTA_MENSAL), 0)).toFixed(2), cor: '#0ea5e9' },
-                    { lbl: 'Armazém', val: +(admins.filter(a => moduloArmazemAtivo(a)).reduce((s, a) => s + (a.armazemPlano === 'anual' ? PRECO_ARMAZEM_ANUAL / 12 : PRECO_ARMAZEM_MENSAL), 0)).toFixed(2), cor: '#b45309' },
+                    { lbl: 'Contratos', val: +(admins.filter(a => moduloContratosAtivo(a) && !packModuloIncluido(a, 'contratosPlano')).reduce((s, a) => s + (a.contratosPlano === 'anual' ? PRECO_CONTRATOS_ANUAL / 12 : PRECO_CONTRATOS_MENSAL), 0)).toFixed(2), cor: '#16a34a' },
+                    { lbl: 'Frota', val: +(admins.filter(a => moduloFrotaAtivo(a) && !packModuloIncluido(a, 'frotaPlano')).reduce((s, a) => s + (a.frotaPlano === 'anual' ? PRECO_FROTA_ANUAL / 12 : PRECO_FROTA_MENSAL), 0)).toFixed(2), cor: '#0ea5e9' },
+                    { lbl: 'Armazém', val: +(admins.filter(a => moduloArmazemAtivo(a) && !packModuloIncluido(a, 'armazemPlano')).reduce((s, a) => s + (a.armazemPlano === 'anual' ? PRECO_ARMAZEM_ANUAL / 12 : PRECO_ARMAZEM_MENSAL), 0)).toFixed(2), cor: '#b45309' },
                     { lbl: 'Notificações', val: +(admins.filter(a => moduloNotificacoesAtivo(a)).reduce((s, a) => s + (a.notificacoesPlano === 'anual' ? PRECO_NOTIFICACOES_ANUAL / 12 : PRECO_NOTIFICACOES_MENSAL), 0)).toFixed(2), cor: '#e11d48' },
-                    { lbl: 'CRM + Assist', val: +(admins.filter(a => moduloCrmAtivo(a)).reduce((s, a) => s + (a.crmPlano === 'anual' ? PRECO_CRM_ANUAL / 12 : PRECO_CRM_MENSAL), 0)).toFixed(2), cor: '#7c3aed' }
+                    { lbl: 'CRM + Assist', val: +(admins.filter(a => moduloCrmAtivo(a) && !packModuloIncluido(a, 'crmPlano')).reduce((s, a) => s + (a.crmPlano === 'anual' ? PRECO_CRM_ANUAL / 12 : PRECO_CRM_MENSAL), 0)).toFixed(2), cor: '#7c3aed' }
                 ]);
 
                 graf += _tgBarras('Empresas com cada add-on ativo', [
@@ -35527,7 +35600,7 @@ window._relPrefill = function(msg){
                     <div id="rc_outro_plano_bloco" style="display:none;margin-left:26px;"><select id="rc_plano_escolhido">${planosOpts}</select></div>
                     <label style="display:flex;gap:8px;align-items:flex-start;font-weight:600;color:#152a52;"><input type="radio" name="rc_escolha" value="cancelar" onchange="_renovClienteAtualizarUI()" style="margin-top:3px;"> Cancelar a minha subscrição</label>
                 </div>
-                <div id="rc_addons_bloco" style="background:#f8fafc;border-radius:8px;padding:12px;margin-bottom:16px;">
+                <div id="rc_addons_bloco" style="display:${d.packAtual ? 'none' : 'block'};background:#f8fafc;border-radius:8px;padding:12px;margin-bottom:16px;">
                     <div style="font-weight:700;color:#152a52;margin-bottom:8px;font-size:.9rem;">Módulos adicionais (opcional)</div>
                     ${['contratos', 'frota', 'armazem', 'rondas'].map(m => `
                         <label style="display:flex;align-items:center;gap:8px;font-weight:400;margin-bottom:6px;">
@@ -35545,7 +35618,7 @@ window._relPrefill = function(msg){
         function _renovClienteAtualizarUI() {
             const escolha = document.querySelector('input[name="rc_escolha"]:checked')?.value;
             document.getElementById('rc_outro_plano_bloco').style.display = escolha === 'outro_plano' ? 'block' : 'none';
-            document.getElementById('rc_addons_bloco').style.display = escolha === 'cancelar' ? 'none' : 'block';
+            document.getElementById('rc_addons_bloco').style.display = escolha === 'cancelar' || _renovClienteDados.packAtual ? 'none' : 'block';
         }
         function escapeHtmlSimples(s) { return String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
         function _submeterRenovCliente() {
