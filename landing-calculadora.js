@@ -490,6 +490,14 @@ const PACK_PRECOS_SITE = typeof PACK_PRECOS !== 'undefined' ? PACK_PRECOS : {
     pro_plus: { 5: 82.48, 10: 87.48, 25: 102.48, 50: 142.48 },
     supreme: { 5: 102.49, 10: 107.49, 25: 122.49, 50: 162.49 },
 };
+// Pro+ é sempre o Pro no mesmo escalão + 9,99 €/mês.
+// Recalcular a partir do preço real do Pro evita divergências entre a landing
+// e a tabela da aplicação quando houver alterações futuras aos preços.
+PACK_PRECOS_SITE.pro_plus = Object.fromEntries(
+    Object.entries(PACK_PRECOS_SITE.pro).map(([escalao, preco]) =>
+        [escalao, Math.round((Number(preco) + 9.99) * 100) / 100]
+    )
+);
 // Detalhe de cada pack — o que ganhas ao subir de nível fica agrupado, para o cliente perceber
 // logo "o que é que este pack me traz a mais". Cumulativo: cada um inclui tudo o do anterior.
 // Mapa completo de funcionalidades por pack (igual ao Excel). Agrupado por área para se ler bem.
@@ -564,7 +572,7 @@ function tgAtualizarPrecos() {
         b.setAttribute('aria-pressed', String(b.dataset.mode === _tgBilling));
     });
     document.querySelectorAll('#packGrid .plan').forEach(card => {
-        const precos = card.dataset.pack === 'pro_plus' ? { 5: 82.48, 10: 87.48, 25: 102.48, 50: 142.48 } : PACK_PRECOS_SITE[card.dataset.pack];
+        const precos = PACK_PRECOS_SITE[card.dataset.pack];
         const mensal = precos[_packEscalaoAtual];
         const totalAnual = Math.round(mensal * 12 * 0.9 * 100) / 100;
         card.querySelector('.amt').textContent = _packFmtEuro(anual ? totalAnual : mensal);
