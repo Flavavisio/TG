@@ -85,3 +85,15 @@ test('accumulated counter resumes after lunch without counting the break and fre
   t.dados.ponto[1].saida='16:00';const html=t.ctx._htmlResumoEquipaHoje('a','2026-10-30');assert.match(html,/03h 05m 00s/);assert(!html.includes('data-tempo-servico='));
  }finally{t.close();}
 });
+test('new interventions start at zero seconds and keep precision after serialization and reload',()=>{
+ const t=setup();try{
+  t.advance(40000);const p=entry('v','16:00:40');
+  assert.match(t.ctx._tempoServicoHTML(p),/00h 00m 00s/);
+  t.advance(1000);assert.match(t.ctx._tempoServicoHTML(JSON.parse(JSON.stringify(p))),/00h 00m 01s/);
+  assert.match(t.ctx._tempoAcumuladoServicoHTML([p],'v'),/00h 00m 01s/);
+  assert.match(src,/entrada: r\.entrada \? String\(r\.entrada\)\.slice\(0, 8\)/);
+  for(const name of ['picarPontoOS','obraLongaPicarEntrada','_quiosqueAgendaPicar','quiosquePicar','confirmarEntradaPonto']){
+   const fn=src.match(new RegExp('        (?:async )?function '+name+'\\([^]*?\\n        \\}'))[0];assert(fn.includes('toTimeString().slice(0, 8)'),name);
+  }
+ }finally{t.close()}
+});
