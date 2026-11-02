@@ -3399,7 +3399,7 @@ function _assistEstado(value) {
             area.innerHTML = `
                 <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
                     <div style="position:relative;flex:1;">
-                        <input type="text" id="qsa_busca_artigo" placeholder="Pesquisar material..." autocomplete="off" oninput="_quiosqueAgendaFiltrarArtigos()" onfocus="_quiosqueAgendaFiltrarArtigos()" style="width:100%;" />
+                        <input type="text" id="qsa_busca_artigo" placeholder="Pesquisar por nome ou referência..." autocomplete="off" oninput="_quiosqueAgendaFiltrarArtigos()" onfocus="_quiosqueAgendaFiltrarArtigos()" style="width:100%;" />
                         <div id="qsa_resultados_artigos" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #e2e8f0;border-radius:8px;box-shadow:0 8px 20px rgba(0,0,0,.12);max-height:min(55vh,420px);overflow-y:auto;z-index:50;margin-top:2px;"></div>
                     </div>
                     <button type="button" class="btn btn-sm btn-outline" onclick="_quiosqueAgendaAdicionarMaterial()" title="Adicionar este material"><i class="fas fa-plus"></i></button>
@@ -3415,8 +3415,8 @@ function _assistEstado(value) {
             const lista = document.getElementById('qsa_resultados_artigos');
             const termo = input.value.trim().toLowerCase();
             const artigos = window._qsaArtigosCache || [];
-            const filtrados = (termo ? artigos.filter(a => a.nome.toLowerCase().includes(termo)) : artigos).slice(0, 8);
-            lista.innerHTML = filtrados.length ? filtrados.map(a => `<div style="padding:8px 12px;cursor:pointer;border-bottom:1px solid #f1f5f9;" onmousedown="_quiosqueAgendaEscolherArtigo('${a.id}','${escapeHtmlSimples(a.nome).replace(/'/g, "\\'")}')">${escapeHtmlSimples(a.nome)}</div>`).join('') : '<div style="padding:8px 12px;color:#94a3b8;font-size:.85rem;">Nenhum encontrado.</div>';
+            const filtrados = (termo ? artigos.filter(a => _artigoCorrespondePesquisa(a, termo)) : artigos).slice(0, 8);
+            lista.innerHTML = filtrados.length ? filtrados.map(a => `<div style="padding:8px 12px;cursor:pointer;border-bottom:1px solid #f1f5f9;" onmousedown="_quiosqueAgendaEscolherArtigo('${a.id}','${escapeHtmlSimples(a.nome).replace(/'/g, "\\'")}')">${a.referencia ? `<strong>${escapeHtmlSimples(a.referencia)}</strong> — ` : ''}${escapeHtmlSimples(a.nome || '')}</div>`).join('') : '<div style="padding:8px 12px;color:#94a3b8;font-size:.85rem;">Nenhum encontrado.</div>';
             lista.style.display = 'block';
         }
         function _quiosqueAgendaEscolherArtigo(id, nome) {
@@ -6466,7 +6466,7 @@ function _assistEstado(value) {
                     `<div style="border:1px dashed #cbd5e1;border-radius:8px;padding:10px;">
                         <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
                             <div style="position:relative;flex:1;">
-                                <input type="text" id="veros_busca_artigo" placeholder="Pesquisar material..." autocomplete="off" oninput="_verOsFiltrarArtigos()" onfocus="_verOsFiltrarArtigos()" onblur="setTimeout(()=>{const l=document.getElementById('veros_resultados_artigos'); if(l) l.style.display='none';},150)" style="width:100%;" />
+                                <input type="text" id="veros_busca_artigo" placeholder="Pesquisar por nome ou referência..." autocomplete="off" oninput="_verOsFiltrarArtigos()" onfocus="_verOsFiltrarArtigos()" onblur="setTimeout(()=>{const l=document.getElementById('veros_resultados_artigos'); if(l) l.style.display='none';},150)" style="width:100%;" />
                                 <input type="hidden" id="veros_artigo_escolhido_id" />
                                 <div id="veros_resultados_artigos" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #e2e8f0;border-radius:8px;box-shadow:0 8px 20px rgba(0,0,0,.12);max-height:min(55vh,420px);overflow-y:auto;z-index:50;margin-top:2px;"></div>
                             </div>
@@ -6490,6 +6490,12 @@ function _assistEstado(value) {
                 window._verOsArtigosDisponiveisCache = artigosDisp;
             }
         }
+        // Usa os mesmos campos da pesquisa livre de Stock / Artigos.
+        // O nome descritivo pode não conter a referência do fabricante.
+        function _artigoCorrespondePesquisa(artigo, termo) {
+            return [artigo.nome, artigo.referencia, artigo.marca, artigo.categoria]
+                .some(valor => String(valor ?? '').toLowerCase().includes(termo));
+        }
         function _verOsFiltrarArtigos() {
             const input = document.getElementById('veros_busca_artigo');
             const lista = document.getElementById('veros_resultados_artigos');
@@ -6497,13 +6503,13 @@ function _assistEstado(value) {
             const termo = input.value.trim().toLowerCase();
             document.getElementById('veros_artigo_escolhido_id').value = '';
             const artigos = window._verOsArtigosDisponiveisCache || [];
-            const filtrados = (termo ? artigos.filter(a => a.nome.toLowerCase().includes(termo)) : artigos).slice(0, 8);
+            const filtrados = (termo ? artigos.filter(a => _artigoCorrespondePesquisa(a, termo)) : artigos).slice(0, 8);
             if (!filtrados.length) {
                 lista.innerHTML = `<div style="padding:10px;color:#94a3b8;font-size:.85rem;">${termo ? 'Nenhum material encontrado — usa o botão + para criar "' + escapeHtmlSimples(input.value.trim()) + '"' : 'Sem materiais disponíveis.'}</div>`;
                 lista.style.display = 'block';
                 return;
             }
-            lista.innerHTML = filtrados.map(a => `<div style="padding:9px 12px;cursor:pointer;border-bottom:1px solid #f1f5f9;" onmousedown="_verOsEscolherArtigoBusca('${a.id}','${escapeHtmlSimples(a.nome).replace(/'/g, "\\'")}')">${escapeHtmlSimples(a.nome)} <span style="color:#94a3b8;font-size:.76rem;">(${a.unidade || 'un'})</span></div>`).join('');
+            lista.innerHTML = filtrados.map(a => `<div style="padding:9px 12px;cursor:pointer;border-bottom:1px solid #f1f5f9;" onmousedown="_verOsEscolherArtigoBusca('${a.id}','${escapeHtmlSimples(a.nome).replace(/'/g, "\\'")}')">${a.referencia ? `<strong>${escapeHtmlSimples(a.referencia)}</strong> — ` : ''}${escapeHtmlSimples(a.nome || '')} <span style="color:#94a3b8;font-size:.76rem;">(${a.unidade || 'un'})</span></div>`).join('');
             lista.style.display = 'block';
         }
         function _verOsEscolherArtigoBusca(id, nome) {
@@ -18280,7 +18286,7 @@ function _assistEstado(value) {
             html += `<div style="border-top:1px dashed #cbd5e1;padding-top:8px;margin-top:4px;">
                 <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
                     <div style="position:relative;flex:1;">
-                        <input type="text" id="fo_busca_artigo" placeholder="Pesquisar material... (escreve o nome)" autocomplete="off" oninput="_foFiltrarArtigos()" onfocus="_foFiltrarArtigos()" onblur="setTimeout(()=>{const l=document.getElementById('fo_resultados_artigos'); if(l) l.style.display='none';},150)" style="width:100%;" />
+                        <input type="text" id="fo_busca_artigo" placeholder="Pesquisar por nome ou referência..." autocomplete="off" oninput="_foFiltrarArtigos()" onfocus="_foFiltrarArtigos()" onblur="setTimeout(()=>{const l=document.getElementById('fo_resultados_artigos'); if(l) l.style.display='none';},150)" style="width:100%;" />
                         <input type="hidden" id="fo_artigo_escolhido_id" />
                         <div id="fo_resultados_artigos" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #e2e8f0;border-radius:8px;box-shadow:0 8px 20px rgba(0,0,0,.12);max-height:min(55vh,420px);overflow-y:auto;z-index:50;margin-top:2px;"></div>
                     </div>
@@ -18320,13 +18326,13 @@ function _assistEstado(value) {
             const termo = input.value.trim().toLowerCase();
             document.getElementById('fo_artigo_escolhido_id').value = '';
             const artigos = window._foArtigosDisponiveisCache || [];
-            const filtrados = (termo ? artigos.filter(a => a.nome.toLowerCase().includes(termo)) : artigos).slice(0, 8);
+            const filtrados = (termo ? artigos.filter(a => _artigoCorrespondePesquisa(a, termo)) : artigos).slice(0, 8);
             if (!filtrados.length) {
                 lista.innerHTML = `<div style="padding:10px;color:#94a3b8;font-size:.85rem;">${termo ? 'Nenhum material encontrado — usa o botão + para criar "' + escapeHtmlSimples(input.value.trim()) + '"' : 'Sem materiais disponíveis.'}</div>`;
                 lista.style.display = 'block';
                 return;
             }
-            lista.innerHTML = filtrados.map(a => `<div style="padding:9px 12px;cursor:pointer;border-bottom:1px solid #f1f5f9;" onmousedown="_foEscolherArtigoBusca('${a.id}','${escapeHtmlSimples(a.nome).replace(/'/g, "\\'")}')">${escapeHtmlSimples(a.nome)} <span style="color:#94a3b8;font-size:.76rem;">(${a.unidade || 'un'})</span></div>`).join('');
+            lista.innerHTML = filtrados.map(a => `<div style="padding:9px 12px;cursor:pointer;border-bottom:1px solid #f1f5f9;" onmousedown="_foEscolherArtigoBusca('${a.id}','${escapeHtmlSimples(a.nome).replace(/'/g, "\\'")}')">${a.referencia ? `<strong>${escapeHtmlSimples(a.referencia)}</strong> — ` : ''}${escapeHtmlSimples(a.nome || '')} <span style="color:#94a3b8;font-size:.76rem;">(${a.unidade || 'un'})</span></div>`).join('');
             lista.style.display = 'block';
         }
         function _foEscolherArtigoBusca(id, nome) {
@@ -32167,7 +32173,7 @@ window._relPrefill = function(msg){
                 <div style="border:1px dashed #cbd5e1;border-radius:8px;padding:8px;margin-top:6px;">
                     <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
                         <div style="position:relative;flex:1;">
-                            <input type="text" id="folhaobrig_busca_artigo" placeholder="Pesquisar material... (escreve o nome)" autocomplete="off" oninput="_folhaObrigFiltrarArtigos()" onfocus="_folhaObrigFiltrarArtigos()" onblur="setTimeout(()=>{const l=document.getElementById('folhaobrig_resultados_artigos'); if(l) l.style.display='none';},150)" style="width:100%;" />
+                            <input type="text" id="folhaobrig_busca_artigo" placeholder="Pesquisar por nome ou referência..." autocomplete="off" oninput="_folhaObrigFiltrarArtigos()" onfocus="_folhaObrigFiltrarArtigos()" onblur="setTimeout(()=>{const l=document.getElementById('folhaobrig_resultados_artigos'); if(l) l.style.display='none';},150)" style="width:100%;" />
                             <input type="hidden" id="folhaobrig_artigo_escolhido_id" />
                             <div id="folhaobrig_resultados_artigos" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #e2e8f0;border-radius:8px;box-shadow:0 8px 20px rgba(0,0,0,.12);max-height:min(55vh,420px);overflow-y:auto;z-index:50;margin-top:2px;"></div>
                         </div>
@@ -32204,13 +32210,13 @@ window._relPrefill = function(msg){
             const termo = input.value.trim().toLowerCase();
             document.getElementById('folhaobrig_artigo_escolhido_id').value = '';
             const artigos = window._folhaObrigArtigosDisponiveisCache || [];
-            const filtrados = (termo ? artigos.filter(a => a.nome.toLowerCase().includes(termo)) : artigos).slice(0, 8);
+            const filtrados = (termo ? artigos.filter(a => _artigoCorrespondePesquisa(a, termo)) : artigos).slice(0, 8);
             if (!filtrados.length) {
                 lista.innerHTML = `<div style="padding:10px;color:#94a3b8;font-size:.85rem;">${termo ? 'Nenhum material encontrado — usa o botão + para criar "' + escapeHtmlSimples(input.value.trim()) + '"' : 'Sem materiais disponíveis.'}</div>`;
                 lista.style.display = 'block';
                 return;
             }
-            lista.innerHTML = filtrados.map(a => `<div style="padding:9px 12px;cursor:pointer;border-bottom:1px solid #f1f5f9;" onmousedown="_folhaObrigEscolherArtigoBusca('${a.id}','${escapeHtmlSimples(a.nome).replace(/'/g, "\\'")}')">${escapeHtmlSimples(a.nome)} <span style="color:#94a3b8;font-size:.76rem;">(${a.unidade || 'un'})</span></div>`).join('');
+            lista.innerHTML = filtrados.map(a => `<div style="padding:9px 12px;cursor:pointer;border-bottom:1px solid #f1f5f9;" onmousedown="_folhaObrigEscolherArtigoBusca('${a.id}','${escapeHtmlSimples(a.nome).replace(/'/g, "\\'")}')">${a.referencia ? `<strong>${escapeHtmlSimples(a.referencia)}</strong> — ` : ''}${escapeHtmlSimples(a.nome || '')} <span style="color:#94a3b8;font-size:.76rem;">(${a.unidade || 'un'})</span></div>`).join('');
             lista.style.display = 'block';
         }
         function _folhaObrigEscolherArtigoBusca(id, nome) {

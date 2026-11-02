@@ -28,5 +28,6 @@ test('counts refresh on status changes, employee visibility and account switch',
  }finally{w.close();}
 });
 test('both entry points expose one counter group and matching versioned assets',()=>{
- for(const file of ['index.html','login.html']){const w=new JSDOM(fs.readFileSync(file,'utf8')).window;try{assert.equal(w.document.querySelectorAll('#servicosContadores').length,1);assert(w.document.querySelector('script[src="app-principal.js?v=signed-drafts-20261102"]'));assert(w.document.querySelector('link[href^="styles.css?v="]'));}finally{w.close();}}
+ const worker=fs.readFileSync('sw.js','utf8');let asset;
+ for(const file of ['index.html','login.html']){const w=new JSDOM(fs.readFileSync(file,'utf8')).window;try{assert.equal(w.document.querySelectorAll('#servicosContadores').length,1);const src=w.document.querySelector('script[src^="app-principal.js?v="]').getAttribute('src');assert(worker.includes('./'+src));if(asset)assert.equal(src,asset);asset=src;assert(w.document.querySelector('link[href^="styles.css?v="]'));}finally{w.close();}}
 });
