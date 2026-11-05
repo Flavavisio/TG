@@ -31,3 +31,18 @@ test('both entry points expose one counter group and matching versioned assets',
  const worker=fs.readFileSync('sw.js','utf8');let asset;
  for(const file of ['index.html','login.html']){const w=new JSDOM(fs.readFileSync(file,'utf8')).window;try{assert.equal(w.document.querySelectorAll('#servicosContadores').length,1);const src=w.document.querySelector('script[src^="app-principal.js?v="]').getAttribute('src');assert(worker.includes('./'+src));if(asset)assert.equal(src,asset);asset=src;assert(w.document.querySelector('link[href^="styles.css?v="]'));}finally{w.close();}}
 });
+function failedVisit(w,index){
+ const s=w.dados.servicos[index];s.checklist={__tgVisitasSemSucesso:{tentativas:{['p'+index]:{id:'p'+index,adminId:s.adminId,tecnicoId:'f',tecnicoNome:'Técnico',registadoEm:'2026-11-05T10:00:00Z',motivo:'ausente',data:s.data,entrada:'09:00',saida:'09:15'}}}};
+}
+test('Por reagendar counts OS once, separates them from pending and opens the single native scheduling form',()=>{
+ const w=setup();try{w.eval(fs.readFileSync('tg-unsuccessful-visits.js','utf8'));failedVisit(w,0);const s=w.dados.servicos[0];s.checklist.__tgVisitasSemSucesso.tentativas.other={...s.checklist.__tgVisitasSemSucesso.tentativas.p0,id:'other'};
+ w.renderizarServicos();assert.equal(count(w,'reagendar'),1);assert.equal(count(w,'pendentes'),2);assert.equal(count(w,'todos'),7);
+ w.servicosFiltrarEstado('reagendar');assert.deepEqual(rows(w),['OS-0']);assert.equal(w.document.getElementById('modalGenericoTitulo').textContent,'Agendar visita');assert(w.document.getElementById('modalGenericoOverlay').classList.contains('open'));assert.equal(w.document.getElementById('tgVisitOverlay'),null);
+ s.checklist.__tgVisitasSemSucesso.resolucoes={p0:{acao:'reagendar'},other:{acao:'reagendar'}};w.renderizarServicos();assert.equal(count(w,'reagendar'),0);assert.equal(count(w,'pendentes'),3);
+ }finally{w.close();}
+});
+test('multiple OS open a native chooser and the chosen OS opens directly for scheduling',()=>{
+ const w=setup();try{w.eval(fs.readFileSync('tg-unsuccessful-visits.js','utf8'));failedVisit(w,0);failedVisit(w,1);w.renderizarServicos();w.servicosFiltrarEstado('reagendar');assert.equal(count(w,'reagendar'),2);assert.deepEqual(rows(w).sort(),['OS-0','OS-1']);assert.equal(w.document.getElementById('modalGenericoTitulo').textContent,'OS por reagendar');
+ const form=w.document.getElementById('modalGenericoForm');form.elements.os.value='1';form.dispatchEvent(new w.Event('submit',{cancelable:true}));assert.equal(w.document.getElementById('modalGenericoTitulo').textContent,'Agendar visita');assert.match(form.textContent,/OS OS-1/);assert.equal(w.document.querySelectorAll('.modal-overlay.open').length,1);
+ }finally{w.close();}
+});

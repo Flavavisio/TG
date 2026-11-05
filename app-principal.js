@@ -5926,18 +5926,20 @@ function _assistEstado(value) {
         function _servicosGrupoEstado(servico) {
             const estado = (servico.status || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
             if (estado === 'concluido') return 'concluidos';
+            if (globalThis.TGUnsuccessfulVisits?.pending(servico)) return 'reagendar';
             if (estado === 'stand by') return 'standby';
             return estado === 'cancelado' ? 'cancelados' : 'pendentes';
         }
         function servicosFiltrarEstado(estado) {
-            if (!['todos', 'pendentes', 'standby', 'concluidos'].includes(estado)) return;
+            if (!['todos', 'pendentes', 'reagendar', 'standby', 'concluidos'].includes(estado)) return;
             _servicosEstadoFiltro = estado;
             renderizarServicos();
+            if (estado === 'reagendar') globalThis.TGUnsuccessfulVisits?.openPending();
         }
         function _servicosContadores(lista) {
             const cont = document.getElementById('servicosContadores');
             if (!cont) return;
-            cont.innerHTML = [['pendentes', 'Pendentes'], ['standby', 'Stand by'], ['concluidos', 'Concluídos'], ['todos', 'Todos']].map(([estado, nome]) => {
+            cont.innerHTML = [['pendentes', 'Pendentes'], ['reagendar', 'Por reagendar'], ['standby', 'Stand by'], ['concluidos', 'Concluídos'], ['todos', 'Todos']].map(([estado, nome]) => {
                 const numero = estado === 'todos' ? lista.length : lista.filter(s => _servicosGrupoEstado(s) === estado).length;
                 return `<button type="button" class="obras-estado-contador" data-servicos-estado="${estado}" aria-pressed="${_servicosEstadoFiltro === estado}" onclick="servicosFiltrarEstado('${estado}')"><strong>${numero}</strong><span>${nome}</span></button>`;
             }).join('');
@@ -32107,6 +32109,7 @@ window._relPrefill = function(msg){
         }
 
         function _fecharModalGenerico() {
+            globalThis.TGUnsuccessfulVisits?.cleanupModal();
             delete document.getElementById('modalGenericoOverlay').dataset.tgAssistNative;
             _wsTentarVoltar();
             document.getElementById('modalGenericoOverlay').classList.remove('open', 'modal-veros');

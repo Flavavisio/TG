@@ -134,22 +134,59 @@ const blocked=(os,userId)=>pending(os)&&unresolved(os).some(v=>v.tecnicoId===use
 const label=os=>pending(os)&&os.status!=='em andamento'?'Por reagendar':os.status||'pendente';
 function badge(os){if(!pending(os))return '';return '<span class="tg-uv-badge">'+(os.status==='em andamento'?'Visita sem sucesso · por tratar':'Visita sem sucesso · por reagendar')+'</span>';}
 function refresh(){if(typeof renderizarTudo==='function')renderizarTudo();if(typeof renderizarAgendaObras==='function')renderizarAgendaObras();}
+let disposeModal=null;
+function cleanupModal(){disposeModal?.();}
 function modal(title,body){
- document.getElementById('tgVisitOverlay')?.remove();const previous=document.activeElement;
- const overlay=document.createElement('div');overlay.id='tgVisitOverlay';overlay.className='modal-overlay open';
- overlay.innerHTML=`<div class="modal tg-uv-modal" role="dialog" aria-modal="true" aria-labelledby="tgVisitTitle" tabindex="-1"><div class="modal-header"><h3 id="tgVisitTitle">${esc(title)}</h3><button type="button" class="btn btn-outline" data-uv-close aria-label="Fechar visita">×</button></div><form class="tg-uv-body">${body}<p data-uv-error role="alert" class="tg-uv-error"></p></form></div>`;
- document.body.append(overlay);const form=overlay.querySelector('form');
- const close=()=>{overlay.remove();previous?.focus?.();};
- overlay.querySelector('[data-uv-close]').onclick=close;
- overlay.addEventListener('keydown',e=>{
+ disposeModal?.();
+ const previous=document.activeElement;
+ // Use the same shell, title, fields, footer and close button as the other TG forms.
+ let overlay=document.getElementById('modalGenericoOverlay'),temporary=false;
+ if(overlay){
+  if(overlay.classList.contains('open')&&typeof _fecharModalGenerico==='function')_fecharModalGenerico();
+  overlay.classList.remove('modal-veros');
+ }else{
+  temporary=true;document.getElementById('tgVisitOverlay')?.remove();
+  overlay=document.createElement('div');overlay.id='tgVisitOverlay';overlay.className='modal-overlay';
+  overlay.innerHTML='<div class="modal"><div class="tg-uv-title-row"><h3 id="tgVisitTitle"></h3><button type="button" class="close-modal" aria-label="Fechar visita">×</button></div><form><div class="tg-uv-body"></div><div class="modal-actions"></div></form></div>';
+  document.body.append(overlay);
+ }
+ const oldZIndex=overlay.style.zIndex;
+ overlay.dataset.tgVisits='true';overlay.style.zIndex='100100';
+ const box=overlay.querySelector('.modal'),form=temporary?overlay.querySelector('form'):document.getElementById('modalGenericoForm');
+ const heading=temporary?overlay.querySelector('h3'):document.getElementById('modalGenericoTitulo');
+ const fields=temporary?overlay.querySelector('.tg-uv-body'):document.getElementById('modalGenericoCampos');
+ const actions=temporary?overlay.querySelector('.modal-actions'):document.getElementById('modalGenericoAcoes');
+ const oldActions=[...actions.childNodes],closeButton=overlay.querySelector('.close-modal'),oldClose=closeButton.onclick;
+ heading.textContent=title;
+ box.style.cssText='max-width:640px;';box.setAttribute('role','dialog');box.setAttribute('aria-modal','true');box.setAttribute('aria-labelledby',heading.id);box.tabIndex=-1;
+ form.style.cssText='';form.classList.add('tg-uv-form');fields.style.cssText='';fields.classList.add('tg-uv-body');
+ fields.innerHTML=body+'<p data-uv-error role="alert" class="tg-uv-error"></p>';
+ for(const label of [...fields.querySelectorAll('label')]){
+  if(label.classList.contains('tg-uv-person'))continue;
+  const group=document.createElement('div');group.className='form-group';
+  label.before(group);group.append(label);
+  if(label.hasAttribute('data-uv-price')){group.dataset.uvPrice='';label.removeAttribute('data-uv-price');group.hidden=label.hidden;label.hidden=false;}
+ }
+ const footer=fields.querySelector('.tg-uv-actions');actions.style.cssText='';actions.replaceChildren();
+ if(footer){actions.append(...footer.children);footer.remove();}
+ else actions.innerHTML='<button type="button" class="btn" data-uv-cancel style="background:#e9edf2;">Fechar</button>';
+ actions.querySelector('[data-uv-cancel]')?.classList.remove('btn-outline');
+ const cancel=actions.querySelector('[data-uv-cancel]');if(cancel)cancel.style.background='#e9edf2';
+ const primary=actions.querySelector('[type=submit]');if(primary){primary.classList.remove('btn-warning');primary.classList.add('btn-success');}
+ const onKey=e=>{
   if(e.key==='Escape'){e.preventDefault();e.stopPropagation();close();}
   if(e.key==='Tab'){
-   const nodes=[...overlay.querySelectorAll('button,input,select,textarea,a[href]')].filter(n=>!n.disabled&&n.getClientRects().length),first=nodes[0],last=nodes.at(-1);
+   const nodes=[...box.querySelectorAll('button,input,select,textarea,a[href],summary')].filter(n=>!n.disabled&&n.getClientRects().length),first=nodes[0],last=nodes.at(-1);
    if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus();}
   }
- });
- form.querySelector('[data-uv-cancel]')?.addEventListener('click',close);overlay.querySelector('.modal').focus();
- return {overlay,form,close,error:message=>{form.querySelector('[data-uv-error]').textContent=message;}};
+ };
+ let disposed=false;
+ const dispose=()=>{if(disposed)return;disposed=true;overlay.removeEventListener('keydown',onKey);form.classList.remove('tg-uv-form');fields.classList.remove('tg-uv-body');delete overlay.dataset.tgVisits;overlay.style.zIndex=oldZIndex;closeButton.onclick=oldClose;actions.replaceChildren(...oldActions);form.onsubmit=null;if(disposeModal===dispose)disposeModal=null;};
+ const close=()=>{dispose();if(temporary)overlay.remove();else if(typeof _fecharModalGenerico==='function')_fecharModalGenerico();else overlay.classList.remove('open');previous?.focus?.();if(disposeModal===dispose)disposeModal=null;};
+ disposeModal=dispose;
+ overlay.querySelector('.close-modal').onclick=close;cancel?.addEventListener('click',close);overlay.addEventListener('keydown',onKey);
+ overlay.classList.add('open');box.focus();
+ return {overlay,form,close,error:message=>{fields.querySelector('[data-uv-error]').textContent=message;}};
 }
 function historyHtml(os){
  if(!attempts(os).length)return '';
@@ -190,9 +227,21 @@ async function register(osId,pointId,context={}){
 }
 function peopleFor(os){return [...(state().administradores||[]).map(p=>({...p,role:'admin'})),...state().funcionarios||[],...state().encarregados||[]].filter((p,i,arr)=>tenant(p)===os.adminId&&!p.suspenso&&p.ativo!==false&&arr.findIndex(x=>x.id===p.id)===i);}
 function open(id){const os=find(id);if(!os)return;if(canManage(os)&&pending(os))return manage(id);if(typeof abrirVerOS==='function')abrirVerOS(id);}
+function visitContext(os){
+ const latest=unresolved(os)[0]||attempts(os)[0];
+ if(!latest)return '';
+ return `<p class="help-text tg-uv-context"><strong>OS ${esc(os.numeroRegisto||os.id)} · ${esc(REASONS[latest.motivo]||'Visita sem sucesso')}</strong><br>${esc(latest.tecnicoNome||latest.tecnicoId)} · ${esc(new Date(latest.registadoEm).toLocaleString('pt-PT'))}${latest.observacoes?'<br>'+esc(latest.observacoes.slice(0,280)):''}</p>`;
+}
+function openPending(){
+ const list=pendingList(tenant(actor())).filter(canManage);
+ if(!list.length)return;
+ if(list.length===1)return manage(list[0].id);
+ const ui=modal('OS por reagendar',`<p class="help-text">Seleciona a ordem de serviço para agendar a próxima visita.</p><label>Ordem de serviço<select name="os" required>${list.map(os=>`<option value="${esc(os.id)}">OS ${esc(os.numeroRegisto||os.id)} · ${esc(os.descricao||'Serviço')} · ${esc(REASONS[unresolved(os)[0]?.motivo]||'Visita sem sucesso')}</option>`).join('')}</select></label><div class="tg-uv-actions"><button type="button" class="btn" data-uv-cancel>Cancelar</button><button type="submit" class="btn btn-success">Agendar visita</button></div>`);
+ ui.form.onsubmit=event=>{event.preventDefault();const id=ui.form.elements.os.value;ui.close();manage(id);};
+}
 function manage(id){
  const os=find(id);try{checkActor(os,actor(),true);}catch(e){alert(e.message);return;}
- const people=peopleFor(os),ui=modal('Tratar visita sem sucesso',`${historyHtml(os)}<label>Próximo passo<select name="acao"><option value="reagendar">Reagendar OS</option><option value="manter">Manter o serviço e dar esta visita como tratada</option><option value="cancelar">Cancelar OS</option></select></label><div data-uv-schedule><div class="tg-uv-fields"><label>Nova data<input name="data" type="date" value="${esc(getDataHoje())}"></label><label>Hora<input name="hora" type="time" value="${esc((os.hora||'09:00').slice(0,5))}"></label></div><fieldset><legend>Técnicos da próxima visita</legend>${people.map(p=>`<label class="tg-uv-person"><input type="checkbox" name="tecnicos" value="${esc(p.id)}" ${assigned(os).includes(p.id)?'checked':''}>${esc(p.nome||p.empresa||p.id)}</label>`).join('')}</fieldset></div><label>Deslocação desta tentativa<select name="cobranca"><option value="pendente">Por decidir</option><option value="nao_cobrar">Não cobrar</option><option value="cobrar">Cobrar deslocação</option></select></label><label data-uv-price hidden>Valor da deslocação (€)<input name="valor" type="number" min="0.01" max="1000000" step="0.01"></label><p class="help-text">A decisão de cobrança fica no histórico. A emissão de fatura é feita separadamente.</p><div class="tg-uv-actions"><button type="button" class="btn btn-outline" data-uv-cancel>Cancelar</button><button type="submit" class="btn btn-success">Guardar decisão</button></div>`);
+ const people=peopleFor(os),ui=modal('Agendar visita',`${visitContext(os)}<label>Próximo passo<select name="acao"><option value="reagendar">Reagendar OS</option><option value="manter">Manter o serviço e dar esta visita como tratada</option><option value="cancelar">Cancelar OS</option></select></label><div data-uv-schedule><div class="tg-uv-fields"><label>Nova data<input name="data" type="date" value="${esc(getDataHoje())}"></label><label>Hora<input name="hora" type="time" value="${esc((os.hora||'09:00').slice(0,5))}"></label></div><fieldset><legend>Técnicos da próxima visita</legend>${people.map(p=>`<label class="tg-uv-person"><input type="checkbox" name="tecnicos" value="${esc(p.id)}" ${assigned(os).includes(p.id)?'checked':''}>${esc(p.nome||p.empresa||p.id)}</label>`).join('')}</fieldset></div><label>Deslocação desta tentativa<select name="cobranca"><option value="pendente">Por decidir</option><option value="nao_cobrar">Não cobrar</option><option value="cobrar">Cobrar deslocação</option></select></label><label data-uv-price hidden>Valor da deslocação (€)<input name="valor" type="number" min="0.01" max="1000000" step="0.01"></label><p class="help-text">A decisão de cobrança fica no histórico. A emissão de fatura é feita separadamente.</p><details class="tg-uv-history-toggle"><summary>Histórico de tentativas (${attempts(os).length})</summary>${historyHtml(os)}</details><div class="tg-uv-actions"><button type="button" class="btn btn-outline" data-uv-cancel>Cancelar</button><button type="submit" class="btn btn-success">Guardar decisão</button></div>`);
  ui.form.elements.acao.onchange=()=>{ui.form.querySelector('[data-uv-schedule]').hidden=ui.form.elements.acao.value!=='reagendar';};
  ui.form.elements.cobranca.onchange=()=>{ui.form.querySelector('[data-uv-price]').hidden=ui.form.elements.cobranca.value!=='cobrar';};
  let applied=false;
@@ -213,5 +262,5 @@ function manage(id){
 }
 function pendingList(adminId){return (state().servicos||[]).filter(s=>s.adminId===adminId&&pending(s));}
 function summary(adminId){const rows=pendingList(adminId);if(!rows.length)return '';return `<div class="tg-uv-summary"><strong>${rows.length} OS com visitas sem sucesso por tratar</strong>${rows.map(s=>`<button type="button" class="btn btn-outline" onclick="TGUnsuccessfulVisits.open('${esc(s.id)}')">OS ${esc(s.numeroRegisto||s.id)} · ${esc(s.descricao||'Serviço')} · ${esc(REASONS[unresolved(s)[0]?.motivo])}</button>`).join('')}</div>`;}
-return Object.freeze({KEY,REASONS,envelope,attempts,unresolved,pending,failedPoint,blocked,label,validate,applyVisit,applyDecision,mergeChecklist,persistRows,register,manage,open,badge,panel,summary,pendingList});
+return Object.freeze({KEY,REASONS,envelope,attempts,unresolved,pending,failedPoint,blocked,label,validate,applyVisit,applyDecision,mergeChecklist,persistRows,register,manage,open,openPending,cleanupModal,badge,panel,summary,pendingList});
 });
