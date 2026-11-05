@@ -270,6 +270,7 @@
 @media(max-width:480px){#secao-contratos>.section-header+div{gap:6px!important}#secao-contratos>.section-header+div .tg-status-box{padding:9px 7px!important;align-items:center;text-align:center}#secao-contratos>.section-header+div .tg-status-label{font-size:.66rem!important}#secao-contratos>.tg-painel-claro>div:first-child{gap:6px!important}#secao-contratos>.tg-painel-claro+div{grid-template-columns:1fr 1fr}#secao-contratos .section-header .btn{font-size:.77rem;padding:8px!important}}
 </style>
 <link rel="stylesheet" href="tg-assist-native.css?v=1.6.0">
+<link rel="stylesheet" href="landing-demo.css?v=20261105">
 </head>
 <body>
 <div id="tg-landing">
@@ -281,6 +282,7 @@
     <button type="button" class="tg-menu-toggle" aria-label="Abrir menu" aria-expanded="false" aria-controls="tg-public-nav">Menu <span aria-hidden="true">☰</span></button>
     <nav class="nav-links" id="tg-public-nav" aria-label="Navegação principal">
       <a href="#tg-como-funciona">Como funciona</a>
+      <a href="#tg-clientes">Clientes</a>
       <a href="#tg-vantagens">Funcionalidades</a>
       <a href="#tg-precos">Planos e preços</a>
       <a href="#tg-faq">Dúvidas</a>
@@ -309,7 +311,7 @@
       <p class="lead">Organize serviços, técnicos e clientes num só lugar. A equipa recebe o trabalho no telemóvel e o escritório acompanha cada intervenção.</p>
       <div class="hero-cta">
         <button type="button" class="btn btn-orange" onclick="_tgRegistarEvento('clique_cta','hero');abrirModalSignup()">Experimentar 14 dias grátis <span aria-hidden="true">→</span></button>
-        <a class="btn btn-ghost" href="#tg-como-funciona">Ver como funciona</a>
+        <a class="btn btn-ghost" href="#tg-demo">Ver demonstração · 90 segundos</a>
       </div>
       <div class="hero-trust"><span>14 dias para experimentar</span><span>Sem cartão de crédito</span><span>Suporte em português</span></div>
       <p class="tg-industries">Segurança · Eletricidade · AVAC · Instalação e manutenção</p>
@@ -384,15 +386,60 @@
     <div class="tg-toto-note"><img src="assets/toto.png" alt="Teco, o assistente da Total Gest" width="90" height="90" loading="lazy"><p><strong>O Teco ajuda a não perder o fio ao dia.</strong><br>Atalhos, resumo do dia e alertas sobre os dados disponíveis no seu perfil.</p><button type="button" class="btn btn-ghost" data-tg-preview>Ampliar a plataforma</button></div>
   </div>
 </section>
+<section id="tg-demo" aria-labelledby="tg-demo-title">
+ <div class="wrap">
+  <div class="sec-head"><span class="eyebrow">Veja o percurso completo</span><h2 id="tg-demo-title">Do pedido ao relatório, em 90 segundos.</h2><p>Veja como o escritório e o técnico acompanham o mesmo serviço, até à assinatura do cliente.</p></div>
+  <div class="tg-demo" data-demo>
+   <div class="tg-demo-toolbar"><span class="tg-demo-example">Demonstração ilustrativa · dados fictícios</span><span data-demo-time>00:00 / 01:30</span></div>
+   <div class="tg-demo-layout">
+    <ol class="tg-demo-chapters" aria-label="Etapas da demonstração">
+     <li><button type="button" data-demo-step="0" aria-pressed="true" aria-controls="tg-demo-scene-0"><span>01</span><strong>Criar serviço</strong><small>O escritório organiza</small></button></li>
+     <li><button type="button" data-demo-step="1" aria-pressed="false" aria-controls="tg-demo-scene-1"><span>02</span><strong>Técnico recebe</strong><small>O trabalho no telemóvel</small></button></li>
+     <li><button type="button" data-demo-step="2" aria-pressed="false" aria-controls="tg-demo-scene-2"><span>03</span><strong>Registar trabalho</strong><small>Materiais, notas e fotografias</small></button></li>
+     <li><button type="button" data-demo-step="3" aria-pressed="false" aria-controls="tg-demo-scene-3"><span>04</span><strong>Cliente assina</strong><small>O registo da intervenção</small></button></li>
+     <li><button type="button" data-demo-step="4" aria-pressed="false" aria-controls="tg-demo-scene-4"><span>05</span><strong>Gestor consulta</strong><small>O resultado no escritório</small></button></li>
+    </ol>
+    <div class="tg-demo-stage" data-demo-phase="0">
+     <article id="tg-demo-scene-0" data-demo-scene="0" aria-labelledby="tg-demo-heading-0">
+      <div class="tg-demo-screenbar"><b>Total Gest</b><span>Escritório · Ordens de serviço</span></div>
+      <div class="tg-demo-screen"><span class="tg-demo-kicker">Preparar a intervenção</span><h3 id="tg-demo-heading-0">Um pedido, um serviço organizado.</h3><div class="tg-demo-fields"><div><small>Cliente</small><b>Cliente de demonstração</b></div><div><small>Instalação</small><b>Loja · Lisboa</b></div><div class="tg-demo-reveal"><small>Trabalho</small><b>Manutenção do sistema de segurança</b></div><div class="tg-demo-reveal"><small>Responsável e horário</small><b>Técnico de exemplo · 09:00</b></div></div><p class="tg-demo-result">Cliente, local e técnico associados à mesma ordem de serviço.</p></div>
+     </article>
+     <article id="tg-demo-scene-1" data-demo-scene="1" aria-labelledby="tg-demo-heading-1" hidden>
+      <div class="tg-demo-screenbar"><b>Total Gest</b><span>Telemóvel · O meu dia</span></div>
+      <div class="tg-demo-screen"><span class="tg-demo-kicker">Consultar o trabalho atribuído</span><h3 id="tg-demo-heading-1">O técnico sabe onde ir e o que fazer.</h3><div class="tg-demo-phone"><b>O meu dia</b><div class="tg-demo-job"><span class="tg-demo-tag">09:00 · Agendado</span><h4>Manutenção de segurança</h4><p>Cliente de demonstração<br>Loja · Lisboa</p><div class="tg-demo-reveal">Responsável: Técnico de exemplo</div><div class="tg-demo-reveal tg-demo-faux-action">Consultar serviço</div></div></div><p class="tg-demo-result">O serviço atribuído fica disponível na agenda do técnico.</p></div>
+     </article>
+     <article id="tg-demo-scene-2" data-demo-scene="2" aria-labelledby="tg-demo-heading-2" hidden>
+      <div class="tg-demo-screenbar"><b>Total Gest</b><span>No local · Registo da intervenção</span></div>
+      <div class="tg-demo-screen"><span class="tg-demo-kicker">Documentar o trabalho</span><h3 id="tg-demo-heading-2">O trabalho fica registado no local.</h3><div class="tg-demo-fields"><div><small>Trabalho realizado</small><b>Verificação e limpeza dos equipamentos</b></div><div class="tg-demo-reveal"><small>Material utilizado</small><b>1 × Conector de substituição</b></div><div class="tg-demo-reveal"><small>Fotografias</small><b>Registo fotográfico associado ao serviço</b></div></div><p class="tg-demo-result">Notas, materiais e fotografias acompanham a intervenção.</p></div>
+     </article>
+     <article id="tg-demo-scene-3" data-demo-scene="3" aria-labelledby="tg-demo-heading-3" hidden>
+      <div class="tg-demo-screenbar"><b>Total Gest</b><span>No local · Relatório</span></div>
+      <div class="tg-demo-screen"><span class="tg-demo-kicker">Recolher a assinatura</span><h3 id="tg-demo-heading-3">O cliente assina no telemóvel.</h3><div class="tg-demo-paper"><b>Relatório da intervenção</b><p>Cliente de demonstração · Loja</p><p class="tg-demo-reveal">Trabalho realizado e materiais registados.</p><div class="tg-demo-signature tg-demo-reveal"><svg viewBox="0 0 280 65" role="img" aria-label="Assinatura fictícia de demonstração"><path d="M12 48 Q30 8 43 20 T38 50 Q72 5 78 35 T99 31 Q114 58 129 30 Q130 52 149 36 T178 37 Q193 24 208 40 T264 27" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg><small>Assinatura fictícia</small></div></div><p class="tg-demo-result">A assinatura fica associada ao relatório guardado.</p></div>
+     </article>
+     <article id="tg-demo-scene-4" data-demo-scene="4" aria-labelledby="tg-demo-heading-4" hidden>
+      <div class="tg-demo-screenbar"><b>Total Gest</b><span>Escritório · Histórico do cliente</span></div>
+      <div class="tg-demo-screen"><span class="tg-demo-kicker">Acompanhar o resultado</span><h3 id="tg-demo-heading-4">A informação regressa ao escritório.</h3><div class="tg-demo-summary"><div><small>Serviço</small><strong>Concluído</strong></div><div class="tg-demo-reveal"><small>Relatório</small><strong>Guardado</strong></div><div class="tg-demo-reveal"><small>Assinatura</small><strong>Recolhida</strong></div></div><div class="tg-demo-job tg-demo-reveal"><b>Cliente de demonstração · Histórico</b><p>Intervenção, técnico, materiais e relatório reunidos no mesmo local.</p></div><p class="tg-demo-result">O gestor consulta o trabalho e os documentos associados ao cliente.</p></div>
+     </article>
+    </div>
+   </div>
+   <div class="tg-demo-controls"><button type="button" class="btn btn-orange" data-demo-play aria-label="Reproduzir demonstração de 90 segundos">Reproduzir · 90 segundos</button><button type="button" class="btn btn-ghost" data-demo-reset>Recomeçar</button><label class="tg-demo-seek">Percurso da demonstração<input type="range" min="0" max="90" step="1" value="0" data-demo-seek aria-label="Posição na demonstração, em segundos"></label></div>
+   <p class="tg-demo-footnote">Pode pausar ou escolher uma etapa. A interface é ilustrativa; as áreas disponíveis dependem do pack e das permissões.</p><span class="tg-demo-sr" data-demo-announcement role="status"></span>
+  </div>
+  <div class="tg-demo-cta"><button type="button" class="btn btn-orange" onclick="_tgRegistarEvento('clique_cta','demo');abrirModalSignup()">Experimentar 14 dias grátis</button><a class="tg-text-link" href="#tg-precos">Comparar os cinco packs →</a></div>
+ </div>
+</section>
+
 <section id="tg-vantagens" class="soft"><div class="wrap">
   <div class="sec-head"><span class="eyebrow">Funcionalidades</span><h2>O que precisa, organizado por área.</h2><p>Comece pelo essencial e escolha o pack adequado à sua operação. Abra cada área para saber mais.</p></div>
   <div class="tg-capabilities"><details class="tg-capability"><summary><span class="tg-cap-number">01</span><span><strong>Serviços e assistências</strong><small>Do pedido à intervenção concluída.</small></span><span class="tg-cap-plus" aria-hidden="true">+</span></summary><div><p>Crie e atribua ordens de serviço, consulte a agenda e registe folhas de obra. Os pedidos do portal entram nas Assistências, em aberto, para a administração tratar.</p><p class="tg-cap-note">Assistências disponíveis com o respetivo módulo ativo.</p></div></details>
-<details class="tg-capability"><summary><span class="tg-cap-number">02</span><span><strong>Clientes e instalações</strong><small>O histórico certo, no local certo.</small></span><span class="tg-cap-plus" aria-hidden="true">+</span></summary><div><p>Em todos os planos, organize as instalações de cada cliente. No Expert, Pro e Supreme, acompanhe as instalações com Passaporte de Instalação: equipamentos, ligações, documentos e histórico de intervenções reunidos na mesma ficha. O portal permite consultar a informação disponibilizada pela empresa.</p><p class="tg-cap-note">Instalações em todos os planos. Passaporte de Instalação e portal do cliente a partir do Expert.</p></div></details>
+<details class="tg-capability"><summary><span class="tg-cap-number">02</span><span><strong>Clientes e instalações</strong><small>O histórico certo, no local certo.</small></span><span class="tg-cap-plus" aria-hidden="true">+</span></summary><div><p>Em todos os planos, organize as instalações de cada cliente. No Expert, Pro, Pro+ e Supreme, acompanhe as instalações com Passaporte de Instalação: equipamentos, ligações, documentos e histórico de intervenções reunidos na mesma ficha. O portal permite consultar a informação disponibilizada pela empresa.</p><p class="tg-cap-note">Instalações em todos os planos. Passaporte de Instalação e portal do cliente a partir do Expert.</p></div></details>
 <details class="tg-capability"><summary><span class="tg-cap-number">03</span><span><strong>Equipa e assiduidade</strong><small>O escritório e os técnicos em sintonia.</small></span><span class="tg-cap-plus" aria-hidden="true">+</span></summary><div><p>Organize funcionários, calendário, férias e faltas. Registe entradas e saídas com localização nas picagens, conforme as permissões.</p><p class="tg-cap-note">Ponto e assiduidade a partir do Expert.</p></div></details>
 <details class="tg-capability"><summary><span class="tg-cap-number">04</span><span><strong>Manutenção e relatórios</strong><small>Planeie hoje as próximas intervenções.</small></span><span class="tg-cap-plus" aria-hidden="true">+</span></summary><div><p>Acompanhe contratos, equipamentos e periodicidades. Crie relatórios personalizados e relatórios de especialidade, incluindo SCIE.</p><p class="tg-cap-note">Contratos e relatórios de especialidade a partir do Expert.</p></div></details>
 <details class="tg-capability"><summary><span class="tg-cap-number">05</span><span><strong>Obras, materiais e frota</strong><small>Saiba o que cada trabalho utiliza.</small></span><span class="tg-cap-plus" aria-hidden="true">+</span></summary><div><p>Consulte obras, custos, artigos, armazéns e ferramentas. Na frota, acompanhe viaturas, documentos e intervenções.</p><p class="tg-cap-note">Frota no Expert; obras e stock a partir do Pro.</p></div></details>
-<details class="tg-capability"><summary><span class="tg-cap-number">06</span><span><strong>Comercial e gestão</strong><small>Da oportunidade à visão da operação.</small></span><span class="tg-cap-plus" aria-hidden="true">+</span></summary><div><p>Acompanhe leads, propostas e atividade comercial no CRM. Consulte indicadores e escolha o software de faturação da empresa.</p><p class="tg-cap-note">CRM no Supreme. As ligações de faturação dependem do software, versão e configuração.</p></div></details>
+<details class="tg-capability"><summary><span class="tg-cap-number">06</span><span><strong>Comercial e gestão</strong><small>Da oportunidade à visão da operação.</small></span><span class="tg-cap-plus" aria-hidden="true">+</span></summary><div><p>Acompanhe leads, propostas e atividade comercial no CRM. Consulte indicadores e escolha o software de faturação da empresa.</p><p class="tg-cap-note">CRM nos packs Pro+ e Supreme. As ligações de faturação dependem do software, versão e configuração.</p></div></details>
 </div><a class="tg-text-link" href="#tg-precos">Comparar os packs e preços <span aria-hidden="true">→</span></a></div></section>
+
+<section id="tg-clientes" class="soft" aria-labelledby="tg-clientes-title"><div class="wrap"><div class="sec-head"><span class="eyebrow">Empresas que já confiam na Total Gest</span><h2 id="tg-clientes-title">Conheça alguns dos nossos clientes.</h2><p>Empresas de instalação, manutenção e serviços técnicos que fazem parte da Total Gest.</p></div><div class="tg-customer-grid"><article class="tg-customer-card"><img src="cliente-logo-1.jpg" alt="" width="84" height="84" loading="lazy"><h3>BM Soluções de Segurança</h3></article><article class="tg-customer-card"><img src="cliente-logo-3.jpeg" alt="" width="84" height="84" loading="lazy"><h3>B.F.J. Climatização e Energias</h3></article><article class="tg-customer-card"><img src="cliente-logo-4.jpg" alt="" width="84" height="84" loading="lazy"><h3>Prime Segurança Ativa</h3></article><article class="tg-customer-card"><img src="cliente-logo-6.png" alt="" width="84" height="84" loading="lazy"><h3>Kfogo Sistemas de Protecção e Segurança</h3></article><article class="tg-customer-card"><img src="cliente-logo-7.jpeg" alt="" width="84" height="84" loading="lazy"><h3>VR Alarmes</h3></article></div><div class="tg-real-cases" data-real-cases hidden><h3>Casos reais de clientes</h3><div data-real-cases-list></div></div><p class="tg-customer-note">Veja o percurso de um serviço na demonstração e experimente com os dados da sua empresa durante 14 dias, sem cartão de crédito.</p><div class="tg-demo-cta"><a class="btn btn-ghost" href="#tg-demo">Ver demonstração de 90 segundos</a><button type="button" class="btn btn-orange" onclick="_tgRegistarEvento('clique_cta','clientes');abrirModalSignup()">Experimentar grátis</button></div></div></section>
 
 <!-- PREÇOS -->
 <section id="tg-precos" class="soft">
@@ -458,7 +505,7 @@
         <div class="who">Gestão operacional e comercial</div>
         <div class="amt" data-preco-mensal="102.49">102,49 €</div>
         <div class="per">por mês · c/ IVA</div>
-        <ul class="tg-pack-highlights"><li>Tudo do Pro</li><li>CRM e dashboard analítico</li><li>Rondas e opções de integração</li><li>Modelos de relatório ilimitados</li></ul><button type="button" class="pack-detalhes-link" aria-expanded="false" aria-controls="packDetalhesInline" data-pack-details="supreme" onclick="_packVerDetalhes('supreme')">Comparar funcionalidades</button>
+        <ul class="tg-pack-highlights"><li>Tudo do Pro+</li><li>Dashboard analítico</li><li>Rondas e opções de integração</li><li>Modelos de relatório ilimitados</li></ul><button type="button" class="pack-detalhes-link" aria-expanded="false" aria-controls="packDetalhesInline" data-pack-details="supreme" onclick="_packVerDetalhes('supreme')">Comparar funcionalidades</button>
         <a class="btn btn-ghost" href="#" data-pack-start="supreme" onclick="return tgEscolherPack(event,'supreme')">Experimentar grátis</a>
       </div>
     </div>
@@ -544,7 +591,7 @@
    <p class="tcw-sub">Mais de 100 funcionários? No final, poderá pedir uma proposta à medida.</p>
   </div>
   <div id="tcw-passo-2" class="tcw-passo" style="display:none">
-   <p class="tcw-sub">Todos os packs incluem clientes, instalações, ordens de serviço e manutenções. O Expert, Pro e Supreme acrescentam o Passaporte de Instalação. Selecione o que também precisa.</p>
+   <p class="tcw-sub">Todos os packs incluem clientes, instalações, ordens de serviço e manutenções. O Expert, Pro, Pro+ e Supreme acrescentam o Passaporte de Instalação. Selecione o que também precisa.</p>
    <div class="tcw-addons">
     <label class="tcw-addon"><input type="checkbox" value="instalacoes"><span><b>Passaporte de Instalação</b><small>Equipamentos, ligações, documentos e histórico por instalação</small></span></label>
     <label class="tcw-addon"><input type="checkbox" value="equipa"><span><b>Ponto, férias e equipa</b><small>Assiduidade e gestão do dia a dia</small></span></label>
@@ -562,7 +609,7 @@
 </div>
 <section class="tg-access-section"><div class="wrap"><span class="eyebrow">TOTAL GEST NO SEU TELEMÓVEL</span><h2>A sua operação, sempre consigo.</h2><p>Instale a app para aceder diretamente à sua conta.</p><div class="tg-install-actions"><button type="button" onclick="instalarPWA('android')">Instalar para Android</button><button type="button" onclick="instalarPWA('ios')">Instalar para iPhone</button></div></div></section>
 <dialog id="tg-platform-preview" aria-labelledby="tg-preview-title"><div class="tg-preview-head"><h2 id="tg-preview-title">Exemplo da interface Total Gest</h2><button type="button" class="btn btn-ghost" data-tg-preview-close>Fechar ×</button></div><img src="dashboard-mockup.jpg" alt="Exemplo do dashboard Total Gest" width="1800" height="1015" loading="lazy"><p>As áreas disponíveis dependem do pack e das permissões do utilizador.</p></dialog>
-<section id="tg-solucoes" class="tg-guides"><div class="wrap"><span class="eyebrow">Soluções para empresas técnicas</span><h2>Conheça a Total Gest por área de trabalho.</h2><p>Software português para empresas de instalação, manutenção e assistência técnica. Compare os quatro packs e conheça os fluxos de trabalho antes de escolher.</p><div class="tg-guide-grid"><a href="solucoes/ordens-de-servico.html"><h3>Ordens de serviço</h3><p>Do agendamento ao relatório e ao histórico.</p></a><a href="solucoes/manutencao-contratos.html"><h3>Manutenção e contratos</h3><p>Periodicidade, equipamentos e intervenções.</p></a><a href="solucoes/gestao-equipas.html"><h3>Gestão de equipas</h3><p>Agenda, ponto e acessos por perfil.</p></a><a href="solucoes/portal-cliente.html"><h3>Portal do cliente</h3><p>Informação de serviços e documentos.</p></a><a href="planos.html"><h3>Comparar os quatro packs</h3><p>Funcionalidades, capacidades e preços com IVA.</p></a><a href="sobre-totalgest.html"><h3>Sobre a Total Gest</h3><p>Para quem é a plataforma e como funciona.</p></a></div></div></section>
+<section id="tg-solucoes" class="tg-guides"><div class="wrap"><span class="eyebrow">Soluções para empresas técnicas</span><h2>Conheça a Total Gest por área de trabalho.</h2><p>Software português para empresas de instalação, manutenção e assistência técnica. Compare os cinco packs e conheça os fluxos de trabalho antes de escolher.</p><div class="tg-guide-grid"><a href="solucoes/ordens-de-servico.html"><h3>Ordens de serviço</h3><p>Do agendamento ao relatório e ao histórico.</p></a><a href="solucoes/manutencao-contratos.html"><h3>Manutenção e contratos</h3><p>Periodicidade, equipamentos e intervenções.</p></a><a href="solucoes/gestao-equipas.html"><h3>Gestão de equipas</h3><p>Agenda, ponto e acessos por perfil.</p></a><a href="solucoes/portal-cliente.html"><h3>Portal do cliente</h3><p>Informação de serviços e documentos.</p></a><a href="planos.html"><h3>Comparar os cinco packs</h3><p>Funcionalidades, capacidades e preços com IVA.</p></a><a href="sobre-totalgest.html"><h3>Sobre a Total Gest</h3><p>Para quem é a plataforma e como funciona.</p></a></div></div></section>
 <section class="tg-guides"><div class="wrap"><span class="eyebrow">GUIAS PRÁTICOS</span><h2>Organize o trabalho da sua equipa.</h2><p>Saiba como acompanhar serviços no terreno e planear a manutenção dos equipamentos.</p><div class="tg-guide-grid"><a href="blog/como-gerir-ordens-de-servico.html"><h3>Como gerir ordens de serviço</h3><p>Do pedido do cliente ao registo do trabalho realizado.</p></a><a href="blog/o-que-e-fsm-field-service-management.html"><h3>Gestão de equipas no terreno (FSM)</h3><p>O que procurar num sistema para técnicos e instalações.</p></a><a href="blog/o-que-e-cmms-manutencao.html"><h3>Manutenção de equipamentos (CMMS)</h3><p>Organizar intervenções e consultar o histórico de manutenção.</p></a></div></div></section>
 <footer id="tg-contactos">
   <div class="wrap foot-grid">
@@ -3065,6 +3112,8 @@
 </div>
 
 <script src="landing-calculadora.js?v=2.2.0-pack-features"></script>
-<script src="landing-ui.js?v=1.0.0"></script>
+<script src="landing-ui.js?v=20261105"></script>
+<script src="landing-demo.js?v=20261105"></script>
+<script src="landing-cases.js?v=20261105"></script>
 </body>
 </html>
