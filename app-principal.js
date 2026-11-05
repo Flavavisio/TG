@@ -1306,12 +1306,19 @@ function _assistEstado(value) {
                         // escreveu nenhuma linha — sem o .select(), nunca saberíamos a diferença entre
                         // "gravou tudo" e "não gravou nada", e ficávamos a marcar coisas como
                         // sincronizadas quando não estavam.
+                        const visitasProtegidas = col === 'servicos' && globalThis.TGUnsuccessfulVisits && loteRows.some(r => r.checklist?.[globalThis.TGUnsuccessfulVisits.KEY]);
                         const { data: linhasGravadas, error } = col === 'administradores'
                             ? await _guardarAdministradoresAlterados(loteRows)
+                            : visitasProtegidas ? await globalThis.TGUnsuccessfulVisits.persistRows(supa, loteRows, _snap.servicos, (row, original) => {
+                                const obj = lista.find(o => o.id === row.id);
+                                if (obj && JSON.stringify(meta.to(obj)) === JSON.stringify(original)) Object.assign(obj, meta.from(row));
+                                const snapshot = loteJson.find(x => x.id === row.id);
+                                if (snapshot) snapshot.json = JSON.stringify(meta.to(meta.from(row)));
+                              }, row => meta.to(meta.from(row)))
                             : await supa.from(meta.tabela).upsert(loteRows, { onConflict: 'id' }).select('id');
                         if (error) {
                             console.error('upsert ' + meta.tabela + ' (lote ' + (i / TAMANHO_LOTE + 1) + '):', error.message);
-                            const colunaFalta = _colunaEmFalta(error);
+                            const colunaFalta = visitasProtegidas ? null : _colunaEmFalta(error);
                             if (colunaFalta) {
                                 // Repete sem essa coluna — e pode ser preciso repetir mais que uma
                                 // vez, se faltar mais que uma coluna de uma vez (ex.: várias
@@ -6057,6 +6064,7 @@ function _assistEstado(value) {
                             </select>
                         `;
                 }
+                statusHtml += globalThis.TGUnsuccessfulVisits?.badge(s) || '';
                 let btnCriarFolha = '';
                 if (s.status === 'concluído') {
                     const folhaOS = dados.folhasObra?.find(f => f.servicoId === s.id);
@@ -6304,6 +6312,7 @@ function _assistEstado(value) {
             const _mapaInfoVerOs = _osMapaInfo(os.clienteId, os.morada, os.localId);
             campos.innerHTML = `
                 ${window.TGPassport?.osButton(os) || ''}
+                ${globalThis.TGUnsuccessfulVisits?.panel(os) || ''}
                 ${os.morada ? `<div style="margin-bottom:12px;color:#334155;font-size:.88rem;"><i class="fas fa-location-dot" style="color:#94a3b8;"></i> ${escapeHtmlSimples(os.morada)} ${_mapaInfoVerOs ? `<a href="${_mapaInfoVerOs.url}" target="_blank" rel="noopener" title="${_mapaInfoVerOs.exato ? 'Ver pin exato no mapa' : 'Ver morada no mapa (aproximado)'}" style="color:${_mapaInfoVerOs.exato ? '#16a34a' : '#dc2626'};margin-left:4px;"><i class="fas fa-map-location-dot"></i></a>` : ''}</div>` : ''}
                 <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
                     <button type="button" class="btn btn-sm" id="verOsBtnFolhas" onclick="_verOsMostrar('${osId}','folhas')" style="flex:1;min-width:110px;background:#0ea5e9;color:#fff;"><i class="fas fa-clipboard-list"></i> Folhas de obra</button>
@@ -12526,7 +12535,7 @@ function _assistEstado(value) {
             const ids = os?.funcionariosIds?.length ? os.funcionariosIds : [os?.funcionarioId].filter(Boolean);
             if (!os || !funcionarioId || ids.length < 2 || !ids.includes(funcionarioId) || !os.relatorioResponsavelId || os.relatorioResponsavelId === funcionarioId) return false;
             const pontos = (registos.ponto || []).filter(p => p.servicoId === os.id && p.funcionarioId === funcionarioId &&
-                p.adminId === os.adminId && p.entrada && p.data === (os.data || getDataHoje()))
+                p.adminId === os.adminId && p.entrada && p.data === (os.data || getDataHoje()) && !globalThis.TGUnsuccessfulVisits?.failedPoint(os, p.id))
                 .sort((a, b) => b.entrada.localeCompare(a.entrada));
             if (pontos.some(p => !p.saida)) return false;
             return !!(pontos[0]?.saida && !pontos[0].pausaAlmoco);
@@ -12561,7 +12570,7 @@ function _assistEstado(value) {
                         ${_moradaBadge}
                         ${_climaBadge}
                         ${_pontoBadge}
-                        ${window.TGPassport?.osButton(s) || ''}
+                        ${window.TGPassport?.osButton(s) || ''}${globalThis.TGUnsuccessfulVisits?.badge(s) || ''}
                     </div>
                     <div style="margin-top:5px;">${_estadoEditavel}</div>
                     ${emConf ? '<div class="ag-conflito-badge"><i class="fas fa-exclamation-triangle"></i> Sobreposição de horário</div>' : ''}
@@ -13493,7 +13502,7 @@ function _assistEstado(value) {
         }
         function _itensPendenciasAlerta(tipo, ids) {
             if (!['admin', 'subadmin'].includes(usuarioLogado?.role) || !Array.isArray(ids)) return [];
-            const colecoes = { relatorioOS: 'servicos', servico: 'servicos', contrato: 'contratos', veiculo: 'veiculos', requisicao: 'requisicoes', pedido: 'pedidos', artigo: 'artigos', obra: 'obras', assistencia: 'assistencias' };
+            const colecoes = { visitaOS: 'servicos', relatorioOS: 'servicos', servico: 'servicos', contrato: 'contratos', veiculo: 'veiculos', requisicao: 'requisicoes', pedido: 'pedidos', artigo: 'artigos', obra: 'obras', assistencia: 'assistencias' };
             const lista = dados[colecoes[tipo]] || [];
             return lista.filter(i => i.adminId === _tenantId() && ids.includes(i.id));
         }
@@ -13550,6 +13559,7 @@ function _assistEstado(value) {
             const item = _itensPendenciasAlerta(tipo, [id])[0];
             if (!item) { mostrarErro('Registo indisponível.'); return; }
             document.getElementById('tgPendenciasOverlay')?.remove();
+            if (tipo === 'visitaOS') { globalThis.TGUnsuccessfulVisits?.open(id); return; }
             if (tipo === 'relatorioOS') { abrirVerOS(id); _verOsMostrar(id, 'relatorios'); return; }
             if (tipo === 'servico') { abrirVerOS(id); return; }
             if (tipo === 'contrato') { abrirModalContrato(id); return; }
@@ -13626,6 +13636,8 @@ function _assistEstado(value) {
                 alertas.push({ tipo: 'info', titulo: `🎂 ${_aniversariantes.length === 1 ? _aniversariantes[0].nome + ' faz anos hoje' : _nomes + ' fazem anos hoje'}`, sub: 'Aproveite para o(a) cumprimentar!', acao: '' });
             }
 
+            const osVisitasPendentes = globalThis.TGUnsuccessfulVisits?.pendingList(adminId) || [];
+            if (osVisitasPendentes.length) alertas.push({ tipo: 'warning', titulo: `${osVisitasPendentes.length} OS com visitas sem sucesso por tratar`, sub: 'Consulte o motivo e decida se pretende reagendar.', acao: _acaoPendenciasAlerta('visitaOS', osVisitasPendentes) });
             const osRelatoriosPendentes = _osComRelatoriosPorTerminar(adminId);
             if (osRelatoriosPendentes.length) alertas.push({ tipo: 'warning', titulo: `${osRelatoriosPendentes.length} OS com relatórios por terminar`, sub: 'Existem relatórios em rascunho ou por concluir. A conclusão da OS mantém-se.', acao: _acaoPendenciasAlerta('relatorioOS', osRelatoriosPendentes) });
 
@@ -15838,6 +15850,7 @@ function _assistEstado(value) {
                 <div class="tgm-panel tgm-panel--equipa">
                     <div class="tgm-eyebrow">Toda a equipa</div>
                     <div class="tgm-title tgm-title--sm"><i class="fas fa-users"></i> Resumo do Dia</div>
+                    ${globalThis.TGUnsuccessfulVisits?.summary(adminId) || ''}
                     ${osRelatoriosPendentes.length ? `<button type="button" class="btn btn-outline" style="margin:8px 0;white-space:normal;" onclick="${escapeHtmlSimples(_acaoPendenciasAlerta('relatorioOS', osRelatoriosPendentes))}"><i class="fas fa-file-pen"></i> ${osRelatoriosPendentes.length} OS com relatórios por terminar (inclui dias anteriores)</button>` : ''}
                     ${todasOS.length || obrasEmCurso.length ? `<div class="tgm-resumo-lista">${todasOS.map(s => linha(s)).join('')}${obrasEmCurso.map(o => linha(o, true)).join('')}</div>` : '<p class="tgm-vazio">Sem OS marcadas para hoje.</p>'}
                 </div>
@@ -28392,9 +28405,11 @@ async function salvarAdmin(e) {
             });
         })();
         // ===== fim ESC =====
-        function perguntarSaidaObra(texto) {
+        function perguntarSaidaObra(texto, osId) {
             return new Promise(resolve => {
                 _modalSimNaoResolve = resolve;
+                const visitaBtn = document.getElementById('modalSimNaoVisitaBtn');
+                if (visitaBtn) visitaBtn.style.display = osId && globalThis.TGUnsuccessfulVisits ? 'block' : 'none';
                 document.getElementById('modalSimNaoNaoBtn').style.display = 'none';
                 document.getElementById('modalSimNaoAlmocoBtn').style.display = 'block';
                 document.getElementById('modalSimNaoHojeBtn').style.display = 'block';
@@ -28513,6 +28528,7 @@ async function salvarAdmin(e) {
             if (usuarioLogado?.role !== 'funcionario' && usuarioLogado?.role !== 'encarregado' && usuarioLogado?.role !== 'vendedor' && usuarioLogado?.role !== 'admin' && usuarioLogado?.role !== 'subadmin') return;
             const _atribuidos = (os.funcionariosIds && os.funcionariosIds.length) ? os.funcionariosIds : [os.funcionarioId].filter(Boolean);
             if (!_atribuidos.includes(usuarioLogado.id)) { alert('Só quem está atribuído a esta OS pode picar o ponto aqui.'); return; }
+            if (tipo === 'entrada' && globalThis.TGUnsuccessfulVisits?.blocked(os, usuarioLogado.id)) { alert('Esta visita ficou sem sucesso e aguarda decisão da administração.'); return; }
             if (tipo === 'entrada' && _osConcluidaParaFuncionario(os, usuarioLogado.id)) { alert('A tua participação nesta OS já está concluída. O responsável irá finalizar a documentação.'); return; }
             if (tipo === 'entrada' && os.status === 'concluído') { alert('Esta OS já está Concluída — não é possível dar entrada. Fala com o admin/encarregado se for preciso reabrir.'); return; }
             const hoje = getDataHoje();
@@ -28576,13 +28592,19 @@ async function salvarAdmin(e) {
                 const _prosseguirSaidaOS = async (kmSai) => {
                 aberto.saida = hora;
                 if (loc) { aberto.latSaida = loc.lat; aberto.lngSaida = loc.lng; }
-                const resposta = await perguntarSaidaObra('Saída picada às ' + hora + '.\n\nTerminaste a obra?');
+                const resposta = await perguntarSaidaObra('Saída da OS' + (os.numeroRegisto ? ' #' + os.numeroRegisto : '') + '.\n\nO que pretendes fazer?', os.id);
                 if (resposta == null) {
                     // Cancelou (cruz) — desfaz a saída que já tínhamos gravado, como se nunca
                     // tivesse picado nada, para não ficar um registo "a meio" por engano.
                     aberto.saida = null;
                     aberto.latSaida = null;
                     aberto.lngSaida = null;
+                    return;
+                }
+                if (resposta === 'sem_sucesso') {
+                    aberto.saida = null; aberto.latSaida = null; aberto.lngSaida = null;
+                    if (!globalThis.TGUnsuccessfulVisits) { alert('Atualiza a aplicação para registar uma visita sem sucesso.'); return; }
+                    await globalThis.TGUnsuccessfulVisits.register(os.id, aberto.id, { loc, kmSai });
                     return;
                 }
                 if (resposta === 'almoco') {

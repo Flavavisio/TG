@@ -88,6 +88,7 @@
     }
     function jobState(job) {
         const state=normal(job.row.status||job.row.estado);
+        if (job.kind==='os' && !job.open && window.TGUnsuccessfulVisits?.pending(job.row)) return ['paused','Por reagendar'];
         return job.open?['live','Em curso']:completed(job)?['done','Concluído']:state.includes('almoco')?['paused','Almoço']:['stand by','suspensa'].includes(state)?['paused','Em pausa']:['pending','Por iniciar'];
     }
     function rowHTML(job,action) {
@@ -99,6 +100,7 @@
     }
     function focusHTML(job) {
         if (!job) return `<section class="tgt-empty">${icon('circle-check')}<h3>Sem OS por iniciar</h3><p>Consulta as OS de hoje abaixo ou a agenda da semana em Trabalhos.</p>${button('Ver a agenda da semana','jobs')}</section>`;
+        if (job.kind==='os' && !job.open && window.TGUnsuccessfulVisits?.blocked(job.row,u()?.id)) return `<section class="tgt-empty"><h3>Visita sem sucesso registada</h3><p>A administração vai analisar a tentativa e decidir a próxima visita.</p>${button('Ver ordem de serviço','details',job)}</section>`;
         if (completed(job) && !job.open) return `<section class="tgt-empty"><h3>Participação concluída</h3><p>A tua participação nesta OS terminou. O responsável trata da documentação.</p>${button('Ver ordem de serviço','details',job)}</section>`;
         const open=!!job.open, clock=!!personalClock();
         let map=null;
