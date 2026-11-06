@@ -2,7 +2,7 @@
 (function () {
     'use strict';
     const source = document.currentScript?.src || location.href;
-    const stylesheet = new URL('tg-form-focus.css?v=1.2.1', source).href;
+    const stylesheet = new URL('tg-form-focus.css?v=1.3.0-service-search', source).href;
     const documents = new WeakSet();
     const originalSizes = new WeakMap();
     const controls = 'input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]):not([type=hidden]):not([type=button]):not([type=submit]):not([type=reset]):not([type=image]):not([type=file]),select,textarea,[contenteditable="true"],[contenteditable="plaintext-only"],[contenteditable=""]';
@@ -76,8 +76,27 @@
             if (records.some(r => r.type === 'childList' || !r.target.matches?.(controls))) refresh();
         });
         observer.observe(doc.documentElement, {childList:true, subtree:true, attributes:true, attributeFilter:['class','style']});
-        doc.defaultView.addEventListener('resize', refresh);
-        doc.defaultView.visualViewport?.addEventListener('resize', refresh);
+        const viewport = doc.defaultView.visualViewport;
+        let viewportFrame = false;
+        const fitServiceForm = () => {
+            const height = viewport?.height || doc.defaultView.innerHeight;
+            doc.documentElement.style.setProperty('--tg-form-visible-height', height + 'px');
+            doc.documentElement.style.setProperty('--tg-form-visible-top', (viewport?.offsetTop || 0) + 'px');
+            if (viewportFrame) return;
+            viewportFrame = true;
+            doc.defaultView.requestAnimationFrame(() => {
+                viewportFrame = false;
+                const active = doc.activeElement;
+                if (active?.matches?.(controls) && active.closest('#modalOverlay.open')?.querySelector('#s_cliente_busca')) {
+                    active.scrollIntoView?.({block:'nearest',inline:'nearest'});
+                }
+            });
+        };
+        doc.defaultView.addEventListener('resize', () => { refresh();fitServiceForm(); });
+        viewport?.addEventListener('resize', () => { refresh();fitServiceForm(); });
+        viewport?.addEventListener('scroll', fitServiceForm);
+        doc.addEventListener('focusin', fitServiceForm, true);
+        fitServiceForm();
         doc.addEventListener('DOMContentLoaded', refresh, {once:true});
         refresh();
         // Capture iframe loads, including srcdoc reports created after opening a modal.

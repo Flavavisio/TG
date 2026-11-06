@@ -2135,9 +2135,10 @@ function _assistEstado(value) {
             if (!dd) {
                 dd = document.createElement('div');
                 dd.id = ddId;
-                dd.style.cssText = 'position:absolute;z-index:99999;background:#fff;border:1px solid #e2e8f0;border-radius:8px;box-shadow:0 10px 28px rgba(0,0,0,.14);max-height:min(55vh,420px);overflow-y:auto;margin-top:4px;left:0;right:0;';
+                dd.className = 'cliente-busca-resultados';
+                dd.style.cssText = 'display:none;';
                 if (getComputedStyle(input.parentElement).position === 'static') input.parentElement.style.position = 'relative';
-                input.parentElement.appendChild(dd);
+                input.after(dd);
             }
             const mapa = window._clienteBuscaMapa || {};
             const todasLabels = Object.keys(mapa);
@@ -2150,13 +2151,21 @@ function _assistEstado(value) {
                 dd.style.display = 'block';
                 return;
             }
-            dd.innerHTML = resultados.map(label => `<div class="cliente-busca-item" style="padding:8px 12px;cursor:pointer;font-size:.92rem;" data-label="${label.replace(/"/g, '&quot;')}">${label}</div>`).join('');
+            dd.replaceChildren();
+            resultados.forEach(label => {
+                const option = document.createElement('button');
+                option.type = 'button';option.className = 'cliente-busca-item';
+                option.dataset.label = label;option.textContent = label;
+                dd.appendChild(option);
+            });
             dd.style.display = 'block';
             dd.querySelectorAll('.cliente-busca-item').forEach(el => {
                 el.onmouseenter = () => el.style.background = '#f1f5f9';
                 el.onmouseleave = () => el.style.background = '';
-                el.onmousedown = (ev) => {
-                    ev.preventDefault(); // evita perder o foco/blur antes do click registar
+                // Keep mouse focus in the input, but select only on click: a touch
+                // gesture can then scroll the results without choosing the first name.
+                el.onmousedown = ev => ev.preventDefault();
+                el.onclick = () => {
                     input.value = el.dataset.label;
                     input.dataset.selecionadoLabel = el.dataset.label;
                     document.getElementById(hiddenId).value = mapa[el.dataset.label] || '';

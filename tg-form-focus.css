@@ -21,3 +21,17 @@
 @media print {
   [data-tg-form-focus-sized] { transition:none!important; }
 }
+
+@media screen {
+/* Client results stay in document flow: the hero and modal cannot clip the list. */
+.cliente-busca-resultados{position:relative;z-index:2;flex:0 0 auto;width:100%;min-width:0;box-sizing:border-box;background:#fff;color:#152a52;border:1px solid #cbd5e1;border-radius:10px;box-shadow:0 6px 18px #152a5214;max-height:min(240px,32dvh);overflow-x:hidden;overflow-y:auto;overscroll-behavior-y:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch;margin-top:4px}
+.cliente-busca-resultados .cliente-busca-item{display:block;width:100%;min-height:44px;padding:10px 12px;border:0;border-bottom:1px solid #e6eaf2;border-radius:0;background:#fff;color:#152a52;text-align:left;font:inherit;font-size:16px;line-height:1.45;white-space:normal;overflow-wrap:anywhere;cursor:pointer;touch-action:pan-y}
+.cliente-busca-resultados .cliente-busca-item:focus-visible{outline:2px solid #1a5f7a;outline-offset:-2px;background:#eef7fa}
+#modalOverlay:has(#s_cliente_busca){top:var(--tg-form-visible-top,0px);bottom:auto;height:var(--tg-form-visible-height,100dvh);box-sizing:border-box;align-items:center!important;padding:12px}
+#modalOverlay:has(#s_cliente_busca)>.modal{max-height:calc(var(--tg-form-visible-height,100dvh) - 24px)!important;min-height:0;overflow-y:auto;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch}
+#modalOverlay #s_cliente_busca{min-width:0;max-width:100%;min-height:46px;box-sizing:border-box;color:#152a52!important;caret-color:#152a52;line-height:1.5;text-align:left;text-overflow:clip}
+#modalOverlay #s_func_checkboxes{max-height:min(240px,30dvh)!important;overflow-y:auto;overscroll-behavior-y:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch;scrollbar-gutter:stable}
+#modalOverlay #s_func_checkboxes label{min-height:36px;white-space:normal;overflow-wrap:anywhere;text-align:left}
+@media(max-width:600px){#modalOverlay:has(#s_cliente_busca) .ff-hero{padding:14px;gap:10px}#modalOverlay:has(#s_cliente_busca) .ff-avatar-drop{display:none}#modalOverlay:has(#s_cliente_busca) .ff-hero-fields{width:100%}}
+
+}
