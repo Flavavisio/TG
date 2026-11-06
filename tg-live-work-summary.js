@@ -5,7 +5,7 @@ if (window.TGLiveWorkSummary) return;
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const text = v => String(v ?? '').trim();
 const date = () => {const d=new Date();return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');};
-const time = value => {const s=text(value);const m=s.match(/(?:^|T|\\s)([01]?\\d|2[0-3]):([0-5]\\d)/);return m ? m[1].padStart(2,'0')+':'+m[2] : '';};
+const time = value => {const s=text(value);const m=s.match(/(?:^|T|\s)([01]?\d|2[0-3]):([0-5]\d)/);return m ? m[1].padStart(2,'0')+':'+m[2] : '';};
 const todayRecord = (row,today) => text(row.data || row.dataEntrada || row.dataInicio).slice(0,10)===today;
 const duration = (start,finish,today) => {
  const a=time(start),b=time(finish),now=new Date();
@@ -19,6 +19,31 @@ const scope = () => {
  if(typeof usuarioLogado==='undefined'||!usuarioLogado||!['admin','subadmin','superadmin'].includes(usuarioLogado.role))return null;
  return usuarioLogado.adminId||usuarioLogado.id;
 };
+function teamForOS(job) {
+ const tenant=scope();
+ if(!tenant||!job||job.adminId!==tenant||typeof dados==='undefined')return null;
+ const actual=new Set();
+ (dados.ponto||[]).filter(p=>p.adminId===tenant&&p.servicoId===job.id&&p.funcionarioId&&time(p.entrada)).forEach(p=>actual.add(String(p.funcionarioId)));
+ (dados.folhasObra||[]).filter(f=>f.adminId===tenant&&f.servicoId===job.id&&f.funcionarioId&&(text(f.descricao)||Number(f.horasTrabalhadas)>0)).forEach(f=>actual.add(String(f.funcionarioId)));
+ const attended=actual.size>0;
+ const ids=attended?[...actual]:[...new Set([...(job.funcionariosIds||[]),job.funcionarioId].filter(Boolean).map(String))];
+ const people=new Map([...(dados.funcionarios||[]),...(dados.encarregados||[]),...(dados.administradores||[])].filter(p=>p.adminId===tenant||p.id===tenant).map(p=>[String(p.id),text(p.nome)||'Técnico não identificado']));
+ const names=ids.map(id=>people.get(id)||'Técnico não identificado').sort((a,b)=>a.localeCompare(b,'pt'));
+ return {names,attended,label:!names.length?'Sem técnico atribuído':(attended?(names.length===1?'Técnico: ':'Técnicos: '):(names.length===1?'Atribuído: ':'Atribuídos: '))+names.join(' · ')};
+}
+function renderCentral() {
+ const root=document.getElementById('secao-dashboard-central');if(!root)return;
+ const tenant=scope();
+ const jobs=new Map((typeof dados==='undefined'?[]:dados.servicos||[]).filter(s=>s.adminId===tenant).map(s=>[String(s.id),s]));
+ root.querySelectorAll('.hdc-feed .fi[onclick]').forEach(row=>{
+  const id=(row.getAttribute('onclick')||'').match(/^abrirVerOS\('([^']+)'\)$/)?.[1];
+  const content=row.querySelector('.tt')?.parentElement;if(!id||!content)return;
+  const team=teamForOS(jobs.get(id));let line=content.querySelector('[data-tgl-os-team]');
+  if(!team){line?.remove();return;}
+  if(!line){line=document.createElement('div');line.className='tgl-work-team';line.dataset.tglOsTeam=id;content.appendChild(line);}
+  if(line.textContent!==team.label)line.textContent=team.label;
+ });
+}
 function records() {
  if(typeof dados==='undefined'||!dados)return [];
  const tenant=scope();if(!tenant)return [];
@@ -61,6 +86,8 @@ style.textContent=`
 .tgl-work-desc{font-size:10px;line-height:1.4;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:3px}
 .tgl-work-team{font-size:10px;line-height:1.4;margin-top:3px;overflow-wrap:anywhere}
 .tgl-work-state{font-size:10px;margin-top:3px;color:#64748b}.tgl-work-state.active{color:#16836a}
+#secao-dashboard-central .hdc-feed .fi>div{min-width:0;flex:1}
+#secao-dashboard-central .hdc-feed .tgl-work-team{font-size:.7rem;color:var(--hsub,#64748b);line-height:1.45;white-space:normal;overflow-wrap:anywhere}
 body.dark-mode .tgl-work-row{border-color:#35445d}body.dark-mode .tgl-work-desc,body.dark-mode .tgl-work-state{color:#aebbd0}
 `;
 function target(){
@@ -73,6 +100,7 @@ function target(){
 }
 function render(){
  try{
+ renderCentral();
  const host=target();if(!host)return;
  const items=records();if(!items.length)return;
  const markup=items.map(g=>`<div class="tgl-work-row" data-work-type="${g.kind}" data-work-id="${esc(g.id)}">
@@ -89,5 +117,5 @@ function render(){
 }
 function start(){document.head.append(style);render();setInterval(()=>{if(!document.hidden)render();},2500);document.addEventListener('tg:interface-updated',render);}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
-window.TGLiveWorkSummary={render,records};
+window.TGLiveWorkSummary={render,records,teamForOS};
 })();
