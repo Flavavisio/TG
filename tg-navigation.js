@@ -288,6 +288,20 @@
         if(control.dataset.tgnCalendar)return agenda(control.dataset.tgnCalendar);
         switch(control.dataset.tgnNav){case 'home':return _voltarMeuDia();case 'agenda':return agenda();case 'work':returnToMore=false;return workMenu();case 'alerts':return alerts();case 'more':return more();}
     });
+    // An icon-only Nexus sidebar cannot display its nested navigation choices.
+    // Expand it before the existing group click handler opens the accordion.
+    // This preserves the user's selection and the original sidebar permissions.
+    document.addEventListener('click', event => {
+        const button = event.target.closest?.('#tgSidebarNav .tg-nav-grupo-btn');
+        if (!button || !document.body.classList.contains('tg-nexus') ||
+            !document.body.classList.contains('tg-sidebar-collapsed') ||
+            window.matchMedia('(max-width: 900px)').matches) return;
+        if (typeof window.alternarSidebarEncolhida === 'function') {
+            window.alternarSidebarEncolhida();
+        } else {
+            document.getElementById('tgSidebarToggle')?.click();
+        }
+    }, true);
     document.addEventListener('tg:interface-updated',refresh);
     let resize;window.addEventListener('resize',()=>{clearTimeout(resize);resize=setTimeout(()=>{
         _montarMenuInferiorMobile();
