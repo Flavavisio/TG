@@ -27,3 +27,33 @@ test('both visit forms reuse the normal TG dialog, field groups, close control a
  w.TGUnsuccessfulVisits.applyVisit(w.dados.servicos[0],w.dados.ponto[0],w.usuarioLogado,{motivo:'ausente'},w.dados.ponto,new Date());w.usuarioLogado={id:'a',role:'admin'};w.TGUnsuccessfulVisits.manage('os');assert.equal(w.document.getElementById('modalGenericoTitulo').textContent,'Agendar visita');assert.equal(overlay.querySelector('.tg-uv-history-toggle').open,false);assert(overlay.querySelector('#modalGenericoCampos input[name=data]'));assert(overlay.querySelector('#modalGenericoAcoes [type=submit]'));
  }finally{w.close();}
 });
+
+function rescheduleSetup(){
+ const w=setup();
+ w.dados.funcionarios.push({id:'e2',adminId:'a',nome:'Segundo técnico'},{id:'foreign',adminId:'b',nome:'Outra empresa'});
+ w.dados.clientes=[{id:'client',adminId:'a',nome:'Cliente de teste'}];w.dados.servicos[0].clienteId='client';
+ w.TGUnsuccessfulVisits.applyVisit(w.dados.servicos[0],w.dados.ponto[0],w.usuarioLogado,{motivo:'ausente'},w.dados.ponto,new Date());
+ w.usuarioLogado={id:'a',role:'admin'};w.dados.notificacoes=[];w.pushes=[];w.notifEnabled=true;w.moduloNotificacoesAtivo=()=>w.notifEnabled;w.gerarId=()=> 'notification-'+w.dados.notificacoes.length;
+ w.supa={functions:{invoke:(name,{body})=>{assert(w.saved.length>0,'schedule must be saved before sending');w.pushes.push({name,body});return Promise.resolve({});}}};
+ const main=fs.readFileSync('app-principal.js','utf8');w.eval(main.match(/        function _notificarFuncionario\([^]*?\n        \}/)[0]);
+ w.TGUnsuccessfulVisits.manage('os');const form=w.document.querySelector('form');form.elements.data.value='2026-11-07';form.elements.hora.value='14:30';return {w,form};
+}
+test('reschedule notifies each next-visit technician through the real in-app and push helper after saving',async()=>{
+ const {w,form}=rescheduleSetup();try{
+  form.querySelector('[name=tecnicos][value=e2]').checked=true;form.dispatchEvent(new w.Event('submit',{cancelable:true}));await settle();
+  assert.deepEqual(w.pushes.map(p=>p.body.utilizador_id),['e','e2']);assert.equal(w.dados.notificacoes.length,2);
+  for(const notice of w.dados.notificacoes){assert.equal(notice.adminId,'a');assert.match(notice.titulo,/OS #125 reagendada/);assert.match(notice.mensagem,/Cliente de teste.*Manutenção.*07\/11\/2026 às 14:30/);assert.equal(notice.acao,'abrirVerOS("os")');}
+  assert(!w.pushes.some(p=>p.body.utilizador_id==='foreign'));assert.equal(w.saved[0].notificacoes.length,0);assert.equal(w.saved[0].servicos[0].data,'2026-11-07');
+  // Even if the old submit handler is invoked again, it does not notify twice.
+  await form.onsubmit?.(new w.Event('submit',{cancelable:true}));await settle();assert.equal(w.pushes.length,2);
+ }finally{w.close();}
+});
+test('failed reschedule sends no notification until retry confirms the save, and notifies only the new team',async()=>{
+ const {w,form}=rescheduleSetup();try{form.querySelector('[name=tecnicos][value=e]').checked=false;form.querySelector('[name=tecnicos][value=e2]').checked=true;w.fail=true;form.dispatchEvent(new w.Event('submit',{cancelable:true}));await settle();assert.equal(w.pushes.length,0);assert.equal(w.dados.notificacoes.length,0);w.fail=false;form.dispatchEvent(new w.Event('submit',{cancelable:true}));await settle();assert.deepEqual(w.pushes.map(p=>p.body.utilizador_id),['e2']);assert.equal(w.dados.notificacoes.length,1);}finally{w.close();}
+});
+test('cancelling the form, treating a visit without rescheduling or cancelling the OS never sends a reschedule notification',async()=>{
+ for(const action of ['close','manter','cancelar']){const {w,form}=rescheduleSetup();try{if(action==='close')form.querySelector('[data-uv-cancel]').click();else{form.elements.acao.value=action;form.dispatchEvent(new w.Event('submit',{cancelable:true}));await settle();}assert.equal(w.pushes.length,0);assert.equal(w.dados.notificacoes.length,0);}finally{w.close();}}
+});
+test('reschedule notifications respect the existing notification entitlement',async()=>{
+ const {w,form}=rescheduleSetup();try{w.notifEnabled=false;form.dispatchEvent(new w.Event('submit',{cancelable:true}));await settle();assert.equal(w.pushes.length,0);assert.equal(w.dados.notificacoes.length,0);assert.equal(w.dados.servicos[0].data,'2026-11-07');}finally{w.close();}
+});

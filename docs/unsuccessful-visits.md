@@ -27,3 +27,9 @@ Limites: a gravação contra a base de dados de produção não foi exercitada. 
 A lista de OS apresenta o contador «Por reagendar», separado de Pendentes, com uma contagem por OS, mesmo quando existem várias tentativas. Ao clicar, abre diretamente o agendamento se existir uma OS; com várias, permite escolher a OS e abre o respetivo formulário. Depois de tratada a pendência, a OS sai desse contador.
 
 Os formulários de registo e reagendamento reutilizam o modal genérico do TG, com os mesmos campos, botões e cruz de fecho. O histórico fica recolhido para dar prioridade à nova data, hora e equipa. O modal devolve os controlos ao estado normal quando é fechado, para os restantes ecrãs continuarem a funcionar. Verificados no navegador a 390 e 320 px com dados fictícios.
+
+## Notificação de reagendamento — 6 de novembro de 2026
+
+Depois de confirmar no servidor o reagendamento de uma visita sem sucesso, cada técnico atribuído à próxima visita é avisado pelo mecanismo habitual de notificações internas e push. O aviso inclui número da OS, cliente, descrição, nova data/hora e acesso à OS. Respeita o módulo de notificações e o registo/permissão de push do dispositivo. Só avisa a equipa da próxima visita, mesmo que seja diferente da anterior. Não avisa ao fechar o formulário, cancelar a OS, tratar sem reagendar ou falhar a gravação. Uma repetição de sincronização só avisa depois de sucesso.
+
+Verificação: 26 testes relacionados passaram, incluindo quatro casos novos que usam o helper real de notificações com persistência e envio push simulados. Nenhuma notificação foi enviada a contas reais durante os testes.

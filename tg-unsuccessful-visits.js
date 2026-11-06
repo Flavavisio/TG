@@ -244,7 +244,7 @@ function manage(id){
  const people=peopleFor(os),ui=modal('Agendar visita',`${visitContext(os)}<label>Próximo passo<select name="acao"><option value="reagendar">Reagendar OS</option><option value="manter">Manter o serviço e dar esta visita como tratada</option><option value="cancelar">Cancelar OS</option></select></label><div data-uv-schedule><div class="tg-uv-fields"><label>Nova data<input name="data" type="date" value="${esc(getDataHoje())}"></label><label>Hora<input name="hora" type="time" value="${esc((os.hora||'09:00').slice(0,5))}"></label></div><fieldset><legend>Técnicos da próxima visita</legend>${people.map(p=>`<label class="tg-uv-person"><input type="checkbox" name="tecnicos" value="${esc(p.id)}" ${assigned(os).includes(p.id)?'checked':''}>${esc(p.nome||p.empresa||p.id)}</label>`).join('')}</fieldset></div><label>Deslocação desta tentativa<select name="cobranca"><option value="pendente">Por decidir</option><option value="nao_cobrar">Não cobrar</option><option value="cobrar">Cobrar deslocação</option></select></label><label data-uv-price hidden>Valor da deslocação (€)<input name="valor" type="number" min="0.01" max="1000000" step="0.01"></label><p class="help-text">A decisão de cobrança fica no histórico. A emissão de fatura é feita separadamente.</p><details class="tg-uv-history-toggle"><summary>Histórico de tentativas (${attempts(os).length})</summary>${historyHtml(os)}</details><div class="tg-uv-actions"><button type="button" class="btn btn-outline" data-uv-cancel>Cancelar</button><button type="submit" class="btn btn-success">Guardar decisão</button></div>`);
  ui.form.elements.acao.onchange=()=>{ui.form.querySelector('[data-uv-schedule]').hidden=ui.form.elements.acao.value!=='reagendar';};
  ui.form.elements.cobranca.onchange=()=>{ui.form.querySelector('[data-uv-price]').hidden=ui.form.elements.cobranca.value!=='cobrar';};
- let applied=false;
+ let applied=false,rescheduleNotice=null,notified=false;
  ui.form.onsubmit=async event=>{
   event.preventDefault();const button=ui.form.querySelector('[type=submit]');if(button.disabled)return;button.disabled=true;ui.error('');
   try{
@@ -253,10 +253,25 @@ function manage(id){
     if(input.acao==='cancelar'&&!await tgConfirm('Cancelar esta OS e conservar o histórico da tentativa?',{titulo:'Cancelar OS'}))return;
     if(input.acao==='reagendar'&&typeof _bloquearSeAusenteEmOS==='function'&&_bloquearSeAusenteEmOS(input.funcionariosIds,input.data))return;
     applyDecision(os,actor(),input,peopleFor(os),state().ponto||[]);applied=true;
+    if(input.acao==='reagendar'){
+     const client=(state().clientes||[]).find(c=>c.id===os.clienteId&&c.adminId===os.adminId);
+     rescheduleNotice={ids:[...new Set(assigned(os))],adminId:os.adminId,title:'📅 OS '+(os.numeroRegisto?'#'+os.numeroRegisto+' ':'')+'reagendada',
+      message:[client?.nome||client?.empresa,os.descricao,'Nova visita em '+os.data.split('-').reverse().join('/')+' às '+os.hora+'.'].filter(Boolean).join(' — '),
+      action:'abrirVerOS('+JSON.stringify(os.id)+')'};
+    }
     [...ui.form.elements].forEach(el=>{if(!el.matches('button'))el.disabled=true;});
    }
    if(!navigator.onLine)throw Error('É necessária ligação para confirmar a decisão.');
-   await guardarDados();ui.close();refresh();alert('Decisão guardada no histórico da OS.');
+   await guardarDados();
+   // Only notify after the reschedule has been confirmed; failed saves can be retried.
+   if(rescheduleNotice&&!notified&&typeof _notificarFuncionario==='function'){
+    notified=true;
+    for(const id of rescheduleNotice.ids){
+     try{_notificarFuncionario(id,rescheduleNotice.title,rescheduleNotice.message,rescheduleNotice.adminId,rescheduleNotice.action);}
+     catch(error){console.warn('Notificação de reagendamento:',error);}
+    }
+   }
+   ui.close();refresh();alert('Decisão guardada no histórico da OS.');
   }catch(e){if(applied){if(typeof _guardarCacheLocal==='function')_guardarCacheLocal();refresh();button.textContent='Tentar sincronizar';}ui.error((applied?'Decisão pendente de sincronização. ':'')+(e.message||'Não foi possível guardar.'));}finally{button.disabled=false;}
  };
 }
