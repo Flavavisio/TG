@@ -12205,29 +12205,62 @@ function _assistEstado(value) {
             if (f && f.foto) return `<img src="${f.foto}" style="width:${px}px;height:${px}px;border-radius:50%;object-fit:cover;border:1px solid #e2e8f0;vertical-align:middle;" />`;
             return `<span style="width:${px}px;height:${px}px;border-radius:50%;background:#e0e7ff;color:#4f46e5;display:inline-flex;align-items:center;justify-content:center;font-weight:700;vertical-align:middle;font-size:${Math.round(px*0.45)}px;">${nome.charAt(0).toUpperCase()}</span>`;
         }
+        function _grupoMapaEquipa() {
+            return L.markerClusterGroup({
+                maxClusterRadius: 55,
+                spiderfyOnMaxZoom: true,
+                showCoverageOnHover: false,
+                animate: false,
+                iconCreateFunction: cluster => {
+                    const numero = cluster.getChildCount();
+                    const tamanho = numero < 10 ? 40 : numero < 50 ? 44 : 50;
+                    const nomes = cluster.getAllChildMarkers().map(m => m.options.title || '').filter(Boolean).join(' · ');
+                    return L.divIcon({
+                        className: 'tg-map-cluster',
+                        html: `<div class="tg-map-cluster-count" role="img" aria-label="${numero} pessoas neste local" title="${escapeHtmlSimples(nomes)}" style="width:${tamanho}px;height:${tamanho}px;">${numero}</div>`,
+                        iconSize: [tamanho, tamanho], iconAnchor: [tamanho / 2, tamanho / 2]
+                    });
+                }
+            });
+        }
+        function _baseMapaEquipa(mapa, mostrarControlo) {
+            const satelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: 'Imagens © Esri' });
+            const ruas = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' });
+            const rotulos = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: '' });
+            satelite.addTo(mapa);
+            rotulos.addTo(mapa);
+            if (mostrarControlo) L.control.layers({ 'Satélite': satelite, 'Mapa': ruas }, {}, { position: 'topright', collapsed: true }).addTo(mapa);
+            mapa.on('baselayerchange', evento => {
+                if (evento.name === 'Satélite') { if (!mapa.hasLayer(rotulos)) rotulos.addTo(mapa); }
+                else mapa.removeLayer(rotulos);
+            });
+        }
+        document.addEventListener('tg:map-ready', () => {
+            if (document.getElementById('secao-mapa-equipa')?.classList.contains('active') || document.getElementById('tgPainelTVOverlay')?.classList.contains('aberto')) renderizarMapaEquipa();
+            if (document.getElementById('secao-dashboard-central')?.classList.contains('active')) _renderizarMapaEquipaDashboardCentral();
+        });
         function renderizarMapaEquipa() {
             if (typeof L === 'undefined') { const i = document.getElementById('mapaEquipaInfo'); if (i) i.textContent = 'Mapa indisponível (sem ligação à internet).'; return; }
             const cont = document.getElementById('mapaEquipa');
             if (!cont) return;
+            if (typeof L.markerClusterGroup !== 'function') { const info = document.getElementById('mapaEquipaInfo'); if (info) info.textContent = window._tgMapaBibliotecasErro ? 'Não foi possível carregar o mapa. Atualiza a página para tentar novamente.' : 'A carregar o mapa da equipa…'; return; }
             if (!_mapaEquipa) {
                 _mapaEquipa = L.map('mapaEquipa').setView([39.5, -8.0], 6);
-                const satelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: 'Tiles © Esri' });
-                const ruas = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' });
-                satelite.addTo(_mapaEquipa); // satélite por defeito
-                L.control.layers({ 'Satélite': satelite, 'Ruas': ruas }, null, { position: 'topright' }).addTo(_mapaEquipa);
-                _mapaMarkers = L.layerGroup().addTo(_mapaEquipa);
+                _baseMapaEquipa(_mapaEquipa, true);
+                _mapaMarkers = _grupoMapaEquipa().addTo(_mapaEquipa);
             }
             setTimeout(() => { try { _mapaEquipa.invalidateSize(); } catch (e) {} }, 120);
             _mapaMarkers.clearLayers();
             const adminId = _tenantId();
             const _souEncarregado = usuarioLogado?.role === 'encarregado';
             const _minhaEquipaIds = _souEncarregado ? (dados.encarregados?.find(e => e.id === usuarioLogado.id)?.funcionariosIds || []) : null;
-            const pessoas = _souEncarregado
+            const pessoasOriginais = _souEncarregado
                 ? (dados.funcionarios || []).filter(f => f.adminId === adminId && f.role !== 'admin' && _minhaEquipaIds.includes(f.id)).map(f => ({ id: f.id, nome: f.nome, tipo: 'Funcionário', foto: f.foto }))
                 : [
                 ...(dados.funcionarios || []).filter(f => f.adminId === adminId && f.role !== 'admin').map(f => ({ id: f.id, nome: f.nome, tipo: 'Funcionário', foto: f.foto })),
                 ...(dados.encarregados || []).filter(e => e.adminId === adminId).map(e => ({ id: e.id, nome: e.nome, tipo: 'Encarregado', foto: null }))
             ];
+            const pessoas = pessoasOriginais.filter((p, i, lista) => lista.findIndex(x => x.id === p.id) === i);
             const hoje = getDataHoje();
             const rotaSel = document.getElementById('rotaPessoaSel');
             if (rotaSel) {
@@ -12251,13 +12284,13 @@ function _assistEstado(value) {
                     ? `<img src="${p.foto}" style="width:34px;height:34px;border-radius:50%;object-fit:cover;display:block;" />`
                     : `<div style="width:34px;height:34px;border-radius:50%;background:#e0e7ff;color:#4f46e5;display:flex;align-items:center;justify-content:center;font-weight:700;">${(p.nome || '?').charAt(0).toUpperCase()}</div>`;
                 const icone = L.divIcon({ className: 'tg-map-avatar', html: `<div style="width:40px;height:40px;border-radius:50%;border:3px solid ${ring};box-shadow:0 1px 5px rgba(0,0,0,.45);overflow:hidden;background:#fff;">${inner}</div>`, iconSize: [40, 40], iconAnchor: [20, 20], popupAnchor: [0, -22] });
-                const m = L.marker([loc.lat, loc.lng], { icon: icone });
+                const m = L.marker([loc.lat, loc.lng], { icon: icone, title: p.nome || p.tipo });
                 m.bindPopup(`<div style="text-align:center;">${_avatarFuncHTML(p.id, 48)}</div><strong>${p.nome}</strong> (${p.tipo})<br>${emServico ? ('● Em serviço' + (loc.obra ? ' — ' + loc.obra : '')) : '○ Fora de serviço'}<br>Na app: ${online ? '🟢 online' : '⚪ offline'}<br><span style="color:#64748b;">Última localização: ${loc.quando}</span><br><a href="https://www.google.com/maps?q=${loc.lat},${loc.lng}" target="_blank">Abrir no Google Maps</a>`);
                 m.addTo(_mapaMarkers);
                 pts.push([loc.lat, loc.lng]);
             });
             const info = document.getElementById('mapaEquipaInfo');
-            if (info) info.textContent = `${pts.length} com localização · ${semLoc} sem localização`;
+            if (info) info.textContent = `${pts.length} com localização · ${semLoc} sem localização · Os círculos com números agrupam pessoas próximas.`;
             if (pts.length) { try { _mapaEquipa.fitBounds(pts, { padding: [40, 40], maxZoom: 15 }); } catch (e) {} }
         }
         let _mapaRotaLayer = null;
@@ -19118,7 +19151,9 @@ function _assistEstado(value) {
         function _hdcClicarPessoaNoMapa(pessoaId) {
             const m = _hdcMarkersPorPessoa[pessoaId];
             if (!m || !_hdcMapaEquipa) return;
-            _hdcMapaEquipa.setView(m.getLatLng(), Math.max(_hdcMapaEquipa.getZoom(), 14));
+            _hdcMapaEquipa.setView(m.getLatLng(), Math.max(_hdcMapaEquipa.getZoom(), 14), { animate: false });
+            const grupo = _hdcMapaMarkers?.getVisibleParent?.(m);
+            if (grupo && grupo !== m && typeof grupo.spiderfy === 'function') grupo.spiderfy();
             m.openPopup();
             document.getElementById('hdcMapaEquipa')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
@@ -19127,6 +19162,7 @@ function _assistEstado(value) {
             if (typeof L === 'undefined') { if (info) info.textContent = 'Mapa indisponível (a carregar…).'; return; }
             const cont = document.getElementById('hdcMapaEquipa');
             if (!cont) return;
+            if (typeof L.markerClusterGroup !== 'function') { if (info) info.textContent = window._tgMapaBibliotecasErro ? 'Não foi possível carregar o mapa. Atualiza a página.' : 'A carregar o mapa da equipa…'; return; }
             // O Dashboard Central recria o HTML todo de cada vez que atualiza (innerHTML), o que
             // destrói e substitui esta <div> por uma nova — mas a instância do Leaflet guardada em
             // _hdcMapaEquipa continuava "presa" à div antiga (já fora do documento), por isso o mapa
@@ -19138,17 +19174,18 @@ function _assistEstado(value) {
             }
             if (!_hdcMapaEquipa) {
                 _hdcMapaEquipa = L.map('hdcMapaEquipa', { zoomControl: false, attributionControl: false }).setView([39.5, -8.0], 6);
-                L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(_hdcMapaEquipa);
-                _hdcMapaMarkers = L.layerGroup().addTo(_hdcMapaEquipa);
+                _baseMapaEquipa(_hdcMapaEquipa, false);
+                _hdcMapaMarkers = _grupoMapaEquipa().addTo(_hdcMapaEquipa);
             }
             setTimeout(() => { try { _hdcMapaEquipa.invalidateSize(); } catch (e) {} }, 150);
             _hdcMapaMarkers.clearLayers();
             _hdcMarkersPorPessoa = {};
             const adminId = _tenantId();
-            const pessoas = [
+            const pessoasOriginais = [
                 ...(dados.funcionarios || []).filter(f => f.adminId === adminId && f.role !== 'admin').map(f => ({ id: f.id, nome: f.nome, tipo: 'Funcionário', foto: f.foto })),
                 ...(dados.encarregados || []).filter(e => e.adminId === adminId).map(e => ({ id: e.id, nome: e.nome, tipo: 'Encarregado', foto: null }))
             ];
+            const pessoas = pessoasOriginais.filter((p, i, lista) => lista.findIndex(x => x.id === p.id) === i);
             const hoje = getDataHoje();
             const pts = []; let semLoc = 0;
             pessoas.forEach(p => {
@@ -19163,7 +19200,7 @@ function _assistEstado(value) {
                     ? `<img src="${p.foto}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;display:block;" />`
                     : `<div style="width:28px;height:28px;border-radius:50%;background:#e0e7ff;color:#4f46e5;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.7rem;">${(p.nome || '?').charAt(0).toUpperCase()}</div>`;
                 const icone = L.divIcon({ className: 'tg-map-avatar', html: `<div style="width:34px;height:34px;border-radius:50%;border:3px solid ${ring};box-shadow:0 1px 5px rgba(0,0,0,.45);overflow:hidden;background:#fff;">${inner}</div>`, iconSize: [34, 34], iconAnchor: [17, 17], popupAnchor: [0, -19] });
-                const m = L.marker([loc.lat, loc.lng], { icon: icone });
+                const m = L.marker([loc.lat, loc.lng], { icon: icone, title: p.nome || p.tipo });
                 m.bindPopup(`<strong>${escapeHtmlSimples(p.nome)}</strong> (${p.tipo})<br>${emServico ? '● Em serviço' + (loc.obra ? ' — ' + escapeHtmlSimples(loc.obra) : '') : '○ Fora de serviço'}<br>Na app: ${online ? '🟢 online' : '⚪ offline'}<br><span style="color:#64748b;">Última localização: ${loc.quando}</span>`);
                 m.addTo(_hdcMapaMarkers);
                 _hdcMarkersPorPessoa[p.id] = m;

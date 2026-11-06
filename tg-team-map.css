@@ -1,0 +1,15 @@
+/* Keep the map imagery continuous: general document-image styles cannot affect tiles. */
+#mapaEquipa .leaflet-tile,
+#hdcMapaEquipa .leaflet-tile {
+    padding:0!important;margin:0!important;border:0!important;border-radius:0!important;
+    box-shadow:none!important;max-width:none!important;max-height:none!important;
+}
+#mapaEquipa .tg-map-avatar img,
+#hdcMapaEquipa .tg-map-avatar img {padding:0!important;margin:0!important;border:0!important;box-shadow:none!important}
+.tg-map-cluster {background:transparent;border:0}
+.tg-map-cluster-count {
+    display:flex;align-items:center;justify-content:center;box-sizing:border-box;
+    border-radius:50%;border:3px solid #fff;background:#152a52;color:#fff;
+    box-shadow:0 2px 6px rgba(0,0,0,.35);font-size:.9rem;font-weight:800;
+    font-variant-numeric:tabular-nums;line-height:1;cursor:pointer;
+}

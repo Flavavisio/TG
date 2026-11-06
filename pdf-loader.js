@@ -4,6 +4,7 @@
                 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
                 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js',
                 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js',
+                'vendor/leaflet-markercluster-1.5.3.js',
                 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js',
                 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'
             ];
@@ -22,6 +23,10 @@
                 // de forma imprevisível). "async = false" mantém o download em paralelo, mas
                 // força a EXECUÇÃO a respeitar a ordem em que os scripts foram pedidos.
                 s.async = false;
+                if (src === 'vendor/leaflet-markercluster-1.5.3.js') {
+                    s.onload = function () { document.dispatchEvent(new Event('tg:map-ready')); };
+                    s.onerror = function () { window._tgMapaBibliotecasErro = true; document.dispatchEvent(new Event('tg:map-ready')); };
+                }
                 document.body.appendChild(s);
             });
         });
