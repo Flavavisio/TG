@@ -21,6 +21,7 @@
     const button = (text, action, job, primary = false) => `<button type="button" class="tgt-button${primary?' tgt-primary':''}" data-tgt-action="${action}"${job?` data-tgt-kind="${job.kind}" data-tgt-id="${esc(job.id)}"`:''}>${text}</button>`;
     let view = 'home', identity = '', selected = '', weekDay = '', wasEnabled = false, refreshing = false;
     const wizards = new Map();
+    let homeRoot = null, lastClockState = '';
 
     function jobs() {
         if (!enabled() || !tenant() || !_licencaValidaTenant()) return [];
@@ -152,7 +153,8 @@
 
         const html=`<div class="tgt-home"><header class="tgt-day-head"><p class="tgt-eyebrow">ÁREA DO TÉCNICO</p><h2>O meu dia</h2><p>Hoje · ${esc(day)}</p>${avatarHTML()}</header>${attendance()?`<div class="tgt-clock"><span>${icon('fingerprint')}<span><strong>Ponto de hoje</strong><small>${general?'Entrada às '+esc(general.entrada):'Sem entrada registada'}</small></span></span>${button(general?'Ver ponto':'Picar entrada',general?'point':'clock')}</div>`:''}${openWork?button('Tens uma obra em curso · Abrir Obras','works'):''}${focusHTML(focus)}${recordsHTML()}${todayListHTML(available)}${draftsHTML(list)}${team}</div>`;
         const finalHTML=oldSession?html.replace('</header>','</header>'+button('Entrada anterior por encerrar · Abrir Trabalhos','jobs')):html;
-        if(dia.dataset.tgtHtml!==finalHTML){dia.innerHTML=finalHTML;dia.dataset.tgtHtml=finalHTML;}
+        if(dia.dataset.tgtHtml!==finalHTML || dia.firstElementChild!==homeRoot){dia.innerHTML=finalHTML;dia.dataset.tgtHtml=finalHTML;}
+        homeRoot=dia.firstElementChild;
         dia.style.display=view==='home'&&!document.querySelector('.section-container.active')?'block':'none';
         menu();
     }
@@ -434,7 +436,29 @@
             updateLeaveBalance();wasEnabled=on;
         }finally{refreshing=false;}
     }
+    // Reconcile from the existing local clock records. No network reads or new picagens.
+    // This stays independent of the large dashboard render and of Realtime delivery.
+    function reconcileClock(force=false) {
+        if(!enabled() || document.hidden)return;
+        const personal=key=>rows(key).filter(p=>p.funcionarioId===u().id).map(p=>[p.id,p.servicoId,p.obraId,p.data,p.entrada,p.saida,p.pausaAlmoco]);
+        const key=JSON.stringify([u().id,tenant(),u().role,today(),personal('ponto'),personal('obraPontoLonga'),
+            rows('servicos').map(s=>[s.id,s.status,s.data,s.funcionariosIds,s.funcionarioId]),
+            rows('obras').map(o=>[o.id,o.estado,o.responsaveisIds,o.responsavelId])]);
+        if(force || key!==lastClockState || $('omeudia')?.firstElementChild!==homeRoot){
+            refresh();lastClockState=key;
+        }
+    }
+    function reconcileClockSafely(force=false) {
+        try{reconcileClock(force);}catch(error){console.warn('Atualizar estado da intervenção:',error);}
+    }
     function wrap(name,fn) {const original=window[name];if(typeof original==='function')window[name]=function(...args){return fn.call(this,original,args);};}
+    wrap('guardarDados',function(original,args){
+        const result=original.apply(this,args);
+        reconcileClockSafely(true);
+        // Preserve the native promise and its rejection for callers that await confirmation.
+        if(result && typeof result.then==='function')result.then(()=>reconcileClockSafely(true),()=>reconcileClockSafely(true));
+        return result;
+    });
     wrap('_ehPerfilMobile',function(original,args){return enabled()||original.apply(this,args);});
     wrap('_layoutUsaSidebarShell',function(original,args){return enabled()?false:original.apply(this,args);});
     wrap('_obraLongaPontoAberto',function(original,args){return enabled()?rows('obraPontoLonga').find(p=>p.funcionarioId===u().id&&p.obraId===args[0]&&p.entrada&&!p.saida)||null:original.apply(this,args);});
@@ -509,6 +533,9 @@
         if (event.target.matches?.('img[data-tgt-avatar]')) event.target.hidden = true;
     }, true);
     document.addEventListener('tg:interface-updated',refresh);
+    window.addEventListener('focus',()=>reconcileClockSafely(true));
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden)reconcileClockSafely(true);});
+    setInterval(()=>reconcileClockSafely(),3000);
     let resize;window.addEventListener('resize',()=>{clearTimeout(resize);resize=setTimeout(refresh,180);});
     window.TGTechnician={refresh,jobs,todayJobs,weekJobs,enabled};refresh();
 }());
