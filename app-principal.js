@@ -12101,13 +12101,15 @@ function _assistEstado(value) {
         }
         let _falhasSyncConsecutivas = 0;
         let _avisoSyncPersistenteMostrado = false;
-        // Teste TG: the two live dashboards check lightweight table versions every 2s.
-        // Other screens retain the 30s cadence. No full reload unless data changed.
+        // A agenda e os painéis visíveis verificam as versões das tabelas a cada 2 s.
+        // Os outros ecrãs mantêm o intervalo de 30 s.
         let _dadosPollEmCurso = false, _dadosPollUltima = 0, _dadosPollIdentidade = '', _dadosPollGeracao = 0;
         function _painelAtividadeVisivel() {
             if (!['admin', 'subadmin', 'encarregado'].includes(usuarioLogado?.role)) return false;
             const central = document.getElementById('secao-dashboard-central');
-            if (central?.classList.contains('active') || central?.style.display === 'block') return true;
+            const agenda = document.getElementById('secao-agenda-obras');
+            if (central?.classList.contains('active') || central?.style.display === 'block'
+                || agenda?.classList.contains('active') || agenda?.style.display === 'block') return true;
             const dia = document.getElementById('omeudia');
             return !!dia && dia.style.display !== 'none' && !document.querySelector('.section-container.active');
         }
@@ -12623,7 +12625,7 @@ function _assistEstado(value) {
                         ${window.TGPassport?.osButton(s) || ''}${globalThis.TGUnsuccessfulVisits?.badge(s) || ''}
                     </div>
                     <div style="margin-top:5px;">${_estadoEditavel}</div>
-                    ${emConf ? '<div class="ag-conflito-badge"><i class="fas fa-exclamation-triangle"></i> Sobreposição de horário</div>' : ''}
+                    ${emConf ? '<div class="ag-conflito-badge"><i class="fas fa-exclamation-triangle"></i> Conflito no planeamento</div>' : ''}
                     <div style="font-weight:600;font-size:.85rem;margin-top:3px;">${s.numeroRegisto ? ('#' + s.numeroRegisto + ' ') : ''}${cliente}</div>
                     ${_tiposTrabalhoBadgesHTML(s)}
                     <div style="font-size:.8rem;color:#475569;margin:2px 0;" title="${escapeHtmlSimples(s.descricao || '')}">${escapeHtmlSimples((s.descricao || '').slice(0, 110))}</div>
@@ -12651,7 +12653,7 @@ function _assistEstado(value) {
                     ${_climaBadge}
                     <span class="ag-estado ${cls}">${estado}</span>
                 </div>
-                ${emConf ? '<div class="ag-conflito-badge"><i class="fas fa-exclamation-triangle"></i> Sobreposição de horário</div>' : ''}
+                ${emConf ? '<div class="ag-conflito-badge"><i class="fas fa-exclamation-triangle"></i> Conflito no planeamento</div>' : ''}
                 <div style="font-weight:700;font-size:.82rem;margin-top:4px;">OS #${s.numeroRegisto || '—'}</div>
                 <div style="font-size:.78rem;color:#475569;">${escapeHtmlSimples(numClienteTxt)}</div>
                 <div style="font-size:.74rem;color:#0f172a;font-weight:600;margin-top:1px;">${escapeHtmlSimples(_tipoOSResumoDetalhado(s))}</div>
@@ -12767,6 +12769,21 @@ function _assistEstado(value) {
             cont.innerHTML = html;
             _agendaCarregarClimas(oss);
         }
+        function _estadoOSAgenda(os, pontos = dados.ponto || [], hoje = getDataHoje()) {
+            if (os.status !== 'pausa para almoço') return os.status;
+            const registos = pontos.filter(p => p.adminId === os.adminId && p.servicoId === os.id && p.data === hoje);
+            const ultimasPausas = new Map();
+            for (const p of registos) {
+                if (p.pausaAlmoco && p.saida && p.saida > (ultimasPausas.get(p.funcionarioId) || '')) {
+                    ultimasPausas.set(p.funcionarioId, p.saida);
+                }
+            }
+            // A picagem pode sincronizar antes do estado da OS. Só um regresso à mesma
+            // intervenção, depois da última pausa da pessoa, confirma a retoma.
+            const retomou = registos.some(p => !p.saida && p.entrada && ultimasPausas.has(p.funcionarioId)
+                && p.entrada >= ultimasPausas.get(p.funcionarioId));
+            return retomou ? 'em andamento' : os.status;
+        }
         function renderizarAgendaObras() {
             const cont = document.getElementById('agendaObrasConteudo');
             if (!cont) return;
@@ -12774,9 +12791,13 @@ function _assistEstado(value) {
             const readOnly = usuarioLogado?.role === 'funcionario' || document.getElementById('tgPainelTVOverlay')?.classList.contains('aberto');
             let oss = (dados.servicos || []).filter(s => s.adminId === adminId && s.status !== 'por aprovar');
             if (usuarioLogado?.role === 'funcionario') oss = oss.filter(s => s.funcionarioId === usuarioLogado.id || (s.funcionariosIds && s.funcionariosIds.includes(usuarioLogado.id)));
+            const hojeStr = getDataHoje();
+            oss = oss.map(os => {
+                const status = _estadoOSAgenda(os, dados.ponto || [], hojeStr);
+                return status === os.status ? os : { ...os, status };
+            });
             const conflitos = _calcularConflitos(oss);
             oss = _aplicarFiltrosAgenda(oss);
-            const hojeStr = getDataHoje();
             if (_agendaVistaObras === 'mes') { renderAgendaMes(cont, oss, hojeStr, conflitos, readOnly); return; }
             if (_agendaVistaObras === 'gantt') { renderAgendaGantt(cont, oss, hojeStr, conflitos, readOnly); return; }
             if (_agendaVistaObras === 'dia') { renderAgendaDia(cont, oss, hojeStr, conflitos, readOnly); return; }
@@ -12856,7 +12877,7 @@ function _assistEstado(value) {
                     const conf = conflitos && conflitos.has(s.id);
                     const bloq = _osBloqueada(s);
                     const dragAttrM = (!readOnly && !bloq) ? `data-tg-agenda-drag draggable="true" ondragend="agendaDragEnd()" ondragstart="agendaDragStart(event,'${s.id}')"` : '';
-                    html += `<div class="agenda-mes-os ${cls}" ${dragAttrM} title="${s.hora || ''} ${_nomeClienteOS(s.clienteId)} — ${s.status || 'pendente'}${conf ? ' (sobreposição)' : ''}${bloq ? ' (bloqueada)' : ''}">${bloq ? '🔒 ' : ''}${conf ? '⚠ ' : ''}${s.hora ? s.hora + ' ' : ''}${_nomeClienteOS(s.clienteId).slice(0, 12)}</div>`;
+                    html += `<div class="agenda-mes-os ${cls}" ${dragAttrM} title="${s.hora || ''} ${_nomeClienteOS(s.clienteId)} — ${s.status || 'pendente'}${conf ? ' (conflito no planeamento)' : ''}${bloq ? ' (bloqueada)' : ''}">${bloq ? '🔒 ' : ''}${conf ? '⚠ ' : ''}${s.hora ? s.hora + ' ' : ''}${_nomeClienteOS(s.clienteId).slice(0, 12)}</div>`;
                 });
                 if (doDia.length > 4) html += `<div style="font-size:.68rem;color:#64748b;margin-top:2px;">+${doDia.length - 4} mais</div>`;
                 html += `</div>`;
@@ -12892,7 +12913,7 @@ function _assistEstado(value) {
                 const tipo = _tipoOSResumo(s);
                 const coordsChip = _osCoordenadasExatas(s);
                 const climaSpanChip = coordsChip ? ` <span id="clima-${s.id}" class="ag-clima"></span>` : '';
-                return `<div class="agenda-gantt-chip ag-est-${cls}${emConf ? ' conflito' : ''}${bloqueada ? ' bloqueada' : ''}" ${draggableAttr} onclick="_agendaClickOS('${s.id}')" title="${s.hora || '--:--'} ${cliente} — ${tipo}${emConf ? ' — sobreposição' : ''}">
+                return `<div class="agenda-gantt-chip ag-est-${cls}${emConf ? ' conflito' : ''}${bloqueada ? ' bloqueada' : ''}" ${draggableAttr} onclick="_agendaClickOS('${s.id}')" title="${s.hora || '--:--'} ${cliente} — ${tipo}${emConf ? ' — conflito no planeamento' : ''}">
                     ${bloqueada ? '<i class="fas fa-lock"></i> ' : ''}${emConf ? '<i class="fas fa-triangle-exclamation"></i> ' : ''}<span style="font-weight:700;">${s.hora || '--:--'}</span> ${cliente} <span class="gantt-chip-tipo">(${tipo})</span>${climaSpanChip}
                 </div>`;
             };
@@ -28617,6 +28638,15 @@ async function salvarAdmin(e) {
             }
             document.getElementById('modalGenericoOverlay').classList.add('open');
         }
+        function _entradaOSPendenteSincronizacao(os, entrada) {
+            if (!_snap.ponto?.has(entrada.id)) return true;
+            const estadoGravado = JSON.parse(_snap.servicos?.get(os.id) || 'null')?.status;
+            if (os.status === 'em andamento' && estadoGravado !== os.status) return true;
+            return (dados.ponto || []).some(p => !p.servicoId && !p.obraId && p.adminId === entrada.adminId
+                && p.funcionarioId === entrada.funcionarioId && p.data === entrada.data && p.entrada === entrada.entrada
+                && !_snap.ponto?.has(p.id));
+        }
+
         async function picarPontoOS(osId, tipo) {
             const os = dados.servicos?.find(s => s.id === osId); if (!os) return;
             if (usuarioLogado?.role !== 'funcionario' && usuarioLogado?.role !== 'encarregado' && usuarioLogado?.role !== 'vendedor' && usuarioLogado?.role !== 'admin' && usuarioLogado?.role !== 'subadmin') return;
@@ -28654,22 +28684,30 @@ async function salvarAdmin(e) {
                 const adminObjEnt = dados.administradores?.find(a => a.id === adminId);
                 const _prosseguirEntradaOS = (kmEnt) => {
                     _checklistEntradaVerificar(adminId, () => {
-                    abrirSliderConfirmacao('Confirmar entrada', 'Vais dar entrada na OS' + (os.numeroRegisto ? ' #' + os.numeroRegisto : '') + ' — ' + (os.descricao || _nomeClienteOS(os.clienteId)) + '.', () => {
+                    abrirSliderConfirmacao('Confirmar entrada', 'Vais dar entrada na OS' + (os.numeroRegisto ? ' #' + os.numeroRegisto : '') + ' — ' + (os.descricao || _nomeClienteOS(os.clienteId)) + '.', async () => {
                         dados.ponto = dados.ponto || [];
-                        dados.ponto.push({
+                        const entrada = {
                             id: gerarId(), funcionarioId: usuarioLogado.id, adminId, data: hoje, entrada: hora, saida: null,
                             obraDescricao: os.descricao || _nomeClienteOS(os.clienteId), servicoId: os.id, clienteId: os.clienteId,
                             lat: loc?.lat ?? null, lng: loc?.lng ?? null, kmInicio: kmEnt ?? null
-                        });
+                        };
+                        dados.ponto.push(entrada);
                         // Regresso do almoço para esta mesma OS — reabre logo também o relógio de
                         // ponto geral, sem precisar de ir picar entrada à parte no Registo de Ponto.
-                        if (voltaDeAlmocoOS && pontoAssiduidadeAtivo()) {
-                            dados.ponto.push({ id: gerarId(), funcionarioId: usuarioLogado.id, adminId, data: hoje, entrada: hora, saida: null, lat: loc?.lat ?? null, lng: loc?.lng ?? null });
+                        const reabriuPontoGeral = voltaDeAlmocoOS && pontoAssiduidadeAtivo();
+                        if (reabriuPontoGeral) {
+                            dados.ponto.push({ id: gerarId(), funcionarioId: entrada.funcionarioId, adminId, data: hoje, entrada: hora, saida: null, lat: loc?.lat ?? null, lng: loc?.lng ?? null });
                         }
                         if (os.status !== 'concluído') os.status = 'em andamento';
-                        guardarDados(dados);
+                        const gravacao = guardarDados(dados);
                         renderizarTudo();
-                        alert('✅ Entrada picada nesta obra às ' + hora + '. Estado da OS passou para "Em andamento".' + (voltaDeAlmocoOS && pontoAssiduidadeAtivo() ? '\n\n🍽️ Regresso do almoço — o relógio de ponto geral também voltou a contar automaticamente.' : ''));
+                        try { await gravacao; } catch { /* A sincronização volta a tentar os registos pendentes. */ }
+                        if (usuarioLogado?.id !== entrada.funcionarioId || _tenantId() !== adminId || entrada.saida) return;
+                        if (_entradaOSPendenteSincronizacao(os, entrada)) {
+                            mostrarToast('Entrada guardada no dispositivo às ' + hora + '. A aguardar sincronização.', 'aviso');
+                        } else {
+                            mostrarToast('Entrada confirmada às ' + hora + '.' + (reabriuPontoGeral ? ' O ponto geral também voltou a contar.' : ''), 'sucesso');
+                        }
                     });
                     }, { tipo: 'servico', id: os.id });
                 };
