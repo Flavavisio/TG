@@ -6,8 +6,8 @@ function setup(response='hoje'){
  class Clock extends Date {constructor(...args){super(...(args.length?args:['2026-10-30T16:00:00']));}}
  const os={id:'os',adminId:'a',clienteId:'c',data:'2026-10-30',funcionariosIds:['responsavel','colega'],relatorioResponsavelId:'responsavel',status:'em andamento'};
  const dados={administradores:[{id:'a'}],servicos:[os],ponto:[{id:'p',adminId:'a',servicoId:'os',funcionarioId:'colega',data:os.data,entrada:'09:00',saida:null}],obraPontoLonga:[]};
- const ctx=vm.createContext({dados,usuarioLogado:{id:'colega',adminId:'a',role:'funcionario'},Date:Clock,_tenantId:()=> 'a',_gpsPontoAtivo:()=>false,getDataHoje:()=> '2026-10-30',perguntarSaidaObra:async()=>response,guardarDados:async()=>saved.push(JSON.stringify(dados)),_checklistSaidaVerificar:(id,cb)=>cb(),renderizarTudo:()=>calls.push('render'),renderizarAgendaObras:()=>calls.push('agenda'),renderizarPonto:()=>{},obterNomeFuncionario:()=> 'Responsável',alert:msg=>alerts.push(msg),criarFolhaDaOS:()=>calls.push('sheet'),_folhaOSPendente:null,_pausaAlmocoPendente:()=>({tipo:'os',servicoId:'os'}),pontoAssiduidadeAtivo:()=>false,pontoAbertoHoje:()=>false,_checklistEntradaVerificar:(id,cb)=>cb(),abrirSliderConfirmacao:(title,text,cb)=>{ctx.confirm=cb;},gerarId:()=> 'new',_nomeClienteOS:()=> 'Cliente'});
- vm.runInContext(fn('_osConcluidaParaFuncionario')+'\n'+fn('picarPontoOS'),ctx);
+ const ctx=vm.createContext({dados,usuarioLogado:{id:'colega',adminId:'a',role:'funcionario'},Date:Clock,_snap:{ponto:new Map(),servicos:new Map()},mostrarToast(){},_tenantId:()=> 'a',_gpsPontoAtivo:()=>false,getDataHoje:()=> '2026-10-30',perguntarSaidaObra:async()=>response,guardarDados:async()=>saved.push(JSON.stringify(dados)),_checklistSaidaVerificar:(id,cb)=>cb(),renderizarTudo:()=>calls.push('render'),renderizarAgendaObras:()=>calls.push('agenda'),renderizarPonto:()=>{},obterNomeFuncionario:()=> 'Responsável',alert:msg=>alerts.push(msg),criarFolhaDaOS:()=>calls.push('sheet'),_folhaOSPendente:null,_pausaAlmocoPendente:()=>({tipo:'os',servicoId:'os'}),pontoAssiduidadeAtivo:()=>false,pontoAbertoHoje:()=>false,_checklistEntradaVerificar:(id,cb)=>cb(),abrirSliderConfirmacao:(title,text,cb)=>{ctx.confirm=cb;},gerarId:()=> 'new',_nomeClienteOS:()=> 'Cliente'});
+ vm.runInContext(['_osConcluidaParaFuncionario','_entradaOSPendenteSincronizacao','picarPontoOS'].map(fn).join('\n'),ctx);
  return {ctx,os,dados,alerts,saved,calls,completed:id=>ctx._osConcluidaParaFuncionario(os,id||'colega')};
 }
 for(const response of ['hoje',true])test('non-responsible employee completes their own participation after '+response+' without closing the team OS',async()=>{
@@ -17,7 +17,7 @@ for(const response of ['hoje',true])test('non-responsible employee completes the
 });
 test('lunch remains resumable and permits a new personal entry into the same OS',async()=>{
  const t=setup('almoco');await t.ctx.picarPontoOS('os','saida');assert.equal(t.dados.ponto[0].pausaAlmoco,true);assert.equal(t.completed(),false);
- await t.ctx.picarPontoOS('os','entrada');assert.equal(typeof t.ctx.confirm,'function');t.ctx.confirm();assert.equal(t.dados.ponto.length,2);assert.equal(t.dados.ponto[1].saida,null);assert.equal(t.completed(),false);
+ await t.ctx.picarPontoOS('os','entrada');assert.equal(typeof t.ctx.confirm,'function');await t.ctx.confirm();assert.equal(t.dados.ponto.length,2);assert.equal(t.dados.ponto[1].saida,null);assert.equal(t.completed(),false);
 });
 test('the responsible employee retains the sheet workflow and individual completion never affects another user',async()=>{
  const t=setup(true);t.ctx.usuarioLogado.id='responsavel';t.dados.ponto[0].funcionarioId='responsavel';await t.ctx.picarPontoOS('os','saida');assert(t.calls.includes('sheet'));assert.equal(t.completed('responsavel'),false);assert.equal(t.completed('colega'),false);assert.equal(t.os.status,'em andamento');

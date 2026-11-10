@@ -3,15 +3,15 @@ const src=fs.readFileSync('app-principal.js','utf8');
 const fn=name=>{const m=src.match(new RegExp('        (?:async )?function '+name+'\\([^]*?\\n        \\}'));assert(m,name);return m[0];};
 function setup(){
  const listeners=new Map(),calls=[];
- const c=vm.createContext({console:{warn(){}},Date:{now:()=>c.now},now:100000,navigator:{onLine:true},usuarioLogado:{id:'admin',adminId:'a',role:'admin'},dados:{},modal:false,central:false,home:true,hidden:false,pending:0,changed:['ponto'],calls,_dadosPollTimer:null,_dadosPollEmCurso:false,_dadosPollUltima:0,_dadosPollIdentidade:'',_dadosPollGeracao:0,_ultimasVersoesPorTabela:{},_ultimaVersaoConhecida:null,_falhasSyncConsecutivas:0,_avisoSyncPersistenteMostrado:false,TABELA_PARA_COLUNA:{ponto:'ponto',obra_ponto_longa:'obraPontoLonga',servicos:'servicos',folhas_obra:'folhasObra'},_tenantIdAtual:()=>c.usuarioLogado?.adminId,
+ const c=vm.createContext({console:{warn(){}},Date:{now:()=>c.now},now:100000,navigator:{onLine:true},usuarioLogado:{id:'admin',adminId:'a',role:'admin'},dados:{},modal:false,central:false,agenda:false,home:true,hidden:false,pending:0,changed:['ponto'],calls,_dadosPollTimer:null,_dadosPollEmCurso:false,_dadosPollUltima:0,_dadosPollIdentidade:'',_dadosPollGeracao:0,_ultimasVersoesPorTabela:{},_ultimaVersaoConhecida:null,_falhasSyncConsecutivas:0,_avisoSyncPersistenteMostrado:false,TABELA_PARA_COLUNA:{ponto:'ponto',obra_ponto_longa:'obraPontoLonga',servicos:'servicos',folhas_obra:'folhasObra'},_tenantIdAtual:()=>c.usuarioLogado?.adminId,
  _contarAlteracoesPendentes:()=>c.pending,_tabelasQueMudaram:async()=>{calls.push('versions');c._ultimasVersoesPorTabela={ponto:'new'};return c.changed;},carregarTabelaEspecifica:async col=>{calls.push(col);},carregarDados:async()=>{calls.push('all');},guardarDados:async()=>{calls.push('save');},renderizarTudo:()=>calls.push('render'),setInterval:(cb,ms)=>{c.timer=cb;c.interval=ms;return 1;},clearInterval:()=>{c.timer=null;}});
  const surface={addEventListener:(name,cb)=>listeners.set(name,cb),removeEventListener:name=>listeners.delete(name)};
- c.window={...surface};c.document={...surface,get hidden(){return c.hidden;},getElementById:id=>id==='secao-dashboard-central'?{style:{},classList:{contains:()=>c.central}}:id==='omeudia'?{style:{display:c.home?'block':'none'}}:null,querySelector:q=>q==='.modal-overlay.open'?(c.modal?{}:null):q==='.section-container.active'?(c.home?null:{}):null};
+ c.window={...surface};c.document={...surface,get hidden(){return c.hidden;},getElementById:id=>id==='secao-dashboard-central'?{style:{},classList:{contains:()=>c.central}}:id==='secao-agenda-obras'?{style:{},classList:{contains:()=>c.agenda}}:id==='omeudia'?{style:{display:c.home?'block':'none'}}:null,querySelector:q=>q==='.modal-overlay.open'?(c.modal?{}:null):q==='.section-container.active'?(c.home?null:{}):null};
  vm.runInContext(['_painelAtividadeVisivel','_pollDadosGerais','_retomarPollDadosGerais','iniciarPollDadosGerais','pararPollDadosGerais'].map(fn).join('\n'),c);
  return {c,calls,listeners};
 }
-test('home and central dashboard refresh changed tables within the 2s cadence',async()=>{
- for(const central of [false,true]){const {c,calls}=setup();c.central=central;c.home=!central;await c._pollDadosGerais();assert.deepEqual(calls,['versions','ponto','render']);calls.length=0;c.now+=1000;await c._pollDadosGerais();assert.equal(calls.length,0);c.now+=1000;await c._pollDadosGerais();assert.deepEqual(calls,['versions','ponto','render']);}
+test('home, central dashboard and agenda refresh changed tables within the 2s cadence',async()=>{
+ for(const screen of ['home','central','agenda']){const {c,calls}=setup();c.home=screen==='home';c.central=screen==='central';c.agenda=screen==='agenda';await c._pollDadosGerais();assert.deepEqual(calls,['versions','ponto','render']);calls.length=0;c.now+=1000;await c._pollDadosGerais();assert.equal(calls.length,0);c.now+=1000;await c._pollDadosGerais();assert.deepEqual(calls,['versions','ponto','render']);}
 });
 test('other screens and employee sessions retain the 30s cadence',async()=>{
  for(const employee of [false,true]){const {c,calls}=setup();if(employee)c.usuarioLogado.role='funcionario';else c.home=false;await c._pollDadosGerais();calls.length=0;c.now+=2000;await c._pollDadosGerais();assert.equal(calls.length,0);c.now+=28000;await c._pollDadosGerais();assert(calls.includes('versions'));}
@@ -30,4 +30,37 @@ test('resume bypasses cadence, repeated start has one timer and stop removes lis
 test('general redraw includes the visible central dashboard so activity does not remain stale',()=>{assert.match(fn('_renderizarTudoAgora'),/if \(_secaoVisivel\('secao-dashboard-central'\)\) renderizarDashboardCentralSecao\(\)/);});
 test('a late table response cannot replace local edits or data after logout',async()=>{
  for(const change of ['edit','logout']){const {c}=setup();let release;c.M={ponto:{tabela:'ponto',from:x=>x,to:x=>x}};c._snap={};c._guardarCacheLocal=()=>{};c._pontoCarregadoDesde='2026-01-01';c.supa={from:()=>({select:()=>({gte(){return this;},eq(){return this;}})})};c._buscarPaginadoGenerico=()=>new Promise(r=>release=r);c.dados.ponto=[{id:'local'}];vm.runInContext(fn('carregarTabelaEspecifica'),c);const request=c.carregarTabelaEspecifica('ponto',true);if(change==='edit')c.pending=1;else c._dadosPollGeracao++;release({data:[{id:'remote'}]});if(change==='edit')await assert.rejects(request);else await request;assert.equal(c.dados.ponto[0].id,'local');}
+});
+
+
+test('agenda refresh shows a confirmed lunch return when the OS status has not synced yet', async()=>{
+ const {c,calls}=setup();
+ c.home=false;c.agenda=true;
+ const date='2026-11-10';
+ const os={id:'os',adminId:'a',funcionarioId:'f',status:'pausa para almoço',data:date};
+ const pausa={adminId:'a',servicoId:'os',funcionarioId:'f',data:date,entrada:'11:16:22',saida:'13:32:30',pausaAlmoco:true};
+ const volta={...pausa,entrada:'13:57:06',saida:null,pausaAlmoco:false};
+ c.dados={ponto:[pausa],servicos:[os]};
+ c.getDataHoje=()=>date;c._tenantId=()=> 'a';c._agendaVistaObras='dia';
+ c._calcularConflitos=()=>new Set();c._aplicarFiltrosAgenda=rows=>rows;
+ const getElement=c.document.getElementById;
+ c.document.getElementById=id=>id==='agendaObrasConteudo'?{}:getElement(id);
+ let shown;
+ c.renderAgendaDia=(element,rows)=>{shown=rows[0].status;};
+ vm.runInContext(['_estadoOSAgenda','renderizarAgendaObras'].map(fn).join('\n'),c);
+ c.renderizarTudo=()=>c.renderizarAgendaObras();
+ c.renderizarTudo();
+ assert.equal(shown,'pausa para almoço');
+ await c._pollDadosGerais();
+ c.carregarTabelaEspecifica=async col=>{assert.equal(col,'ponto');c.dados.ponto=[pausa,volta];calls.push(col);};
+ c.now+=2000;
+ await c._pollDadosGerais();
+ assert.equal(shown,'em andamento');
+ assert.equal(os.status,'pausa para almoço','display does not overwrite the stored OS');
+ for(const wrong of [{adminId:'b'},{funcionarioId:'outro'},{servicoId:'outro'},{data:'2026-11-09'},{entrada:'13:30:00'},{saida:'14:30:00'}]){
+  assert.equal(c._estadoOSAgenda(os,[pausa,{...volta,...wrong}],date),'pausa para almoço');
+ }
+ const segundaPausa={...pausa,entrada:'14:30:00',saida:'15:00:00'};
+ assert.equal(c._estadoOSAgenda(os,[pausa,volta,segundaPausa],date),'pausa para almoço');
+ assert.equal(c._estadoOSAgenda({...os,status:'concluído'},[pausa,volta],date),'concluído');
 });
