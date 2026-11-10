@@ -71,6 +71,8 @@ test('dashboard preview also clusters and selecting a person opens their popup t
 });
 test('entry points and PWA cache have matching map assets; the dependency executes after Leaflet',()=>{
  const loader=fs.readFileSync('pdf-loader.js','utf8');assert(loader.indexOf('leaflet/1.9.4/leaflet.min.js')<loader.indexOf('vendor/leaflet-markercluster-1.5.3.js'));assert(loader.includes('s.async = false'));assert(loader.includes("new Event('tg:map-ready')"));
- for(const file of ['index.html','login.html','sw.js'])for(const asset of ['app-principal.js?v=team-map-clusters-20261106','pdf-loader.js?v=team-map-clusters-20261106','tg-team-map.css?v=1.0.0','vendor/leaflet-markercluster-1.5.3.css'])assert(fs.readFileSync(file,'utf8').includes(asset),file+' '+asset);
+ const mainAsset=fs.readFileSync('login.html','utf8').match(/app-principal\.js\?v=[^"]+/)?.[0];
+ assert(mainAsset);
+ for(const file of ['index.html','login.html','sw.js'])for(const asset of [mainAsset,'pdf-loader.js?v=team-map-clusters-20261106','tg-team-map.css?v=1.0.0','vendor/leaflet-markercluster-1.5.3.css'])assert(fs.readFileSync(file,'utf8').includes(asset),file+' '+asset);
  assert(fs.readFileSync('sw.js','utf8').includes('vendor/leaflet-markercluster-1.5.3.js'));
 });
