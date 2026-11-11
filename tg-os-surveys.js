@@ -75,7 +75,9 @@ function mountOS(osId){
  const target=[...document.querySelectorAll('#modalGenericoOverlay.modal-veros,.modal-overlay.open,.modal.open,[role="dialog"][open],[role="dialog"].open,.ws-os-overlay.open,.tgm-modal.open')].filter(x=>x.offsetWidth>0||x.getClientRects().length).at(-1);
  if(!target)return;
  let host=target.querySelector('[data-survey-os-action]');
+ if(host?.dataset.osId===String(osId))return;
  if(!host){host=document.createElement('div');host.className='tg-survey-actions';host.dataset.surveyOsAction='';(target.querySelector('#verOsConteudo,#modalGenericoCampos,.modal-content,.modal-body,.modal-card,.tgm-modal-content')||target).append(host);}
+ host.dataset.osId=String(osId);
  host.innerHTML='<strong><i class="fas fa-star"></i> Inquérito de satisfação</strong><p>Envie um link personalizado ao cliente após a intervenção.</p><button type="button" class="btn btn-outline" data-sat-os-button>Copiar link do inquérito</button>';
  host.querySelector('button').addEventListener('click',()=>copyLink(osId));
 }
@@ -178,6 +180,9 @@ document.addEventListener('click',event=>{
  }
  setTimeout(refresh,100);
 });
-document.addEventListener('DOMContentLoaded',()=>{refresh();setInterval(()=>{if(document.getElementById('hdcSatisfacao'))dashboard();},60000);});
+document.addEventListener('DOMContentLoaded',()=>{
+ refresh();
+ setInterval(()=>{if(tenant()){installOS();injectCustomerTab();}if(document.getElementById('hdcSatisfacao'))dashboard();},60000);
+});
 window.TGOSSurveys={linkForOS,copyLink,openCustomer,fetchRows,dashboard,warnCustomer};
 })();
