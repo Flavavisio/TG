@@ -1,0 +1,24 @@
+/* Inquéritos de satisfação por OS — desenho consistente com os modais Nexus. */
+.tg-survey-actions{border-top:1px solid #dbe3ef;padding:16px 2px;margin-top:18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.tg-survey-actions strong{font-size:14px;color:#17365f}.tg-survey-actions p{font-size:12px;color:#64748b;margin:0;flex:1;min-width:190px}
+.tg-survey-actions button{border-radius:9px}
+.tg-sat-client{padding:12px 6px;color:var(--text-primary,#1b3052)}
+.tg-sat-client>header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:8px 0 18px;border-bottom:1px solid #dbe3ee}
+.tg-sat-client>header h2{margin:4px 0 0;font-size:23px}.tg-sat-client>header p{margin:4px 0;color:#64748b}
+.tg-sat-client>header span{background:#ecf1fa;color:#1c406d;padding:8px 12px;border-radius:10px;font-size:12px;font-weight:700}
+.tg-sat-record{background:var(--bg-card,#fff);border:1px solid #dce5f0;border-radius:12px;padding:17px;margin:12px 0}
+.tg-sat-record-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.tg-sat-record-meta{font-size:12px;color:#64748b;margin-top:5px}
+.tg-sat-pill{display:inline-block;padding:5px 9px;border-radius:15px;font-size:11px;background:#eff3fa;color:#435675;font-weight:800}
+.tg-sat-pill.good{background:#dbf6e7;color:#0a6b3c}.tg-sat-pill.bad{background:#ffe4df;color:#a42320}
+.tg-sat-five{display:flex;gap:6px;flex-wrap:wrap;margin:13px 0}.tg-sat-five span{padding:6px 9px;background:#f1f5fa;border-radius:7px;font-size:12px}
+.tg-sat-record p{margin:9px 0;color:inherit;white-space:pre-wrap}.tg-sat-record small{font-size:11px;color:#697991}
+#tgOsSatisfactionDashboard{border-top:1px solid #dde5f0;margin-top:10px;padding:10px 0 0;font-size:12px}
+#tgOsSatisfactionDashboard h5{margin:0 0 7px;font-size:12px}
+.tg-sat-metrics{display:flex;gap:7px;flex-wrap:wrap}.tg-sat-metrics span{border-radius:7px;background:#f0f4fa;padding:6px 9px}.tg-sat-metrics b{font-size:15px}.tg-sat-metrics .negative{background:#ffe4e1;color:#9f2525}
+#tgOsSatisfactionDashboard details{margin-top:8px}#tgOsSatisfactionDashboard details p{margin:8px 0;font-size:11px}
+.tg-survey-toast{position:fixed;bottom:18px;right:18px;z-index:100400;background:#153963;color:#fff;border-radius:10px;box-shadow:0 8px 35px #0003;padding:12px 16px;max-width:min(430px,calc(100% - 36px));font-size:13px}
+.tg-survey-toast.is-error{background:#9e2626}.tg-sat-warning{position:fixed;inset:0;z-index:100500;background:#0b1e3c99;display:grid;place-items:center;padding:16px}
+.tg-sat-warning-card{background:#fff;color:#23395a;width:min(490px,100%);border-radius:15px;padding:25px;box-shadow:0 20px 60px #0004}
+.tg-sat-warning-card h3{font-size:19px;margin:0 0 16px;color:#a72823}.tg-sat-warning-card p{font-size:14px;line-height:1.5;white-space:pre-wrap}
+.tg-sat-warning-card button{margin-top:12px}
+@media(max-width:600px){.tg-sat-client{padding:8px 0}.tg-sat-record{padding:12px}.tg-sat-warning-card{padding:18px}}
