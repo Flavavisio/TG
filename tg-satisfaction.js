@@ -86,7 +86,7 @@
     function draw(target, ctx, range, s) {
         target.replaceChildren();
         const head = document.createElement('div'); head.className = 'tg-sat-heading';
-        const title = document.createElement('h4'); title.textContent = 'Satisfação dos clientes'; head.append(title);
+        const title = document.createElement('h4'); title.textContent = 'Satisfação dos Reports'; head.append(title);
         const actions = document.createElement('div'); actions.className = 'tg-sat-actions';
         for (const [format, label] of [['pdf', 'PDF'], ['csv', 'CSV']]) {
             const button = document.createElement('button'); button.type = 'button'; button.textContent = label; button.setAttribute('aria-label', 'Descarregar ' + label); button.title = 'Descarregar ' + label;
