@@ -1,6 +1,8 @@
 /* Teste TG: the same essential employee workspace on phone and PC. All writes use the native flows. */
 (function () {
     'use strict';
+    const horasMinutos = value => { const hours=Number(value); if(!Number.isFinite(hours)||hours<0)return '0 min'; const total=Math.round(hours*60); const h=Math.floor(total/60),m=total%60; return h ? `${h} h${m ? ` ${m} min` : ''}` : `${m} min`; };
+
     if (window.TGTechnician) return;
     const $ = id => document.getElementById(id);
     const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -411,7 +413,7 @@
             });
             const notes=$('fo_materiais')?.value?.trim();
             const used=$('fo_mat_sim')?.classList.contains('ativo');
-            wizard.review.innerHTML=`<h3>Confirma antes de guardar</h3><dl><dt>Obra / OS</dt><dd>${esc($('fo_obra_desc')?.value)}</dd><dt>Data</dt><dd>${esc($('fo_data')?.value?.split('-').reverse().join('/')||'')}</dd><dt>Trabalho realizado</dt><dd>${esc($('fo_descricao')?.value)}</dd><dt>Horas trabalhadas</dt><dd>${esc($('fo_horas')?.value||'0')} h</dd><dt>Materiais</dt><dd>${esc(materialRows.join(' · ')|| (used?'Sem quantidades de material indicadas':'Sem materiais'))}${notes?'<br>'+esc(notes):''}</dd></dl><p>A folha só fica guardada depois de confirmares.</p>`;
+            wizard.review.innerHTML=`<h3>Confirma antes de guardar</h3><dl><dt>Obra / OS</dt><dd>${esc($('fo_obra_desc')?.value)}</dd><dt>Data</dt><dd>${esc($('fo_data')?.value?.split('-').reverse().join('/')||'')}</dd><dt>Trabalho realizado</dt><dd>${esc($('fo_descricao')?.value)}</dd><dt>Horas trabalhadas</dt><dd>${esc(horasMinutos($('fo_horas')?.value||0))}</dd><dt>Materiais</dt><dd>${esc(materialRows.join(' · ')|| (used?'Sem quantidades de material indicadas':'Sem materiais'))}${notes?'<br>'+esc(notes):''}</dd></dl><p>A folha só fica guardada depois de confirmares.</p>`;
             // The native "Assinar" button measures the visible canvas before drawing.
             // Never initialize it again here: going back or rotating must retain the ink.
         }
