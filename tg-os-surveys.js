@@ -61,10 +61,10 @@ function toast(message,error=false){
 function mountOS(osId){
  if(!yes())return;
  const os=(records().servicos||[]).find(x=>String(x.id)===String(osId)&&String(x.adminId)===tenant());if(!os)return;
- const target=[...document.querySelectorAll('.modal-overlay.open,.modal.open,[role="dialog"][open],[role="dialog"].open,.ws-os-overlay.open,.tgm-modal.open')].filter(x=>x.offsetWidth>0||x.getClientRects().length).at(-1);
+ const target=[...document.querySelectorAll('#modalGenericoOverlay.modal-veros,.modal-overlay.open,.modal.open,[role="dialog"][open],[role="dialog"].open,.ws-os-overlay.open,.tgm-modal.open')].filter(x=>x.offsetWidth>0||x.getClientRects().length).at(-1);
  if(!target)return;
  let host=target.querySelector('[data-survey-os-action]');
- if(!host){host=document.createElement('div');host.className='tg-survey-actions';host.dataset.surveyOsAction='';(target.querySelector('.modal-content,.modal-body,.modal-card,.tgm-modal-content')||target).append(host);}
+ if(!host){host=document.createElement('div');host.className='tg-survey-actions';host.dataset.surveyOsAction='';(target.querySelector('#verOsConteudo,#modalGenericoCampos,.modal-content,.modal-body,.modal-card,.tgm-modal-content')||target).append(host);}
  host.innerHTML='<strong><i class="fas fa-star"></i> Inquérito de satisfação</strong><p>Envie um link personalizado ao cliente após a intervenção.</p><button type="button" class="btn btn-outline" data-sat-os-button>Copiar link do inquérito</button>';
  host.querySelector('button').addEventListener('click',()=>copyLink(osId));
 }
@@ -141,12 +141,12 @@ function watchCustomerSelect(event){
  const value=target.value;if(!(records().clientes||[]).some(c=>String(c.id)===value))return;
  const nearby=target.closest('.modal-overlay,.modal,[role="dialog"],.section-container');
  const text=nearby?.textContent?.slice(0,700)||'';
- if(!/nova ordem|nova os|criar os|ordem de servi|novo servi/i.test(text))return;
+ if(!/nova ordem|nova os|criar os|ordem de servi|novo servi/i.test(text)&&!target.closest('#modalGenericoOverlay,[id*=modalServ],[id*=modalOS]'))return;
  warned='';warnCustomer(value);
 }
 let ticking=false;
 function refresh(){
- if(ticking)return;ticking=true;setTimeout(()=>{ticking=false;installOS();injectCustomerTab();if(document.getElementById('hdcSatisfacao')&&!document.getElementById('tgOsSatisfactionDashboard'))dashboard();},200);
+ if(ticking)return;ticking=true;setTimeout(()=>{ticking=false;installOS();injectCustomerTab();if(activeOS)mountOS(activeOS);if(document.getElementById('hdcSatisfacao')&&!document.getElementById('tgOsSatisfactionDashboard'))dashboard();},200);
 }
 document.addEventListener('change',watchCustomerSelect,true);
 document.addEventListener('tg:interface-updated',()=>{cache.at=0;refresh();dashboard();});
