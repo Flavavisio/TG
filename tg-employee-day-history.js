@@ -62,13 +62,28 @@ function activity(org,p,day) {
 }
 const style=document.createElement('style');style.textContent=`
 .tghd-overlay{position:fixed;inset:0;background:rgba(12,25,48,.64);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px}
-.tghd-panel{background:var(--bg-card,#fff);color:var(--text-primary,#182844);width:min(780px,100%);max-height:90dvh;overflow:auto;border-radius:16px;padding:22px;box-shadow:0 20px 60px #0003}
+.tghd-panel{background:var(--bg-card,#fff);color:var(--text-primary,#182844);width:min(1180px,100%);max-height:90dvh;overflow:auto;border-radius:16px;padding:22px;box-shadow:0 20px 60px #0003}
 .tghd-head{display:flex;justify-content:space-between;align-items:center;gap:12px}.tghd-head h2{margin:0;font-size:20px}
 .tghd-fields{display:grid;grid-template-columns:minmax(0,1fr) minmax(160px,220px);gap:12px;margin:18px 0}
 .tghd-fields label{display:block;font-size:12px;font-weight:700;margin-bottom:5px}.tghd-fields select,.tghd-fields input{width:100%;padding:10px;border-radius:9px;border:1px solid #b8c3d6;background:var(--bg-card,#fff);color:inherit}
 .tghd-muted{opacity:.65}.tghd-event{padding:5px 0;font-size:12px}.tghd-event a{color:#2670bd;text-decoration:underline}.tghd-item{padding:12px 0;border-bottom:1px solid #dae0eb}.tghd-item strong{font-size:14px}.tghd-item small{display:block;margin-top:5px;opacity:.8}
 .tghd-summary{background:var(--bg-secondary,#f0f4fa);padding:12px;border-radius:10px;margin-bottom:8px}
 .tghd-actions{display:flex;gap:8px;align-items:center}.tghd-action{border:1px solid #c3cedf;background:transparent;color:inherit;border-radius:9px;padding:9px 12px;cursor:pointer}
+.tghd-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(310px,1fr);gap:16px;align-items:start;margin-top:16px}
+.tghd-mapcol{position:sticky;top:0;min-width:0}
+.tghd-map{height:480px;border-radius:12px;overflow:hidden;background:#e8edf5;border:1px solid #cad3e2;z-index:0}
+.tghd-map .leaflet-tile{max-width:none!important;max-height:none!important;padding:0!important;margin:0!important;border:0!important;box-shadow:none!important}
+.tghd-map-head{display:flex;justify-content:space-between;gap:8px;align-items:center;margin:0 0 8px}
+.tghd-map-note{font-size:12px;opacity:.7;margin-top:9px}
+.tghd-timeline-row{display:flex;text-align:left;gap:12px;align-items:flex-start;width:100%;background:transparent;border:0;border-bottom:1px solid #dce4ef;padding:12px 8px;color:inherit;cursor:pointer}
+.tghd-timeline-row:hover,.tghd-timeline-row.is-selected{background:#e7efff;border-radius:9px}
+.tghd-index{min-width:31px;height:31px;display:grid;place-items:center;border-radius:50%;background:#172e58;color:#fff;font-size:12px;font-weight:800}
+.tghd-index.no-gps{background:#a7b0bf;color:#14243f}
+.tghd-timeline-body{flex:1;min-width:0}.tghd-timeline-body strong{display:block;font-size:13px}
+.tghd-timeline-body small{display:block;font-size:12px;opacity:.7;margin-top:3px}
+.tghd-map-marker{width:29px;height:29px;border:2px solid white;border-radius:50%;display:grid;place-items:center;background:#152a52;color:white;font-size:12px;font-weight:800;box-shadow:0 2px 8px #0005}
+.tghd-map-empty{height:100%;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;font-size:14px;color:#465975}
+@media(max-width:760px){.tghd-layout{grid-template-columns:1fr}.tghd-mapcol{position:static;grid-row:1}.tghd-map{height:290px}}
 @media(max-width:520px){.tghd-fields{grid-template-columns:1fr}.tghd-panel{padding:14px}}
 @media print{body>*:not(#tgHistoricoDiario){display:none!important}.tghd-overlay{position:static;background:transparent;padding:0}.tghd-panel{max-height:none;box-shadow:none;width:100%}.tghd-actions,.tghd-fields{display:none!important}}
 `;document.head.appendChild(style);
@@ -90,7 +105,33 @@ function open() {
  const date=overlay.querySelector('#tghdData');if(!date.value)date.value=dateKey(new Date().toLocaleDateString('sv-SE'));
  overlay.hidden=false;overlay.style.display='flex';render();sel.focus();
 }
-function close(){const el=document.getElementById('tgHistoricoDiario');if(el){el.hidden=true;el.style.display='none';}}
+let routeMap=null, routeMarkers=[],routeLayer=null;
+function close(){const el=document.getElementById('tgHistoricoDiario');if(el){el.hidden=true;el.style.display='none';}if(routeMap){routeMap.remove();routeMap=null;routeMarkers=[];routeLayer=null;}}
+function mapRoute(events) {
+ const target=document.getElementById('tghdMap'); if(!target)return;
+ if(routeMap){routeMap.remove();routeMap=null;routeMarkers=[];routeLayer=null;}
+ const points=events.filter(x=>x.loc);
+ if(!points.length){target.innerHTML='<div class="tghd-map-empty">Não existem coordenadas GPS registadas para este dia.</div>';return;}
+ if(!window.L){target.innerHTML='<div class="tghd-map-empty">Mapa indisponível neste dispositivo. Utilize os links de localização na cronologia.</div>';return;}
+ target.innerHTML='';
+ routeMap=L.map(target,{scrollWheelZoom:false}).setView([points[0].loc.lat,points[0].loc.lng],12);
+ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap contributors'}).addTo(routeMap);
+ const coords=[];
+ points.forEach(event=>{
+   const xy=[event.loc.lat,event.loc.lng];coords.push(xy);
+   const icon=L.divIcon({className:'',html:'<span class="tghd-map-marker">'+event.pointNumber+'</span>',iconSize:[30,30],iconAnchor:[15,15]});
+   const marker=L.marker(xy,{icon}).addTo(routeMap).bindPopup('<strong>Ponto '+event.pointNumber+' · '+esc(event.at)+'</strong><div>'+esc(event.label)+'</div>');
+   routeMarkers[event.index]=marker;
+   marker.on('click',()=>selectPoint(event.index,false));
+ });
+ if(coords.length>1)routeLayer=L.polyline(coords,{color:'#1763a6',weight:3,dashArray:'6 6',opacity:.8}).addTo(routeMap);
+ if(coords.length>1)routeMap.fitBounds(L.latLngBounds(coords).pad(.2),{maxZoom:15});else routeMap.setView(coords[0],15);
+ requestAnimationFrame(()=>routeMap?.invalidateSize());
+}
+function selectPoint(index,openPopup=true){
+ document.querySelectorAll('[data-tghd-point]').forEach(el=>el.classList.toggle('is-selected',Number(el.dataset.tghdPoint)===Number(index)));
+ const marker=routeMarkers[index];if(marker&&routeMap){routeMap.panTo(marker.getLatLng());if(openPopup)marker.openPopup();}
+}
 function render() {
  const org=tenant(),root=document.getElementById('tghdContent'),sel=document.getElementById('tghdFuncionario'),date=document.getElementById('tghdData');if(!root)return;
  if(!org){close();return;}
@@ -109,13 +150,23 @@ function render() {
  }
  timeline.sort((a,b)=>(a.at||'99:99').localeCompare(b.at||'99:99')||a.priority-b.priority);
  const countJobs=new Set(items.filter(x=>x.kind!=='Ponto').map(x=>x.kind+':'+x.ref)).size;
- const pauseEvents=timeline.filter(x=>x.label.startsWith('Saída para almoço'));
- root.innerHTML='<div class="tghd-summary"><strong>'+esc(person.nome||'Funcionário')+'</strong> · '+esc(date.value)+'<div>'+countJobs+' trabalho(s) · '+fmt(total)+' de intervenções com horários completos</div><small>Consulta de registos existentes. Horários incompletos e deslocações não entram no total; este valor não substitui o apuramento oficial.</small></div>'+
- '<h3>Cronologia do dia</h3>'+
- (timeline.length?timeline.map(x=>'<div class="tghd-item"><strong>'+esc(x.at||'Sem hora')+' · '+esc(x.label)+'</strong><div class="tghd-event">'+locate(x.loc)+'</div></div>').join(''):'<p>Sem registos para esta data.</p>')+
- '<h3>Trabalhos realizados</h3>'+
- (items.filter(x=>x.kind!=='Ponto').map(x=>'<div class="tghd-item"><strong>'+esc(x.start||'Sem hora')+(x.end?' – '+esc(x.end):'')+' · '+esc(x.kind)+' · '+esc(x.name)+'</strong><div>'+esc(x.description)+'</div><small>'+esc(x.kind)+' #'+esc(x.ref)+(x.duration!==null?' · '+fmt(x.duration):' · Horário não apurado')+(x.sheet?' · Folha de obra':'')+'</small></div>').join('')||'<p>Sem OS ou obras registadas.</p>')+
- '<p class="tghd-muted">O regresso do almoço é identificado pela entrada seguinte; só são indicadas localizações efetivamente registadas.</p>';
+ let pointNumber=0;timeline.forEach((ev,index)=>{ev.index=index;if(ev.loc)ev.pointNumber=++pointNumber;});
+ const first=timeline.find(ev=>ev.at), last=[...timeline].reverse().find(ev=>ev.at);
+ const jobRows=items.filter(x=>x.kind!=='Ponto');
+ root.innerHTML='<div class="tghd-summary"><strong>'+esc(person.nome||'Funcionário')+'</strong> · '+esc(date.value)+
+ '<div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:8px"><span><b>'+countJobs+'</b> trabalhos</span><span><b>'+pointNumber+'</b> pontos GPS</span><span><b>'+fmt(total)+'</b> intervenções completas</span></div>'+
+ '<small>Primeiro registo: '+esc(first?.at||'—')+' · Último registo: '+esc(last?.at||'—')+'. Os horários não substituem o apuramento oficial de horas.</small></div>'+
+ '<div class="tghd-layout"><section class="tghd-timeline"><h3>Cronologia do dia</h3>'+
+ (timeline.length?timeline.map(x=>'<button type="button" class="tghd-timeline-row" data-tghd-point="'+x.index+'"><span class="tghd-index '+(x.loc?'':'no-gps')+'">'+(x.pointNumber||'·')+'</span><span class="tghd-timeline-body"><strong>'+esc(x.at||'Sem hora')+' · '+esc(x.label)+'</strong><small>'+(x.loc?'Ponto '+x.pointNumber+' · GPS registado':'Sem localização GPS')+'</small></span></button>').join(''):'<p>Sem registos para esta data.</p>')+
+ '<h3 style="margin-top:18px">Trabalhos realizados</h3>'+
+ (jobRows.map(x=>'<div class="tghd-item"><strong>'+esc(x.start||'Sem hora')+(x.end?' – '+esc(x.end):'')+' · '+esc(x.kind)+' · '+esc(x.name)+'</strong><div>'+esc(x.description)+'</div><small>'+esc(x.kind)+' #'+esc(x.ref)+(x.duration!==null?' · '+fmt(x.duration):' · Horário não apurado')+(x.sheet?' · Folha de obra':'')+'</small></div>').join('')||'<p>Sem OS ou obras registadas.</p>')+
+ '</section><aside class="tghd-mapcol"><div class="tghd-map-head"><strong>Roteiro do dia</strong><small>'+pointNumber+' pontos com GPS</small></div><div id="tghdMap" class="tghd-map" aria-label="Mapa com os pontos registados"></div>'+
+ '<div class="tghd-map-note">Os pontos são ligados pela ordem cronológica, em linha indicativa. Não representam o trajeto exato nem localização contínua.</div></aside></div>';
+ root.querySelectorAll('[data-tghd-point]').forEach(el=>el.addEventListener('click',()=>{
+  const event=timeline[Number(el.dataset.tghdPoint)];selectPoint(event.index);
+  if(!event.loc) return;
+ }));
+ mapRoute(timeline);
 }
 function inject(){
  if(!tenant())return;
