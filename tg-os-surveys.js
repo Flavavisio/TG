@@ -187,10 +187,10 @@ async function expandSurveyDashboard(){
  panel.setAttribute('aria-label','Detalhes de satisfação dos inquéritos');
  panel.innerHTML='<header><div><small>INQUÉRITOS DAS ORDENS DE SERVIÇO</small><h2>Satisfação dos Inquéritos</h2><p>Classificações de cada pergunta, exclusivamente de inquéritos respondidos por link.</p></div><button type="button" data-survey-modal-close aria-label="Fechar">✕</button></header><div data-survey-modal-content> A carregar avaliações… </div>';
  overlay.append(panel);document.body.append(overlay);
- const close=()=>overlay.remove();
+ const close=()=>{document.removeEventListener('keydown',escape);overlay.remove();};
  panel.querySelector('[data-survey-modal-close]').addEventListener('click',close);
  overlay.addEventListener('click',e=>{if(e.target===overlay)close();});
- const escape=e=>{if(e.key==='Escape'){close();document.removeEventListener('keydown',escape);}};
+ const escape=e=>{if(e.key==='Escape')close();};
  document.addEventListener('keydown',escape);
  panel.querySelector('[data-survey-modal-close]').focus();
  try{
