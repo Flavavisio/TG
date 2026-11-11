@@ -1,7 +1,7 @@
 /* Teste TG: the same essential employee workspace on phone and PC. All writes use the native flows. */
 (function () {
     'use strict';
-    const horasMinutos = value => { const hours=Number(value); if(!Number.isFinite(hours)||hours<0)return '0 min'; const total=Math.round(hours*60); const h=Math.floor(total/60),m=total%60; return h ? `${h} h${m ? ` ${m} min` : ''}` : `${m} min`; };
+    const horasMinutos = value => { const hours=Number(value); if(!Number.isFinite(hours)||hours<0)return '0 min'; const total=Math.round(hours*60); const h=Math.floor(total/60),m=total%60; return h ? `${h} h ${String(m).padStart(2,'0')} min` : `${m} min`; };
 
     if (window.TGTechnician) return;
     const $ = id => document.getElementById(id);
