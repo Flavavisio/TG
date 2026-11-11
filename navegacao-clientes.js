@@ -3,7 +3,7 @@
 const TG_AREAS = {
     servicos: { nome: 'Serviços', icone: 'fa-wrench', texto: 'Acompanhe o trabalho de todos os clientes.', secoes: ['servicos', 'assistencias', 'contratos', 'obras-longa', 'folhas', 'relatorio-os'] },
     agenda: { nome: 'Agenda', icone: 'fa-calendar-days', texto: 'Planeie serviços, obras e disponibilidade da equipa.', secoes: ['agenda', 'agenda-obras', 'calendario-equipa'] },
-    equipa: { nome: 'Equipa', icone: 'fa-users', texto: 'Pessoas, presenças e organização do trabalho.', secoes: ['funcionarios', 'historico-diario', 'ponto', 'assiduidade', 'pedidos', 'mapa-equipa', 'alertas-geofence'] },
+    equipa: { nome: 'Equipa', icone: 'fa-users', texto: 'Pessoas, presenças e organização do trabalho.', secoes: ['funcionarios', 'historico-diario', 'assiduidade', 'pedidos', 'ponto', 'mapa-equipa', 'alertas-geofence'] },
     mais: { nome: 'Mais', icone: 'fa-ellipsis', texto: 'Recursos da empresa, análises e configuração.', secoes: [] }
 };
 const TG_NOMES = { servicos: 'Todas as ordens de serviço', assistencias: 'Pedidos de assistência', contratos: 'Contratos e manutenções', 'obras-longa': 'Todas as obras', agenda: 'Agenda de serviços', 'agenda-obras': 'Planeamento de obras', 'calendario-equipa': 'Disponibilidade da equipa', 'relatorios-personalizados': 'Modelos de relatórios', reports: 'Indicadores de gestão', 'dashboard-analitico': 'Análise de produtividade', ferramentas: 'Ferramentas de trabalho (QR)' };
