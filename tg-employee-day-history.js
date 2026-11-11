@@ -80,7 +80,7 @@ const style=document.createElement('style');style.textContent=`
 .tghd-index{min-width:31px;height:31px;display:grid;place-items:center;border-radius:50%;background:#172e58;color:#fff;font-size:12px;font-weight:800}
 .tghd-index.no-gps{background:#a7b0bf;color:#14243f}
 .tghd-timeline-body{flex:1;min-width:0}.tghd-timeline-body strong{display:block;font-size:13px}
-.tghd-timeline-body small{display:block;font-size:12px;opacity:.7;margin-top:3px}
+.tghd-timeline-body small{display:block;font-size:12px;opacity:.8;margin-top:3px}.tghd-map-link{color:#2164b4;text-decoration:underline}
 .tghd-map-marker{width:29px;height:29px;border:2px solid white;border-radius:50%;display:grid;place-items:center;background:#152a52;color:white;font-size:12px;font-weight:800;box-shadow:0 2px 8px #0005}
 .tghd-map-empty{height:100%;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;font-size:14px;color:#465975}
 @media(max-width:760px){.tghd-layout{grid-template-columns:1fr}.tghd-mapcol{position:static;grid-row:1}.tghd-map{height:290px}}
@@ -140,7 +140,6 @@ function render() {
  // Tempos de sessões válidas, unidos para impedir contagem dupla de trabalhos sobrepostos.
  const spans=items.filter(x=>x.duration!==null).map(x=>[mins(x.start),mins(x.end)]).sort((a,b)=>a[0]-b[0]);
  let total=0,last=null;for(const [a,b] of spans){if(last===null){total+=b-a;last=b;}else{total+=Math.max(0,b-Math.max(last,a));last=Math.max(last,b);}}
- const count=new Set(items.map(x=>x.kind+':'+x.ref)).size;
  const timeline=[];
  for(const x of items){
    const label=x.kind==='Ponto'?'Ponto':x.kind+' · '+x.name;
@@ -149,6 +148,14 @@ function render() {
    if(!x.start&&!x.end)timeline.push({at:'',priority:3,label:x.kind+' · '+x.name+' — '+(x.description||'Registo sem horário'),loc:null});
  }
  timeline.sort((a,b)=>(a.at||'99:99').localeCompare(b.at||'99:99')||a.priority-b.priority);
+ let awaitingLunchReturn=false;
+ for(const ev of timeline){
+   if(ev.label.startsWith('Saída para almoço')){awaitingLunchReturn=true;continue;}
+   if(ev.label.startsWith('Entrada')&&awaitingLunchReturn){
+     ev.label=ev.label.replace(/^Entrada/, 'Regresso do almoço');
+     awaitingLunchReturn=false;
+   }
+ }
  const countJobs=new Set(items.filter(x=>x.kind!=='Ponto').map(x=>x.kind+':'+x.ref)).size;
  let pointNumber=0;timeline.forEach((ev,index)=>{ev.index=index;if(ev.loc)ev.pointNumber=++pointNumber;});
  const firstEvent=timeline.find(ev=>ev.at), lastEvent=[...timeline].reverse().find(ev=>ev.at);
@@ -162,6 +169,7 @@ function render() {
  (jobRows.map(x=>'<div class="tghd-item"><strong>'+esc(x.start||'Sem hora')+(x.end?' – '+esc(x.end):'')+' · '+esc(x.kind)+' · '+esc(x.name)+'</strong><div>'+esc(x.description)+'</div><small>'+esc(x.kind)+' #'+esc(x.ref)+(x.duration!==null?' · '+fmt(x.duration):' · Horário não apurado')+(x.sheet?' · Folha de obra':'')+'</small></div>').join('')||'<p>Sem OS ou obras registadas.</p>')+
  '</section><aside class="tghd-mapcol"><div class="tghd-map-head"><strong>Roteiro do dia</strong><small>'+pointNumber+' pontos com GPS</small></div><div id="tghdMap" class="tghd-map" aria-label="Mapa com os pontos registados"></div>'+
  '<div class="tghd-map-note">Os pontos são ligados pela ordem cronológica, em linha indicativa. Não representam o trajeto exato nem localização contínua.</div></aside></div>';
+ root.querySelectorAll('[data-tghd-map-link]').forEach(a=>a.addEventListener('click',event=>event.stopPropagation()));
  root.querySelectorAll('[data-tghd-point]').forEach(el=>el.addEventListener('click',()=>{
   const event=timeline[Number(el.dataset.tghdPoint)];selectPoint(event.index);
   if(!event.loc) return;
