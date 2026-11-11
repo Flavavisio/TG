@@ -107,13 +107,30 @@ async function openCustomer(id){
   (rows.length?rows.map(rowHtml).join(''):'<p>Este cliente ainda não tem inquéritos de satisfação associados a OS.</p>')+'</section>';
  }catch(e){container.innerHTML='<p class="tg-sat-error">Não foi possível consultar a satisfação. '+esc(e.message)+'</p>';}
 }
+let tabObservedOverlay=null;
+let tabObserver=null;
+function observeClientNavigation(){
+ const overlay=document.getElementById('wsClienteOverlay');
+ if(!overlay||overlay===tabObservedOverlay)return;
+ tabObserver?.disconnect();
+ tabObservedOverlay=overlay;
+ tabObserver=new MutationObserver(mutations=>{
+  // Executa no microtask da alteração do DOM, antes do próximo desenho.
+  if(!tenant()||!overlay.isConnected||!overlay.classList.contains('open'))return;
+  if(!mutations.some(m=>m.type==='childList'&&(m.addedNodes.length||m.removedNodes.length)))return;
+  if(!overlay.querySelector('[data-tg-survey-tab]'))injectCustomerTab();
+ });
+ tabObserver.observe(overlay,{childList:true,subtree:true});
+}
 function injectCustomerTab(){
  const overlay=document.getElementById('wsClienteOverlay');if(!overlay||!tenant())return;
+ observeClientNavigation();
  const buttons=[...overlay.querySelectorAll('button,[role="tab"]')];
  const summary=buttons.find(x=>/^(resumo|visão geral)$/i.test(x.textContent.trim())||x.dataset.aba==='resumo');
  const history=buttons.find(x=>/^hist[oó]rico$/i.test(x.textContent.trim())||x.dataset.aba==='historico');
  const reference=summary||history;if(!reference||overlay.querySelector('[data-tg-survey-tab]'))return;
  const tab=document.createElement('button');tab.type='button';tab.className=reference.className;tab.dataset.tgSurveyTab='';tab.dataset.aba='satisfacao';tab.innerHTML='<i class="fas fa-star"></i> Satisfação';
+ if(overlay.dataset.abaAtual==='satisfacao')tab.classList.add('ativo','active');
  if(summary)summary.after(tab);else history.before(tab);
  tab.addEventListener('click',event=>{
   event.preventDefault();event.stopPropagation();
@@ -178,9 +195,12 @@ document.addEventListener('click',event=>{
    const last=visible.at(-1);if(last)warnCustomer(last.value);
   },450);
  }
- setTimeout(refresh,100);
+ // Não esperar pelo timeout do clique: o observador repõe o separador antes do paint.
+ observeClientNavigation();
+ setTimeout(refresh,0);
 });
 document.addEventListener('DOMContentLoaded',()=>{
+ observeClientNavigation();
  refresh();
  setInterval(()=>{if(tenant()){installOS();injectCustomerTab();}if(document.getElementById('hdcSatisfacao'))dashboard();},60000);
 });
