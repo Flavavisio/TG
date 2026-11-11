@@ -169,6 +169,49 @@ function injectCustomerTab(){
   openCustomer(id);
  });
 }
+const surveyQuestions=[
+ ['avaliacao_tecnico','Atendimento e profissionalismo do técnico'],
+ ['avaliacao_execucao','Qualidade da execução do serviço ou obra'],
+ ['avaliacao_pontualidade','Pontualidade e cumprimento dos horários'],
+ ['avaliacao_limpeza','Organização e limpeza no final da intervenção'],
+ ['avaliacao_geral','Satisfação geral com o serviço']
+];
+async function expandSurveyDashboard(){
+ if(!yes())return;
+ document.getElementById('tgSurveyDashboardModal')?.remove();
+ const overlay=document.createElement('div');
+ overlay.id='tgSurveyDashboardModal';overlay.className='tg-sat-warning tg-os-survey-modal';
+ const panel=document.createElement('div');
+ panel.className='tg-os-survey-modal-panel';
+ panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','true');
+ panel.setAttribute('aria-label','Detalhes de satisfação dos inquéritos');
+ panel.innerHTML='<header><div><small>INQUÉRITOS DAS ORDENS DE SERVIÇO</small><h2>Satisfação dos Inquéritos</h2><p>Classificações de cada pergunta, exclusivamente de inquéritos respondidos por link.</p></div><button type="button" data-survey-modal-close aria-label="Fechar">✕</button></header><div data-survey-modal-content> A carregar avaliações… </div>';
+ overlay.append(panel);document.body.append(overlay);
+ const close=()=>overlay.remove();
+ panel.querySelector('[data-survey-modal-close]').addEventListener('click',close);
+ overlay.addEventListener('click',e=>{if(e.target===overlay)close();});
+ const escape=e=>{if(e.key==='Escape'){close();document.removeEventListener('keydown',escape);}};
+ document.addEventListener('keydown',escape);
+ panel.querySelector('[data-survey-modal-close]').focus();
+ try{
+  const rows=(await fetchRows(true)).filter(r=>r.respondido_em);
+  if(!overlay.isConnected)return;
+  const content=panel.querySelector('[data-survey-modal-content]');
+  const averages=surveyQuestions.map(([key,title])=>{
+   const valid=rows.map(r=>Number(r[key])).filter(n=>Number.isInteger(n)&&n>=1&&n<=5);
+   const avg=valid.length?valid.reduce((a,b)=>a+b,0)/valid.length:0;
+   const counts=[1,2,3,4,5].map(n=>valid.filter(v=>v===n).length);
+   return {key,title,average:avg,total:valid.length,counts};
+  });
+  content.innerHTML='<div class="tg-os-survey-modal-summary"><strong>'+rows.length+'</strong> inquéritos respondidos</div>'+
+  '<div class="tg-os-survey-question-grid">'+averages.map(q=>'<section class="tg-os-survey-question"><div class="tg-os-survey-question-top"><strong>'+esc(q.title)+'</strong><b>'+(q.total?q.average.toLocaleString('pt-PT',{minimumFractionDigits:1,maximumFractionDigits:1}):'—')+' / 5</b></div><div class="tg-os-survey-question-chart">'+q.counts.map((n,i)=>'<div class="tg-os-survey-question-row"><small>'+(i+1)+' ★</small><div class="tg-os-survey-bar-track"><div class="tg-os-survey-bar-fill rating-'+(i+1)+'" style="width:'+(q.total?100*n/q.total:0)+'%"></div></div><span>'+n+'</span></div>').join('')+'</div></section>').join('')+'</div>'+
+  '<h3>Respostas individuais</h3>'+
+  (rows.length?rows.slice().sort((a,b)=>String(b.respondido_em).localeCompare(String(a.respondido_em))).map(r=>{
+   const os=(records().servicos||[]).find(o=>String(o.id)===String(r.servico_id));
+   return '<article class="tg-os-survey-answer"><div class="tg-os-survey-answer-head"><strong>'+esc(customerName(r.cliente_id))+'</strong><span>OS '+esc(os?.numeroRegisto||r.servico_id)+' · '+esc(stamp(r.respondido_em))+'</span></div><div class="tg-os-survey-answer-scores">'+surveyQuestions.map(([k,title])=>'<div><span>'+esc(title)+'</span><b>'+esc(r[k]??'—')+'/5</b></div>').join('')+'</div><p>'+esc(r.comentario||'Sem comentário.')+'</p></article>';
+  }).join(''):'<p>Não existem inquéritos respondidos.</p>');
+ }catch(e){if(overlay.isConnected)panel.querySelector('[data-survey-modal-content]').textContent='Não foi possível carregar as avaliações. Tente novamente.';}
+}
 async function dashboard(){
  if(!yes())return;
  const parent=document.getElementById('hdcSatisfacao');if(!parent?.isConnected)return;
@@ -185,12 +228,11 @@ async function dashboard(){
   const avg=rated.length?(rated.reduce((acc,r)=>acc+Number(r.avaliacao_geral),0)/rated.length).toFixed(1).replace('.',','):'—';
   const count=Array.from({length:5},(_,i)=>rated.filter(r=>Number(r.avaliacao_geral)===i+1).length);
   const max=Math.max(1,...count);
-  mount.innerHTML='<header class="tg-os-survey-heading"><h4><i class="fas fa-chart-column"></i> Satisfação dos Inquéritos</h4><button type="button" class="btn btn-outline" data-sat-refresh title="Atualizar os inquéritos">Atualizar</button></header>'+
+  mount.innerHTML='<header class="tg-os-survey-heading"><h4><i class="fas fa-chart-column"></i> Satisfação dos Inquéritos</h4><button type="button" class="btn btn-outline" data-sat-expand title="Expandir inquéritos">Expandir <i class="fas fa-expand"></i></button></header>'+
    '<div class="tg-sat-metrics"><span><b>'+rated.length+'</b> respostas</span><span><b>'+avg+'</b> média / 5</span><span class="'+(neg.length?'negative':'')+'"><b>'+neg.length+'</b> negativas</span></div>'+
    '<div class="tg-os-survey-chart" role="img" aria-label="Distribuição das avaliações gerais dos inquéritos por estrelas">'+count.map((n,i)=>'<div class="tg-os-survey-bar-row"><span>'+String(i+1)+' ★</span><div class="tg-os-survey-bar-track"><div class="tg-os-survey-bar-fill rating-'+String(i+1)+'" style="width:'+(100*n/max)+'%"></div></div><b>'+n+'</b></div>').join('')+'</div>'+
-   '<p class="tg-sat-source">Apenas inquéritos respondidos através do link das OS. Não inclui os relatórios técnicos.</p>'+
-   (neg.length?'<details><summary>Ver avaliações negativas</summary>'+neg.slice(0,10).map(r=>'<p><strong>'+esc(customerName(r.cliente_id))+'</strong> · '+r.avaliacao_geral+'/5 · '+esc(stamp(r.respondido_em))+'<br>'+esc(r.comentario||'Sem comentário')+'</p>').join('')+'</details>':'');
-  mount.querySelector('[data-sat-refresh]')?.addEventListener('click',async()=>{cache.at=0;await dashboard();});
+   '<p class="tg-sat-source">Respostas aos inquéritos das OS · Escala 1 a 5</p>';
+  mount.querySelector('[data-sat-expand]')?.addEventListener('click',expandSurveyDashboard);
  }catch(e){mount.textContent='Não foi possível atualizar os inquéritos.';}
 }
 
