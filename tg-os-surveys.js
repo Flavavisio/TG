@@ -193,6 +193,58 @@ async function dashboard(){
   mount.querySelector('[data-sat-refresh]')?.addEventListener('click',async()=>{cache.at=0;await dashboard();});
  }catch(e){mount.textContent='Não foi possível atualizar os inquéritos.';}
 }
+
+let serviceTableObserver=null,serviceTableNode=null,serviceRenderPending=false;
+function findRowOS(tr){
+ const org=tenant();if(!org)return null;
+ const all=(records().servicos||[]).filter(x=>String(x.adminId)===org);
+ const first=(tr.cells?.[0]?.textContent||'').trim();
+ const byNumber=all.find(x=>x.numeroRegisto&&String(x.numeroRegisto).trim()===first);
+ if(byNumber)return byNumber;
+ for(const key of [tr.dataset.servicoId,tr.dataset.osId,tr.dataset.id].filter(Boolean)){
+  const match=all.find(x=>String(x.id)===String(key));if(match)return match;
+ }
+ const html=[...tr.querySelectorAll('[onclick],[data-os-id]')].map(x=>x.getAttribute('onclick')||x.dataset.osId||'').join(' ');
+ for(const x of all){if(html.includes("'"+String(x.id)+"'")||html.includes('"'+String(x.id)+'"'))return x;}
+ return null;
+}
+function surveyListColumn(rows){
+ const tbody=document.getElementById('tabelaServicos');if(!yes()||!tbody)return;
+ const head=tbody.closest('table')?.querySelector('thead tr');if(!head)return;
+ if(!head.querySelector('[data-sat-os-heading]')){
+  const th=document.createElement('th');th.dataset.satOsHeading='';th.textContent='Inquérito respondido';
+  head.insertBefore(th,head.lastElementChild);
+ }
+ const lookup=new Map(rows.map(r=>[String(r.servico_id),r]));
+ [...tbody.rows].forEach(tr=>{
+  if(!tr.cells?.length)return;
+  let td=tr.querySelector('[data-sat-os-cell]');
+  if(!td){td=document.createElement('td');td.dataset.satOsCell='';tr.insertBefore(td,tr.lastElementChild);}
+  const os=findRowOS(tr);
+  if(!os){td.textContent='—';td.title='OS não identificada';return;}
+  const survey=lookup.get(String(os.id)),answered=!!survey?.respondido_em;
+  const signature=String(os.id)+':'+(answered?'1':'0');
+  if(td.dataset.satSignature===signature)return;
+  td.dataset.satSignature=signature;
+  td.innerHTML=answered?'<button type="button" class="tg-sat-os-yes" aria-label="Inquérito respondido, ver resposta">Sim · Ver resposta</button>':'<span class="tg-sat-os-no">Não</span>';
+  td.querySelector('button')?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();showOSResponse(os.id);});
+ });
+}
+async function renderSurveyList(){
+ if(!yes())return;
+ const tbody=document.getElementById('tabelaServicos');if(!tbody)return;
+ if(tbody!==serviceTableNode){
+  serviceTableObserver?.disconnect();serviceTableNode=tbody;
+  serviceTableObserver=new MutationObserver(mutations=>{
+   if(mutations.some(m=>m.type==='childList')&&!serviceRenderPending){
+    serviceRenderPending=true;queueMicrotask(()=>{serviceRenderPending=false;renderSurveyList();});
+   }
+  });
+  serviceTableObserver.observe(tbody,{childList:true,subtree:false});
+ }
+ try{surveyListColumn(await fetchRows());}
+ catch(e){console.warn('Inquéritos: falha ao atualizar a coluna',e);}
+}
 async function warnCustomer(id){
  if(!yes()||!id||id===warned)return;
  try{
@@ -220,10 +272,10 @@ function watchCustomerSelect(event){
 }
 let ticking=false;
 function refresh(){
- if(ticking)return;ticking=true;setTimeout(()=>{ticking=false;installOS();injectCustomerTab();if(activeOS)mountOS(activeOS);if(document.getElementById('hdcSatisfacao')&&!document.getElementById('tgOsSatisfactionDashboard'))dashboard();},200);
+ if(ticking)return;ticking=true;setTimeout(()=>{ticking=false;installOS();injectCustomerTab();if(activeOS)mountOS(activeOS);renderSurveyList();if(document.getElementById('hdcSatisfacao')&&!document.getElementById('tgOsSatisfactionDashboard'))dashboard();},200);
 }
 document.addEventListener('change',watchCustomerSelect,true);
-document.addEventListener('tg:interface-updated',()=>{cache.at=0;refresh();dashboard();});
+document.addEventListener('tg:interface-updated',()=>{cache.at=0;refresh();dashboard();renderSurveyList();});
 document.addEventListener('click',event=>{
  if(event.target.closest('[data-tg-survey-tab]'))return;
  const action=event.target.closest('button,a,[role="button"]');
@@ -242,7 +294,7 @@ document.addEventListener('click',event=>{
 document.addEventListener('DOMContentLoaded',()=>{
  observeClientNavigation();
  refresh();
- setInterval(()=>{if(tenant()){installOS();injectCustomerTab();}if(document.getElementById('hdcSatisfacao'))dashboard();},60000);
+ setInterval(()=>{if(tenant()){installOS();injectCustomerTab();renderSurveyList();}if(document.getElementById('hdcSatisfacao'))dashboard();},30000);
 });
-window.TGOSSurveys={linkForOS,copyLink,openCustomer,fetchRows,dashboard,warnCustomer};
+window.TGOSSurveys={linkForOS,copyLink,openCustomer,fetchRows,dashboard,warnCustomer,showOSResponse,renderSurveyList};
 })();
