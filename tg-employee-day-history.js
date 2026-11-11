@@ -125,10 +125,18 @@ function inject(){
  if(!staff)return;
  const card=document.createElement('div');card.className='card-principal';card.dataset.card='historico-diario';
  card.innerHTML='<div class="icon"><i class="fas fa-calendar-day"></i></div><div class="info"><h3>Histórico Diário</h3><p>Entradas, pausas, trabalhos e localizações</p></div>';
- card.addEventListener('click',e=>{e.preventDefault();open();});
+ card.setAttribute('onclick','return abrirHistoricoDiarioFuncionario()');
  staff.after(card);
 }
 window.TGHistoricoDiario={open,close};
+window.abrirHistoricoDiarioFuncionario=function(){open();return false;};
+// Os menus Nexus/Equipa são reconstruídos dinamicamente. Intercetar a opção
+// antes dos renderizadores evita um cartão visível sem ação associada.
+document.addEventListener('click',event=>{
+ const target=event.target instanceof Element ? event.target.closest('[data-tgn-card="historico-diario"],[data-nx-open="historico-diario"],[data-secao="historico-diario"],.card-principal[data-card="historico-diario"],[data-tghd-open]') : null;
+ if(!target||!tenant())return;
+ event.preventDefault();event.stopImmediatePropagation();open();
+},true);
 const observer=new MutationObserver(()=>{if(document.getElementById('tgHistoricoDiario')&&!tenant())close();inject();});
 function start(){observer.observe(document.body,{childList:true,subtree:true,attributes:false});const area=document.getElementById('secao-navegacao-simples');if(area)observer.observe(area,{childList:true,attributes:true,attributeFilter:['class']});inject();document.addEventListener('click',()=>setTimeout(inject,0));}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
