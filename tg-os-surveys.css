@@ -49,3 +49,49 @@
 .tg-sat-response-dialog .tg-sat-record{margin:12px 0;background:#fff}
 .tg-survey-actions [data-sat-os-state]{font-size:12px;color:#607088;white-space:nowrap}
 @media(max-width:670px){#tgOsSatisfactionDashboard.tg-os-satisfaction-card{height:auto;min-height:0}}
+
+/* Dashboard compacto: sem scroll interno. Detalhe num modal dedicado. */
+#secao-dashboard-central #tgOsSatisfactionDashboard.tg-os-satisfaction-card,
+#tgOsSatisfactionDashboard.tg-os-satisfaction-card{
+  gap:6px!important;padding:10px 11px!important;min-height:0!important;
+  height:auto!important;overflow:visible!important;
+  font-size:11px;line-height:1.25;
+}
+#tgOsSatisfactionDashboard .tg-os-survey-heading{gap:6px}
+#tgOsSatisfactionDashboard .tg-os-survey-heading h4{font-size:12px!important;line-height:1.2}
+#tgOsSatisfactionDashboard .tg-os-survey-heading button{font-size:10px!important;padding:5px 7px!important;white-space:nowrap;flex-shrink:0}
+#tgOsSatisfactionDashboard .tg-sat-metrics{gap:4px;flex-wrap:wrap}
+#tgOsSatisfactionDashboard .tg-sat-metrics span{font-size:9px!important;padding:4px 6px}
+#tgOsSatisfactionDashboard .tg-sat-metrics b{font-size:12px!important}
+#tgOsSatisfactionDashboard .tg-os-survey-chart{gap:4px}
+#tgOsSatisfactionDashboard .tg-os-survey-bar-row{font-size:10px;grid-template-columns:28px minmax(0,1fr) 18px;gap:5px}
+#tgOsSatisfactionDashboard .tg-os-survey-bar-track{height:9px}
+#tgOsSatisfactionDashboard .tg-sat-source{font-size:9px!important;line-height:1.2!important}
+.tg-os-survey-modal{z-index:100700}
+.tg-os-survey-modal-panel{background:#fff;color:#1e3558;width:min(970px,100%);max-height:92dvh;overflow:auto;border-radius:15px;padding:24px;box-shadow:0 18px 60px #0004}
+.tg-os-survey-modal-panel>header{display:flex;gap:12px;justify-content:space-between;align-items:flex-start;border-bottom:1px solid #dce4ef;padding-bottom:14px;margin-bottom:18px}
+.tg-os-survey-modal-panel>header small{font-size:10px;letter-spacing:.09em;color:#64748b;font-weight:750}
+.tg-os-survey-modal-panel>header h2{font-size:23px;margin:4px 0}
+.tg-os-survey-modal-panel>header p{font-size:12px;margin:0;color:#64748b}
+.tg-os-survey-modal-panel>header button{background:#eff3f9;color:#253d61;border:0;border-radius:9px;width:34px;height:34px;cursor:pointer;font-size:19px;flex-shrink:0}
+.tg-os-survey-modal-summary{background:#eff4fa;padding:11px 13px;border-radius:9px;margin-bottom:15px;font-size:13px}
+.tg-os-survey-question-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.tg-os-survey-question{padding:15px;border-radius:11px;border:1px solid #dce6f1;background:#fff;min-width:0}
+.tg-os-survey-question-top{display:flex;gap:12px;justify-content:space-between;align-items:flex-start;margin-bottom:13px;font-size:13px}
+.tg-os-survey-question-top b{white-space:nowrap;color:#143b69}
+.tg-os-survey-question-chart{display:grid;gap:6px}
+.tg-os-survey-question-row{display:grid;grid-template-columns:35px minmax(0,1fr) 28px;align-items:center;gap:8px;font-size:12px}
+.tg-os-survey-question-row span{text-align:right;font-variant-numeric:tabular-nums}
+.tg-os-survey-modal-panel h3{font-size:17px;margin:24px 0 10px}
+.tg-os-survey-answer{border:1px solid #dce6f1;border-radius:10px;padding:14px;margin-top:10px}
+.tg-os-survey-answer-head{display:flex;gap:9px;flex-wrap:wrap;justify-content:space-between;margin-bottom:10px;font-size:13px}
+.tg-os-survey-answer-head span{font-size:12px;color:#64748b}
+.tg-os-survey-answer-scores{display:grid;gap:6px}
+.tg-os-survey-answer-scores>div{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid #eef2f7;padding:5px 0;font-size:12px}
+.tg-os-survey-answer-scores b{white-space:nowrap;color:#193e69}
+.tg-os-survey-answer p{white-space:pre-wrap;font-size:12px;margin:10px 0 0}
+@media(max-width:680px){
+ .tg-os-survey-modal-panel{padding:16px}
+ .tg-os-survey-question-grid{grid-template-columns:1fr}
+ .tg-os-survey-modal-panel>header h2{font-size:19px}
+}
