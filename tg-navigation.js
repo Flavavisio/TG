@@ -1,6 +1,8 @@
 /* Teste TG: task-based navigation. Source cards remain the permission authority. */
 (function () {
     'use strict';
+    const horasMinutos = value => { const hours=Number(value); if(!Number.isFinite(hours)||hours<0)return '0 min'; const total=Math.round(hours*60); const h=Math.floor(total/60),m=total%60; return h ? `${h} h${m ? ` ${m} min` : ''}` : `${m} min`; };
+
     if (window.TGNavigation) return;
     const $ = id => document.getElementById(id);
     const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -233,7 +235,7 @@
         workSelection(tab);
         if(tab==='resumo'){
             const hours=ctx.sheets.reduce((sum,f)=>sum+(Number(f.horasTrabalhadas)||0),0);
-            content.innerHTML=`<section class="tgn-work-summary"><h3>Resumo da obra</h3><div class="tgn-work-kpis"><div><strong>${ctx.os.length}</strong><span>OS associadas</span></div><div><strong>${ctx.sheets.length}</strong><span>Folhas registadas</span></div><div><strong>${hours.toLocaleString('pt-PT',{maximumFractionDigits:2})} h</strong><span>Horas registadas</span></div></div><p class="help-text">Consulta as OS, folhas, relatórios e materiais nos separadores desta obra.</p></section>`;
+            content.innerHTML=`<section class="tgn-work-summary"><h3>Resumo da obra</h3><div class="tgn-work-kpis"><div><strong>${ctx.os.length}</strong><span>OS associadas</span></div><div><strong>${ctx.sheets.length}</strong><span>Folhas registadas</span></div><div><strong>${horasMinutos(hours)}</strong><span>Horas registadas</span></div></div><p class="help-text">Consulta as OS, folhas, relatórios e materiais nos separadores desta obra.</p></section>`;
         } else if(tab==='os'){
             content.innerHTML='<h3>Ordens de serviço da obra</h3><div class="tgn-work-list">'+(ctx.os.map(os=>`<button type="button" class="tgn-tile" data-tgn-work-os="${esc(os.id)}"><span><strong>${esc(os.numeroRegisto||os.descricao||'Ordem de serviço')}</strong><small>${esc(os.data||'Por agendar')} · ${esc(os.status||'Pendente')}</small></span><span>Ver OS ›</span></button>`).join('')||'<p class="help-text">Sem OS disponíveis para o teu perfil nesta obra.</p>')+'</div>';
         } else if(tab==='relatorios'){
@@ -251,6 +253,8 @@
         const options=document.createElement('details');options.className='tgn-work-options';options.innerHTML='<summary>Mais opções da obra</summary><div class="tgn-work-extra"></div>';
         ['Documentos','Financeiro','Marcos','Checklist'].forEach(key=>{const button=$('verObraBtn'+key);if(button)options.querySelector('div').append(button);});
         options.addEventListener('click',event=>{if(event.target.closest('button'))options.open=false;});parent.after(options);
+        // O registo de entrada faz-se nos trabalhos atribuídos, não no detalhe desta obra.
+        document.querySelectorAll('#modalGenericoCampos button[onclick*="obraLongaPicarEntrada"]').forEach(button=>button.remove());
         parent.classList.add('tgn-work-tabs');workSelection(initial);
         if(['resumo','os','relatorios'].includes(initial))workTab(id,initial);
     }
