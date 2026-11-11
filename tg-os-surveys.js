@@ -40,17 +40,28 @@ async function linkForOS(osId){
  }
  cache.at=0;return data;
 }
+function shareDialog(link){
+ document.getElementById('tgSurveyShare')?.remove();
+ const overlay=document.createElement('div');overlay.id='tgSurveyShare';overlay.className='tg-sat-warning';
+ overlay.innerHTML='<div class="tg-sat-warning-card" role="dialog" aria-modal="true" aria-label="Enviar inquérito"><h3 style="color:#183b69"><i class="fas fa-star"></i> Enviar inquérito ao cliente</h3><p>Copie o link ou abra o WhatsApp para enviar o inquérito relativo a esta OS.</p><label for="tgSurveyLink">Ligação do inquérito</label><input id="tgSurveyLink" style="width:100%;padding:10px;border:1px solid #cad5e4;border-radius:8px;margin:8px 0" readonly><div style="display:flex;gap:9px;flex-wrap:wrap"><button type="button" class="btn btn-outline" data-share-copy>Copiar link</button><button type="button" class="btn btn-success" data-share-whatsapp>WhatsApp</button><button type="button" class="btn" data-share-close>Fechar</button></div></div>';
+ document.body.append(overlay);const input=overlay.querySelector('#tgSurveyLink');input.value=link;
+ overlay.querySelector('[data-share-close]').addEventListener('click',()=>overlay.remove());
+ overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove();});
+ overlay.querySelector('[data-share-copy]').addEventListener('click',async()=>{
+  try{if(navigator.clipboard?.writeText)await navigator.clipboard.writeText(link);else{input.select();if(!document.execCommand('copy'))throw Error('Cópia indisponível');}toast('Link copiado.');}
+  catch(e){input.focus();input.select();toast('Selecione e copie o link apresentado.',true);}
+ });
+ overlay.querySelector('[data-share-whatsapp]').addEventListener('click',()=>{
+  const message='Obrigado pela sua confiança. Agradecemos a sua avaliação do serviço realizado: '+link;
+  window.open('https://wa.me/?text='+encodeURIComponent(message),'_blank','noopener,noreferrer');
+ });
+ input.focus();input.select();
+}
 async function copyLink(osId){
  const button=document.querySelector('[data-sat-os-button]');
  if(button)button.disabled=true;
- try{
-  const row=await linkForOS(osId),link=surveyUrl(row);
-  if(navigator.clipboard?.writeText)await navigator.clipboard.writeText(link);
-  else {
-   const ta=document.createElement('textarea');ta.value=link;document.body.append(ta);ta.select();if(!document.execCommand('copy'))throw Error('Cópia indisponível');ta.remove();
-  }
-  toast('Link de inquérito copiado. Pode enviá-lo por WhatsApp, SMS ou email.');
- }catch(e){toast(e.message||'Erro ao gerar link.',true);}
+ try{const row=await linkForOS(osId);shareDialog(surveyUrl(row));}
+ catch(e){toast(e.message||'Erro ao gerar link.',true);}
  finally{if(button)button.disabled=false;}
 }
 function toast(message,error=false){
@@ -126,7 +137,11 @@ async function dashboard(){
 async function warnCustomer(id){
  if(!yes()||!id||id===warned)return;
  try{
-  const responses=(await fetchRows()).filter(r=>String(r.cliente_id)===String(id)&&r.respondido_em).sort((a,b)=>String(b.respondido_em).localeCompare(String(a.respondido_em)));
+  const services=new Map((records().servicos||[]).filter(s=>String(s.adminId)===tenant()).map(s=>[String(s.id),s]));
+  const responses=(await fetchRows()).filter(r=>String(r.cliente_id)===String(id)&&r.respondido_em).sort((a,b)=>{
+   const date=r=>String(services.get(String(r.servico_id))?.data||r.criado_em||'');
+   return date(b).localeCompare(date(a))||String(b.respondido_em).localeCompare(String(a.respondido_em));
+  });
   const last=responses[0];if(!last||last.avaliacao_geral>2)return;
   warned=id;
   const os=(records().servicos||[]).find(s=>String(s.id)===String(last.servico_id));
