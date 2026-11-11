@@ -151,11 +151,11 @@ function render() {
  timeline.sort((a,b)=>(a.at||'99:99').localeCompare(b.at||'99:99')||a.priority-b.priority);
  const countJobs=new Set(items.filter(x=>x.kind!=='Ponto').map(x=>x.kind+':'+x.ref)).size;
  let pointNumber=0;timeline.forEach((ev,index)=>{ev.index=index;if(ev.loc)ev.pointNumber=++pointNumber;});
- const first=timeline.find(ev=>ev.at), last=[...timeline].reverse().find(ev=>ev.at);
+ const firstEvent=timeline.find(ev=>ev.at), lastEvent=[...timeline].reverse().find(ev=>ev.at);
  const jobRows=items.filter(x=>x.kind!=='Ponto');
  root.innerHTML='<div class="tghd-summary"><strong>'+esc(person.nome||'Funcionário')+'</strong> · '+esc(date.value)+
  '<div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:8px"><span><b>'+countJobs+'</b> trabalhos</span><span><b>'+pointNumber+'</b> pontos GPS</span><span><b>'+fmt(total)+'</b> intervenções completas</span></div>'+
- '<small>Primeiro registo: '+esc(first?.at||'—')+' · Último registo: '+esc(last?.at||'—')+'. Os horários não substituem o apuramento oficial de horas.</small></div>'+
+ '<small>Primeiro registo: '+esc(firstEvent?.at||'—')+' · Último registo: '+esc(lastEvent?.at||'—')+'. Os horários não substituem o apuramento oficial de horas.</small></div>'+
  '<div class="tghd-layout"><section class="tghd-timeline"><h3>Cronologia do dia</h3>'+
  (timeline.length?timeline.map(x=>'<button type="button" class="tghd-timeline-row" data-tghd-point="'+x.index+'"><span class="tghd-index '+(x.loc?'':'no-gps')+'">'+(x.pointNumber||'·')+'</span><span class="tghd-timeline-body"><strong>'+esc(x.at||'Sem hora')+' · '+esc(x.label)+'</strong><small>'+(x.loc?'Ponto '+x.pointNumber+' · GPS registado':'Sem localização GPS')+'</small></span></button>').join(''):'<p>Sem registos para esta data.</p>')+
  '<h3 style="margin-top:18px">Trabalhos realizados</h3>'+
