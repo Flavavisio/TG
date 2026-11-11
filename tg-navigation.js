@@ -14,7 +14,7 @@
     // A estrutura é comum a Admin e Sub-Admin; permissões apenas filtram acessos.
     const groups = [
         ['comercial','Comercial','fa-handshake-angle',['clientes','crm','contratos','distribuicao']],
-        ['equipa','Equipa','fa-users-gear',['funcionarios','historico-diario','encarregados','ponto','assiduidade','pedidos','calendario-equipa','mapa-equipa','alertas-geofence','quiosque']],
+        ['equipa','Equipa','fa-users-gear',['funcionarios','historico-diario','assiduidade','pedidos','encarregados','ponto','calendario-equipa','mapa-equipa','alertas-geofence','quiosque']],
         ['operacoes','Obras e Serviços','fa-gears',['obras-longa','servicos','assistencias','folhas','agenda-obras','agenda']],
         ['frota','Frota','fa-car',['frota']],
         ['rondas','Rondas','fa-route',['rondas']],
