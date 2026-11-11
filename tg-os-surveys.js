@@ -165,7 +165,19 @@ function refresh(){
 }
 document.addEventListener('change',watchCustomerSelect,true);
 document.addEventListener('tg:interface-updated',()=>{cache.at=0;refresh();dashboard();});
-document.addEventListener('click',event=>{if(event.target.closest('[data-tg-survey-tab]'))return;setTimeout(refresh,100);});
+document.addEventListener('click',event=>{
+ if(event.target.closest('[data-tg-survey-tab]'))return;
+ const action=event.target.closest('button,a,[role="button"]');
+ if(action&&/nova os|nova ordem de servi|criar ordem de servi|novo servi/i.test((action.textContent||'').trim())){
+  warned='';
+  setTimeout(()=>{
+   const selectors=[...document.querySelectorAll('select[id*="cliente" i],select[name*="cliente" i]')];
+   const visible=selectors.filter(el=>el.getClientRects().length&&el.value&&(records().clientes||[]).some(c=>String(c.id)===String(el.value)));
+   const last=visible.at(-1);if(last)warnCustomer(last.value);
+  },450);
+ }
+ setTimeout(refresh,100);
+});
 document.addEventListener('DOMContentLoaded',()=>{refresh();setInterval(()=>{if(document.getElementById('hdcSatisfacao'))dashboard();},60000);});
 window.TGOSSurveys={linkForOS,copyLink,openCustomer,fetchRows,dashboard,warnCustomer};
 })();
