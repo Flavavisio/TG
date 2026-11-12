@@ -59,6 +59,13 @@
         const pause=typeof _pausaAlmocoPendente==='function'?_pausaAlmocoPendente():null;
         return !!pause && (job.kind==='os'?pause.tipo==='os'&&pause.servicoId===job.id:pause.tipo==='obra'&&pause.obraId===job.id);
     }
+    function pausedWork(job) {
+        if(!job||job.open)return false;
+        const entries=rows(job.kind==='os'?'ponto':'obraPontoLonga')
+            .filter(p=>p.funcionarioId===u()?.id&&p.data===today()
+                &&(job.kind==='os'?p.servicoId===job.id:p.obraId===job.id)&&p.entrada);
+        return entries.length>0&&entries[entries.length-1].motivoSaida==='pausa';
+    }
     const express = () => expressAtivo(adminDoUtilizador());
     const attendance = () => pontoAssiduidadeAtivo();
     function mark(name) {
@@ -110,9 +117,9 @@
         if (typeof _osMapaInfo==='function')map=_osMapaInfo(job.row.clienteId,job.address,job.row.localId);
         // Keep navigation URLs supplied by the existing location resolver, never arbitrary schemes.
         const mapLink=map && /^https:\/\//i.test(map.url||'')?`<a class="tgt-button" href="${esc(map.url)}" target="_blank" rel="noopener"${job.kind==='os'?` data-tgt-travel="${esc(job.id)}"`:''}>${icon('route')} Navegar</a>`:'';
-        const resume=resumingLunch(job);
-        const status=open?'EM CURSO':resume?'REGRESSAR DO ALMOÇO':'A SEGUIR';
-        const startLabel=open?'Registar saída':resume?'Regressar à intervenção':attendance()&&!clock?'Picar entrada no dia':'Iniciar intervenção';
+        const resume=resumingLunch(job),paused=pausedWork(job);
+        const status=open?'EM CURSO':paused?'EM PAUSA':resume?'REGRESSAR DO ALMOÇO':'A SEGUIR';
+        const startLabel=open?(job.kind==='os'?'Registar saída':'Pausar obra'):paused?'Retomar intervenção':resume?'Regressar à intervenção':attendance()&&!clock?'Picar entrada no dia':'Iniciar intervenção';
         const pendente=open && job.kind==='os' && typeof _entradaOSPendenteSincronizacao==='function'
             && _entradaOSPendenteSincronizacao(job.row,job.open);
         const info=open?'Entrada registada às '+job.open.entrada+(job.open.data!==today()?' · '+job.open.data.split('-').reverse().join('/'):'')
@@ -123,7 +130,7 @@
             ${info?`<p class="tgt-focus-info">${esc(info)}</p>`:''}
             ${open && typeof _tempoServicoHTML==='function'?_tempoServicoHTML(job.open,job.kind==='obra'?'Em serviço nesta obra há':'Em serviço neste cliente há'):''}
             ${open?`<div class="tgt-tools">${job.kind==='os'?button(icon('camera')+' Fotografias','photos',job):''}${button(icon('boxes-stacked')+' Materiais','materials',job)}${passportTarget(job)?button(icon('id-card')+' Passaporte','passport',job):''}</div>`:''}
-            <div class="tgt-focus-actions">${button(startLabel+' '+icon('arrow-right'),open?'exit':'start',job,true)}<div class="tgt-detail-actions">${button('Ver '+(job.kind==='os'?'ordem de serviço':'obra'),'details',job)}${mapLink}</div></div></section>`;
+            <div class="tgt-focus-actions">${button(startLabel+' '+icon('arrow-right'),open?(job.kind==='os'?'exit':'pause'):'start',job,true)}<div class="tgt-detail-actions">${button('Ver '+(job.kind==='os'?'ordem de serviço':'obra'),'details',job)}${mapLink}</div></div></section>`;
     }
     function recordsHTML() {
         if(!permitted('folhas'))return '';
@@ -154,9 +161,16 @@
         const oldSession=list.some(job=>job.kind==='os'&&job.open&&job.date!==today());
         const day=new Date(today()+'T12:00:00').toLocaleDateString('pt-PT',{weekday:'long',day:'numeric',month:'long'});
         const general=personalClock();
+        const generalRecords=rows('ponto').filter(p=>p.funcionarioId===u()?.id&&!p.servicoId&&!p.obraId&&p.data===today()&&p.entrada);
+        const hasGeneralRecord=generalRecords.length>0;
+        const lunchTaken=generalRecords.some(p=>p.pausaAlmoco&&p.saida);
+        const latestGeneral=generalRecords[generalRecords.length-1];
+        const lunchPending=!general&&!!latestGeneral?.pausaAlmoco&&!!latestGeneral.saida;
+        // Production policy: one lunch break per working day, unlike temporary TesteTG mode.
+        const lunchBar=hasGeneralRecord&&(lunchPending||general&&!lunchTaken)?`<div class="tgt-clock tgt-lunch"><span>${icon('utensils')}<span><strong>Pausa para almoço</strong><small>${lunchPending?'Em almoço':'A pausa não conta como tempo em serviço'}</small></span></span>${button(lunchPending?'Regresso de almoço':'Sair para almoço','lunch')}</div>`:'';
         const team=u()?.role==='encarregado' && window.TGSupervisorHome ? `<details class="tgt-team"><summary>${icon('users')} A minha equipa</summary>${TGSupervisorHome.html(tenant(),today())}</details>`:'';
 
-        const html=`<div class="tgt-home"><header class="tgt-day-head"><p class="tgt-eyebrow">ÁREA DO TÉCNICO</p><h2>O meu dia</h2><p>Hoje · ${esc(day)}</p>${avatarHTML()}</header>${attendance()?`<div class="tgt-clock"><span>${icon('fingerprint')}<span><strong>Ponto de hoje</strong><small>${general?'Entrada às '+esc(general.entrada):'Sem entrada registada'}</small></span></span>${button(general?'Ver ponto':'Picar entrada',general?'point':'clock')}</div>`:''}${openWork?button('Tens uma obra em curso · Abrir Obras','works'):''}${focusHTML(focus)}${recordsHTML()}${todayListHTML(available)}${draftsHTML(list)}${team}</div>`;
+        const html=`<div class="tgt-home"><header class="tgt-day-head"><p class="tgt-eyebrow">ÁREA DO TÉCNICO</p><h2>O meu dia</h2><p>Hoje · ${esc(day)}</p>${avatarHTML()}</header>${attendance()?`<div class="tgt-clock"><span>${icon('fingerprint')}<span><strong>Ponto de hoje</strong><small>${general?'Entrada às '+esc(general.entrada):'Sem entrada registada'}</small></span></span>${general?button('Dar saída','clock'):button('Dar entrada','clock')}${general?button('Ver ponto','point'):''}</div>${lunchBar}`:''}${openWork?button('Tens uma obra em curso · Abrir Obras','works'):''}${focusHTML(focus)}${recordsHTML()}${todayListHTML(available)}${draftsHTML(list)}${team}</div>`;
         const finalHTML=oldSession?html.replace('</header>','</header>'+button('Entrada anterior por encerrar · Abrir Trabalhos','jobs')):html;
         if(dia.dataset.tgtHtml!==finalHTML || dia.firstElementChild!==homeRoot){dia.innerHTML=finalHTML;dia.dataset.tgtHtml=finalHTML;}
         homeRoot=dia.firstElementChild;
@@ -423,6 +437,112 @@
         if(wizard.root.parentElement===wizard.fields)wizard.parts.forEach(({node})=>wizard.fields.append(node));wizard.root.remove();
         wizard.submit.hidden=false;wizard.submit.innerHTML=wizard.submitText;wizard.form.noValidate=wizard.noValidate;wizards.delete(wizard.form);
     }
+    let pendingOsExitId=null,pendingOsExitJob=null;
+    function updateOsExitMenu() {
+        const overlay=$('modalSimNaoOverlay'),choice=$('modalSimNaoAlmocoBtn');
+        if(!enabled()||!pendingOsExitId||!overlay?.classList.contains('open')||!choice)return;
+        choice.innerHTML=icon('pause')+' Pausar OS';
+    }
+    // Keep the production exit modal's other native options unchanged.
+    // Choosing "Pausar OS" cancels its pending exit flow first, then saves
+    // a dedicated pause of the OS; the general attendance clock keeps running.
+    document.addEventListener('click',event=>{
+        if(!enabled()||!pendingOsExitId)return;
+        const overlay=$('modalSimNaoOverlay');
+        if(!overlay?.classList.contains('open'))return;
+        const pause=$('modalSimNaoAlmocoBtn');
+        if(pause&&(event.target===pause||pause.contains(event.target))){
+            event.preventDefault();event.stopImmediatePropagation();
+            const job=pendingOsExitJob;
+            pendingOsExitId=null;pendingOsExitJob=null;
+            if(typeof _modalSimNaoResponder==='function')_modalSimNaoResponder(null);
+            if(job)setTimeout(()=>pauseWork(job),0);
+        }else if(event.target.closest('button')&&!event.target.closest('#modalSimNaoAlmocoBtn')){
+            pendingOsExitId=null;pendingOsExitJob=null;
+        }
+    },true);
+    if($('modalSimNaoOverlay'))new MutationObserver(updateOsExitMenu)
+        .observe($('modalSimNaoOverlay'),{attributes:true,attributeFilter:['class']});
+    let pauseBusy=false;
+    async function pauseWork(job) {
+        if(pauseBusy||!job?.open||!enabled())return;
+        const active=job.kind==='os'
+            ? rows('ponto').find(p=>p.id===job.open.id&&p.funcionarioId===u()?.id&&p.servicoId===job.id&&!p.saida)
+            : rows('obraPontoLonga').find(p=>p.id===job.open.id&&p.funcionarioId===u()?.id&&p.obraId===job.id&&!p.saida);
+        if(!active)return;
+        pauseBusy=true;
+        const oldExit=active.saida,oldReason=active.motivoSaida;
+        active.saida=new Date().toTimeString().slice(0,8);
+        active.motivoSaida='pausa';
+        try {
+            await guardarDados(dados);
+            renderizarTudo();
+            refresh();
+        }catch(error){
+            active.saida=oldExit;
+            if(oldReason===undefined)delete active.motivoSaida;else active.motivoSaida=oldReason;
+            const message='Não foi possível confirmar a pausa. Tenta novamente: '+(error?.message||'falha de ligação');
+            if(typeof mostrarErro==='function')mostrarErro(message);else alert(message);
+        }finally{pauseBusy=false;}
+    }
+    function handleGeneralClock() {
+        if(!attendance())return;
+        if(!personalClock())return picarPonto();
+        if(typeof abrirSliderConfirmacao!=='function') {
+            if(typeof mostrarErro==='function')mostrarErro('A confirmação por arrastar está indisponível.');
+            return;
+        }
+        if(jobs().some(job=>job.open)||(typeof _pausaAlmocoPendente==='function'&&_pausaAlmocoPendente())){
+            if(typeof mostrarErro==='function')mostrarErro('Pausa ou termina primeiro a intervenção em curso antes de dares saída do dia.');
+            else alert('Pausa ou termina primeiro a intervenção em curso antes de dares saída do dia.');
+            return;
+        }
+        abrirSliderConfirmacao('Dar saída','Confirma a saída do serviço. Arrasta para confirmar.',()=>{
+            // Reuse the native end-of-day persistence and its optional mileage flow.
+            // Resolve its existing question immediately with "saida"; lunch is separate.
+            const pending=picarPonto();
+            const popup=$('modalGenericoOverlay');
+            if(popup?.classList.contains('open')
+                &&popup.querySelector('[onclick*="_responderSaidaOuAlmoco"]')
+                &&typeof _responderSaidaOuAlmoco==='function') {
+                _responderSaidaOuAlmoco('saida');
+            }
+            return pending;
+        });
+    }
+    function handleLunch() {
+        if(!attendance())return;
+        const current=personalClock();
+        const generalRecords=rows('ponto').filter(p=>p.funcionarioId===u()?.id&&!p.servicoId&&!p.obraId&&p.data===today()&&p.entrada);
+        if(current){
+            if(generalRecords.some(p=>p.pausaAlmoco&&p.saida))return;
+            if(jobs().some(job=>job.open)||typeof _pausaAlmocoPendente==='function'&&_pausaAlmocoPendente()){
+                const message='Pausa primeiro a OS ou obra em curso antes de saíres para almoço.';
+                if(typeof mostrarErro==='function')mostrarErro(message);else alert(message);
+                return;
+            }
+            // The native attendance workflow already records pausaAlmoco and persists it.
+            const operation=picarPonto();
+            const popup=$('modalGenericoOverlay');
+            if(popup?.classList.contains('open')&&popup.querySelector('[onclick*="_responderSaidaOuAlmoco"]')&&typeof _responderSaidaOuAlmoco==='function'){
+                _responderSaidaOuAlmoco('almoco');
+            }
+            return operation;
+        }
+        const last=generalRecords[generalRecords.length-1];
+        if(last?.pausaAlmoco&&last.saida)return picarPonto();
+    }
+    function updatePointSummaryActions() {
+        const point=$('secao-ponto');
+        if(!point)return;
+        point.querySelectorAll('button').forEach(control=>{
+            const label=normal(control.textContent).replace(/\s+/g,' ').trim();
+            if(/^(picar|dar) saida$/.test(label)) {
+                if(enabled()){control.hidden=true;control.dataset.tgtHiddenClockOut='true';}
+                else if(control.dataset.tgtHiddenClockOut==='true'){control.hidden=false;delete control.dataset.tgtHiddenClockOut;}
+            }
+        });
+    }
     function refresh() {
         if(refreshing)return;refreshing=true;
         try {
@@ -438,7 +558,7 @@
                 _montarMenuInferiorMobile();renderizarOMeuDia();
                 if(!document.querySelector('.section-container.active')&&view==='home')_mostrarInicioConteudo();
             }
-            updateLeaveBalance();wasEnabled=on;
+            updateLeaveBalance();updatePointSummaryActions();wasEnabled=on;
         }finally{refreshing=false;}
     }
     // Reconcile from the existing local clock records. No network reads or new picagens.
@@ -479,7 +599,7 @@
     wrap('_montarMenuInferiorMobile',function(original,args){const result=original.apply(this,args);if(enabled()){document.body.classList.add('tgt-active');menu();}return result;});
     wrap('_voltarMeuDia',function(original,args){if(enabled())return home();return original.apply(this,args);});
     wrap('_abrirGrupoMobile',function(original,args){if(enabled()){view='group';prepareHome();}const result=original.apply(this,args);if(enabled())menu();return result;});
-    wrap('abrirSecao',function(original,args){if(enabled()&&u()?.role==='funcionario'&&args[0]==='frota')return fleet();if(enabled()&&args[0]==='obras-longa')return worksList();if(enabled()&&['agenda-obras','servicos'].includes(args[0]))return workList();if(enabled())view=args[0]==='folhas'?'records':args[0]==='pedidos'?'leave':'section';const result=original.apply(this,args);if(enabled())menu();return result;});
+    wrap('abrirSecao',function(original,args){if(enabled()&&u()?.role==='funcionario'&&args[0]==='frota')return fleet();if(enabled()&&args[0]==='obras-longa')return worksList();if(enabled()&&['agenda-obras','servicos'].includes(args[0]))return workList();if(enabled())view=args[0]==='folhas'?'records':args[0]==='pedidos'?'leave':'section';const result=original.apply(this,args);if(enabled())menu();updatePointSummaryActions();return result;});
     for(const name of ['criarFolhaDaOS','criarFolhaDaObra'])wrap(name,function(original,args){wizards.forEach(removeWizard);const result=original.apply(this,args);installWizard();return result;});
     wrap('abrirModal',function(original,args){wizards.forEach(removeWizard);return original.apply(this,args);});
     document.addEventListener('submit',event=>{
@@ -505,7 +625,8 @@
             case'jobs':weekDay=today();return navigate(workList);case'works':return navigate(worksList);case'profile':return abrirEditarPerfil();case'point':if(permitted('ponto'))abrirSecao('ponto');return;
             case'sheets':if(permitted('folhas'))abrirSecao('folhas');return;
             case'leave':if(permitted('pedidos'))return navigate(()=>abrirSecao('pedidos'));return;
-            case'clock':return picarPonto();
+            case'clock':return handleGeneralClock();
+            case'lunch':return handleLunch();
             case'wizard-back':if(wizard)setStep(wizard,Math.max(0,wizard.step-1));return;
             case'wizard-next':if(wizard&&validate(wizard,wizard.step))setStep(wizard,Math.min(2,wizard.step+1));return;
         }
@@ -519,7 +640,15 @@
             case'reports':return details(job,'relatorios');
             case'materials':return details(job,'materiais');
             case'start':if(completed(job))return;if(express()&&job.kind==='os')return criarFolhaDaOS(job.id);if(attendance()&&!personalClock()&&!resumingLunch(job))return picarPonto();if(job.open)return;return job.kind==='os'?picarPontoOS(job.id,'entrada'):obraLongaPicarEntrada(job.id);
-            case'exit':if(!job.open)return;return job.kind==='os'?picarPontoOS(job.id,'saida'):obraLongaPicarSaida(job.id);
+            case'pause':return pauseWork(job);
+            case'exit':if(!job.open)return;
+                if(job.kind==='os'){
+                    pendingOsExitId=job.id;pendingOsExitJob=job;
+                    const result=picarPontoOS(job.id,'saida');
+                    updateOsExitMenu();
+                    return result;
+                }
+                return obraLongaPicarSaida(job.id);
         }
     });
     // Watch only modal open/close. Native constructors are synchronous, so background
@@ -538,6 +667,8 @@
         if (event.target.matches?.('img[data-tgt-avatar]')) event.target.hidden = true;
     }, true);
     document.addEventListener('tg:interface-updated',refresh);
+    const pointSummarySection=$('secao-ponto');
+    if(pointSummarySection)new MutationObserver(updatePointSummaryActions).observe(pointSummarySection,{childList:true,subtree:true});
     window.addEventListener('focus',()=>reconcileClockSafely(true));
     document.addEventListener('visibilitychange',()=>{if(!document.hidden)reconcileClockSafely(true);});
     setInterval(()=>reconcileClockSafely(),3000);
