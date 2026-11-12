@@ -1,0 +1,25 @@
+name: Validar bloqueios OS sem ponto
+on:
+  push:
+    branches:
+      - fix/os-sem-ponto-20261112
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verificar sintaxe
+        run: |
+          node --check app-principal.js
+          node --check tg-technician.js
+      - name: Testes OS, ponto e custos
+        run: |
+          node --test tests/os-individual-completion.test.cjs tests/pause-reason-persistence.test.cjs tests/kiosk-work-hours.test.cjs tests/worksite-cost-consistency.test.cjs
+      - name: Regras sem registo de ponto
+        run: |
+          node --test tests/os-no-attendance-guards.test.cjs
