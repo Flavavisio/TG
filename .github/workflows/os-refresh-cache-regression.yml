@@ -1,0 +1,27 @@
+name: Verificar refresh técnico e cache PWA
+on:
+  push:
+    branches:
+      - fix/tecnico-refresh-cache-20261112
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Preparar DOM isolado
+        run: npm install --no-save --no-package-lock jsdom@26
+      - name: Verificar sintaxe JavaScript
+        run: |
+          node --check tg-technician.js
+          node --check app-principal.js
+          node --check sw.js
+      - name: Simulação com 1/2/3 técnicos e várias OS
+        run: node --test tests/os-production-stress.test.cjs
+      - name: Contadores, atualização técnica, PWA, custos e relatórios
+        run: |
+          node --test tests/technician-clock-refresh.test.cjs tests/service-time-isolated.test.cjs tests/os-individual-completion.test.cjs tests/kiosk-work-hours.test.cjs tests/worksite-cost-consistency.test.cjs tests/pause-reason-persistence.test.cjs tests/os-no-attendance-guards.test.cjs
