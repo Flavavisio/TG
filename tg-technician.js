@@ -669,9 +669,9 @@
             case'reports':return details(job,'relatorios');
             case'materials':return details(job,'materiais');
             case'start':if(completed(job))return;if(express()&&job.kind==='os')return criarFolhaDaOS(job.id);if(job.open)return;
-                if(!attendance()&&jobs().some(other=>other.open&&(other.id!==job.id||other.kind!==job.kind))){
+                if(!attendance()&&(jobs().some(other=>other.open&&(other.id!==job.id||other.kind!==job.kind))||pendingPersonalOS().length)){
                     const active=jobs().find(other=>other.open&&(other.id!==job.id||other.kind!==job.kind));
-                    const message='Tens '+label(active)+' em execução. Termina por hoje ou termina a intervenção antes de iniciar outra OS.';
+                    const message=active?'Tens '+label(active)+' em execução. Termina por hoje ou termina a intervenção antes de iniciar outra OS.':'Tens OS por regularizar: '+pendingPersonalOS().join(', ')+'. Regressa e seleciona Terminar por hoje ou Terminar OS.';
                     if(typeof mostrarErro==='function')mostrarErro(message);else alert(message);return;
                 }
                 if(attendance()&&!personalClock()&&!resumingLunch(job))return picarPonto();return job.kind==='os'?picarPontoOS(job.id,'entrada'):obraLongaPicarEntrada(job.id);
