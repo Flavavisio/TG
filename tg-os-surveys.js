@@ -205,11 +205,7 @@ async function expandSurveyDashboard(){
   });
   content.innerHTML='<div class="tg-os-survey-modal-summary"><strong>'+rows.length+'</strong> inquéritos respondidos</div>'+
   '<div class="tg-os-survey-question-grid">'+averages.map(q=>'<section class="tg-os-survey-question"><div class="tg-os-survey-question-top"><strong>'+esc(q.title)+'</strong><b>'+(q.total?q.average.toLocaleString('pt-PT',{minimumFractionDigits:1,maximumFractionDigits:1}):'—')+' / 5</b></div><div class="tg-os-survey-question-chart">'+q.counts.map((n,i)=>'<div class="tg-os-survey-question-row"><small>'+(i+1)+' ★</small><div class="tg-os-survey-bar-track"><div class="tg-os-survey-bar-fill rating-'+(i+1)+'" style="width:'+(q.total?100*n/q.total:0)+'%"></div></div><span>'+n+'</span></div>').join('')+'</div></section>').join('')+'</div>'+
-  '<h3>Respostas individuais</h3>'+
-  (rows.length?rows.slice().sort((a,b)=>String(b.respondido_em).localeCompare(String(a.respondido_em))).map(r=>{
-   const os=(records().servicos||[]).find(o=>String(o.id)===String(r.servico_id));
-   return '<article class="tg-os-survey-answer"><div class="tg-os-survey-answer-head"><strong>'+esc(customerName(r.cliente_id))+'</strong><span>OS '+esc(os?.numeroRegisto||r.servico_id)+' · '+esc(stamp(r.respondido_em))+'</span></div><div class="tg-os-survey-answer-scores">'+surveyQuestions.map(([k,title])=>'<div><span>'+esc(title)+'</span><b>'+esc(r[k]??'—')+'/5</b></div>').join('')+'</div><p>'+esc(r.comentario||'Sem comentário.')+'</p></article>';
-  }).join(''):'<p>Não existem inquéritos respondidos.</p>');
+  '<p class="tg-sat-source">Resultados agregados por pergunta. As respostas individuais continuam disponíveis na ficha do cliente e na respetiva OS.</p>';
  }catch(e){if(overlay.isConnected)panel.querySelector('[data-survey-modal-content]').textContent='Não foi possível carregar as avaliações. Tente novamente.';}
 }
 async function dashboard(){
@@ -236,56 +232,12 @@ async function dashboard(){
  }catch(e){mount.textContent='Não foi possível atualizar os inquéritos.';}
 }
 
-let serviceTableObserver=null,serviceTableNode=null,serviceRenderPending=false;
-function findRowOS(tr){
- const org=tenant();if(!org)return null;
- const all=(records().servicos||[]).filter(x=>String(x.adminId)===org);
- const first=(tr.cells?.[0]?.textContent||'').trim();
- const byNumber=all.find(x=>x.numeroRegisto&&String(x.numeroRegisto).trim()===first);
- if(byNumber)return byNumber;
- for(const key of [tr.dataset.servicoId,tr.dataset.osId,tr.dataset.id].filter(Boolean)){
-  const match=all.find(x=>String(x.id)===String(key));if(match)return match;
- }
- const html=[...tr.querySelectorAll('[onclick],[data-os-id]')].map(x=>x.getAttribute('onclick')||x.dataset.osId||'').join(' ');
- for(const x of all){if(html.includes("'"+String(x.id)+"'")||html.includes('"'+String(x.id)+'"'))return x;}
- return null;
-}
-function surveyListColumn(rows){
- const tbody=document.getElementById('tabelaServicos');if(!yes()||!tbody)return;
- const head=tbody.closest('table')?.querySelector('thead tr');if(!head)return;
- if(!head.querySelector('[data-sat-os-heading]')){
-  const th=document.createElement('th');th.dataset.satOsHeading='';th.textContent='Inquérito respondido';
-  head.insertBefore(th,head.lastElementChild);
- }
- const lookup=new Map(rows.map(r=>[String(r.servico_id),r]));
- [...tbody.rows].forEach(tr=>{
-  if(!tr.cells?.length)return;
-  let td=tr.querySelector('[data-sat-os-cell]');
-  if(!td){td=document.createElement('td');td.dataset.satOsCell='';tr.insertBefore(td,tr.lastElementChild);}
-  const os=findRowOS(tr);
-  if(!os){td.textContent='—';td.title='OS não identificada';return;}
-  const survey=lookup.get(String(os.id)),answered=!!survey?.respondido_em;
-  const signature=String(os.id)+':'+(answered?'1':'0');
-  if(td.dataset.satSignature===signature)return;
-  td.dataset.satSignature=signature;
-  td.innerHTML=answered?'<button type="button" class="tg-sat-os-yes" aria-label="Inquérito respondido, ver resposta">Sim · Ver resposta</button>':'<span class="tg-sat-os-no">Não</span>';
-  td.querySelector('button')?.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();showOSResponse(os.id);});
- });
-}
-async function renderSurveyList(){
- if(!yes())return;
- const tbody=document.getElementById('tabelaServicos');if(!tbody)return;
- if(tbody!==serviceTableNode){
-  serviceTableObserver?.disconnect();serviceTableNode=tbody;
-  serviceTableObserver=new MutationObserver(mutations=>{
-   if(mutations.some(m=>m.type==='childList')&&!serviceRenderPending){
-    serviceRenderPending=true;queueMicrotask(()=>{serviceRenderPending=false;renderSurveyList();});
-   }
-  });
-  serviceTableObserver.observe(tbody,{childList:true,subtree:false});
- }
- try{surveyListColumn(await fetchRows());}
- catch(e){console.warn('Inquéritos: falha ao atualizar a coluna',e);}
+// A tabela das OS não apresenta coluna de inquéritos; os detalhes pertencem à própria OS.
+function removeLegacySurveyColumn(){
+ const tbody=document.getElementById('tabelaServicos');
+ const table=tbody?.closest('table');
+ if(!table)return;
+ table.querySelectorAll('[data-sat-os-heading],[data-sat-os-cell]').forEach(el=>el.remove());
 }
 async function warnCustomer(id){
  if(!yes()||!id||id===warned)return;
@@ -314,10 +266,10 @@ function watchCustomerSelect(event){
 }
 let ticking=false;
 function refresh(){
- if(ticking)return;ticking=true;setTimeout(()=>{ticking=false;installOS();injectCustomerTab();if(activeOS)mountOS(activeOS);renderSurveyList();if(document.getElementById('hdcSatisfacao')&&!document.getElementById('tgOsSatisfactionDashboard'))dashboard();},200);
+ if(ticking)return;ticking=true;setTimeout(()=>{ticking=false;installOS();injectCustomerTab();if(activeOS)mountOS(activeOS);removeLegacySurveyColumn();if(document.getElementById('hdcSatisfacao')&&!document.getElementById('tgOsSatisfactionDashboard'))dashboard();},200);
 }
 document.addEventListener('change',watchCustomerSelect,true);
-document.addEventListener('tg:interface-updated',()=>{cache.at=0;refresh();dashboard();renderSurveyList();});
+document.addEventListener('tg:interface-updated',()=>{cache.at=0;refresh();dashboard();removeLegacySurveyColumn();});
 document.addEventListener('click',event=>{
  if(event.target.closest('[data-tg-survey-tab]'))return;
  const action=event.target.closest('button,a,[role="button"]');
@@ -336,7 +288,7 @@ document.addEventListener('click',event=>{
 document.addEventListener('DOMContentLoaded',()=>{
  observeClientNavigation();
  refresh();
- setInterval(()=>{if(tenant()){installOS();injectCustomerTab();renderSurveyList();}if(document.getElementById('hdcSatisfacao'))dashboard();},30000);
+ setInterval(()=>{if(tenant()){installOS();injectCustomerTab();removeLegacySurveyColumn();}if(document.getElementById('hdcSatisfacao'))dashboard();},30000);
 });
-window.TGOSSurveys={linkForOS,copyLink,openCustomer,fetchRows,dashboard,warnCustomer,showOSResponse,renderSurveyList};
+window.TGOSSurveys={linkForOS,copyLink,openCustomer,fetchRows,dashboard,warnCustomer,showOSResponse};
 })();
