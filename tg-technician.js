@@ -441,13 +441,15 @@
     function updateOsExitMenu() {
         const overlay=$('modalSimNaoOverlay'),choice=$('modalSimNaoAlmocoBtn');
         if(!enabled()||!pendingOsExitId||!overlay?.classList.contains('open')||!choice)return;
-        choice.innerHTML=icon('pause')+' Pausar OS';
+        choice.hidden=!attendance();
+        choice.style.display=attendance()?'':'none';
+        if(attendance())choice.innerHTML=icon('pause')+' Pausar OS';
     }
     // Keep the production exit modal's other native options unchanged.
     // Choosing "Pausar OS" cancels its pending exit flow first, then saves
     // a dedicated pause of the OS; the general attendance clock keeps running.
     document.addEventListener('click',event=>{
-        if(!enabled()||!pendingOsExitId)return;
+        if(!enabled()||!pendingOsExitId||!attendance())return;
         const overlay=$('modalSimNaoOverlay');
         if(!overlay?.classList.contains('open'))return;
         const pause=$('modalSimNaoAlmocoBtn');
@@ -465,7 +467,7 @@
         .observe($('modalSimNaoOverlay'),{attributes:true,attributeFilter:['class']});
     let pauseBusy=false;
     async function pauseWork(job) {
-        if(pauseBusy||!job?.open||!enabled())return;
+        if(pauseBusy||!job?.open||!enabled()||!attendance())return;
         const active=job.kind==='os'
             ? rows('ponto').find(p=>p.id===job.open.id&&p.funcionarioId===u()?.id&&p.servicoId===job.id&&!p.saida)
             : rows('obraPontoLonga').find(p=>p.id===job.open.id&&p.funcionarioId===u()?.id&&p.obraId===job.id&&!p.saida);
@@ -639,8 +641,14 @@
             case'passport':return openPassport(job);
             case'reports':return details(job,'relatorios');
             case'materials':return details(job,'materiais');
-            case'start':if(completed(job))return;if(express()&&job.kind==='os')return criarFolhaDaOS(job.id);if(attendance()&&!personalClock()&&!resumingLunch(job))return picarPonto();if(job.open)return;return job.kind==='os'?picarPontoOS(job.id,'entrada'):obraLongaPicarEntrada(job.id);
-            case'pause':return pauseWork(job);
+            case'start':if(completed(job))return;if(express()&&job.kind==='os')return criarFolhaDaOS(job.id);if(job.open)return;
+                if(!attendance()&&jobs().some(other=>other.open&&(other.id!==job.id||other.kind!==job.kind))){
+                    const active=jobs().find(other=>other.open&&(other.id!==job.id||other.kind!==job.kind));
+                    const message='Tens '+label(active)+' em execução. Termina por hoje ou termina a intervenção antes de iniciar outra OS.';
+                    if(typeof mostrarErro==='function')mostrarErro(message);else alert(message);return;
+                }
+                if(attendance()&&!personalClock()&&!resumingLunch(job))return picarPonto();return job.kind==='os'?picarPontoOS(job.id,'entrada'):obraLongaPicarEntrada(job.id);
+            case'pause':if(!attendance())return;return pauseWork(job);
             case'exit':if(!job.open)return;
                 if(job.kind==='os'){
                     pendingOsExitId=job.id;pendingOsExitJob=job;
