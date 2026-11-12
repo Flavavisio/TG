@@ -11,7 +11,7 @@ test('pause action and pause persistence require attendance',()=>{
   assert.match(src,/pauseBusy\|\|!job\?\.open\|\|!enabled\(\)\|\|!attendance\(\)/);
 });
 test('prevent second job from starting while previous job is open without attendance',()=>{
-  assert.match(src,/if\(!attendance\(\)&&jobs\(\)\.some\(other=>other\.open/);
+  assert.match(src,/if\(!attendance\(\)&&\(jobs\(\)\.some\(other=>other\.open/);
   assert.match(src,/Termina por hoje ou termina a intervenção antes de iniciar outra OS/);
 });
 
@@ -20,7 +20,7 @@ function pending(records,services) {
   const fn=src.match(/    function pendingPersonalOS\(\) \{[^]*?\n    \}/);
   assert(fn,'pendingPersonalOS implementation is present');
   const ctx={records,services};
-  vm.runInNewContext('const u=()=>({id:"t"}); const rows=k=>k==="ponto"?records:services; const done=s=>/concluid|terminad|cancelad/.test(s||""); '+fn[0]+'; answer=pendingPersonalOS();',ctx);
+  vm.runInNewContext('const u=()=>({id:"t"}); const rows=k=>k==="ponto"?records:services; const done=s=>/concluid|terminad|cancelad/.test((s||"").normalize('NFD').replace(/[\\u0300-\\u036f]/g,'')); '+fn[0]+'; answer=pendingPersonalOS();',ctx);
   return Array.from(ctx.answer);
 }
 test('exit lists every OS in progress or paused individually',()=>{
