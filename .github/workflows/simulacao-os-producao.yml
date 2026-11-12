@@ -1,0 +1,24 @@
+name: Simulacao OS Produção
+on:
+  push:
+    branches:
+      - validation/os-simulation-prod-20261112
+jobs:
+  simulate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Dependencia isolada para DOM
+        run: npm install --no-save --no-package-lock jsdom@26
+      - name: Sintaxe e percurso completo
+        run: |
+          node --check tg-technician.js
+          node --test tests/os-production-simulation.test.cjs
+      - name: Regressão ponto e OS
+        run: |
+          node --test tests/os-individual-completion.test.cjs tests/pause-reason-persistence.test.cjs tests/kiosk-work-hours.test.cjs tests/worksite-cost-consistency.test.cjs tests/os-no-attendance-guards.test.cjs
