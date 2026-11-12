@@ -24,7 +24,19 @@
                     // O browser só verifica automaticamente se há versão nova em certos
                     // momentos (ex.: ao recarregar a página) — como esta app pode ficar aberta
                     // horas seguidas, força uma verificação extra a cada 30 minutos.
-                    setInterval(function () { reg.update().catch(function () {}); }, 30 * 60 * 1000);
+                    // Revalidar também quando a app volta ao primeiro plano.
+                    // O utilizador não deve precisar de esperar 30 minutos para ver Atualizar.
+                    let ultimaVerificacao = 0;
+                    function procurarAtualizacao() {
+                        if (Date.now() - ultimaVerificacao < 60 * 1000) return;
+                        ultimaVerificacao = Date.now();
+                        reg.update().then(function () { return _verificarVersaoEmEspera(); }).catch(function () {});
+                    }
+                    setInterval(procurarAtualizacao, 30 * 60 * 1000);
+                    document.addEventListener('visibilitychange', function () {
+                        if (!document.hidden) procurarAtualizacao();
+                    });
+                    window.addEventListener('focus', procurarAtualizacao);
                 }).catch(function (err) {
                     console.warn('Service worker não registado (precisa de HTTPS):', err);
                 });
