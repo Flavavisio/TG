@@ -204,15 +204,34 @@ async function expandSurveyDashboard(){
   const rows=(await fetchRows(true)).filter(r=>r.respondido_em);
   if(!overlay.isConnected)return;
   const content=panel.querySelector('[data-survey-modal-content]');
-  const averages=surveyQuestions.map(([key,title])=>{
-   const valid=rows.map(r=>Number(r[key])).filter(n=>Number.isInteger(n)&&n>=1&&n<=5);
-   const avg=valid.length?valid.reduce((a,b)=>a+b,0)/valid.length:0;
-   const counts=[1,2,3,4,5].map(n=>valid.filter(v=>v===n).length);
-   return {key,title,average:avg,total:valid.length,counts};
-  });
-  content.innerHTML='<div class="tg-os-survey-modal-summary"><strong>'+rows.length+'</strong> inquéritos respondidos</div>'+
-  '<div class="tg-os-survey-question-grid">'+averages.map(q=>'<section class="tg-os-survey-question"><div class="tg-os-survey-question-top"><strong>'+esc(q.title)+'</strong><b>'+(q.total?q.average.toLocaleString('pt-PT',{minimumFractionDigits:1,maximumFractionDigits:1}):'—')+' / 5</b></div><div class="tg-os-survey-question-chart">'+q.counts.map((n,i)=>'<div class="tg-os-survey-question-row"><small>'+(i+1)+' ★</small><div class="tg-os-survey-bar-track"><div class="tg-os-survey-bar-fill rating-'+(i+1)+'" style="width:'+(q.total?100*n/q.total:0)+'%"></div></div><span>'+n+'</span></div>').join('')+'</div></section>').join('')+'</div>'+
-  '<p class="tg-sat-source">Resultados agregados por pergunta. As respostas individuais continuam disponíveis na ficha do cliente e na respetiva OS.</p>';
+  const groups=new Map();
+  const legacy=surveyQuestions.map(([id,label])=>({id,label,type:'rating'}));
+  for(const row of rows){
+   const qs=Array.isArray(row.formulario_snapshot?.perguntas)&&row.formulario_snapshot.perguntas.length?
+     row.formulario_snapshot.perguntas:legacy;
+   for(const q of qs){
+    if(!['rating','yesno','text'].includes(q.type)||!q.id||!q.label)continue;
+    const key=q.id+':'+q.label+':'+q.type;
+    if(!groups.has(key))groups.set(key,{id:q.id,title:q.label,type:q.type,values:[]});
+    const v=Object.prototype.hasOwnProperty.call(row,q.id)?row[q.id]:(row.respostas_personalizadas||{})[q.id];
+    if(v!==undefined&&v!==null&&v!=='')groups.get(key).values.push(v);
+   }
+  }
+  const all=[...groups.values()];
+  content.innerHTML='<div class="tg-os-survey-modal-summary"><strong>'+rows.length+'</strong> inquéritos respondidos · '+all.length+' perguntas / versões</div>'+
+  '<div class="tg-os-survey-question-grid">'+all.map(q=>{
+   const valid=q.type==='rating'?q.values.map(Number).filter(n=>Number.isInteger(n)&&n>=1&&n<=5):q.values;
+   const avg=q.type==='rating'&&valid.length?valid.reduce((a,b)=>a+b,0)/valid.length:0;
+   const counts=q.type==='rating'?[1,2,3,4,5].map(n=>valid.filter(v=>v===n).length):q.type==='yesno'?[valid.filter(v=>v===false).length,valid.filter(v=>v===true).length]:[];
+   const names=q.type==='rating'?['1 ★','2 ★','3 ★','4 ★','5 ★']:['Não','Sim'];
+   const max=Math.max(1,...counts);
+   const title=q.type==='rating'?(valid.length?avg.toLocaleString('pt-PT',{minimumFractionDigits:1,maximumFractionDigits:1}):'—')+' / 5':
+     valid.length+' respostas';
+   return '<section class="tg-os-survey-question"><div class="tg-os-survey-question-top"><strong>'+esc(q.title)+'</strong><b>'+esc(title)+'</b></div>'+
+     (q.type==='text'?'<p class="tg-sat-source">Pergunta de texto livre: apenas o total de respostas é apresentado neste resumo.</p>':
+       '<div class="tg-os-survey-question-chart">'+counts.map((n,i)=>'<div class="tg-os-survey-question-row"><small>'+esc(names[i])+'</small><div class="tg-os-survey-bar-track"><div class="tg-os-survey-bar-fill rating-'+(q.type==='rating'?i+1:3+i*2)+'" style="width:'+(100*n/max)+'%"></div></div><span>'+n+'</span></div>').join('')+'</div>')+'</section>';
+  }).join('')+'</div>'+
+  '<p class="tg-sat-source">Resultados agregados por pergunta e versão. As respostas individuais só estão disponíveis na ficha do cliente e na OS.</p>';
  }catch(e){if(overlay.isConnected)panel.querySelector('[data-survey-modal-content]').textContent='Não foi possível carregar as avaliações. Tente novamente.';}
 }
 async function dashboard(){
