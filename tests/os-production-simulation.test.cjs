@@ -63,3 +63,30 @@ test('com ponto: regularizadas duas OS, saída pode ser confirmada',async()=>{
 test('dois técnicos: estado de um não altera a intervenção do outro',()=>{
  const t=setup({two:false});try{t.enter('os1');t.w.dados.ponto.push({id:'colleague',adminId:'a',funcionarioId:'t2',servicoId:'os1',data:'2026-11-12',entrada:'09:30',saida:null});t.close('os1');assert.deepEqual(Array.from(t.w.TGTechnician.pendingPersonalOS()),[]);assert.equal(t.w.dados.ponto.find(x=>x.id==='colleague').saida,null);}finally{t.finish()}
 });
+
+test('com ponto: botão de almoço só aparece quando há picagem geral e inicia fluxo de almoço',()=>{
+ const t=setup({attendance:true,two:false});try{
+  const lunch=t.w.document.querySelector('[data-tgt-action="lunch"]');
+  assert(lunch,'botão de almoço ativo');
+  lunch.click();
+  assert(t.events.includes('generalExit'),'fluxo de picagem geral chamado');
+ }finally{t.finish()}
+});
+test('sem ponto: depois de concluir definitivamente OS 1, pode iniciar OS 2',()=>{
+ const t=setup();try{
+  t.enter('os1');t.close('os1','concluida');
+  t.w.dados.servicos.find(os=>os.id==='os1').status='concluído';
+  t.enter('os2');
+  assert(t.events.includes('entrada:os2'));
+ }finally{t.finish()}
+});
+test('com ponto: OS ativa continua identificada quando tenta aceder à segunda',()=>{
+ const t=setup({attendance:true});try{
+  t.enter('os1');
+  assert.equal(t.w.TGTechnician.jobs().filter(x=>x.open).length,1);
+  const second=t.w.document.querySelector('[data-tgt-action="choose"][data-tgt-id="os2"]');
+  assert(second);
+  second.click();
+  assert(!t.events.includes('entrada:os2'));
+ }finally{t.finish()}
+});
