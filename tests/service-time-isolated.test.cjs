@@ -8,7 +8,7 @@ function setup(){
  let now=new Date('2026-10-30T16:00:00').getTime();
  class Clock extends Date {constructor(...args){super(...(args.length?args:[now]));}static now(){return now;}}
  const dados={servicos:[{id:'os',adminId:'a',data:'2026-10-30',hora:'11:43',clienteId:'c',funcionariosIds:['v','f'],status:'em andamento'}],obras:[],ponto:[],obraPontoLonga:[]};
- const ctx=vm.createContext({Date:Clock,document:dom.window.document,dados,obterNomeFuncionario:id=>({v:'Vanda Ribeiro',f:'Flávio Rosa'}[id]||id),obterNomeCliente:()=> 'Churrasqueira Jaime',escapeHtmlSimples:s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),_kmPercorridosOS:()=>0,_osComRelatoriosPorTerminar:()=>false});
+ const ctx=vm.createContext({Date:Clock,document:dom.window.document,dados,obterNomeFuncionario:id=>({v:'Vanda Ribeiro',f:'Flávio Rosa'}[id]||id),obterNomeCliente:()=> 'Churrasqueira Jaime',escapeHtmlSimples:s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),_kmPercorridosOS:()=>0,_osComRelatoriosPorTerminar:()=>[]});
  vm.runInContext(functions,ctx);
  return {ctx,dados,document:dom.window.document,advance:ms=>now+=ms,close:()=>dom.window.close()};
 }
