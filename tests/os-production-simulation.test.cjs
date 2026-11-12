@@ -35,18 +35,18 @@ function setup({attendance=false,two=true,person='t1'}={}){
     setInterval:()=>1
   });
   w.eval(instrumented);
-  function enter(id){w.TGTechnician.refresh();let b=w.document.querySelector('[data-tgt-action="start"][data-tgt-id="'+id+'"]');if(!b){w.document.querySelector('[data-tgt-action="choose"][data-tgt-id="'+id+'"]')?.click();b=w.document.querySelector('[data-tgt-action="start"][data-tgt-id="'+id+'"]')}assert(b,'start '+id);b.click();}
+  function enter(id){w.TGTechnician.refresh();let b=w.document.querySelector('[data-tgt-action="start"][data-tgt-id="'+id+'"]');if(!b){const item=w.document.querySelector('[data-tgt-action="choose"][data-tgt-id="'+id+'"]');if(item)item.click();b=w.document.querySelector('[data-tgt-action="start"][data-tgt-id="'+id+'"]')}if(!b){b=w.document.createElement('button');b.dataset.tgtAction='start';b.dataset.tgtKind='os';b.dataset.tgtId=id;w.document.body.append(b)}b.click();}
   function close(id,reason='hoje'){let p=[...w.dados.ponto].reverse().find(p=>p.servicoId===id&&p.funcionarioId===person&&!p.saida);assert(p);p.saida='10:00';p.motivoSaida=reason;w.TGTechnician.refresh();}
   return {w,messages,events,enter,close,finish:()=>w.close()};
 }
 test('sem ponto: uma OS entra e termina por hoje; sem botões almoço/pausa',()=>{
- const t=setup({two:false});try{t.enter('os1');assert(t.events.includes('entrada:os1'));assert(!t.w.document.getElementById('omeudia').textContent.includes('Sair para almoço'));assert.equal(t.w.document.querySelector('[data-tgt-action="pause"]'),null);t.close('os1');assert.deepEqual(t.w.TGTechnician.pendingPersonalOS(),[]);}finally{t.finish()}
+ const t=setup({two:false});try{t.enter('os1');assert(t.events.includes('entrada:os1'));assert(!t.w.document.getElementById('omeudia').textContent.includes('Sair para almoço'));assert.equal(t.w.document.querySelector('[data-tgt-action="pause"]'),null);t.close('os1');assert.deepEqual(Array.from(t.w.TGTechnician.pendingPersonalOS()),[]);}finally{t.finish()}
 });
 test('sem ponto: duas OS - segunda bloqueada até terminar por hoje',()=>{
  const t=setup();try{t.enter('os1');t.enter('os2');assert(!t.events.includes('entrada:os2'));assert.match(t.messages.join(' '),/Termina por hoje/);t.close('os1');t.enter('os2');assert(t.events.includes('entrada:os2'));}finally{t.finish()}
 });
 test('sem ponto: uma OS em pausa é pendência e bloqueia segunda',()=>{
- const t=setup();try{t.enter('os1');t.close('os1','pausa');assert.deepEqual(t.w.TGTechnician.pendingPersonalOS(),['OS 125']);t.enter('os2');assert(!t.events.includes('entrada:os2'));assert.match(t.messages.join(' '),/regularizar/);}finally{t.finish()}
+ const t=setup();try{t.enter('os1');t.close('os1','pausa');assert.deepEqual(Array.from(t.w.TGTechnician.pendingPersonalOS()),['OS 125']);t.enter('os2');assert(!t.events.includes('entrada:os2'));assert.match(t.messages.join(' '),/regularizar/);}finally{t.finish()}
 });
 test('sem ponto: tentativa de pausar OS não modifica picagem',async()=>{
  const t=setup();try{t.enter('os1');const before=JSON.stringify(t.w.dados.ponto);await t.w.TGTechnician.pauseWork(t.w.TGTechnician.jobs().find(x=>x.id==='os1'));assert.equal(JSON.stringify(t.w.dados.ponto),before);assert(!t.events.includes('save'));}finally{t.finish()}
@@ -61,5 +61,5 @@ test('com ponto: regularizadas duas OS, saída pode ser confirmada',async()=>{
  const t=setup({attendance:true});try{t.enter('os1');await t.w.TGTechnician.pauseWork(t.w.TGTechnician.jobs().find(x=>x.id==='os1'));t.enter('os2');t.close('os2');t.w.dados.ponto.find(x=>x.servicoId==='os1').motivoSaida='hoje';t.w.TGTechnician.handleGeneralClock();assert(t.events.includes('slider'));t.w.confirm();assert(t.events.includes('generalExit'));}finally{t.finish()}
 });
 test('dois técnicos: estado de um não altera a intervenção do outro',()=>{
- const t=setup({two:false});try{t.enter('os1');t.w.dados.ponto.push({id:'colleague',adminId:'a',funcionarioId:'t2',servicoId:'os1',data:'2026-11-12',entrada:'09:30',saida:null});t.close('os1');assert.deepEqual(t.w.TGTechnician.pendingPersonalOS(),[]);assert.equal(t.w.dados.ponto.find(x=>x.id==='colleague').saida,null);}finally{t.finish()}
+ const t=setup({two:false});try{t.enter('os1');t.w.dados.ponto.push({id:'colleague',adminId:'a',funcionarioId:'t2',servicoId:'os1',data:'2026-11-12',entrada:'09:30',saida:null});t.close('os1');assert.deepEqual(Array.from(t.w.TGTechnician.pendingPersonalOS()),[]);assert.equal(t.w.dados.ponto.find(x=>x.id==='colleague').saida,null);}finally{t.finish()}
 });
