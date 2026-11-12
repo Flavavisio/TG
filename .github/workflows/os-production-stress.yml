@@ -24,4 +24,4 @@ jobs:
         run: node --test tests/os-production-stress.test.cjs
       - name: Regressões OS e tempos
         run: |
-          node --test tests/os-individual-completion.test.cjs tests/kiosk-work-hours.test.cjs tests/worksite-cost-consistency.test.cjs tests/pause-reason-persistence.test.cjs tests/os-no-attendance-guards.test.cjs tests/technician-clock-refresh.test.cjs tests/service-time.test.cjs
+          node --test tests/os-individual-completion.test.cjs tests/kiosk-work-hours.test.cjs tests/worksite-cost-consistency.test.cjs tests/pause-reason-persistence.test.cjs tests/os-no-attendance-guards.test.cjs tests/technician-clock-refresh.test.cjs tests/service-time-isolated.test.cjs
