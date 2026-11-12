@@ -33,9 +33,11 @@
                         reg.update().then(function () { return _verificarVersaoEmEspera(); }).catch(function () {});
                     }
                     setInterval(procurarAtualizacao, 30 * 60 * 1000);
-                    document.addEventListener('visibilitychange', function () {
-                        if (!document.hidden) procurarAtualizacao();
-                    });
+                    if (typeof document.addEventListener === 'function') {
+                        document.addEventListener('visibilitychange', function () {
+                            if (!document.hidden) procurarAtualizacao();
+                        });
+                    }
                     window.addEventListener('focus', procurarAtualizacao);
                 }).catch(function (err) {
                     console.warn('Service worker não registado (precisa de HTTPS):', err);
