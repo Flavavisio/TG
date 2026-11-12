@@ -20,7 +20,7 @@ function pending(records,services) {
   const fn=src.match(/    function pendingPersonalOS\(\) \{[^]*?\n    \}/);
   assert(fn,'pendingPersonalOS implementation is present');
   const ctx={records,services};
-  vm.runInNewContext('const u=()=>({id:"t"}); const rows=k=>k==="ponto"?records:services; const done=s=>/concluid|terminad|cancelad/.test((s||"").normalize('NFD').replace(/[\\u0300-\\u036f]/g,"")); '+fn[0]+'; answer=pendingPersonalOS();',ctx);
+  vm.runInNewContext('const u=()=>({id:"t"}); const rows=k=>k==="ponto"?records:services; const done=s=>/concluid|terminad|cancelad/.test((s||"").normalize("NFD").replace(/[\\u0300-\\u036f]/g,"")); '+fn[0]+'; answer=pendingPersonalOS();',ctx);
   return Array.from(ctx.answer);
 }
 test('exit lists every OS in progress or paused individually',()=>{
