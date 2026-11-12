@@ -2,19 +2,55 @@
 <html lang="pt-PT"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer"><title>Inquérito de satisfação · Total Gest</title>
 <link rel="icon" href="icon-192.png"><style>
 :root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#1e2e4b;background:#f1f5fb}
-*{box-sizing:border-box}body{margin:0;padding:25px 14px}.wrap{width:min(680px,100%);margin:0 auto}header{display:flex;gap:12px;align-items:center;margin-bottom:20px}header img{height:45px;max-width:145px;object-fit:contain}.card{background:#fff;border:1px solid #e2e8f0;border-radius:17px;padding:26px;box-shadow:0 14px 44px #17295012}h1{font-size:25px;line-height:1.2;margin:0 0 10px}h2{font-size:17px;margin:20px 0 8px}p{line-height:1.5;color:#51627c}.meta{background:#f4f7fd;border-radius:10px;padding:12px 15px;margin:20px 0;display:grid;gap:7px;font-size:14px}.meta b{color:#1d3358}fieldset{border:0;border-bottom:1px solid #e6ecf4;margin:0;padding:14px 0 19px;min-width:0}legend{font-weight:700;padding-bottom:10px}.stars{display:flex;flex-wrap:wrap;gap:7px}.stars label{cursor:pointer}.stars input{position:absolute;opacity:0;width:1px;height:1px}.stars span{display:grid;place-items:center;width:49px;height:45px;border-radius:9px;border:1px solid #c9d4e2;background:#fff;font-weight:700}.stars input:checked+span{background:#183e73;color:#fff;border-color:#183e73}.stars input:focus-visible+span{outline:3px solid #2563eb;outline-offset:3px}.hint{display:flex;justify-content:space-between;font-size:11px;color:#64748b;margin-top:7px;max-width:280px}textarea{width:100%;min-height:105px;border-radius:9px;border:1px solid #b7c5d8;padding:12px;font:inherit}button{background:#163866;color:#fff;border:0;border-radius:10px;padding:13px 20px;font:inherit;font-weight:750;cursor:pointer;width:100%;margin-top:17px}button:disabled{opacity:.6;cursor:wait}.status{margin-top:14px;font-weight:600}.error{color:#bb2626}.success{color:#08734d}small{color:#64748b}footer{text-align:center;margin:22px 0;font-size:12px;color:#64748b}@media(max-width:450px){.card{padding:18px}.stars span{width:43px;height:43px}}
-</style></head><body><main class="wrap"><header><img src="logo-totalgest.png" alt="Total Gest"><strong>Inquérito de satisfação</strong></header><section class="card" id="app"><h1>A carregar inquérito…</h1></section><footer>Obrigado por nos ajudar a melhorar a qualidade dos serviços.</footer></main>
+*{box-sizing:border-box}body{margin:0;padding:25px 14px}.wrap{width:min(680px,100%);margin:0 auto}header{display:flex;gap:12px;align-items:center;margin-bottom:20px}header img{height:45px;max-width:145px;object-fit:contain}.card{background:#fff;border:1px solid #e2e8f0;border-radius:17px;padding:26px;box-shadow:0 14px 44px #17295012}h1{font-size:25px;line-height:1.2;margin:0 0 10px}h2{font-size:17px;margin:20px 0 8px}p{line-height:1.5;color:#51627c}.meta{background:#f4f7fd;border-radius:10px;padding:12px 15px;margin:20px 0;display:grid;gap:7px;font-size:14px}.meta b{color:#1d3358}fieldset{border:0;border-bottom:1px solid #e6ecf4;margin:0;padding:14px 0 19px;min-width:0}legend{font-weight:700;padding-bottom:10px}.stars{display:flex;flex-wrap:wrap;gap:7px}.stars label{cursor:pointer}.stars input{position:absolute;opacity:0;width:1px;height:1px}.stars span{display:grid;place-items:center;width:49px;height:45px;border-radius:9px;border:1px solid #c9d4e2;background:#fff;font-weight:700}.stars input:checked+span{background:#183e73;color:#fff;border-color:#183e73}.stars input:focus-visible+span{outline:3px solid #2563eb;outline-offset:3px}.survey-text{width:100%;padding:10px;border:1px solid #b7c5d8;border-radius:8px;font:inherit;min-height:80px}.hint{display:flex;justify-content:space-between;font-size:11px;color:#64748b;margin-top:7px;max-width:280px}textarea{width:100%;min-height:105px;border-radius:9px;border:1px solid #b7c5d8;padding:12px;font:inherit}button{background:#163866;color:#fff;border:0;border-radius:10px;padding:13px 20px;font:inherit;font-weight:750;cursor:pointer;width:100%;margin-top:17px}button:disabled{opacity:.6;cursor:wait}.status{margin-top:14px;font-weight:600}.error{color:#bb2626}.success{color:#08734d}small{color:#64748b}footer{text-align:center;margin:22px 0;font-size:12px;color:#64748b}@media(max-width:450px){.card{padding:18px}.stars span{width:43px;height:43px}}
+</style></head><body><main class="wrap"><header><img id="surveyBrandLogo" src="icon-192.png" alt="Logótipo da empresa"><strong id="surveyBrandName">Inquérito de satisfação</strong></header><section class="card" id="app"><h1>A carregar inquérito…</h1></section><footer>Obrigado por nos ajudar a melhorar a qualidade dos serviços.</footer></main>
 <script>
-(()=>{'use strict';const endpoint='https://rfniufasivfnrqfntzog.supabase.co/functions/v1/inquerito-satisfacao-os';const token=new URL(location.href).searchParams.get('token')||'';const app=document.getElementById('app');const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const fields=[['avaliacao_tecnico','Atendimento e profissionalismo do técnico'],['avaliacao_execucao','Qualidade da execução do serviço ou obra'],['avaliacao_pontualidade','Pontualidade e cumprimento dos horários'],['avaliacao_limpeza','Organização e limpeza no final da intervenção'],['avaliacao_geral','Satisfação geral com o serviço']];
+(()=>{'use strict';
+const endpoint='https://rfniufasivfnrqfntzog.supabase.co/functions/v1/inquerito-satisfacao-os';
+const token=new URL(location.href).searchParams.get('token')||'';
+const app=document.getElementById('app');
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const core=['avaliacao_tecnico','avaliacao_execucao','avaliacao_pontualidade','avaliacao_limpeza','avaliacao_geral'];
+const defaults=[
+ {id:'avaliacao_tecnico',type:'rating',required:true,label:'Atendimento e profissionalismo do técnico'},
+ {id:'avaliacao_execucao',type:'rating',required:true,label:'Qualidade da execução do serviço ou obra'},
+ {id:'avaliacao_pontualidade',type:'rating',required:true,label:'Pontualidade e cumprimento dos horários'},
+ {id:'avaliacao_limpeza',type:'rating',required:true,label:'Organização e limpeza no final da intervenção'},
+ {id:'avaliacao_geral',type:'rating',required:true,label:'Satisfação geral com o serviço'}
+];
 const message=(title,text)=>{app.innerHTML='<h1>'+esc(title)+'</h1><p>'+esc(text)+'</p>';};
 const form=data=>{
+ const snapshot=data.formulario||{};
+ const questions=Array.isArray(snapshot.perguntas)&&snapshot.perguntas.length?snapshot.perguntas:defaults;
+ const logo=document.getElementById('surveyBrandLogo');
+ if(data.logo&&/^(https:\/\/|data:image\/(png|jpeg|webp|gif);base64,)/i.test(data.logo)){
+  logo.src=data.logo;logo.onerror=()=>{logo.src='icon-192.png';};
+ }
+ document.getElementById('surveyBrandName').textContent=data.empresa||'Inquérito de satisfação';
  const meta=[['Cliente',data.cliente],['Instalação',data.instalacao],['Ordem de serviço',data.os],['Data',data.data],['Técnico',data.tecnico]].filter(x=>x[1]);
- app.innerHTML='<h1>Como correu a sua intervenção?</h1><p>A sua opinião ajuda a melhorar o nosso serviço. Os dados abaixo foram preenchidos automaticamente.</p><div class="meta">'+meta.map(([k,v])=>'<div><b>'+esc(k)+':</b> '+esc(v)+'</div>').join('')+'</div><form id="surveyForm">'+fields.map(([key,label])=>'<fieldset><legend>'+esc(label)+' *</legend><div class="stars">'+[1,2,3,4,5].map(n=>'<label><input type="radio" name="'+key+'" value="'+n+'" required><span>'+n+'</span></label>').join('')+'</div><div class="hint"><span>1 · Muito insatisfeito</span><span>5 · Muito satisfeito</span></div></fieldset>').join('')+'<h2>Comentários ou sugestões</h2><textarea name="comentario" maxlength="3000" placeholder="O que podemos melhorar? (opcional)"></textarea><button type="submit">Enviar avaliação</button><p class="status" id="status" role="status" aria-live="polite"></p><small>As respostas serão enviadas à empresa responsável pelo serviço.</small></form>';
- const form=document.getElementById('surveyForm');form.addEventListener('submit',async e=>{e.preventDefault();const fd=new FormData(form),body={token,comentario:String(fd.get('comentario')||'')};for(const [key] of fields){const v=fd.get(key);if(!v){document.getElementById('status').textContent='Avalie todas as perguntas.';return;}body[key]=Number(v);}
- const btn=form.querySelector('button');btn.disabled=true;const status=document.getElementById('status');status.textContent='A enviar…';
- try{const res=await fetch(endpoint,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});const json=await res.json();if(!res.ok)throw Error(json.error||'Não foi possível enviar.');message('Obrigado pela sua avaliação!','A sua resposta foi registada e será consultada pela equipa responsável.');}
- catch(err){status.className='status error';status.textContent=err.message;btn.disabled=false;}
+ const input=(q)=>{
+  const k=esc(q.id),required=q.required?' required':'';
+  let field='';
+  if(q.type==='rating')field='<div class="stars">'+[1,2,3,4,5].map(n=>'<label><input type="radio" name="'+k+'" value="'+n+'"'+required+'><span>'+n+'</span></label>').join('')+'</div><div class="hint"><span>1 · Muito insatisfeito</span><span>5 · Muito satisfeito</span></div>';
+  else if(q.type==='yesno')field='<div class="stars"><label><input type="radio" name="'+k+'" value="yes"'+required+'><span>Sim</span></label><label><input type="radio" name="'+k+'" value="no"'+required+'><span>Não</span></label></div>';
+  else field='<textarea class="survey-text" name="'+k+'" maxlength="1500" rows="3"'+required+' placeholder="Escreva a sua resposta"></textarea>';
+  return '<fieldset><legend>'+esc(q.label)+(q.required?' *':'')+'</legend>'+field+'</fieldset>';
+ };
+ app.innerHTML='<h1>'+esc(snapshot.titulo||'Como correu a nossa intervenção?')+'</h1><p>'+esc(snapshot.introducao||'A sua opinião ajuda-nos a melhorar o nosso serviço.')+'</p><div class="meta">'+meta.map(([k,v])=>'<div><b>'+esc(k)+':</b> '+esc(v)+'</div>').join('')+'</div><form id="surveyForm">'+questions.map(input).join('')+'<h2>Comentários ou sugestões</h2><textarea name="comentario" maxlength="3000" placeholder="O que podemos melhorar? (opcional)"></textarea><button type="submit">Enviar avaliação</button><p class="status" id="status" role="status" aria-live="polite"></p><small>As respostas serão enviadas à empresa responsável pelo serviço.</small></form>';
+ const formEl=document.getElementById('surveyForm');
+ formEl.addEventListener('submit',async e=>{
+  e.preventDefault();const fd=new FormData(formEl),body={token,comentario:String(fd.get('comentario')||''),respostas_personalizadas:{}};
+  for(const q of questions){
+   const value=fd.get(q.id),empty=value===null||String(value).trim()==='';
+   if(empty){if(q.required){document.getElementById('status').textContent='Preencha todas as perguntas obrigatórias.';return;}continue;}
+   const v=q.type==='rating'?Number(value):q.type==='yesno'?value==='yes':String(value).trim();
+   if(core.includes(q.id))body[q.id]=v;
+   else body.respostas_personalizadas[q.id]=v;
+  }
+  for(const key of core)if(!Number.isInteger(body[key])||body[key]<1||body[key]>5){document.getElementById('status').textContent='Preencha as cinco avaliações-base.';return;}
+  const btn=formEl.querySelector('button[type="submit"]');btn.disabled=true;const status=document.getElementById('status');status.textContent='A enviar…';
+  try{const res=await fetch(endpoint,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});const json=await res.json();if(!res.ok)throw Error(json.error||'Não foi possível enviar.');message('Obrigado pela sua avaliação!','A sua resposta foi registada e será consultada pela equipa responsável.');}
+  catch(err){status.className='status error';status.textContent=err.message;btn.disabled=false;}
  });
 };
 (async()=>{if(!/^[a-f0-9]{64}$/.test(token)){message('Ligação inválida','Peça um novo link à empresa responsável.');return;}
