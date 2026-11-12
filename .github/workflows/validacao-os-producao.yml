@@ -1,0 +1,27 @@
+name: Validacao isolada OS producao
+on:
+  push:
+    branches:
+      - validation/os-production-20261112
+  workflow_dispatch:
+jobs:
+  validar:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verificar sintaxe principal
+        run: node --check app-principal.js
+      - name: Testar variantes OS e ponto (sem dados reais)
+        run: |
+          node --test \
+            tests/os-individual-completion.test.cjs \
+            tests/pause-reason-persistence.test.cjs \
+            tests/time-registration.test.cjs \
+            tests/ponto-day-boundary.test.cjs \
+            tests/kiosk-work-hours.test.cjs \
+            tests/worksite-cost-consistency.test.cjs
