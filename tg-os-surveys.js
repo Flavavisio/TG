@@ -31,7 +31,9 @@ async function linkForOS(osId){
   if(new Date(existing.expira_em).getTime()<Date.now())throw Error('O link desta OS expirou. É necessário criar um novo inquérito.');
   return existing;
  }
- const payload={admin_id:tenant(),servico_id:os.id,cliente_id:os.clienteId,token:uuidToken()};
+ const snapshot=await window.TGSurveyConfig?.snapshot();
+ if(!snapshot)throw Error('Não foi possível carregar a configuração do inquérito.');
+ const payload={admin_id:tenant(),servico_id:os.id,cliente_id:os.clienteId,token:uuidToken(),formulario_snapshot:snapshot};
  const {data,error}=await supa.from('inqueritos_satisfacao_os').insert(payload).select('*').single();
  if(error){
    const rows=await fetchRows(true);const other=rows.find(r=>String(r.servico_id)===String(os.id));
@@ -123,7 +125,12 @@ function rowHtml(r){
  const os=(records().servicos||[]).find(x=>String(x.id)===String(r.servico_id));
  const rating=r.avaliacao_geral;const mark=rating===null?'<span class="tg-sat-pill">Pendente</span>':'<span class="tg-sat-pill '+(rating<=2?'bad':'good')+'">'+rating+'/5 · '+label(rating)+'</span>';
  return '<article class="tg-sat-record"><div class="tg-sat-record-head"><strong>OS '+esc(os?.numeroRegisto||r.servico_id)+'</strong>'+mark+'</div><div class="tg-sat-record-meta">'+esc(stamp(os?.data||r.criado_em))+' · Técnico: '+esc(technician(os))+'</div>'+
- (r.respondido_em?'<div class="tg-sat-five">'+[['Técnico',r.avaliacao_tecnico],['Execução',r.avaliacao_execucao],['Pontualidade',r.avaliacao_pontualidade],['Limpeza',r.avaliacao_limpeza],['Geral',r.avaliacao_geral]].map(([k,v])=>'<span>'+k+': <b>'+v+'/5</b></span>').join('')+'</div><p>'+esc(r.comentario||'Sem comentários.')+'</p><small>Respondido em '+esc(stamp(r.respondido_em))+'</small>':'<p>A aguardar resposta do cliente.</p>')+'</article>';
+ (r.respondido_em?'<div class="tg-sat-five">'+
+ ((Array.isArray(r.formulario_snapshot?.perguntas)&&r.formulario_snapshot.perguntas.length)?r.formulario_snapshot.perguntas:
+  [['avaliacao_tecnico','Técnico'],['avaliacao_execucao','Execução'],['avaliacao_pontualidade','Pontualidade'],['avaliacao_limpeza','Limpeza'],['avaliacao_geral','Geral']].map(([id,label])=>({id,label,type:'rating'})))
+ .map(q=>{const extra=r.respostas_personalizadas||{},v=Object.prototype.hasOwnProperty.call(r,q.id)?r[q.id]:extra[q.id];
+ return '<span>'+esc(q.label)+': <b>'+esc(v===true?'Sim':v===false?'Não':v===undefined||v===null?'—':String(v)+(q.type==='rating'?'/5':''))+'</b></span>';}).join('')+
+ '</div><p>'+esc(r.comentario||'Sem comentários.')+'</p><small>Respondido em '+esc(stamp(r.respondido_em))+'</small>':'<p>A aguardar resposta do cliente.</p>')+'</article>';
 }
 async function openCustomer(id){
  const container=document.getElementById('wsClienteConteudo');if(!container||!yes())return;
