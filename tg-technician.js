@@ -440,7 +440,10 @@
     let pendingOsExitId=null,pendingOsExitJob=null;
     function updateOsExitMenu() {
         const overlay=$('modalSimNaoOverlay'),choice=$('modalSimNaoAlmocoBtn');
-        if(!enabled()||!pendingOsExitId||!overlay?.classList.contains('open')||!choice)return;
+        if(!choice)return;
+        if(!enabled()||!pendingOsExitId||!overlay?.classList.contains('open')){
+            choice.hidden=false;choice.style.display='';return;
+        }
         choice.hidden=!attendance();
         choice.style.display=attendance()?'':'none';
         if(attendance())choice.innerHTML=icon('pause')+' Pausar OS';
@@ -487,9 +490,33 @@
             if(typeof mostrarErro==='function')mostrarErro(message);else alert(message);
         }finally{pauseBusy=false;}
     }
+    function pendingPersonalOS() {
+        const relevant=rows('ponto').filter(p=>p.funcionarioId===u()?.id&&p.servicoId&&p.entrada);
+        const latest=new Map();
+        for(const p of relevant) {
+            const key=p.servicoId;
+            const stamp=String(p.data||'')+'T'+String(p.entrada||'');
+            const old=latest.get(key);
+            if(!old||stamp>=old.stamp)latest.set(key,{record:p,stamp});
+        }
+        return [...latest].filter(([id,item])=>{
+            const os=rows('servicos').find(s=>s.id===id);
+            if(!os||done(os.status))return false;
+            return !item.record.saida||item.record.motivoSaida==='pausa';
+        }).map(([id,item])=>{
+            const os=rows('servicos').find(s=>s.id===id);
+            return 'OS '+(os.numeroRegisto||id);
+        });
+    }
     function handleGeneralClock() {
         if(!attendance())return;
         if(!personalClock())return picarPonto();
+        const pending=pendingPersonalOS();
+        if(pending.length) {
+            const message='Antes de dar saída de serviço, regressa às seguintes OS e seleciona Terminar por hoje ou Terminar OS: '+pending.join(', ')+'.';
+            if(typeof mostrarErro==='function')mostrarErro(message);else alert(message);
+            return;
+        }
         if(typeof abrirSliderConfirmacao!=='function') {
             if(typeof mostrarErro==='function')mostrarErro('A confirmação por arrastar está indisponível.');
             return;
