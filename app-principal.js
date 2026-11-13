@@ -29574,7 +29574,72 @@ async function salvarAdmin(e) {
                 nome.insertAdjacentElement('afterend', el);
             });
         }
+        // Aplica-se também aos snapshots antigos: o RIE reconstrói as folhas ao adicionar
+        // unidades, mas o seu estado JS não vinha guardado no rascunho HTML.
+        function _tgPrepararCabecalhoRIE(html) {
+            if (!html) return html;
+            html = html.replace(/<script data-tg-rie-header>[\s\S]*?<\/script>/g, '');
+            html = html.replace(/<script data-tg-rie-escape>[\s\S]*?<\/script>/g, '');
+            const bootstrap = function () {
+                const metaKeys = ['numero', 'data', 'nCliente'];
+                const clientKeys = ['cliente', 'morada', 'numeroPorta', 'codigoPostal', 'localidade', 'nCliente'];
+                const fields = () => [...document.querySelectorAll('.print-page')].flatMap(page => [
+                    ...[...page.querySelectorAll('.meta input')].map((el, i) => [el, metaKeys[i]]),
+                    ...[...page.querySelectorAll('.client-row input')].map((el, i) => [el, clientKeys[i]])
+                ]).filter(([, key]) => key);
+                function capture() {
+                    const values = {};
+                    fields().forEach(([el, key]) => { if (!(key in values)) values[key] = el.value; });
+                    docNoVal = values.numero || '';
+                    docDataVal = values.data || '';
+                    docCliNoVal = values.nCliente || '';
+                    clienteVal = values.cliente || '';
+                    moradaVal = values.morada || '';
+                    numeroPortaVal = values.numeroPorta || '';
+                    codigoPostalVal = values.codigoPostal || '';
+                    localidadeVal = values.localidade || '';
+                }
+                function prefill(msg) {
+                    fields().forEach(([el, key]) => {
+                        if (!el.value.trim() && msg[key] != null) {
+                            el.value = String(msg[key]);
+                            el.setAttribute('value', el.value);
+                        }
+                    });
+                    capture();
+                }
+                window._tgRIEEscape = value => String(value || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                // Recupera a dimensão do rascunho (por exemplo, 18 unidades em 2 folhas).
+                const indices = [...document.querySelectorAll('[data-i]')].map(el => Number(el.dataset.i));
+                if (indices.length) numCols = Math.max(...indices) + 1;
+                capture();
+                const originalRender = render;
+                render = function (...args) { capture(); return originalRender.apply(this, args); };
+                // Atualiza apenas o cabeçalho: não reconstrói equipamentos nem assinaturas.
+                window._relPrefill = prefill;
+                document.addEventListener('input', event => {
+                    const field = fields().find(([el]) => el === event.target);
+                    if (!field) return;
+                    fields().forEach(([el, key]) => { if (key === field[1]) el.value = event.target.value; });
+                    capture();
+                });
+                window.addEventListener('message', event => {
+                    const msg = event.data || {};
+                    if (msg.type !== 'rieCabecalho') return;
+                    prefill(msg);
+                    window._lastRelInitMsg = msg;
+                    if (window._relAplicarBranding) window._relAplicarBranding(msg);
+                });
+            };
+            // O render original interpola estes valores em atributos HTML.
+            html = html.replace(/value="\$\{(docNoVal|docDataVal|docCliNoVal|clienteVal|moradaVal|numeroPortaVal|codigoPostalVal|localidadeVal)\}"/g, 'value="${_tgRIEEscape($1)}"');
+            // A primeira renderização corre antes do bootstrap.
+            html = html.replace('<head>', '<head><script data-tg-rie-escape>window._tgRIEEscape = value => String(value || "").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;");<\/script>');
+            return html.replace('</body>', '<script data-tg-rie-header>(' + bootstrap.toString() + ')();<\/script></body>');
+        }
+
         function _tgPrepararNomeFiscalEspecialidade(html, tipo) {
+            if (tipo === 'RIE') html = _tgPrepararCabecalhoRIE(html);
             if (!html || tipo === 'RDI') return html;
             // Refresh the outdated legal label in RCCTV drafts without changing answers.
             if (tipo === 'RCCTV') html = html.replaceAll('Aviso informativo de videovigilância afixado no perímetro exterior do local (art. 31º, nº5 da Lei 34/2013).', 'Aviso informativo de videovigilância afixado em local bem visível (Lei 46/2019).').replaceAll('Aviso informativo de videovigilância afixado em local bem visível (art. 31.º, n.º 5, da Lei n.º 34/2013, de 16 de maio, na redação dada pela Lei n.º 46/2019, de 8 de julho).', 'Aviso informativo de videovigilância afixado em local bem visível (Lei 46/2019).');
@@ -30923,6 +30988,8 @@ window._relPrefill = function(msg){
                 _tgAtualizarNomeFiscalDocumento(iframe.contentDocument, adminRec?.nomeFiscal, adminRec?.empresa || adminRec?.nome);
             }
             const contratoOS = os.contratoId ? dados.contratos?.find(ct => ct.id === os.contratoId) : null;
+            const localRIE = tipo === 'RIE' && os.localId ? dados.locais?.find(l => l.id === os.localId && l.clienteId === os.clienteId && l.adminId === os.adminId) : null;
+            const moradaRIE = localRIE || cliente;
             const initMsg = {
                 type: 'init',
                 equipamentoId, equipamentoNome:requisito?.equipamentoNome || '',
@@ -30950,6 +31017,15 @@ window._relPrefill = function(msg){
                 certificadoraLogo: adminRec?.certificadoraLogo || '',
                 tecnicoNome: usuarioLogado?.nome || obterNomeFuncionario(os.funcionarioId) || ''
             };
+            if (tipo === 'RIE') {
+                initMsg.morada = os.morada || moradaRIE?.morada || moradaRIE?.endereco || '';
+                initMsg.local = initMsg.morada;
+                initMsg.numeroPorta = os.numeroPorta || moradaRIE?.numeroPorta || '';
+                initMsg.codigoPostal = os.codigoPostal || moradaRIE?.codigoPostal || '';
+                initMsg.localidade = os.cidade || os.localidade || moradaRIE?.cidade || moradaRIE?.localidade || '';
+                // Os rascunhos não recebem init: completa só os campos em falta.
+                if (usouRascunho) iframe.contentWindow.postMessage({ ...initMsg, type: 'rieCabecalho' }, '*');
+            }
             if (nativeReport) {
                 const site = nativeContext.local || nativeContext.customer;
                 initMsg.osNumero = os.numeroRegisto || os.id;
