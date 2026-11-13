@@ -1886,3 +1886,36 @@ body.dark-mode .obras-estado-contador[aria-pressed="true"]{background:#183b4d;bo
     .tgm-resumo-pessoas { grid-column:2 / 4; grid-row:2; }
     .tgm-resumo-estado { grid-column:3; grid-row:1; }
 }
+
+/* Mobile error dialogs must remain in the centre of the visible phone viewport.
+   Overrides the generic <=1100px rule that moves all modals to flex-start. */
+@media (max-width:1100px) {
+  #modalErroOverlay.modal-overlay.open {
+    display:flex!important;
+    position:fixed!important;
+    inset:0!important;
+    height:100dvh!important;
+    width:100vw!important;
+    box-sizing:border-box!important;
+    align-items:center!important;
+    justify-content:center!important;
+    flex-wrap:nowrap!important;
+    overflow:hidden!important;
+    padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left))!important;
+    z-index:15000;
+  }
+  #modalErroOverlay.modal-overlay.open > .modal {
+    flex:0 1 auto!important;
+    position:relative!important;
+    display:block!important;
+    width:min(100%,560px)!important;
+    max-width:100%!important;
+    height:auto!important;
+    min-height:0!important;
+    max-height:calc(100dvh - max(12px,env(safe-area-inset-top)) - max(12px,env(safe-area-inset-bottom)))!important;
+    margin:0!important;
+    overflow-y:auto!important;
+    overscroll-behavior:contain;
+    box-sizing:border-box!important;
+  }
+}
