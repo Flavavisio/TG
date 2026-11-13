@@ -1,0 +1,23 @@
+name: Validate four real OS exit actions
+on:
+  push:
+    branches:
+      - fix/os-exit-grid-duplicate-pause-20261113
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock jsdom@26
+      - run: |
+          node --check tg-os-exit-grid.js
+          node --check tests/os-exit-grid.test.cjs
+      - name: 4 cards, no duplicates, native pause
+        run: node --test tests/os-exit-grid.test.cjs
+      - name: OS and kiosk regressions
+        run: node --test tests/os-production-stress.test.cjs tests/technician-clock-refresh.test.cjs tests/kiosk-work-hours.test.cjs tests/os-individual-completion.test.cjs tests/worksite-cost-consistency.test.cjs tests/pause-reason-persistence.test.cjs tests/os-no-attendance-guards.test.cjs
