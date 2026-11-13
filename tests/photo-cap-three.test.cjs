@@ -72,3 +72,16 @@ test('limite é verificado novamente no servidor e não apaga fotografias existe
  assert.match(os,/if\(!stored\)try\{await storage\.remove/);
  assert.match(entity,/if\(!persisted\)try\{await storage\.remove/);
 });
+
+test('administrador vê atalho Fotografias nos detalhes de cada obra',async()=>{
+ const w=new JSDOM('<body><div id="verObraConteudo"></div></body>',{url:'https://tg.example/',runScripts:'outside-only'}).window;
+ w.usuarioLogado={id:'a',adminId:'a',role:'admin'};
+ w.dados={obras:[{id:'obra1',adminId:'a',nome:'Obra 1'},{id:'obra2',adminId:'a',nome:'Obra 2'}]};
+ w.abrirObraLongaDetalhe=id=>Promise.resolve(id);
+ w.eval(fs.readFileSync('tg-entity-photos.js','utf8'));
+ await w.abrirObraLongaDetalhe('obra1');await new Promise(resolve=>setTimeout(resolve,0));
+ assert.match(w.document.querySelector('[data-tg-work-photo-shortcut]').textContent,/máx\. 3/);
+ await w.abrirObraLongaDetalhe('obra2');await new Promise(resolve=>setTimeout(resolve,0));
+ assert.equal(w.document.querySelectorAll('[data-tg-work-photo-shortcut]').length,1);
+ w.close();
+});
