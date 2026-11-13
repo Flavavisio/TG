@@ -10,7 +10,7 @@ body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid>.modal>div:last-child{
   gap:12px!important;
   align-items:stretch;
 }
-body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid :is(#modalSimNaoNaoBtn,#modalSimNaoVisitaBtn,#modalSimNaoHojeBtn,.btn-success){
+body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid :is(#modalSimNaoAlmocoBtn,#modalSimNaoVisitaBtn,#modalSimNaoHojeBtn,.btn-success){
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   gap:10px;min-width:0;min-height:118px;width:100%;
   margin:0!important;padding:15px 9px!important;
@@ -19,7 +19,7 @@ body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid :is(#modalSimNaoNaoBtn,#moda
   line-height:1.24!important;white-space:normal!important;
   text-align:center;box-shadow:none;cursor:pointer;
 }
-body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid #modalSimNaoNaoBtn{
+body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid #modalSimNaoAlmocoBtn{
   grid-column:1;grid-row:1;order:1;
   background:#f59e0b!important;color:#fff!important;
 }
@@ -35,12 +35,12 @@ body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid .btn-success{
   grid-column:2;grid-row:2;order:4;
   background:#16a34a!important;color:#fff!important;
 }
-body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid :is(#modalSimNaoNaoBtn,#modalSimNaoVisitaBtn,#modalSimNaoHojeBtn,.btn-success)>i{
+body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid :is(#modalSimNaoAlmocoBtn,#modalSimNaoVisitaBtn,#modalSimNaoHojeBtn,.btn-success)>i{
   display:block;font-size:27px;line-height:1.1;flex:none;
 }
-body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid #modalSimNaoNaoBtn{
-  display:flex!important;
-}
+/* The original "Não" is only a cancel action, never a pause; hide in 4-card mode. */
+body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid #modalSimNaoNaoBtn{display:none!important}
+body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid #modalSimNaoAlmocoBtn:not([hidden]):not([style*="display:none"]):not([style*="display: none"]){display:flex!important}
 body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid #modalSimNaoVisitaBtn:not([style*="display: none"]):not([style*="display:none"]){
   display:flex!important;
 }
@@ -53,5 +53,5 @@ body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid #modalSimNaoTexto{
 @media(max-width:390px){
  body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid>.modal{padding:22px 12px 14px!important}
  body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid>.modal>div:last-child{gap:9px!important;grid-auto-rows:minmax(108px,auto)}
- body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid :is(#modalSimNaoNaoBtn,#modalSimNaoVisitaBtn,#modalSimNaoHojeBtn,.btn-success){min-height:108px;padding:12px 7px!important;font-size:13px!important}
+ body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid :is(#modalSimNaoAlmocoBtn,#modalSimNaoVisitaBtn,#modalSimNaoHojeBtn,.btn-success){min-height:108px;padding:12px 7px!important;font-size:13px!important}
 }
