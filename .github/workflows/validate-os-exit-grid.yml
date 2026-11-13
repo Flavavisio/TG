@@ -1,0 +1,25 @@
+name: Validate OS exit grid 2x2
+on:
+  push:
+    branches:
+      - feat/os-exit-grid-four-20261113
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install DOM test dependencies
+        run: npm install --no-save --no-package-lock jsdom@26
+      - name: Syntax checks
+        run: |
+          node --check tg-os-exit-grid.js
+          node --check tests/os-exit-grid.test.cjs
+      - name: Test four-card OS exit modal
+        run: node --test tests/os-exit-grid.test.cjs
+      - name: OS technician, kiosk and time regressions
+        run: node --test tests/technician-personal-ui.test.cjs tests/os-production-stress.test.cjs tests/technician-clock-refresh.test.cjs tests/kiosk-work-hours.test.cjs
