@@ -14,7 +14,7 @@ test('o aviso real de erro usa modalErroOverlay nos dois pontos de entrada',()=>
 });
 test('CSS móvel sobrepõe alinhamento genérico ao topo para modais de erro',()=>{
  const old=styles.indexOf('.modal-overlay { flex-wrap:wrap; overflow-y:auto; align-items:flex-start;');
- const fixed=styles.lastIndexOf('#modalErroOverlay.modal-overlay.open');
+ const fixed=styles.lastIndexOf('#modalErroOverlay.modal-overlay.open {');
  assert(old>0&&fixed>old,'A regra específica deve vir depois do alinhamento genérico');
  const block=styles.slice(fixed,fixed+1550);
  assert.match(block,/align-items:center!important/);
