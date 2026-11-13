@@ -5,7 +5,7 @@
   const base = new URL('.', document.currentScript.src);
   const asset = name => new URL('assets/' + name, base).href;
   const css = document.createElement('link');
-  css.rel = 'stylesheet'; css.href = new URL('tg-assistente.css?v=4.2.0-touch', base).href;
+  css.rel = 'stylesheet'; css.href = new URL('tg-assistente.css?v=4.2.1-desktop-only', base).href;
   document.head.append(css);
   const root = document.createElement('aside');
   root.id = 'tg-assistente'; root.hidden = true;
@@ -23,6 +23,8 @@
   const input = root.querySelector('input'), toggle = root.querySelector('.tg-open');
   const picture = toggle.querySelector('img'), shortcuts = root.querySelector('.tg-shortcuts');
   const motion = matchMedia('(prefers-reduced-motion: reduce)');
+  const mobileScreen = matchMedia('(max-width: 900px), (hover: none) and (pointer: coarse)');
+  const mobileDevice = navigator.userAgentData?.mobile === true || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   let identity = '', opened = false, minimized = false, imageTimer, replyTimer, stateTimer, hintTimer;
   let lastContext = '', lastAlertKey = '', mutedUntil = 0, lastHintAt = 0;
   const hint = root.querySelector('.tg-proactive'), badge = root.querySelector('.tg-badge');
@@ -164,7 +166,7 @@
       toggle.setAttribute('aria-expanded', 'false'); toggle.setAttribute('aria-label', 'Abrir assistente Teco');
       clearTimeout(replyTimer); clearTimeout(hintTimer); lastContext=''; lastAlertKey=''; mutedUntil=0; lastHintAt=0; hint.hidden=true; badge.hidden=true; root.querySelector('.tg-snooze').textContent='Silenciar 1 h'; input.disabled=false; root.querySelector('.tg-form button').disabled=false; input.value = ''; setMinimized(false); welcome();
     }
-    root.hidden = !u || ['cliente', 'funcionario'].includes(u.role) || !!kiosk;
+    root.hidden = !u || ['cliente', 'funcionario'].includes(u.role) || !!kiosk || mobileDevice || mobileScreen.matches;
     if (root.hidden) { input.disabled=false;root.querySelector('.tg-form button').disabled=false;panel.hidden = true; opened = false; root.classList.remove('tg-is-open'); toggle.setAttribute('aria-expanded', 'false'); clearTimeout(imageTimer); clearTimeout(stateTimer); clearTimeout(replyTimer); hint.hidden=true; picture.removeAttribute('src'); }
     else { if (!picture.getAttribute('src')) animate(); if (opened) quickLinks(); refreshAlerts(); }
   }
@@ -224,5 +226,6 @@
   // A app notifica alterações da sessão/renderização. Atualização local a cada minuto, sem pedidos de rede nem histórico persistido.
   document.addEventListener('tg:interface-updated', sync);
   window.addEventListener('pageshow', sync);
+  mobileScreen.addEventListener('change', sync);
   sync();
 })();
