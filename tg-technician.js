@@ -20,7 +20,10 @@
         return !!card && !card.hidden && !card.classList.contains('hidden-card') && !card.classList.contains('card-bloqueado') && card.style.display !== 'none';
     };
     const icon = name => `<i class="fas fa-${name}" aria-hidden="true"></i>`;
-    const button = (text, action, job, primary = false) => `<button type="button" class="tgt-button${primary?' tgt-primary':''}" data-tgt-action="${action}"${job?` data-tgt-kind="${job.kind}" data-tgt-id="${esc(job.id)}"`:''}>${text}</button>`;
+    const button = (text, action, job, primary = false) => {
+        const blocked=(action==='start'||action==='clock')&&isOnLunch();
+        return `<button type="button" class="tgt-button${primary?' tgt-primary':''}${blocked?' tgt-lunch-disabled':''}" data-tgt-action="${action}"${job?` data-tgt-kind="${job.kind}" data-tgt-id="${esc(job.id)}"`:''}${blocked?' disabled aria-disabled="true" title="Em almoço — regressa primeiro do almoço"':''}>${text}</button>`;
+    };
     let view = 'home', identity = '', selected = '', weekDay = '', wasEnabled = false, refreshing = false;
     const wizards = new Map();
     let homeRoot = null, lastClockState = '';
@@ -55,6 +58,18 @@
     const findJob = el => jobs().find(job => job.id === el.dataset.tgtId && job.kind === el.dataset.tgtKind);
     const label = job => job.kind==='os'?'OS'+(job.row.numeroRegisto?' #'+job.row.numeroRegisto:''):'Obra';
     const personalClock = () => rows('ponto').find(p => p.funcionarioId===u()?.id && !p.servicoId && !p.obraId && p.data===today() && p.entrada && !p.saida);
+    // A closed lunch clock is not a general clock-out. Only the dedicated
+    // "Regresso de almoço" control can resume attendance.
+    function isOnLunch() {
+        if(!enabled()||!attendance()||personalClock())return false;
+        const records=rows('ponto').filter(p=>p.funcionarioId===u()?.id&&!p.servicoId&&!p.obraId&&p.data===today()&&p.entrada);
+        const latest=records[records.length-1];
+        return !!(latest?.pausaAlmoco&&latest.saida);
+    }
+    function denyLunchEntry() {
+        const message='Estás em almoço. Seleciona primeiro Regresso de almoço para poderes iniciar ou retomar uma intervenção.';
+        if(typeof mostrarErro==='function')mostrarErro(message);else alert(message);
+    }
     function resumingLunch(job) {
         const pause=typeof _pausaAlmocoPendente==='function'?_pausaAlmocoPendente():null;
         return !!pause && (job.kind==='os'?pause.tipo==='os'&&pause.servicoId===job.id:pause.tipo==='obra'&&pause.obraId===job.id);
@@ -165,7 +180,7 @@
         const hasGeneralRecord=generalRecords.length>0;
         const lunchTaken=generalRecords.some(p=>p.pausaAlmoco&&p.saida);
         const latestGeneral=generalRecords[generalRecords.length-1];
-        const lunchPending=!general&&!!latestGeneral?.pausaAlmoco&&!!latestGeneral.saida;
+        const lunchPending=isOnLunch();
         // Production policy: one lunch break per working day, unlike temporary TesteTG mode.
         const lunchBar=hasGeneralRecord&&(lunchPending||general&&!lunchTaken)?`<div class="tgt-clock tgt-lunch"><span>${icon('utensils')}<span><strong>Pausa para almoço</strong><small>${lunchPending?'Em almoço':'A pausa não conta como tempo em serviço'}</small></span></span>${button(lunchPending?'Regresso de almoço':'Sair para almoço','lunch')}</div>`:'';
         const team=u()?.role==='encarregado' && window.TGSupervisorHome ? `<details class="tgt-team"><summary>${icon('users')} A minha equipa</summary>${TGSupervisorHome.html(tenant(),today())}</details>`:'';
@@ -510,6 +525,7 @@
     }
     function handleGeneralClock() {
         if(!attendance())return;
+        if(isOnLunch())return denyLunchEntry();
         if(!personalClock())return picarPonto();
         const pending=pendingPersonalOS();
         if(pending.length) {
@@ -637,8 +653,16 @@
     // The same guards cover entry actions reached from old cards or a stale modal.
     function entryAllowed(id,kind) {return jobs().some(job=>job.kind===kind&&job.id===id&&!completed(job)&&(kind!=='os'||job.date===today()));}
     function denyOtherDay() {const text='Só podes iniciar os trabalhos atribuídos para hoje que ainda não concluíste.';if(typeof mostrarErro==='function')mostrarErro(text);else alert(text);}
-    wrap('picarPontoOS',function(original,args){if(enabled()&&args[1]==='entrada'&&!entryAllowed(args[0],'os'))return denyOtherDay();return original.apply(this,args);});
-    wrap('obraLongaPicarEntrada',function(original,args){if(enabled()&&!entryAllowed(args[0],'obra'))return denyOtherDay();return original.apply(this,args);});
+    wrap('picarPontoOS',function(original,args){
+        if(enabled()&&args[1]==='entrada'&&isOnLunch())return denyLunchEntry();
+        if(enabled()&&args[1]==='entrada'&&!entryAllowed(args[0],'os'))return denyOtherDay();
+        return original.apply(this,args);
+    });
+    wrap('obraLongaPicarEntrada',function(original,args){
+        if(enabled()&&isOnLunch())return denyLunchEntry();
+        if(enabled()&&!entryAllowed(args[0],'obra'))return denyOtherDay();
+        return original.apply(this,args);
+    });
     wrap('renderizarOMeuDia',function(original,args){if(enabled())return renderHome();return original.apply(this,args);});
     wrap('renderizarPedidosFunc',function(original,args){const result=original.apply(this,args);updateLeaveBalance();return result;});
     wrap('_mostrarInicioConteudo',function(original,args){if(enabled())return home();return original.apply(this,args);});
@@ -685,7 +709,7 @@
             case'passport':return openPassport(job);
             case'reports':return details(job,'relatorios');
             case'materials':return details(job,'materiais');
-            case'start':if(completed(job))return;if(express()&&job.kind==='os')return criarFolhaDaOS(job.id);if(job.open)return;
+            case'start':if(isOnLunch())return denyLunchEntry();if(completed(job))return;if(express()&&job.kind==='os')return criarFolhaDaOS(job.id);if(job.open)return;
                 if(!attendance()&&(jobs().some(other=>other.open&&(other.id!==job.id||other.kind!==job.kind))||pendingPersonalOS().length)){
                     const active=jobs().find(other=>other.open&&(other.id!==job.id||other.kind!==job.kind));
                     const message=active?'Tens '+label(active)+' em execução. Termina por hoje ou termina a intervenção antes de iniciar outra OS.':'Tens OS por regularizar: '+pendingPersonalOS().join(', ')+'. Regressa e seleciona Terminar por hoje ou Terminar OS.';

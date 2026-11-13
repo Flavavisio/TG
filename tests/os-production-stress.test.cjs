@@ -213,11 +213,78 @@ test('erros em telemóvel centrados e cache da PWA sincronizada',()=>{
  assert.match(css,/#tgToastContainer:has\(\.tg-toast\.tg-erro\)/);
  assert.match(css,/translate\(-50%,-50%\)/);
  assert.match(css,/#modalGenericoOverlay/);
- const js='tg-technician.js?v=1.11.2-lunch-slide',style='tg-technician.css?v=1.9.1-centered-errors';
+ const js='tg-technician.js?v=1.11.3-lunch-entry-lock',style='tg-technician.css?v=1.9.2-lunch-entry-lock';
  for(const path of ['index.html','login.html','sw.js']){
    const html=fs.readFileSync(path,'utf8');
    assert(html.includes(js),path);
    assert(html.includes(style),path);
  }
- assert(fs.readFileSync('sw.js','utf8').includes('totalgest-release-20261113-lunch-slide-centered-errors'));
+ assert(fs.readFileSync('sw.js','utf8').includes('totalgest-release-20261113-lunch-entry-lock'));
+});
+
+test('almoço: só Regresso de almoço ativo, dar entrada e intervenção esbatidos',()=>{
+ const t=setup({attendance:true});try{
+  t.w.dados.ponto[0].saida='12:00:00';
+  t.w.dados.ponto[0].pausaAlmoco=true;
+  t.w.TGTechnician.refresh();
+  const lunch=t.w.document.querySelector('[data-tgt-action="lunch"]');
+  const clock=t.w.document.querySelector('[data-tgt-action="clock"]');
+  const entry=t.w.document.querySelector('[data-tgt-action="start"]');
+  assert(lunch&&/Regresso de almoço/.test(lunch.textContent));
+  assert.equal(lunch.disabled,false);
+  assert(clock&&entry);
+  for(const b of [clock,entry]){
+    assert.equal(b.disabled,true);
+    assert.equal(b.getAttribute('aria-disabled'),'true');
+    assert(b.classList.contains('tgt-lunch-disabled'));
+  }
+  entry.click();clock.click();
+  assert(!t.events.includes('entrada:os1'));
+  assert(!t.events.includes('generalExit'));
+ }finally{t.finish()}
+});
+test('almoço: entrada direta numa OS e obra são recusadas sem gravar picagem',()=>{
+ const t=setup({attendance:true});try{
+  const rec=t.w.dados.ponto[0];rec.saida='12:00:00';rec.pausaAlmoco=true;
+  const before=JSON.stringify(t.w.dados.ponto);
+  t.w.picarPontoOS('os1','entrada');
+  t.w.obraLongaPicarEntrada('obra', 'entrada');
+  t.w.TGTechnician.handleGeneralClock();
+  assert.equal(JSON.stringify(t.w.dados.ponto),before);
+  assert(!t.events.some(x=>x==='entrada:os1'||x==='work:obra'||x==='generalExit'));
+  assert(t.messages.some(x=>x.includes('Regresso de almoço')));
+ }finally{t.finish()}
+});
+test('almoço: depois de regressar, botões são desbloqueados e OS inicia',()=>{
+ const t=setup({attendance:true});try{
+  const rec=t.w.dados.ponto[0];rec.saida='12:00:00';rec.pausaAlmoco=true;
+  t.w.TGTechnician.refresh();
+  assert(t.w.document.querySelector('[data-tgt-action="start"]').disabled);
+  const lunch=t.w.document.querySelector('[data-tgt-action="lunch"]');
+  lunch.click();
+  assert(t.events.includes('generalExit'));
+  t.w.dados.ponto.push({id:'post-lunch',adminId:'a',funcionarioId:'t1',data:'2026-11-12',entrada:'13:00:00',saida:null});
+  t.w.TGTechnician.refresh();
+  const entry=t.w.document.querySelector('[data-tgt-action="start"]');
+  const clock=t.w.document.querySelector('[data-tgt-action="clock"]');
+  assert(entry&&!entry.disabled);
+  assert(clock&&!clock.disabled);
+  entry.click();
+  assert(t.events.includes('entrada:os1'));
+ }finally{t.finish()}
+});
+test('almoço: se registo pertence a outro técnico ou empresa, não bloqueia',()=>{
+ const t=setup({attendance:true});try{
+  t.w.dados.ponto.push({id:'other-tenant',adminId:'b',funcionarioId:'t1',data:'2026-11-12',entrada:'08:00',saida:'12:00',pausaAlmoco:true});
+  t.w.dados.ponto.push({id:'colleague',adminId:'a',funcionarioId:'t2',data:'2026-11-12',entrada:'08:00',saida:'12:00',pausaAlmoco:true});
+  t.w.TGTechnician.refresh();
+  const entry=t.w.document.querySelector('[data-tgt-action="start"]');
+  assert(entry&&!entry.disabled);
+ }finally{t.finish()}
+});
+test('almoço: CSS apresenta botões bloqueados esbatidos com cursor indisponível',()=>{
+ const css=fs.readFileSync('tg-technician.css','utf8');
+ assert.match(css,/\.tgt-button\.tgt-lunch-disabled/);
+ assert.match(css,/opacity:\.43/);
+ assert.match(css,/cursor:not-allowed/);
 });
