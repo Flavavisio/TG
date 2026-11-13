@@ -87,10 +87,10 @@ test('visita e hoje ocultos não são forçados a aparecer noutras perguntas',()
 test('index, login e PWA incluem grelha e cache atualizada',()=>{
  for(const path of ['index.html','login.html','sw.js']){
   const s=fs.readFileSync(path,'utf8');
-  assert(s.includes('tg-os-exit-grid.js?v=1.0.0'),path);
-  assert(s.includes('tg-os-exit-grid.css?v=1.0.0'),path);
+  assert(s.includes('tg-os-exit-grid.js?v=1.0.1-native-pause'),path);
+  assert(s.includes('tg-os-exit-grid.css?v=1.0.1-native-pause'),path);
  }
- assert(fs.readFileSync('sw.js','utf8').includes('totalgest-release-20261113-os-exit-grid'));
+ assert(fs.readFileSync('sw.js','utf8').includes('totalgest-release-20261113-os-exit-grid-native-pause'));
 });
 
 test('modal com pausa nativa escondida não cria cinco cartões nem desloca Não para pausa',async()=>{
