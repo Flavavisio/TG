@@ -22,4 +22,4 @@ jobs:
       - name: Test four-card OS exit modal
         run: node --test tests/os-exit-grid.test.cjs
       - name: OS technician, kiosk and time regressions
-        run: node --test tests/technician-personal-ui.test.cjs tests/os-production-stress.test.cjs tests/technician-clock-refresh.test.cjs tests/kiosk-work-hours.test.cjs
+        run: node --test tests/os-production-stress.test.cjs tests/technician-clock-refresh.test.cjs tests/kiosk-work-hours.test.cjs tests/os-individual-completion.test.cjs tests/worksite-cost-consistency.test.cjs tests/pause-reason-persistence.test.cjs tests/os-no-attendance-guards.test.cjs
