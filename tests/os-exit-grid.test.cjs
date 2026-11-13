@@ -21,7 +21,9 @@ function setup(){
  const next=()=>new Promise(resolve=>setTimeout(resolve,0));
  async function os(){
   title.textContent='Saída da OS #OS-VA1113-2.\nO que pretendes fazer?';
-  w.document.getElementById('modalSimNaoNaoBtn').textContent='Pausar OS';
+  w.document.getElementById('modalSimNaoNaoBtn').textContent='Não';
+  w.document.getElementById('modalSimNaoAlmocoBtn').style.display='block';
+  w.document.getElementById('modalSimNaoAlmocoBtn').innerHTML='<i class="fas fa-pause"></i> Pausar OS';
   w.document.getElementById('modalSimNaoVisitaBtn').style.display='block';
   w.document.getElementById('modalSimNaoHojeBtn').style.display='block';
   w.document.getElementById('modalSimNaoSimTexto').textContent='Sim, terminei a obra e quero finalizar';
@@ -34,8 +36,10 @@ test('OS: 4 cartões visíveis, nomes e ícones corretos no modal 2x2',async()=>
  const t=setup();try{
   await t.os();
   assert(t.root.classList.contains('tg-os-exit-grid'));
-  assert.match(t.w.document.getElementById('modalSimNaoNaoBtn').textContent,/Pausar OS/);
-  assert(t.w.document.querySelector('[data-tg-os-pause-icon].fa-pause-circle'));
+  assert.match(t.w.document.getElementById('modalSimNaoAlmocoBtn').textContent,/Pausar OS/);
+  assert.equal(t.w.document.getElementById('modalSimNaoNaoBtn').textContent,'Não');
+  assert.match(css,/#modalSimNaoNaoBtn\{display:none!important\}/);
+  assert(t.w.document.querySelector('#modalSimNaoAlmocoBtn [data-tg-os-pause-icon].fa-pause-circle'));
   assert.match(t.w.document.getElementById('modalSimNaoVisitaBtn').textContent,/Visita sem sucesso/);
   assert(t.w.document.querySelector('#modalSimNaoVisitaBtn .fa-calendar-xmark'));
   assert.match(t.w.document.getElementById('modalSimNaoHojeBtn').textContent,/Finalizar por hoje/);
@@ -47,13 +51,14 @@ test('OS: 4 cartões visíveis, nomes e ícones corretos no modal 2x2',async()=>
 test('OS: os quatro cliques mantêm as respostas originais',async()=>{
  const t=setup();try{
   await t.os();
-  const ids=['modalSimNaoNaoBtn','modalSimNaoVisitaBtn','modalSimNaoHojeBtn'];
-  assert.match(t.w.document.getElementById(ids[0]).getAttribute('onclick'),/false/);
+  const ids=['modalSimNaoAlmocoBtn','modalSimNaoVisitaBtn','modalSimNaoHojeBtn'];
+  assert.match(t.w.document.getElementById(ids[0]).getAttribute('onclick'),/almoco/);
+  assert.match(t.w.document.getElementById('modalSimNaoNaoBtn').getAttribute('onclick'),/false/);
   assert.match(t.w.document.getElementById(ids[1]).getAttribute('onclick'),/sem_sucesso/);
   assert.match(t.w.document.getElementById(ids[2]).getAttribute('onclick'),/hoje/);
   assert.match(t.w.document.querySelector('#modalSimNaoOverlay .btn-success').getAttribute('onclick'),/true/);
   assert.match(css,/grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
-  for(const [id,position] of [['modalSimNaoNaoBtn','grid-column:1;grid-row:1'],['modalSimNaoVisitaBtn','grid-column:2;grid-row:1'],['modalSimNaoHojeBtn','grid-column:1;grid-row:2']]){
+  for(const [id,position] of [['modalSimNaoAlmocoBtn','grid-column:1;grid-row:1'],['modalSimNaoVisitaBtn','grid-column:2;grid-row:1'],['modalSimNaoHojeBtn','grid-column:1;grid-row:2']]){
    assert(css.includes('#'+id));assert(css.includes(position));
   }
   assert.match(css,/grid-column:2;grid-row:2/);
@@ -70,7 +75,8 @@ test('outros modais mantêm layout normal e textos originais ao fechar',async()=
   assert(!t.root.classList.contains('tg-os-exit-grid'));
   assert.equal(t.w.document.getElementById('modalSimNaoSimTexto').textContent,'Sim');
   assert.match(t.w.document.getElementById('modalSimNaoHojeBtn').textContent,/Terminado por hoje/);
-  assert.equal(t.w.document.querySelectorAll('[data-tg-os-pause-icon]').length,0);
+  assert(!t.root.classList.contains('tg-os-exit-grid'));
+  assert.equal(t.w.document.getElementById('modalSimNaoNaoBtn').textContent,'Não');
   assert.equal(t.w.document.querySelectorAll('[data-tg-os-final-icon]').length,0);
  }finally{t.close();}
 });
@@ -85,4 +91,14 @@ test('index, login e PWA incluem grelha e cache atualizada',()=>{
   assert(s.includes('tg-os-exit-grid.css?v=1.0.0'),path);
  }
  assert(fs.readFileSync('sw.js','utf8').includes('totalgest-release-20261113-os-exit-grid'));
+});
+
+test('modal com pausa nativa escondida não cria cinco cartões nem desloca Não para pausa',async()=>{
+ const t=setup();try{
+  await t.os();
+  t.w.document.getElementById('modalSimNaoAlmocoBtn').style.display='none';
+  await t.next();
+  assert(!t.root.classList.contains('tg-os-exit-grid'));
+  assert.equal(t.w.document.getElementById('modalSimNaoNaoBtn').textContent,'Não');
+ }finally{t.close()}
 });
