@@ -69,7 +69,10 @@ test('com ponto: botão de almoço só aparece quando há picagem geral e inicia
   const lunch=t.w.document.querySelector('[data-tgt-action="lunch"]');
   assert(lunch,'botão de almoço ativo');
   lunch.click();
-  assert(t.events.includes('generalExit'),'fluxo de picagem geral chamado');
+  assert(t.events.includes('slider'),'deve pedir gesto de arrastar');
+  assert(!t.events.includes('generalExit'),'sem arrastar não grava');
+  t.w.confirm();
+  assert(t.events.includes('generalExit'),'após arrastar inicia o fluxo de almoço');
  }finally{t.finish()}
 });
 test('sem ponto: depois de concluir definitivamente OS 1, pode iniciar OS 2',()=>{
@@ -173,4 +176,48 @@ test('três técnicos e OS diferente: cada funcionário só vê as próprias pen
   t.w.usuarioLogado.id='t2';
   assert.deepEqual(Array.from(t.w.TGTechnician.pendingPersonalOS()),['OS 128']);
  }finally{t.finish()}
+});
+
+test('almoço: cancelar o gesto não regista qualquer saída',()=>{
+ const t=setup({attendance:true,two:false});try{
+  t.w.document.querySelector('[data-tgt-action="lunch"]').click();
+  assert(t.events.includes('slider'));
+  assert(!t.events.includes('generalExit'));
+  assert.equal(t.w.dados.ponto.length,1);
+ }finally{t.finish()}
+});
+test('almoço: ao confirmar verifica novamente OS em curso',()=>{
+ const t=setup({attendance:true,two:false});try{
+  t.w.document.querySelector('[data-tgt-action="lunch"]').click();
+  t.enter('os1');
+  t.w.confirm();
+  assert(!t.events.includes('generalExit'));
+  assert.match(t.messages.at(-1),/Não é possível confirmar o almoço/);
+ }finally{t.finish()}
+});
+test('almoço: sem confirmação por arrastar não regista picagem',()=>{
+ const t=setup({attendance:true,two:false});try{
+  t.w.abrirSliderConfirmacao=undefined;
+  t.w.document.querySelector('[data-tgt-action="lunch"]').click();
+  assert(!t.events.includes('generalExit'));
+  assert.match(t.messages.at(-1),/indisponível/);
+ }finally{t.finish()}
+});
+test('almoço: sem ponto geral não apresenta ação',()=>{
+ const t=setup({attendance:false,two:false});try{
+  assert.equal(t.w.document.querySelector('[data-tgt-action="lunch"]'),null);
+ }finally{t.finish()}
+});
+test('erros em telemóvel centrados e cache da PWA sincronizada',()=>{
+ const css=fs.readFileSync('tg-technician.css','utf8');
+ assert.match(css,/#tgToastContainer:has\(\.tg-toast\.tg-erro\)/);
+ assert.match(css,/translate\(-50%,-50%\)/);
+ assert.match(css,/#modalGenericoOverlay/);
+ const js='tg-technician.js?v=1.11.2-lunch-slide',style='tg-technician.css?v=1.9.1-centered-errors';
+ for(const path of ['index.html','login.html','sw.js']){
+   const html=fs.readFileSync(path,'utf8');
+   assert(html.includes(js),path);
+   assert(html.includes(style),path);
+ }
+ assert(fs.readFileSync('sw.js','utf8').includes('totalgest-release-20261113-lunch-slide-centered-errors'));
 });
