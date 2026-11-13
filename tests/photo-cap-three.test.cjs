@@ -52,7 +52,7 @@ test('assistência e obra sem registo ou de outra empresa não permitem abrir ga
  assert.equal(w.TGEntityPhotos.openObra('foreign'),false);
  w.close();
 });
-test('técnico tem acesso apenas às suas obras, nunca às assistências de gestão',()=>{
+test('técnico tem acesso apenas às suas obras, nunca às assistências de gestão',async()=>{
  const w=new JSDOM('<body></body>',{url:'https://tg.example/',runScripts:'outside-only'}).window;
  w.usuarioLogado={id:'f',adminId:'a',role:'funcionario'};
  w.dados={assistencias:[{id:'as',adminId:'a'}],obras:[{id:'work',adminId:'a',responsaveisIds:['f']},{id:'other',adminId:'a',responsaveisIds:['x']}]};
@@ -60,6 +60,7 @@ test('técnico tem acesso apenas às suas obras, nunca às assistências de gest
  assert.equal(w.TGEntityPhotos.openAssistencia('as'),false);
  assert.equal(w.TGEntityPhotos.openObra('other'),false);
  assert.equal(w.TGEntityPhotos.openObra('work'),true);
+ await new Promise(resolve=>setTimeout(resolve,0));
  w.close();
 });
 test('limite é verificado novamente no servidor e não apaga fotografias existentes',()=>{
