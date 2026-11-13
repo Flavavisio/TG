@@ -5,7 +5,7 @@ const {JSDOM}=require('jsdom');
 const script=fs.readFileSync('tg-os-exit-grid.js','utf8');
 const css=fs.readFileSync('tg-os-exit-grid.css','utf8');
 function setup(){
- const w=new JSDOM(\`<!doctype html><html><body class="tgt-active"><div class="modal-overlay" id="modalSimNaoOverlay"><div class="modal">
+ const w=new JSDOM(`<!doctype html><html><body class="tgt-active"><div class="modal-overlay" id="modalSimNaoOverlay"><div class="modal">
  <button type="button" onclick="_modalSimNaoResponder(null)">×</button>
  <p id="modalSimNaoTexto">Outro aviso</p>
  <div style="display:flex;gap:8px;flex-wrap:wrap;">
@@ -14,7 +14,7 @@ function setup(){
  <button id="modalSimNaoHojeBtn" style="display:none" onclick="_modalSimNaoResponder('hoje')"><i class="fas fa-clipboard-list"></i> Terminado por hoje</button>
  <button id="modalSimNaoVisitaBtn" style="display:none" onclick="_modalSimNaoResponder('sem_sucesso')"><i class="fas fa-calendar-xmark"></i> Visita sem sucesso</button>
  <button class="btn btn-success" onclick="_modalSimNaoResponder(true)"><span id="modalSimNaoSimTexto">Sim</span></button>
- </div></div></div></body></html>\`,{url:'https://tg.example/',runScripts:'outside-only'}).window;
+ </div></div></div></body></html>`,{url:'https://tg.example/',runScripts:'outside-only'}).window;
  w.eval(script);
  w.document.dispatchEvent(new w.Event('DOMContentLoaded'));
  const root=w.document.getElementById('modalSimNaoOverlay'),title=w.document.getElementById('modalSimNaoTexto');
