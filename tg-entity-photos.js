@@ -142,6 +142,30 @@
   render().catch(error=>status(error.message,true));
   return true;
  }
- document.addEventListener('tg:interface-updated',()=>{if(modal&&!valid())close();});
+ function installWorkShortcut(){
+  const original=root.abrirObraLongaDetalhe;
+  if(typeof original!=='function'||original.__tgPhotoShortcut)return;
+  function wrapped(...args){
+   const result=original.apply(this,args);
+   const id=args[0];
+   Promise.resolve(result).then(()=>{
+    const box=$('verObraConteudo');
+    if(!box||!entry('obra',id))return;
+    let btn=box.querySelector('[data-tg-work-photo-shortcut]');
+    if(btn)btn.remove();
+    btn=document.createElement('button');btn.type='button';
+    btn.className='btn btn-outline';btn.dataset.tgWorkPhotoShortcut='true';
+    btn.style.cssText='display:inline-flex;align-items:center;gap:7px;margin:8px 0;min-height:44px';
+    btn.textContent='Fotografias da obra (máx. 3)';
+    btn.addEventListener('click',()=>root.TGEntityPhotos?.openObra(id));
+    box.prepend(btn);
+   }).catch(error=>console.warn('Fotografias da obra:',error));
+   return result;
+  }
+  wrapped.__tgPhotoShortcut=true;
+  root.abrirObraLongaDetalhe=wrapped;
+ }
+ installWorkShortcut();
+ document.addEventListener('tg:interface-updated',()=>{if(modal&&!valid())close();installWorkShortcut();});
  root.TGEntityPhotos={open,openObra:id=>open('obra',id),openAssistencia:id=>open('assistencia',id),close};
 })(window);
