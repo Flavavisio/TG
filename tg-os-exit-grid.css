@@ -1,0 +1,57 @@
+/* Layout 2 × 2 apenas para o modal "Saída da OS". Não altera o fluxo das respostas. */
+body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid>.modal{
+  width:min(100%,560px)!important;max-width:560px!important;
+  padding:24px 20px 20px!important;box-sizing:border-box;
+}
+body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid>.modal>div:last-child{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  grid-auto-rows:minmax(118px,auto);
+  gap:12px!important;
+  align-items:stretch;
+}
+body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid :is(#modalSimNaoNaoBtn,#modalSimNaoVisitaBtn,#modalSimNaoHojeBtn,.btn-success){
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:10px;min-width:0;min-height:118px;width:100%;
+  margin:0!important;padding:15px 9px!important;
+  border:0!important;border-radius:17px!important;
+  box-sizing:border-box;font-size:15px!important;font-weight:750!important;
+  line-height:1.24!important;white-space:normal!important;
+  text-align:center;box-shadow:none;cursor:pointer;
+}
+body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid #modalSimNaoNaoBtn{
+  grid-column:1;grid-row:1;order:1;
+  background:#f59e0b!important;color:#fff!important;
+}
+body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid #modalSimNaoVisitaBtn{
+  grid-column:2;grid-row:1;order:2;
+  background:#d97706!important;color:#fff!important;
+}
+body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid #modalSimNaoHojeBtn{
+  grid-column:1;grid-row:2;order:3;
+  background:#0ea5e9!important;color:#fff!important;
+}
+body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid .btn-success{
+  grid-column:2;grid-row:2;order:4;
+  background:#16a34a!important;color:#fff!important;
+}
+body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid :is(#modalSimNaoNaoBtn,#modalSimNaoVisitaBtn,#modalSimNaoHojeBtn,.btn-success)>i{
+  display:block;font-size:27px;line-height:1.1;flex:none;
+}
+body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid #modalSimNaoNaoBtn{
+  display:flex!important;
+}
+body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid #modalSimNaoVisitaBtn:not([style*="display: none"]){
+  display:flex!important;
+}
+body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid #modalSimNaoHojeBtn:not([style*="display: none"]){
+  display:flex!important;
+}
+body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid #modalSimNaoTexto{
+  margin:8px 22px 22px!important;font-size:17px!important;line-height:1.5;
+}
+@media(max-width:390px){
+ body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid>.modal{padding:22px 12px 14px!important}
+ body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid>.modal>div:last-child{gap:9px!important;grid-auto-rows:minmax(108px,auto)}
+ body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid :is(#modalSimNaoNaoBtn,#modalSimNaoVisitaBtn,#modalSimNaoHojeBtn,.btn-success){min-height:108px;padding:12px 7px!important;font-size:13px!important}
+}
