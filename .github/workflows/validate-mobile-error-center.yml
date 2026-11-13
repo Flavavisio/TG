@@ -1,0 +1,21 @@
+name: Validate mobile centered error modal
+on:
+  push:
+    branches:
+      - fix/center-native-error-modal-20261113
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock jsdom@26
+      - name: Check real error modal and cache rules
+        run: node --test tests/mobile-error-modal-center.test.cjs
+      - name: OS, technician and kiosk regressions
+        run: |
+          node --test tests/os-production-stress.test.cjs tests/technician-clock-refresh.test.cjs tests/kiosk-work-hours.test.cjs tests/photo-cap-three.test.cjs
