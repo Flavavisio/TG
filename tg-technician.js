@@ -550,13 +550,30 @@
                 if(typeof mostrarErro==='function')mostrarErro(message);else alert(message);
                 return;
             }
-            // The native attendance workflow already records pausaAlmoco and persists it.
-            const operation=picarPonto();
-            const popup=$('modalGenericoOverlay');
-            if(popup?.classList.contains('open')&&popup.querySelector('[onclick*="_responderSaidaOuAlmoco"]')&&typeof _responderSaidaOuAlmoco==='function'){
-                _responderSaidaOuAlmoco('almoco');
+            if(typeof abrirSliderConfirmacao!=='function') {
+                const message='A confirmação por arrastar está indisponível. Não foi registada a saída para almoço.';
+                if(typeof mostrarErro==='function')mostrarErro(message);else alert(message);
+                return;
             }
-            return operation;
+            // Require a deliberate slide before invoking the native attendance
+            // workflow. Re-check the clock and active work at confirmation time.
+            return abrirSliderConfirmacao('Sair para almoço','Arrasta para confirmar a saída para almoço.',()=>{
+                const stillOpen=personalClock();
+                const taken=rows('ponto').some(p=>p.funcionarioId===u()?.id&&!p.servicoId&&!p.obraId&&p.data===today()&&p.pausaAlmoco&&p.saida);
+                if(!enabled()||!attendance()||!stillOpen||taken||jobs().some(job=>job.open)
+                    ||(typeof _pausaAlmocoPendente==='function'&&_pausaAlmocoPendente())) {
+                    const message='Não é possível confirmar o almoço. Atualiza o estado das intervenções e tenta novamente.';
+                    if(typeof mostrarErro==='function')mostrarErro(message);else alert(message);
+                    return;
+                }
+                // Native flow remains responsible for persistence and lunch flags.
+                const operation=picarPonto();
+                const popup=$('modalGenericoOverlay');
+                if(popup?.classList.contains('open')&&popup.querySelector('[onclick*="_responderSaidaOuAlmoco"]')&&typeof _responderSaidaOuAlmoco==='function'){
+                    _responderSaidaOuAlmoco('almoco');
+                }
+                return operation;
+            });
         }
         const last=generalRecords[generalRecords.length-1];
         if(last?.pausaAlmoco&&last.saida)return picarPonto();
