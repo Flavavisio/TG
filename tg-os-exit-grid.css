@@ -41,10 +41,10 @@ body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid :is(#modalSimNaoNaoBtn,#moda
 body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid #modalSimNaoNaoBtn{
   display:flex!important;
 }
-body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid #modalSimNaoVisitaBtn:not([style*="display: none"]){
+body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid #modalSimNaoVisitaBtn:not([style*="display: none"]):not([style*="display:none"]){
   display:flex!important;
 }
-body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid #modalSimNaoHojeBtn:not([style*="display: none"]){
+body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid #modalSimNaoHojeBtn:not([style*="display: none"]):not([style*="display:none"]){
   display:flex!important;
 }
 body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid #modalSimNaoTexto{
