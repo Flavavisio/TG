@@ -1,0 +1,22 @@
+name: Validate negative survey OS warning
+on:
+  push:
+    branches:
+      - fix/negative-survey-os-confirm-20261113
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock jsdom@26
+      - run: node --check tg-os-surveys.js
+      - name: Warning and confirmation behavior
+        run: node --test tests/survey-negative-os-warning.test.cjs
+      - name: Regression of OS and time accounting
+        run: |
+          node --test tests/os-production-stress.test.cjs tests/technician-clock-refresh.test.cjs tests/kiosk-work-hours.test.cjs tests/worksite-cost-consistency.test.cjs tests/os-individual-completion.test.cjs
