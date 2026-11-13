@@ -252,3 +252,20 @@ body.tgt-active #modalGenericoOverlay>.modal {
   max-height:calc(100dvh - 24px)!important;
   overflow-y:auto;
 }
+
+/* During lunch, the technician must use Regresso de almoço first.
+   Keep other actions readable but unmistakably unavailable. */
+body.tgt-active .tgt-button.tgt-lunch-disabled,
+body.tgt-active .tgt-button.tgt-lunch-disabled:hover,
+body.tgt-active .tgt-button.tgt-lunch-disabled:focus {
+    opacity:.43!important;
+    filter:grayscale(.65)!important;
+    cursor:not-allowed!important;
+    box-shadow:none!important;
+    pointer-events:none!important;
+}
+body.tgt-active .tgt-button.tgt-lunch-disabled:disabled {
+    background:var(--tgt-soft)!important;
+    color:var(--tgt-muted)!important;
+    border-color:var(--tgt-line)!important;
+}
