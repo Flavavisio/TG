@@ -1,5 +1,6 @@
 #tg-assistente{--tg-ink:#162b4f;--tg-paper:#fff;--tg-soft:#f2f5fa;--tg-line:#dce4ee;position:fixed;right:22px;bottom:22px;z-index:950;font-family:Inter,system-ui,sans-serif;color:var(--tg-ink);font-size:14px;line-height:1.5}
 #tg-assistente[hidden],#tg-assistente [hidden]{display:none!important}
+@media(max-width:900px),(hover:none) and (pointer:coarse){#tg-assistente{display:none!important}}
 #tg-assistente *{box-sizing:border-box}
 #tg-assistente button,#tg-assistente input{font:inherit}
 #tg-assistente button{cursor:pointer}
