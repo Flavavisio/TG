@@ -265,30 +265,80 @@ function removeLegacySurveyColumn(){
  if(!table)return;
  table.querySelectorAll('[data-sat-os-heading],[data-sat-os-cell]').forEach(el=>el.remove());
 }
-async function warnCustomer(id){
- if(!yes()||!id||id===warned)return;
+// Show the most recently ANSWERED survey, not the survey of the most recently
+// scheduled OS. Keep the create-OS form untouched until the operator decides.
+let warningRequest=0,warningOverlay=null;
+function dismissWarning(){
+ if(warningOverlay){warningOverlay.remove();warningOverlay=null;}
+}
+async function warnCustomer(id,select){
+ if(!yes()||!id||id===warned)return false;
+ const request=++warningRequest;
+ dismissWarning();
  try{
   const services=new Map((records().servicos||[]).filter(s=>String(s.adminId)===tenant()).map(s=>[String(s.id),s]));
-  const responses=(await fetchRows()).filter(r=>String(r.cliente_id)===String(id)&&r.respondido_em).sort((a,b)=>{
-   const date=r=>String(services.get(String(r.servico_id))?.data||r.criado_em||'');
-   return date(b).localeCompare(date(a))||String(b.respondido_em).localeCompare(String(a.respondido_em));
-  });
-  const last=responses[0];if(!last||last.avaliacao_geral>2)return;
-  warned=id;
-  const os=(records().servicos||[]).find(s=>String(s.id)===String(last.servico_id));
-  const box=document.createElement('div');box.className='tg-sat-warning';box.innerHTML='<div class="tg-sat-warning-card" role="alertdialog" aria-modal="true"><h3><i class="fas fa-triangle-exclamation"></i> Cliente insatisfeito na última intervenção</h3><p><strong>'+esc(customerName(id))+'</strong> avaliou a última intervenção com <strong>'+last.avaliacao_geral+'/5</strong>.</p><p>OS '+esc(os?.numeroRegisto||last.servico_id)+' · '+esc(stamp(last.respondido_em))+'</p><p>'+esc(last.comentario||'O cliente não deixou comentários.')+'</p><button type="button" class="btn btn-primary">Compreendi — continuar a OS</button></div>';document.body.append(box);
-  const dismiss=()=>box.remove();box.querySelector('button').addEventListener('click',dismiss);box.addEventListener('click',e=>{if(e.target===box)dismiss();});
- }catch(e){console.warn('Satisfação: falha a consultar alerta',e);}
+  const responses=(await fetchRows(true)).filter(r=>String(r.cliente_id)===String(id)&&r.respondido_em)
+   .sort((a,b)=>String(b.respondido_em).localeCompare(String(a.respondido_em))
+    ||String(b.criado_em||'').localeCompare(String(a.criado_em||'')));
+  if(request!==warningRequest||select&&(!select.isConnected||String(select.value)!==String(id)))return false;
+  const last=responses[0],rating=Number(last?.avaliacao_geral);
+  if(!last||!Number.isFinite(rating)||rating>2)return false;
+  const os=services.get(String(last.servico_id));
+  const box=document.createElement('div');
+  box.className='tg-sat-warning';
+  box.innerHTML='<div class="tg-sat-warning-card" role="alertdialog" aria-modal="true" aria-labelledby="tgSatWarningTitle" aria-describedby="tgSatWarningBody" tabindex="-1">'+
+   '<h3 id="tgSatWarningTitle"><i class="fas fa-triangle-exclamation"></i> Atenção — último inquérito negativo</h3>'+
+   '<p id="tgSatWarningBody">O último inquérito preenchido pelo cliente <strong>'+esc(customerName(id))+
+   '</strong> foi de caráter negativo (<strong>'+esc(rating)+'/5</strong>).</p>'+
+   '<p>OS '+esc(os?.numeroRegisto||last.servico_id)+' · '+esc(stamp(last.respondido_em))+'</p>'+
+   (last.comentario?'<p>'+esc(last.comentario)+'</p>':'')+
+   '<p>Deseja continuar a registar esta ordem de serviço?</p>'+
+   '<div class="tg-sat-warning-actions"><button type="button" class="btn btn-outline" data-sat-cancel>Cancelar</button><button type="button" class="btn btn-primary" data-sat-ok>OK — Continuar</button></div></div>';
+  document.body.append(box);warningOverlay=box;
+  const cancel=()=>{
+   if(warningOverlay!==box)return;
+   warned='';
+   dismissWarning();
+   // Cancel the selected customer rather than saving a new OS.
+   // Keep the draft form open so the operator can choose another customer.
+   if(select?.isConnected&&String(select.value)===String(id)){
+    select.value='';
+    select.dispatchEvent(new Event('change',{bubbles:true}));
+    select.focus();
+   }
+  };
+  const approve=()=>{if(warningOverlay!==box)return;warned=id;dismissWarning();select?.focus();};
+  box.querySelector('[data-sat-cancel]').addEventListener('click',cancel);
+  box.querySelector('[data-sat-ok]').addEventListener('click',approve);
+  box.addEventListener('click',event=>{if(event.target===box)cancel();});
+  const onEscape=event=>{
+   if(event.key==='Escape'&&warningOverlay===box){
+    event.preventDefault();event.stopPropagation();cancel();
+   }
+  };
+  document.addEventListener('keydown',onEscape,true);
+  const originalRemove=box.remove.bind(box);
+  box.remove=()=>{document.removeEventListener('keydown',onEscape,true);originalRemove();};
+  box.querySelector('[data-sat-cancel]').focus();
+  return true;
+ }catch(error){
+  console.warn('Satisfação: falha a consultar alerta',error);
+  return false;
+ }
 }
 function watchCustomerSelect(event){
  if(!tenant())return;
  const target=event.target;if(!(target instanceof HTMLSelectElement))return;
  const id=(target.id||'')+' '+(target.name||'');if(!/cliente/i.test(id)||/filtro|pesquisa/i.test(id))return;
- const value=target.value;if(!(records().clientes||[]).some(c=>String(c.id)===value))return;
+ const value=target.value;
+ // Invalidate pending queries when a customer is changed or cleared.
+ warningRequest++;dismissWarning();
+ if(!(records().clientes||[]).some(c=>String(c.id)===value))return;
  const nearby=target.closest('.modal-overlay,.modal,[role="dialog"],.section-container');
  const text=nearby?.textContent?.slice(0,700)||'';
  if(!/nova ordem|nova os|criar os|ordem de servi|novo servi/i.test(text)&&!target.closest('#modalGenericoOverlay,[id*=modalServ],[id*=modalOS]'))return;
- warned='';warnCustomer(value);
+ warned='';
+ warnCustomer(value,target);
 }
 let ticking=false;
 function refresh(){
@@ -304,7 +354,7 @@ document.addEventListener('click',event=>{
   setTimeout(()=>{
    const selectors=[...document.querySelectorAll('select[id*="cliente" i],select[name*="cliente" i]')];
    const visible=selectors.filter(el=>el.getClientRects().length&&el.value&&(records().clientes||[]).some(c=>String(c.id)===String(el.value)));
-   const last=visible.at(-1);if(last)warnCustomer(last.value);
+   const last=visible.at(-1);if(last)warnCustomer(last.value,last);
   },450);
  }
  // Não esperar pelo timeout do clique: o observador repõe o separador antes do paint.
