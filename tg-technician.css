@@ -223,3 +223,32 @@ body.tgt-active :is(#modalPedidoOverlay,#modalSimNaoOverlay)>.modal{width:min(10
 
 /* Produção: o resumo de ponto é de consulta; a saída é efetuada em O meu dia. */
 body.tgt-active #secao-ponto button[data-tgt-hidden-clock-out="true"]{display:none!important}
+
+/* Phone: show error notifications and technician dialogs in the visible centre.
+   Success and informational notifications retain their existing placement. */
+@media (max-width:600px) {
+  body.tgt-active #tgToastContainer:has(.tg-toast.tg-erro) {
+    position:fixed!important;
+    inset:50% auto auto 50%!important;
+    transform:translate(-50%,-50%)!important;
+    width:min(92vw,400px)!important;
+    max-width:calc(100vw - 24px)!important;
+    max-height:calc(100dvh - 32px)!important;
+    overflow-y:auto;
+    z-index:100000!important;
+  }
+  body.tgt-active #tgToastContainer:has(.tg-toast.tg-erro) .tg-toast {
+    width:100%;
+    box-sizing:border-box;
+  }
+}
+/* Ordinary generic dialogs also belong in the centre for technicians. */
+body.tgt-active #modalGenericoOverlay {
+  align-items:center!important;
+  justify-content:center!important;
+}
+body.tgt-active #modalGenericoOverlay>.modal {
+  margin:auto!important;
+  max-height:calc(100dvh - 24px)!important;
+  overflow-y:auto;
+}

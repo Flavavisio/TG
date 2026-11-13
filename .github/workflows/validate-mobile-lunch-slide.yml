@@ -1,0 +1,23 @@
+name: Validate centered errors and lunch slide
+on:
+  push:
+    branches:
+      - fix/mobile-errors-lunch-slide-20261113
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock jsdom@26
+      - run: |
+          node --check tg-technician.js
+          node --check sw.js
+      - name: Simulacao UI e almoço
+        run: node --test tests/os-production-stress.test.cjs
+      - name: Contadores, pausas e custos
+        run: node --test tests/technician-clock-refresh.test.cjs tests/service-time-isolated.test.cjs tests/os-individual-completion.test.cjs tests/kiosk-work-hours.test.cjs tests/worksite-cost-consistency.test.cjs tests/pause-reason-persistence.test.cjs tests/os-no-attendance-guards.test.cjs
