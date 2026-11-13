@@ -144,7 +144,7 @@
             ${job.row.observacoes?`<div class="tgt-access">${icon('circle-info')}<p>${esc(job.row.observacoes)}</p></div>`:''}
             ${info?`<p class="tgt-focus-info">${esc(info)}</p>`:''}
             ${open && typeof _tempoServicoHTML==='function'?_tempoServicoHTML(job.open,job.kind==='obra'?'Em serviço nesta obra há':'Em serviço neste cliente há'):''}
-            ${open?`<div class="tgt-tools">${job.kind==='os'?button(icon('camera')+' Fotografias','photos',job):''}${button(icon('boxes-stacked')+' Materiais','materials',job)}${passportTarget(job)?button(icon('id-card')+' Passaporte','passport',job):''}</div>`:''}
+            ${open?`<div class="tgt-tools">${button(icon('camera')+' Fotografias (máx. 3)','photos',job)}${button(icon('boxes-stacked')+' Materiais','materials',job)}${passportTarget(job)?button(icon('id-card')+' Passaporte','passport',job):''}</div>`:''}
             <div class="tgt-focus-actions">${button(startLabel+' '+icon('arrow-right'),open?(job.kind==='os'?'exit':'pause'):'start',job,true)}<div class="tgt-detail-actions">${button('Ver '+(job.kind==='os'?'ordem de serviço':'obra'),'details',job)}${mapLink}</div></div></section>`;
     }
     function recordsHTML() {
@@ -704,7 +704,7 @@
         switch(control.dataset.tgtAction){
             case'choose':if(jobs().some(other=>other.open&&(other.id!==job.id||other.kind!==job.kind)))return details(job);selected=job.kind+':'+job.id;if(job.kind==='obra')return navigate(worksList);view='home';_fecharSecaoAbertaMobile();if($('painelGrupoMobile'))$('painelGrupoMobile').style.display='none';prepareHome();renderHome();window.scrollTo({top:0,behavior:'auto'});return;
             case'details':return details(job);
-            case'photos':return window.TGOSPhotos?.open(job.id)||details(job,'fotos');
+            case'photos':return job.kind==='obra'?(window.TGEntityPhotos?.openObra(job.id)||details(job,'fotos')):(window.TGOSPhotos?.open(job.id)||details(job,'fotos'));
             case'notes':return notes(job);
             case'passport':return openPassport(job);
             case'reports':return details(job,'relatorios');

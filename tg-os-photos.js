@@ -4,6 +4,7 @@
  'use strict';
  if(root.TGOSPhotos)return;
  const BUCKET='relatorios-especialidade';
+ const MAX_PHOTOS=3;
  const $=id=>document.getElementById(id);
  const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  let modal=null,context=null,busy=false;
@@ -44,7 +45,7 @@
  async function display(){
   if(!valid()||!modal)return;
   const container=$('tg-os-photo-gallery');container.replaceChildren();
-  const list=osFor(context.id)?.fotos||[];
+  const list=await currentPhotos();
   for(const photo of list){
    if(!valid()||!modal)return;
    const div=document.createElement('figure');div.style.cssText='margin:0;border:1px solid #e2e8f0;border-radius:9px;padding:6px';
@@ -61,8 +62,23 @@
    const caption=document.createElement('figcaption');caption.style.cssText='font-size:12px;word-break:break-word';caption.textContent=photo.nome||'Fotografia da OS';div.append(caption);container.append(div);
   }
   $('tg-os-photo-count').textContent=String(list.length);
+  updateAvailability(list.length);
  }
  function close(){if(busy)return;modal?.remove();modal=null;context=null;}
+ async function currentPhotos(){
+  if(typeof supa==='undefined'||!valid())throw Error('Não foi possível consultar as fotografias.');
+  const read=await supa.from('servicos').select('id,fotos').eq('id',context.id).eq('admin_id',context.tenant).single();
+  if(read.error||!read.data||!valid())throw Error('Não foi possível consultar as fotografias da OS.');
+  const list=Array.isArray(read.data.fotos)?read.data.fotos:[];
+  const os=osFor(context.id);if(os)os.fotos=list;
+  return list;
+ }
+ function updateAvailability(count){
+  if(!modal)return;
+  const full=count>=MAX_PHOTOS;
+  modal.querySelectorAll('[data-photo-source]').forEach(btn=>{btn.disabled=busy||full;btn.title=full?'Limite de 3 fotografias atingido':'';});
+  const label=$('tg-os-photo-limit');if(label)label.textContent=full?'Limite de 3 fotografias atingido.':'Podes adicionar mais '+(MAX_PHOTOS-count)+' fotografia(s).';
+ }
  function open(osId){
   const os=osFor(osId),me=identity();if(!os||!me)return false;
   if(modal)modal.remove();
@@ -70,15 +86,16 @@
   const wrapper=document.createElement('div');wrapper.id='tg-os-photo-modal';
   wrapper.innerHTML='<section class="tg-os-photo-dialog" role="dialog" aria-modal="true" aria-labelledby="tg-os-photo-title">'
    +'<div class="tg-os-photo-header"><h2 id="tg-os-photo-title">Fotografias da OS</h2><button type="button" class="tg-os-photo-dismiss" data-photo-close aria-label="Fechar fotografias">×</button></div>'
-   +'<p class="tg-os-photo-description">Fotografias associadas à ordem de serviço, sem necessidade de criar relatórios.</p>'
+   +'<p class="tg-os-photo-description">Até 3 fotografias associadas à ordem de serviço, sem ser necessário criar relatórios.</p>'
    +'<div class="tg-os-photo-actions"><button type="button" data-photo-source="camera"><i class="fas fa-camera" aria-hidden="true"></i> Tirar fotografia</button><button type="button" data-photo-source="gallery"><i class="fas fa-images" aria-hidden="true"></i> Escolher da galeria</button></div>'
    +'<input id="tg-os-photo-input" type="file" accept="image/jpeg,image/png,image/webp" hidden>'
    +'<p id="tg-os-photo-status" class="tg-os-photo-status" role="status" aria-live="polite"></p>'
-   +'<p class="tg-os-photo-count">Fotografias guardadas: <strong id="tg-os-photo-count">0</strong></p>'
+   +'<p class="tg-os-photo-count">Fotografias guardadas: <strong id="tg-os-photo-count">0</strong> / 3</p><p id="tg-os-photo-limit" class="tg-os-photo-status"></p>'
    +'<div id="tg-os-photo-gallery" class="tg-os-photo-gallery"></div></section>';
   wrapper.addEventListener('click',event=>{
    if(event.target===wrapper||event.target.closest('[data-photo-close]'))return close();
-   const option=event.target.closest('[data-photo-source]');if(!option||busy)return;
+   const option=event.target.closest('[data-photo-source]');if(!option||busy||option.disabled)return;
+   if((osFor(context.id)?.fotos||[]).length>=MAX_PHOTOS){status('Limite de 3 fotografias atingido.',true);return;}
    const input=$('tg-os-photo-input');if(option.dataset.photoSource==='camera'){input.capture='environment';input.multiple=false;}else{input.removeAttribute('capture');input.multiple=true;}
    input.click();
   });
@@ -97,6 +114,9 @@
   let completed=0;
   try{
    if(typeof supa==='undefined')throw Error('Não há ligação ao servidor.');
+   const current=await currentPhotos();
+   const vacancies=Math.max(0,MAX_PHOTOS-current.length);
+   if(files.length>vacancies)throw Error('Só podes guardar 3 fotografias por OS. Vagas disponíveis: '+vacancies+'.');
    for(const file of files){
     if(!valid())throw Error('A sessão mudou. Volta a abrir as fotografias.');
     if(!isPhoto(file))throw Error('Escolhe JPG, PNG ou WebP até 8 MB.');
@@ -114,6 +134,7 @@
      if(read.error||!read.data)throw Error('Não foi possível confirmar a OS no servidor.');
      const old=Array.isArray(read.data.fotos)?read.data.fotos:[];
      if(!valid())throw Error('A sessão mudou durante o envio.');
+     if(old.length>=MAX_PHOTOS)throw Error('Limite de 3 fotografias atingido.');
      const updated=[...old,next];
      const save=await supa.from('servicos').update({fotos:updated}).eq('id',context.id).eq('admin_id',context.tenant).select('id,fotos').single();
      if(save.error||!save.data)throw Error('Não foi possível associar a fotografia à OS.');
@@ -133,7 +154,7 @@
    }
    await display();
   }catch(e){status(e.message||'Não foi possível guardar fotografias.',true);}
-  finally{busy=false;buttons?.forEach(b=>b.disabled=false);}
+  finally{busy=false;buttons?.forEach(b=>b.disabled=false);updateAvailability((osFor(context?.id)?.fotos||[]).length);}
  }
  document.addEventListener('tg:interface-updated',()=>{if(modal&&!valid())close();});
 

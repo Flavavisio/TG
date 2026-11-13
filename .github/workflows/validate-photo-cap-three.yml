@@ -1,0 +1,27 @@
+name: Validate photo cap 3
+on:
+  push:
+    branches:
+      - fix/photo-cap-three-records-20261113
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock jsdom@26
+      - run: |
+          node --check tg-os-photos.js
+          node --check tg-entity-photos.js
+          node --check tg-assist-native.js
+          node --check tg-technician.js
+          node --check sw.js
+      - name: Photo cap and permissions
+        run: node --test tests/photo-cap-three.test.cjs tests/os-photos.test.cjs
+      - name: App regressions
+        run: |
+          node --test tests/os-production-stress.test.cjs tests/technician-clock-refresh.test.cjs tests/assist-native.test.cjs tests/assist-dashboard.test.cjs tests/kiosk-work-hours.test.cjs
