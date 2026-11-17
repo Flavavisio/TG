@@ -1,0 +1,21 @@
+name: Validate kiosk materials production
+on:
+  push:
+    branches:
+      - main
+      - release/kiosk-materials-production-20261117
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock jsdom@26
+      - run: node --check app-principal.js
+      - run: node --check sw.js
+      - run: node --test tests/kiosk-planned-materials.test.cjs tests/kiosk-planned-materials-ui.test.cjs tests/kiosk-work-hours.test.cjs tests/contract-kiosk.test.cjs tests/contract-kiosk-admin.test.cjs tests/material-search.test.cjs tests/stock-status.test.cjs tests/pwa-update-notice.test.cjs tests/worksite-cost-consistency.test.cjs tests/os-production-stress.test.cjs tests/technician-clock-refresh.test.cjs tests/pause-reason-persistence.test.cjs
