@@ -126,5 +126,26 @@
         '</div>';
     }).join('');
   }
-  return { normalizarPlano, importarLinhas, importarMatriz, importarFolhaXlsx, renderizarSaldos, resumo, destinoMovimento, movimentosDaObra };
+
+  function saldosDaObra({ obraId, adminId, obraMateriais, artigos }) {
+    if (!id(obraId) || !id(adminId)) throw Error('Obra ou empresa não identificada.');
+    const catalogo = new Map((artigos || []).filter(a => id(a.adminId) === id(adminId)).map(a => [id(a.id), a]));
+    return (obraMateriais || []).filter(m => id(m.obraId) === id(obraId) && id(m.adminId) === id(adminId)).map(m => {
+      const artigo = catalogo.get(id(m.artigoId));
+      const previsto = number(m.qtdPrevista);
+      const consumido = number(m.qtdConsumida);
+      if (!Number.isFinite(previsto) || !Number.isFinite(consumido)) throw Error('Quantidades inválidas nos materiais desta obra.');
+      return {
+        referencia: id(artigo?.referencia || m.artigoId),
+        descricao: id(artigo?.nome || '(artigo removido)'),
+        unidade: id(artigo?.unidade || 'un.'),
+        previsto: round(previsto),
+        consumido: round(consumido),
+        faltaConsumir: round(Math.max(0, previsto - consumido)),
+        extraNaoPrevisto: previsto === 0,
+        excedente: round(Math.max(0, consumido - previsto))
+      };
+    });
+  }
+  return { normalizarPlano, importarLinhas, importarMatriz, importarFolhaXlsx, renderizarSaldos, saldosDaObra, resumo, destinoMovimento, movimentosDaObra };
 });
