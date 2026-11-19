@@ -78,5 +78,53 @@
       return true;
     });
   }
-  return { normalizarPlano, importarLinhas, resumo, destinoMovimento, movimentosDaObra };
+
+  function importarMatriz(cabecalhos, linhas) {
+    if (!Array.isArray(cabecalhos) || !Array.isArray(linhas)) throw Error('Excel inválido.');
+    const limpar = x => id(x).toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').replace(/[^a-z0-9]/g, '');
+    const nomes = cabecalhos.map(limpar);
+    const aliases = {
+      referencia: ['referencia','ref','codigo','artigoid'],
+      descricao: ['descricao','nome','artigo','produto'],
+      quantidade: ['quantidade','qtd','qtdprevista','quantidadeprevista','previsto'],
+      unidade: ['unidade','un','ud']
+    };
+    const index = campo => nomes.findIndex(n => aliases[campo].includes(n));
+    if (index('quantidade') < 0 || (index('referencia') < 0 && index('descricao') < 0)) {
+      return { materiais: [], erros: [{ linha: 1, mensagem: 'Cabeçalhos obrigatórios: Referência ou Descrição, e Quantidade.' }], podeConfirmar: false };
+    }
+    const objetos = linhas.map(row => {
+      const item = {};
+      for (const campo of Object.keys(aliases)) {
+        const coluna = index(campo);
+        if (coluna >= 0) item[campo] = Array.isArray(row) ? row[coluna] : undefined;
+      }
+      return item;
+    });
+    return importarLinhas(objetos);
+  }
+  function importarFolhaXlsx(workbook, xlsx) {
+    if (!workbook || !xlsx || !xlsx.utils || typeof xlsx.utils.sheet_to_json !== 'function') throw Error('Leitor Excel indisponível.');
+    const primeira = workbook.Sheets && workbook.Sheets[workbook.SheetNames && workbook.SheetNames[0]];
+    if (!primeira) throw Error('O ficheiro Excel não tem folhas válidas.');
+    const matriz = xlsx.utils.sheet_to_json(primeira, { header: 1, defval: '' });
+    if (!matriz.length) return { materiais: [], erros: [{ linha: 1, mensagem: 'O Excel está vazio.' }], podeConfirmar: false };
+    return importarMatriz(matriz[0], matriz.slice(1));
+  }
+  function renderizarSaldos(linhas) {
+    const esc = v => id(v).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+    const val = x => new Intl.NumberFormat('pt-PT', { maximumFractionDigits: 4 }).format(x);
+    return (linhas || []).map(x => {
+      const unidade = esc(x.unidade || 'un.');
+      const titulo = esc(x.descricao || x.referencia);
+      return '<div class="tg-material-item"><strong class="tg-material-nome">' + titulo + '</strong>' +
+        (x.referencia ? '<small class="tg-material-ref">' + esc(x.referencia) + '</small>' : '') +
+        '<span class="tg-material-saldo">Previsto: ' + esc(val(x.previsto)) + ' ' + unidade + '</span>' +
+        '<span class="tg-material-saldo">Consumido: ' + esc(val(x.consumido)) + ' ' + unidade + '</span>' +
+        '<span class="tg-material-saldo">Falta consumir: ' + esc(val(x.faltaConsumir)) + ' ' + unidade + '</span>' +
+        (x.extraNaoPrevisto ? '<span class="tg-material-alerta">Material não previsto</span>' : '') +
+        '</div>';
+    }).join('');
+  }
+  return { normalizarPlano, importarLinhas, importarMatriz, importarFolhaXlsx, renderizarSaldos, resumo, destinoMovimento, movimentosDaObra };
 });
