@@ -81,7 +81,7 @@
 
   function importarMatriz(cabecalhos, linhas) {
     if (!Array.isArray(cabecalhos) || !Array.isArray(linhas)) throw Error('Excel inválido.');
-    const limpar = x => id(x).toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').replace(/[^a-z0-9]/g, '');
+    const limpar = x => id(x).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
     const nomes = cabecalhos.map(limpar);
     const aliases = {
       referencia: ['referencia','ref','codigo','artigoid'],
