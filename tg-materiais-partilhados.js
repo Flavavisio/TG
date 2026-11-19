@@ -170,7 +170,7 @@
     if (!painel) {
       painel = elemento.ownerDocument.createElement('section');
       painel.id = 'tg-materiais-saldo-os';
-      painel.className = 'ff-secao tg-materiais-consulta-os';
+      painel.className = 'tg-materiais-consulta-os';
       painel.setAttribute('aria-label','Materiais previstos da obra associada à OS');
       elemento.append(painel);
     }
