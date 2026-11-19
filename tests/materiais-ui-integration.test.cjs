@@ -43,3 +43,32 @@ test('módulo está carregado antes do app e dentro do modal das Obras', () => {
   assert.match(body,/TGMateriaisPartilhados\.atualizarPainelObra/);
   assert.match(body,/salvarPlanoMateriais/);
 });
+
+test('OS associada à Obra consulta plano sem criar movimentos', () => {
+  const dom = new JSDOM('<div id="modalCampos"><div class="ff-wrap"></div></div>');
+  try {
+    const parent = dom.window.document.querySelector('#modalCampos');
+    const data={
+      obraId:'o1',adminId:'a',
+      obraMateriais:[{adminId:'a',obraId:'o1',artigoId:'a1',qtdPrevista:8,qtdConsumida:3}],
+      artigos:[{adminId:'a',id:'a1',nome:'Câmara',referencia:'CAM',unidade:'un.'}]
+    };
+    assert.equal(m.atualizarPainelOS(parent,data),true);
+    assert.match(parent.textContent,/Materiais da obra associada/);
+    assert.match(parent.textContent,/Falta consumir: 5 un\./);
+    assert.equal(parent.querySelectorAll('.ff-wrap > .ff-secao').length,0);
+    assert.equal(data.obraMateriais[0].qtdConsumida,3);
+  } finally {dom.window.close();}
+});
+test('não inventa plano para OS sem Obra associada',()=>{
+  const dom=new JSDOM('<div id="root"></div>');
+  try {
+    assert.equal(m.atualizarPainelOS(dom.window.document.querySelector('#root'),{obraId:null}),false);
+    assert.equal(dom.window.document.querySelector('#tg-materiais-saldo-os'),null);
+  } finally {dom.window.close();}
+});
+test('edição da OS está ligada à consulta de materiais da Obra',()=>{
+  const js=fs.readFileSync('app-principal.js','utf8');
+  assert.match(js,/entidade === 'servico' && item\?\.obraId && window\.TGMateriaisPartilhados/);
+  assert.match(js,/TGMateriaisPartilhados\.atualizarPainelOS/);
+});
