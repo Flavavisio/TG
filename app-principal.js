@@ -26749,6 +26749,17 @@ async function salvarAdmin(e) {
                 html = '<p>Funcionalidade em desenvolvimento.</p>';
             }
             campos.innerHTML = html;
+            // Consulta do plano da Obra associada à OS, sem alterar os seus materiais ou consumos.
+            if (entidade === 'servico' && item?.obraId && window.TGMateriaisPartilhados) {
+                try {
+                    window.TGMateriaisPartilhados.atualizarPainelOS(campos, {
+                        obraId: item.obraId, adminId: _tenantId(),
+                        obraMateriais: dados.obraMateriais || [], artigos: dados.artigos || []
+                    });
+                } catch (erro) {
+                    console.warn('Resumo dos materiais da Obra associada indisponível:', erro);
+                }
+            }
             if (entidade === 'obra' && item?.clienteId) {
                 const busca = document.getElementById('ob_cliente_busca');
                 if (busca.value) busca.dataset.selecionadoLabel = busca.value;
