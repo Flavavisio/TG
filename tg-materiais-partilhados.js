@@ -147,5 +147,21 @@
       };
     });
   }
-  return { normalizarPlano, importarLinhas, importarMatriz, importarFolhaXlsx, renderizarSaldos, saldosDaObra, resumo, destinoMovimento, movimentosDaObra };
+
+  function atualizarPainelObra(elemento, contexto) {
+    if (!elemento || typeof elemento.querySelector !== 'function') return false;
+    const linhas = saldosDaObra(contexto);
+    let painel = elemento.querySelector('#tg-materiais-saldo-obra');
+    if (!painel) {
+      painel = elemento.ownerDocument.createElement('section');
+      painel.id = 'tg-materiais-saldo-obra';
+      painel.setAttribute('aria-label','Resumo de materiais previstos e consumidos da obra');
+      elemento.prepend(painel);
+    }
+    painel.innerHTML = '<h4>Materiais — previsto e consumido</h4>' +
+      (linhas.length ? '<div class="tg-material-lista">' + renderizarSaldos(linhas) + '</div>' :
+      '<p class="tg-material-vazio">Ainda não há materiais associados a esta obra.</p>');
+    return true;
+  }
+  return { normalizarPlano, importarLinhas, importarMatriz, importarFolhaXlsx, renderizarSaldos, saldosDaObra, atualizarPainelObra, resumo, destinoMovimento, movimentosDaObra };
 });
