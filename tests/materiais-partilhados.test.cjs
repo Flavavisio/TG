@@ -38,3 +38,26 @@ test('agregação da obra usa OS associadas, sem dupla contagem do mesmo ID', ()
   ];
   assert.deepEqual(m.movimentosDaObra(movimentos, 'o1', ['s1']).map(x => x.id), ['m1', 'm2']);
 });
+
+test('importação em matriz Excel aceita cabeçalhos equivalentes e vírgulas', () => {
+  const x = m.importarMatriz(['Referência','Descrição','Qtd Prevista','Unidade'], [['C-1','Cabo','12,5','m']]);
+  assert.equal(x.podeConfirmar, true);
+  assert.equal(x.materiais[0].quantidade, 12.5);
+});
+test('Excel sem coluna quantidade fica bloqueado', () => {
+  const x = m.importarMatriz(['Ref','Artigo'], [['A','Produto']]);
+  assert.equal(x.podeConfirmar, false);
+  assert.equal(x.erros[0].linha, 1);
+});
+test('adapta primeira folha do leitor XLSX', () => {
+  const sheet = { content: [['Código','Nome','Quantidade'],['A','Equipamento',2]] };
+  const book = { SheetNames:['Folha1'], Sheets:{ Folha1: sheet } };
+  const xlsx = { utils: { sheet_to_json: s => s.content } };
+  assert.equal(m.importarFolhaXlsx(book,xlsx).materiais[0].referencia, 'A');
+});
+test('HTML de saldos escapa valores externos', () => {
+  const html = m.renderizarSaldos(m.resumo([{referencia:'C',descricao:'<img src=x>',quantidade:3}],[]));
+  assert.match(html,/&lt;img src=x&gt;/);
+  assert.doesNotMatch(html,/<img/);
+  assert.match(html,/Falta consumir: 3 un\./);
+});
