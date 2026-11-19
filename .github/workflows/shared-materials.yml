@@ -1,0 +1,27 @@
+name: Validate shared OS and worksite materials
+on:
+  push:
+    branches:
+      - feature/os-obras-materiais-partilhados
+  pull_request:
+    paths:
+      - 'tg-materiais-partilhados.js'
+      - 'tg-materiais-partilhados.css'
+      - 'app-principal.js'
+      - 'index.html'
+      - 'tests/materiais-*.test.cjs'
+      - '.github/workflows/shared-materials.yml'
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock jsdom@26
+      - run: node --check app-principal.js
+      - run: node --check tg-materiais-partilhados.js
+      - run: node --test tests/materiais-partilhados.test.cjs tests/materiais-ui-integration.test.cjs tests/kiosk-planned-materials-ui.test.cjs
