@@ -1,0 +1,19 @@
+/* Componente reutilizável de materiais nas OS e Obras.
+   Só será carregado após a integração com os formulários existentes. */
+.tg-material-lista{display:grid;gap:10px}
+.tg-material-item{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:12px 14px;display:grid;gap:4px;color:#172642}
+.tg-material-nome{display:block;font-size:14px;overflow-wrap:anywhere}
+.tg-material-ref{color:#64748b;font-size:12px}
+.tg-material-saldo{display:block;color:#475569;font-size:12px}
+.tg-material-alerta{color:#a16207;font-size:12px;font-weight:600}
+.tg-material-dialog{box-sizing:border-box;position:fixed;max-width:560px;width:min(560px,calc(100% - 30px));max-height:calc(100dvh - 34px);overflow:auto;margin:auto;padding:20px;border:1px solid #e2e8f0;border-radius:16px;color:#172642;box-shadow:0 20px 70px #0004}
+.tg-material-dialog::backdrop{background:#0f172a88}
+.tg-material-dialog h3{font-size:18px;margin:0 0 8px}
+.tg-material-dialog .tg-material-linha{display:grid;grid-template-columns:24px minmax(0,1fr) 100px;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #e2e8f0}
+.tg-material-dialog input[type=checkbox]{width:20px;height:20px;margin:2px}
+.tg-material-dialog input[type=number]{width:100%;min-width:0;padding:8px;border:1px solid #cbd5e1;border-radius:8px}
+.tg-material-dialog .tg-material-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:16px}
+.tg-material-dialog button{padding:10px 14px;border-radius:9px;border:1px solid #cbd5e1;background:#fff;color:#172642;cursor:pointer}
+.tg-material-dialog button[type=submit]{background:#164477;border-color:#164477;color:#fff}
+.tg-material-dialog .tg-material-erro{color:#b91c1c;font-size:13px;min-height:18px}
+@media(max-width:420px){.tg-material-dialog .tg-material-linha{grid-template-columns:24px minmax(0,1fr) 78px;gap:9px}.tg-material-dialog{padding:14px}}
