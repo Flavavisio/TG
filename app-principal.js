@@ -18357,6 +18357,17 @@ function _assistEstado(value) {
                 <button type="button" class="btn btn-outline" onclick="omAddItem()" style="margin-top:8px;"><i class="fas fa-plus"></i> Adicionar material</button>
             `;
             renderOmItens();
+            // Painel de leitura comum ao quiosque e às Obras: não grava nem altera stock.
+            if (window.TGMateriaisPartilhados && document.getElementById('modalGenericoCampos')) {
+                try {
+                    window.TGMateriaisPartilhados.atualizarPainelObra(
+                        document.getElementById('modalGenericoCampos'),
+                        { obraId, adminId: _tenantId(), obraMateriais: dados.obraMateriais || [], artigos: dados.artigos || [] }
+                    );
+                } catch (erro) {
+                    console.warn('Resumo de materiais da Obra indisponível:', erro);
+                }
+            }
             document.getElementById('modalGenericoForm').onsubmit = function (ev) { ev.preventDefault(); salvarPlanoMateriais(); };
             const _bgPm = document.querySelector('#modalGenericoOverlay .modal-actions .btn-success'); if (_bgPm) { _bgPm.style.display = ''; _bgPm.innerHTML = '<i class="fas fa-save"></i> Guardar'; }
             document.getElementById('modalGenericoOverlay').classList.add('open');
