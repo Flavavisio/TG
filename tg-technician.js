@@ -134,7 +134,7 @@
         const mapLink=map && /^https:\/\//i.test(map.url||'')?`<a class="tgt-button" href="${esc(map.url)}" target="_blank" rel="noopener"${job.kind==='os'?` data-tgt-travel="${esc(job.id)}"`:''}>${icon('route')} Navegar</a>`:'';
         const resume=resumingLunch(job),paused=pausedWork(job);
         const status=open?'EM CURSO':paused?'EM PAUSA':resume?'REGRESSAR DO ALMOÇO':'A SEGUIR';
-        const startLabel=open?(job.kind==='os'?'Registar saída':'Pausar obra'):paused?'Retomar intervenção':resume?'Regressar à intervenção':attendance()&&!clock?'Picar entrada no dia':'Iniciar intervenção';
+        const startLabel=open?'Registar saída':paused?'Retomar intervenção':resume?'Regressar à intervenção':attendance()&&!clock?'Picar entrada no dia':'Iniciar intervenção';
         const pendente=open && job.kind==='os' && typeof _entradaOSPendenteSincronizacao==='function'
             && _entradaOSPendenteSincronizacao(job.row,job.open);
         const info=open?'Entrada registada às '+job.open.entrada+(job.open.data!==today()?' · '+job.open.data.split('-').reverse().join('/'):'')
@@ -145,7 +145,7 @@
             ${info?`<p class="tgt-focus-info">${esc(info)}</p>`:''}
             ${open && typeof _tempoServicoHTML==='function'?_tempoServicoHTML(job.open,job.kind==='obra'?'Em serviço nesta obra há':'Em serviço neste cliente há'):''}
             ${open?`<div class="tgt-tools">${button(icon('camera')+' Fotografias (máx. 3)','photos',job)}${button(icon('boxes-stacked')+' Materiais','materials',job)}${passportTarget(job)?button(icon('id-card')+' Passaporte','passport',job):''}</div>`:''}
-            <div class="tgt-focus-actions">${button(startLabel+' '+icon('arrow-right'),open?(job.kind==='os'?'exit':'pause'):'start',job,true)}<div class="tgt-detail-actions">${button('Ver '+(job.kind==='os'?'ordem de serviço':'obra'),'details',job)}${mapLink}</div></div></section>`;
+            <div class="tgt-focus-actions">${button(startLabel+' '+icon('arrow-right'),open?'exit':'start',job,true)}<div class="tgt-detail-actions">${button('Ver '+(job.kind==='os'?'ordem de serviço':'obra'),'details',job)}${mapLink}</div></div></section>`;
     }
     function recordsHTML() {
         if(!permitted('folhas'))return '';
@@ -171,8 +171,8 @@
         if (!enabled()) return;
         const dia=$('omeudia');if(!dia)return;
         const list=jobs(),available=todayJobs(list);
-        const focus=available.find(job=>job.open)||available.find(job=>job.kind+':'+job.id===selected&&!completed(job))||available.find(job=>!completed(job));
         const openWork=list.find(job=>job.kind==='obra'&&job.open);
+        const focus=openWork||available.find(job=>job.open)||available.find(job=>job.kind+':'+job.id===selected&&!completed(job))||available.find(job=>!completed(job));
         const oldSession=list.some(job=>job.kind==='os'&&job.open&&job.date!==today());
         const day=new Date(today()+'T12:00:00').toLocaleDateString('pt-PT',{weekday:'long',day:'numeric',month:'long'});
         const general=personalClock();
@@ -185,7 +185,7 @@
         const lunchBar=hasGeneralRecord&&(lunchPending||general&&!lunchTaken)?`<div class="tgt-clock tgt-lunch"><span>${icon('utensils')}<span><strong>Pausa para almoço</strong><small>${lunchPending?'Em almoço':'A pausa não conta como tempo em serviço'}</small></span></span>${button(lunchPending?'Regresso de almoço':'Sair para almoço','lunch')}</div>`:'';
         const team=u()?.role==='encarregado' && window.TGSupervisorHome ? `<details class="tgt-team"><summary>${icon('users')} A minha equipa</summary>${TGSupervisorHome.html(tenant(),today())}</details>`:'';
 
-        const html=`<div class="tgt-home"><header class="tgt-day-head"><p class="tgt-eyebrow">ÁREA DO TÉCNICO</p><h2>O meu dia</h2><p>Hoje · ${esc(day)}</p>${avatarHTML()}</header>${attendance()?`<div class="tgt-clock"><span>${icon('fingerprint')}<span><strong>Ponto de hoje</strong><small>${general?'Entrada às '+esc(general.entrada):'Sem entrada registada'}</small></span></span>${general?button('Dar saída','clock'):button('Dar entrada','clock')}${general?button('Ver ponto','point'):''}</div>${lunchBar}`:''}${openWork?button('Tens uma obra em curso · Abrir Obras','works'):''}${focusHTML(focus)}${recordsHTML()}${todayListHTML(available)}${draftsHTML(list)}${team}</div>`;
+        const html=`<div class="tgt-home"><header class="tgt-day-head"><p class="tgt-eyebrow">ÁREA DO TÉCNICO</p><h2>O meu dia</h2><p>Hoje · ${esc(day)}</p>${avatarHTML()}</header>${attendance()?`<div class="tgt-clock"><span>${icon('fingerprint')}<span><strong>Ponto de hoje</strong><small>${general?'Entrada às '+esc(general.entrada):'Sem entrada registada'}</small></span></span>${general?button('Dar saída','clock'):button('Dar entrada','clock')}${general?button('Ver ponto','point'):''}</div>${lunchBar}`:''}${focusHTML(focus)}${recordsHTML()}${todayListHTML(available)}${draftsHTML(list)}${team}</div>`;
         const finalHTML=oldSession?html.replace('</header>','</header>'+button('Entrada anterior por encerrar · Abrir Trabalhos','jobs')):html;
         if(dia.dataset.tgtHtml!==finalHTML || dia.firstElementChild!==homeRoot){dia.innerHTML=finalHTML;dia.dataset.tgtHtml=finalHTML;}
         homeRoot=dia.firstElementChild;
@@ -452,36 +452,42 @@
         if(wizard.root.parentElement===wizard.fields)wizard.parts.forEach(({node})=>wizard.fields.append(node));wizard.root.remove();
         wizard.submit.hidden=false;wizard.submit.innerHTML=wizard.submitText;wizard.form.noValidate=wizard.noValidate;wizards.delete(wizard.form);
     }
-    let pendingOsExitId=null,pendingOsExitJob=null;
-    function updateOsExitMenu() {
+    let pendingExitJob=null, nativePauseLabel=null;
+    function updateExitMenu() {
         const overlay=$('modalSimNaoOverlay'),choice=$('modalSimNaoAlmocoBtn');
         if(!choice)return;
-        if(!enabled()||!pendingOsExitId||!overlay?.classList.contains('open')){
-            choice.hidden=false;choice.style.display='';return;
+        if(!overlay?.classList.contains('open')){
+            if(nativePauseLabel===null)return;
+            choice.hidden=false;
+            choice.innerHTML=nativePauseLabel;
+            nativePauseLabel=null;
+            pendingExitJob=null;
+            return;
         }
-        choice.hidden=!attendance();
-        choice.style.display=attendance()?'':'none';
-        if(attendance())choice.innerHTML=icon('pause')+' Pausar OS';
+        if(!enabled()||!pendingExitJob)return;
+        if(nativePauseLabel===null)nativePauseLabel=choice.innerHTML;
+        const canPause=attendance(), isWork=pendingExitJob.kind==='obra';
+        choice.hidden=!canPause;
+        choice.style.display=canPause?'':'none';
+        if(canPause)choice.innerHTML=icon('pause')+(isWork?' Pausar obra':' Pausar OS');
     }
-    // Keep the production exit modal's other native options unchanged.
-    // Choosing "Pausar OS" cancels its pending exit flow first, then saves
-    // a dedicated pause of the OS; the general attendance clock keeps running.
+    // Cancel the native exit before recording a personal pause. The general
+    // attendance clock and the other technicians' sessions keep running.
     document.addEventListener('click',event=>{
-        if(!enabled()||!pendingOsExitId||!attendance())return;
         const overlay=$('modalSimNaoOverlay');
-        if(!overlay?.classList.contains('open'))return;
+        if(!enabled()||!pendingExitJob||!overlay?.classList.contains('open')||!overlay.contains(event.target))return;
         const pause=$('modalSimNaoAlmocoBtn');
-        if(pause&&(event.target===pause||pause.contains(event.target))){
+        if(pause?.contains(event.target)&&attendance()){
             event.preventDefault();event.stopImmediatePropagation();
-            const job=pendingOsExitJob;
-            pendingOsExitId=null;pendingOsExitJob=null;
+            const job=pendingExitJob;
+            pendingExitJob=null;
             if(typeof _modalSimNaoResponder==='function')_modalSimNaoResponder(null);
-            if(job)setTimeout(()=>pauseWork(job),0);
-        }else if(event.target.closest('button')&&!event.target.closest('#modalSimNaoAlmocoBtn')){
-            pendingOsExitId=null;pendingOsExitJob=null;
+            setTimeout(()=>pauseWork(job),0);
+        }else if(event.target.closest('button')){
+            pendingExitJob=null;
         }
     },true);
-    if($('modalSimNaoOverlay'))new MutationObserver(updateOsExitMenu)
+    if($('modalSimNaoOverlay'))new MutationObserver(updateExitMenu)
         .observe($('modalSimNaoOverlay'),{attributes:true,attributeFilter:['class']});
     let pauseBusy=false;
     async function pauseWork(job) {
@@ -716,15 +722,11 @@
                     if(typeof mostrarErro==='function')mostrarErro(message);else alert(message);return;
                 }
                 if(attendance()&&!personalClock()&&!resumingLunch(job))return picarPonto();return job.kind==='os'?picarPontoOS(job.id,'entrada'):obraLongaPicarEntrada(job.id);
-            case'pause':if(!attendance())return;return pauseWork(job);
-            case'exit':if(!job.open)return;
-                if(job.kind==='os'){
-                    pendingOsExitId=job.id;pendingOsExitJob=job;
-                    const result=picarPontoOS(job.id,'saida');
-                    updateOsExitMenu();
-                    return result;
-                }
-                return obraLongaPicarSaida(job.id);
+            case'exit':if(!job.open||$('modalSimNaoOverlay')?.classList.contains('open'))return;
+                pendingExitJob=job;
+                const result=job.kind==='os'?picarPontoOS(job.id,'saida'):obraLongaPicarSaida(job.id);
+                updateExitMenu();
+                return result;
         }
     });
     // Watch only modal open/close. Native constructors are synchronous, so background

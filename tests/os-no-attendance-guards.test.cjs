@@ -3,11 +3,12 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const src=fs.readFileSync('tg-technician.js','utf8');
 test('hide pause menu for tenants without attendance',()=>{
-  assert.match(src,/choice\.hidden=!attendance\(\)/);
-  assert.match(src,/choice\.style\.display=attendance\(\)\?'':'none'/);
+  assert.match(src,/const canPause=attendance\(\)/);
+  assert.match(src,/choice\.hidden=!canPause/);
+  assert.match(src,/choice\.style\.display=canPause\?'':'none'/);
 });
 test('pause action and pause persistence require attendance',()=>{
-  assert.match(src,/case'pause':if\(!attendance\(\)\)return;return pauseWork\(job\)/);
+  assert.match(src,/if\(pause\?\.contains\(event\.target\)&&attendance\(\)\)/);
   assert.match(src,/pauseBusy\|\|!job\?\.open\|\|!enabled\(\)\|\|!attendance\(\)/);
 });
 test('prevent second job from starting while previous job is open without attendance',()=>{

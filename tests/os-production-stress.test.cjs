@@ -213,13 +213,13 @@ test('erros em telemóvel centrados e cache da PWA sincronizada',()=>{
  assert.match(css,/#tgToastContainer:has\(\.tg-toast\.tg-erro\)/);
  assert.match(css,/translate\(-50%,-50%\)/);
  assert.match(css,/#modalGenericoOverlay/);
- const js='tg-technician.js?v=1.11.4-work-photos',style='tg-technician.css?v=1.9.2-lunch-entry-lock';
+ const js='tg-technician.js?v=1.11.5-work-exit-home',style='tg-technician.css?v=1.9.2-lunch-entry-lock';
  for(const path of ['index.html','login.html','sw.js']){
    const html=fs.readFileSync(path,'utf8');
    assert(html.includes(js),path);
    assert(html.includes(style),path);
  }
- assert(fs.readFileSync('sw.js','utf8').includes('totalgest-release-20261117-kiosk-material-balances'));
+ assert(fs.readFileSync('sw.js','utf8').includes('totalgest-release-20261119-obras-saida-hoje'));
 });
 
 test('almoço: só Regresso de almoço ativo, dar entrada e intervenção esbatidos',()=>{
