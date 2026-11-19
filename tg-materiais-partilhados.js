@@ -163,5 +163,22 @@
       '<p class="tg-material-vazio">Ainda não há materiais associados a esta obra.</p>');
     return true;
   }
-  return { normalizarPlano, importarLinhas, importarMatriz, importarFolhaXlsx, renderizarSaldos, saldosDaObra, atualizarPainelObra, resumo, destinoMovimento, movimentosDaObra };
+  function atualizarPainelOS(elemento, contexto) {
+    if (!elemento || typeof elemento.querySelector !== 'function' || !id(contexto?.obraId)) return false;
+    const linhas = saldosDaObra(contexto);
+    let painel = elemento.querySelector('#tg-materiais-saldo-os');
+    if (!painel) {
+      painel = elemento.ownerDocument.createElement('section');
+      painel.id = 'tg-materiais-saldo-os';
+      painel.className = 'ff-secao tg-materiais-consulta-os';
+      painel.setAttribute('aria-label','Materiais previstos da obra associada à OS');
+      elemento.append(painel);
+    }
+    painel.innerHTML = '<div class="ff-secao-head">Materiais da obra associada</div>' +
+      '<p class="tg-material-ajuda">Consulta dos materiais da obra. O consumo desta OS deve ser registado uma única vez na folha de obra.</p>' +
+      (linhas.length ? '<div class="tg-material-lista">' + renderizarSaldos(linhas) + '</div>' :
+      '<p class="tg-material-vazio">Esta obra ainda não tem materiais previstos.</p>');
+    return true;
+  }
+  return { normalizarPlano, importarLinhas, importarMatriz, importarFolhaXlsx, renderizarSaldos, saldosDaObra, atualizarPainelObra, atualizarPainelOS, resumo, destinoMovimento, movimentosDaObra };
 });
