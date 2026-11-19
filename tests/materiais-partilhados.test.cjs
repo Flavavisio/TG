@@ -61,3 +61,16 @@ test('HTML de saldos escapa valores externos', () => {
   assert.doesNotMatch(html,/<img/);
   assert.match(html,/Falta consumir: 3 un\./);
 });
+
+test('adaptador lê os campos reais de obra_materiais e isola a empresa', () => {
+  const result = m.saldosDaObra({
+    obraId: 'o1', adminId: 'a',
+    obraMateriais: [
+      {adminId:'a',obraId:'o1',artigoId:'c',qtdPrevista:10,qtdConsumida:2},
+      {adminId:'b',obraId:'o1',artigoId:'x',qtdPrevista:40,qtdConsumida:40}
+    ],
+    artigos: [{id:'c',adminId:'a',nome:'Cabo',referencia:'CX-1',unidade:'m'}]
+  });
+  assert.equal(result.length,1);
+  assert.deepEqual([result[0].previsto,result[0].consumido,result[0].faltaConsumir],[10,2,8]);
+});
