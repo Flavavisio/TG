@@ -56,6 +56,8 @@ test('entry from Obras ativas shows the full personal work card in Hoje and both
    Object.assign(work,{clienteId:'c',morada:'Rua de teste',observacoes:'Montagem',localId:'local'});
    if(attendance)w.dados.ponto.push({id:'general',adminId:'a',funcionarioId:'e',data:w.getDataHoje(),entrada:'08:00'});
    w.TGPassport={scope:()=>true};
+   w.eval(fs.readFileSync('tg-os-exit-grid.js','utf8'));
+   w.document.dispatchEvent(new w.Event('DOMContentLoaded'));
    Object.assign(w,{
     pontoAbertoHoje:()=>attendance,_tenantIdAtual:()=> 'a',
     _mostrarCarregando(){},_esconderCarregando(){},_refrescarModalObraLongaSeAberto(){},
@@ -77,17 +79,26 @@ test('entry from Obras ativas shows the full personal work card in Hoje and both
    assert.equal(homeCard.querySelector('[data-tgt-action=exit]').textContent,worksCard.querySelector('[data-tgt-action=exit]').textContent);
    const overlay=find('#modalSimNaoOverlay'), pause=find('#modalSimNaoAlmocoBtn'), today=find('#modalSimNaoHojeBtn'), finish=find('#modalSimNaoSimTexto');
    homeCard.querySelector('[data-tgt-action=exit]').click();
+   await new Promise(resolve=>setTimeout(resolve,0));
    assert(overlay.classList.contains('open'));
+   assert(overlay.classList.contains('tg-os-exit-grid'));
+   assert(overlay.hasAttribute('data-tgt-work-exit'));
    assert.equal(pause.hidden,!attendance);
-   if(attendance)assert.match(pause.textContent,/Pausar obra/);
-   assert.match(today.textContent,/Terminado por hoje/);
-   assert.match(finish.textContent,/terminei a obra/);
+   if(attendance){
+    assert.match(pause.textContent,/Pausar obra/);
+    assert(pause.querySelector('.fa-pause-circle'));
+   }
+   assert.match(today.textContent,/Finalizar por hoje/);
+   assert(today.querySelector('.fa-calendar-check'));
+   assert.equal(finish.textContent,'Finalizar obra');
+   assert(finish.parentElement.querySelector('.fa-check-circle'));
    assert.equal(find('#modalSimNaoVisitaBtn').style.display,'none');
    assert.equal(w.dados.obraPontoLonga[0].saida,null);
    w._modalSimNaoResponder(null);
    await new Promise(resolve=>setTimeout(resolve,0));
    assert.equal(w.dados.obraPontoLonga[0].saida,null);
    assert.equal(w.saveCalls,1);
+   assert(!overlay.hasAttribute('data-tgt-work-exit'));
    find('[data-tgt-nav=works]').click();
    find('#painelGrupoMobileConteudo [data-tgt-action=exit]').click();
    if(response==='almoco')pause.click();else w._modalSimNaoResponder(response);
@@ -110,7 +121,7 @@ test('entry from Obras ativas shows the full personal work card in Hoje and both
  }
 });
 test('both entry points and offline precache use the same employee refresh asset',()=>{
- const asset='tg-technician.js?v=1.11.5-work-exit-home';for(const path of ['index.html','login.html','sw.js'])assert(fs.readFileSync(path,'utf8').includes(asset),path);const sw=fs.readFileSync('sw.js','utf8');assert.match(sw,/const CACHE = 'totalgest-release-20261119-obras-saida-hoje'/);
+ const asset='tg-technician.js?v=1.11.6-work-exit-icons';for(const path of ['index.html','login.html','sw.js'])assert(fs.readFileSync(path,'utf8').includes(asset),path);const sw=fs.readFileSync('sw.js','utf8');assert.match(sw,/const CACHE = 'totalgest-release-20261119-obras-icones-saida'/);
 });
 
 

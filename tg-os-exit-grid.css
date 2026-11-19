@@ -1,4 +1,4 @@
-/* Layout 2 × 2 apenas para o modal "Saída da OS". Não altera o fluxo das respostas. */
+/* Grelha das ações de saída de OS e de obra. */
 body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid>.modal{
   width:min(100%,560px)!important;max-width:560px!important;
   padding:24px 20px 20px!important;box-sizing:border-box;
@@ -46,6 +46,15 @@ body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid #modalSimNaoVisitaBtn:not([s
 }
 body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid #modalSimNaoHojeBtn:not([style*="display: none"]):not([style*="display:none"]){
   display:flex!important;
+}
+body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid[data-tgt-work-exit] #modalSimNaoVisitaBtn{
+  display:none!important;
+}
+body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid[data-tgt-work-exit] :is(#modalSimNaoAlmocoBtn,#modalSimNaoHojeBtn,.btn-success){
+  grid-area:auto;
+}
+body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid[data-tgt-work-exit] #modalSimNaoAlmocoBtn:not([hidden]) ~ .btn-success{
+  grid-column:1 / -1;
 }
 body.tgt-active #modalSimNaoOverlay.tg-os-exit-grid #modalSimNaoTexto{
   margin:8px 22px 22px!important;font-size:17px!important;line-height:1.5;

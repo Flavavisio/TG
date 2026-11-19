@@ -461,12 +461,14 @@
             choice.hidden=false;
             choice.innerHTML=nativePauseLabel;
             nativePauseLabel=null;
+            overlay?.removeAttribute('data-tgt-work-exit');
             pendingExitJob=null;
             return;
         }
         if(!enabled()||!pendingExitJob)return;
         if(nativePauseLabel===null)nativePauseLabel=choice.innerHTML;
         const canPause=attendance(), isWork=pendingExitJob.kind==='obra';
+        overlay.toggleAttribute('data-tgt-work-exit',isWork);
         choice.hidden=!canPause;
         choice.style.display=canPause?'':'none';
         if(canPause)choice.innerHTML=icon('pause')+(isWork?' Pausar obra':' Pausar OS');
