@@ -6529,10 +6529,21 @@ function _assistEstado(value) {
             overlay.classList.add('open', 'modal-veros');
             _verOsMostrar(osId, 'folhas');
         }
-        function _saldosPlanoOS(os) {
-            const idsFolhas = new Set((dados.folhasObra || []).filter(f => f.adminId === os.adminId && f.servicoId === os.id).map(f => f.id));
-            const movimentos = (dados.movimentosStock || []).filter(m => m.adminId === os.adminId && m.tipo === 'saida' &&
-                ((m.origemTipo === 'os' && m.origemId === os.id) || (m.origemTipo === 'folha' && idsFolhas.has(m.origemId))));
+        function _movimentosConsumoPorOS(adminId) {
+            const folhas = new Map((dados.folhasObra || []).filter(f => f.adminId === adminId && f.servicoId)
+                .map(f => [f.id, f.servicoId]));
+            const porOS = new Map();
+            for (const m of dados.movimentosStock || []) {
+                if (m.adminId !== adminId || m.tipo !== 'saida') continue;
+                const osId = m.origemTipo === 'os' ? m.origemId : m.origemTipo === 'folha' ? folhas.get(m.origemId) : null;
+                if (!osId) continue;
+                if (!porOS.has(osId)) porOS.set(osId, []);
+                porOS.get(osId).push(m);
+            }
+            return porOS;
+        }
+
+        function _saldosPlanoOS(os, movimentos = _movimentosConsumoPorOS(os.adminId).get(os.id) || []) {
             const saldos = new Map((os.materiaisPlano || []).map(m => [m.artigoId, { ...m, qtdConsumida: 0 }]));
             const vistos = new Set();
             for (const m of movimentos) {
@@ -6657,6 +6668,7 @@ function _assistEstado(value) {
                     atual.materiaisPlano = data.materiais_previstos;
                     _guardarCacheLocal();
                     dialog.close();
+                    renderizarAlertas();
                     _verOsMostrar(osId, 'materiais');
                 } catch (e) {
                     console.error('Plano de materiais da OS:', e);
@@ -6726,6 +6738,7 @@ function _assistEstado(value) {
                         if (ctx.obraId) _somarConsumoObra(ctx.adminId, ctx.obraId, artigoId, consumido);
                     }
                     guardarDados().catch(() => alert('Consumo guardado no dispositivo. A sincronização continua pendente.'));
+                    renderizarAlertas();
                     _verOsMostrar(os.id, 'materiais');
                 }, event.currentTarget);
             });
@@ -13975,7 +13988,7 @@ function _assistEstado(value) {
         }
         function _itensPendenciasAlerta(tipo, ids) {
             if (!['admin', 'subadmin'].includes(usuarioLogado?.role) || !Array.isArray(ids)) return [];
-            const colecoes = { visitaOS: 'servicos', relatorioOS: 'servicos', servico: 'servicos', contrato: 'contratos', veiculo: 'veiculos', requisicao: 'requisicoes', pedido: 'pedidos', artigo: 'artigos', obra: 'obras', assistencia: 'assistencias' };
+            const colecoes = { visitaOS: 'servicos', relatorioOS: 'servicos', materiaisOS: 'servicos', servico: 'servicos', contrato: 'contratos', veiculo: 'veiculos', requisicao: 'requisicoes', pedido: 'pedidos', artigo: 'artigos', obra: 'obras', assistencia: 'assistencias' };
             const lista = dados[colecoes[tipo]] || [];
             return lista.filter(i => i.adminId === _tenantId() && ids.includes(i.id));
         }
@@ -14034,6 +14047,7 @@ function _assistEstado(value) {
             document.getElementById('tgPendenciasOverlay')?.remove();
             if (tipo === 'visitaOS') { globalThis.TGUnsuccessfulVisits?.open(id); return; }
             if (tipo === 'relatorioOS') { abrirVerOS(id); _verOsMostrar(id, 'relatorios'); return; }
+            if (tipo === 'materiaisOS') { abrirVerOS(id); _verOsMostrar(id, 'materiais'); return; }
             if (tipo === 'servico') { abrirVerOS(id); return; }
             if (tipo === 'contrato') { abrirModalContrato(id); return; }
             if (tipo === 'veiculo') { abrirModalVeiculo(id); return; }
@@ -14060,6 +14074,27 @@ function _assistEstado(value) {
                 botao('Rejeitar', () => tipo === 'pedido' ? rejeitarPedido(id) : rejeitarRequisicao(id), 'btn-danger');
             }
             if (tipo === 'requisicao') botao('Editar requisição', () => abrirModal('requisicao', id));
+        }
+
+        function _osComDesviosDeMateriais(adminId) {
+            const movimentos = _movimentosConsumoPorOS(adminId);
+            const planosObra = new Map();
+            for (const material of dados.obraMateriais || []) {
+                if (material.adminId !== adminId) continue;
+                if (!planosObra.has(material.obraId)) planosObra.set(material.obraId, new Map());
+                planosObra.get(material.obraId).set(material.artigoId, material);
+            }
+            const imprevistos = [], excedentes = [];
+            for (const os of dados.servicos || []) {
+                if (os.adminId !== adminId || !movimentos.has(os.id)) continue;
+                const desvios = _saldosPlanoOS(os, movimentos.get(os.id)).filter(saldo => saldo.qtdConsumida > 0)
+                    .map(saldo => os.obraId
+                        ? planosObra.get(os.obraId)?.get(saldo.artigoId) || { qtdPrevista: 0, qtdConsumida: saldo.qtdConsumida }
+                        : saldo);
+                if (desvios.some(m => !(Number(m.qtdPrevista) > 0))) imprevistos.push(os);
+                if (desvios.some(m => Number(m.qtdPrevista) > 0 && Math.round((m.qtdConsumida - m.qtdPrevista) * 10000) > 0)) excedentes.push(os);
+            }
+            return { imprevistos, excedentes };
         }
 
         function renderizarAlertas() {
@@ -14278,6 +14313,10 @@ function _assistEstado(value) {
                 });
                 if (obrasExced.size) alertas.push({ tipo: 'warning', titulo: `${obrasExced.size} ${obrasExced.size === 1 ? 'obra com excedente de materiais' : 'obras com excedente de materiais'}`, sub: 'Consumo acima do previsto. Verifique o plano da obra.', acao: _acaoPendenciasAlerta('obra', (dados.obras || []).filter(o => o.adminId === adminId && obrasExced.has(o.id))) });
             }
+
+            const { imprevistos, excedentes } = _osComDesviosDeMateriais(adminId);
+            if (imprevistos.length) alertas.push({ tipo: 'warning', titulo: `${imprevistos.length} OS com materiais não previstos`, sub: 'Há artigos consumidos fora do plano de materiais.', acao: _acaoPendenciasAlerta('materiaisOS', imprevistos) });
+            if (excedentes.length) alertas.push({ tipo: 'warning', titulo: `${excedentes.length} OS com excedente de materiais`, sub: 'Há artigos com consumo acima do previsto no plano da OS ou da obra associada.', acao: _acaoPendenciasAlerta('materiaisOS', excedentes) });
 
             if (!alertas.length) { cont.style.display = 'none'; cont.innerHTML = ''; return; }
             cont.style.display = 'block';

@@ -5,7 +5,7 @@ const { JSDOM } = require('jsdom');
 const XLSX = require('xlsx');
 const materiais = require('../tg-materiais-partilhados.js');
 const source = fs.readFileSync('app-principal.js', 'utf8');
-const names = ['_saldosPlanoOS', '_podeGerirPlanoOS', 'abrirPlanoMateriaisOS',
+const names = ['_movimentosConsumoPorOS', '_saldosPlanoOS', '_podeGerirPlanoOS', 'abrirPlanoMateriaisOS',
   '_parseCsvLine', '_contextoMateriaisFolha', '_quiosqueAgendaPlanoMateriais',
   '_quiosqueAgendaValidarMateriais', '_abrirSelecaoMateriais', '_materializarConsumo',
   '_textoMateriaisSelecionados', '_somarConsumoObra', '_aplicarConsumoFolha', 'renderizarMateriaisDetalheOS'];
@@ -28,7 +28,7 @@ function setup() {
     usuarioLogado: { id: 'admin', role: 'admin', adminId: 'a' },
     _tenantId: () => 'a', _armazemPrincipalId: () => 'armazem',
     gerarId: () => 'id-' + (++id), getDataHoje: () => '2026-11-20',
-    _guardarCacheLocal: () => {}, _verOsMostrar: () => {}, _armazemAtualizarAvisoStock: () => {},
+    _guardarCacheLocal: () => {}, _verOsMostrar: () => {}, renderizarAlertas: () => {}, _armazemAtualizarAvisoStock: () => {},
     guardarDados: async () => {}, calls: [], response: null, error: null
   };
   ctx.supa = { from(table) {

@@ -1,7 +1,8 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
 const {JSDOM}=require('jsdom');
 const src=fs.readFileSync('app-principal.js','utf8');
-const helpers=src.slice(src.indexOf('        function _acaoPendenciasAlerta('),src.indexOf('        // ==================== ARMAZÉM / STOCK',src.indexOf('        function _acaoPendenciasAlerta(')));
+const materials=['_movimentosConsumoPorOS','_saldosPlanoOS'].map(name=>src.slice(src.indexOf('        function '+name+'(')).split('\n        }')[0]+'\n        }').join('\n');
+const helpers=materials+src.slice(src.indexOf('        function _acaoPendenciasAlerta('),src.indexOf('        // ==================== ARMAZÉM / STOCK',src.indexOf('        function _acaoPendenciasAlerta(')));
 const browserTest=fs.readFileSync('tests/alert-destinations-browser.cjs','utf8');
 const fixture=browserTest.split('await page.addScriptTag({content:`')[1].split('`+helpers')[0];
 function setup(){const dom=new JSDOM('<div id="alertasPendencias"></div>',{runScripts:'dangerously'});dom.window.eval(fixture+src.match(/        function _osComRelatoriosPorTerminar\([^]*?\n        \}/)[0]+helpers);return dom.window;}
@@ -42,4 +43,37 @@ test('draft report alert survives OS completion, opens that OS reports, then dis
  const os=w.dados.servicos.find(s=>s.id==='one');os.status='concluído';w.dados.relatoriosEspecialidade=[{id:'r',adminId:'tenant',servicoId:'one',tipo:'RIN',rascunho:true}];
  w.renderizarAlertas();const alert=[...w.document.querySelectorAll('.alerta-linha')].find(a=>a.textContent.includes('relatórios por terminar'));assert(alert);alert.click();assert.deepEqual(json(w.calls),[['os','one'],['tab','one','relatorios']]);
  w.dados.relatoriosEspecialidade[0].rascunho=false;w.renderizarAlertas();assert(!w.document.getElementById('alertasPendencias').textContent.includes('relatórios por terminar'));assert.equal(os.status,'concluído');w.close();
+});
+
+test('OS material alerts use recorded direct and sheet consumption, and open Materials',()=>{
+ const w=setup();
+ try {
+  w._verOsMostrar=(id,tab)=>w.calls.push(['tab',id,tab]);
+  const [one,two,done,foreign]=w.dados.servicos;
+  const plan=(artigoId,qtdPrevista)=>({artigoId,qtdPrevista});
+  one.materiaisPlano=[plan('cable',5)];
+  two.obraId='shared';
+  done.materiaisPlano=[plan('cable',0.3)];
+  w.dados.obraMateriais=[{...plan('cable',10),obraId:'shared',adminId:'tenant',qtdConsumida:11}];
+  w.dados.folhasObra=[{id:'sheet',servicoId:one.id,adminId:'tenant'}];
+  const use=(id,origemId,artigoId,quantidade,origemTipo='os',adminId='tenant')=>(
+   {id,adminId,origemId,artigoId,quantidade,origemTipo,tipo:'saida'}
+  );
+  const sheet=use('s','sheet','cable',3,'folha');
+  w.dados.movimentosStock=[
+   use('a',one.id,'cable',2),sheet,sheet,use('b',one.id,'plug',1),
+   use('c',two.id,'cable',1),use('d',done.id,'cable',0.1),use('e',done.id,'cable',0.2),
+   use('f',foreign.id,'plug',1,'os','other'),use('g',one.id,'foreign',1,'os','other')
+  ];
+  const alertFor=text=>[...w.document.querySelectorAll('.alerta-linha')].find(row=>row.textContent.includes(text));
+  w.renderizarAlertas();
+  alertFor('1 OS com materiais não previstos').click();
+  alertFor('1 OS com excedente de materiais').click();
+  assert.deepEqual(json(w.calls),[['os','one'],['tab','one','materiais'],['os','two'],['tab','two','materiais']]);
+  one.materiaisPlano.push(plan('plug',1));
+  w.dados.obraMateriais[0].qtdPrevista=11;
+  w.renderizarAlertas();
+  assert(!alertFor('com materiais não previstos'));
+  assert(!alertFor('com excedente de materiais'));
+ } finally { w.close(); }
 });
