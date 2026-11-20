@@ -6563,6 +6563,7 @@ function _assistEstado(value) {
                 <form>
                     <h3 id="tg-plano-os-titulo">Plano de materiais da OS</h3>
                     <label>Importar Excel ou CSV <input id="tg-plano-os-ficheiro" type="file" accept=".xlsx,.xls,.csv"></label>
+                    <p class="help-text">Colunas: Referência ou Artigo, e Quantidade. Os artigos devem existir no armazém. A importação acrescenta quantidades ao plano; revê a lista antes de guardar.</p>
                     <div class="tg-material-actions">
                         <label>Artigo <select id="tg-plano-os-artigos"><option value="">Selecionar</option></select></label>
                         <button type="button" id="tg-plano-os-adicionar">Adicionar</button>
@@ -6692,6 +6693,10 @@ function _assistEstado(value) {
                 acoes.append(b);
             };
             if (_podeGerirPlanoOS(os)) botao('Gerir plano de materiais · Importar Excel', () => abrirPlanoMateriaisOS(os.id));
+            if (obra && ['admin', 'subadmin'].includes(usuarioLogado?.role)) botao('Gerir plano da obra · Importar Excel', () => {
+                _fecharModalGenerico();
+                abrirPlanoMateriais(obra.id);
+            });
             if (saldosOS.some(m => m.qtdConsumida > 0)) botao('Devolver material ao armazém', () => {
                 _fecharModalGenerico();
                 abrirDevolverMaterialOS(os.id);
@@ -15858,7 +15863,7 @@ function _assistEstado(value) {
                 const btnLigar = cliente?.telefone ? `<button type="button" class="tgm-btn-mapa" title="Ligar a ${escapeHtmlSimples(obterNomeCliente(s.clienteId) || 'cliente')}" onclick="event.stopPropagation();_ligarClienteOS('${s.id}')"><i class="fas fa-phone"></i></button>` : '';
                 const btnWhatsapp = cliente?.telefone ? `<a href="${_whatsappUrlOS(cliente.telefone)}" target="_blank" rel="noopener" class="tgm-btn-mapa" title="Abrir WhatsApp" onclick="event.stopPropagation();" style="color:#25D366;"><i class="fab fa-whatsapp"></i></a>` : '';
                 const btnObs = (s.observacoes && s.observacoes.trim()) ? `<button type="button" class="tgm-btn-mapa" title="Ver observações" onclick="event.stopPropagation();_verObservacoesOS('${s.id}')"><i class="fas fa-comment-dots"></i></button>` : '';
-                const _materiaisDestaOS = s.obraId ? (dados.obraMateriais || []).filter(m => m.obraId === s.obraId) : [];
+                const _materiaisDestaOS = s.obraId ? (dados.obraMateriais || []).filter(m => m.obraId === s.obraId && m.adminId === s.adminId) : _saldosPlanoOS(s);
                 const btnMateriais = _materiaisDestaOS.length ? `<button type="button" class="tgm-btn-mapa" title="Ver materiais desta OS" onclick="event.stopPropagation();_verMateriaisOS('${s.id}')"><i class="fas fa-boxes-stacked"></i></button>` : '';
                 return `<div class="tgm-row tgm-row--os" id="tgm-os-${s.id}">
                     ${aberto ? '<span class="tgm-live-dot" title="Em curso"></span>' : ''}
@@ -15919,17 +15924,10 @@ function _assistEstado(value) {
             // Lista rápida (popup) dos materiais estipulados na Obra de origem desta OS —
             // previsto vs. já consumido, sem precisar de abrir o "Ver OS" completo.
             window._verMateriaisOS = function(servicoId) {
-                const s = (dados.servicos || []).find(x => x.id === servicoId); if (!s || !s.obraId) return;
-                const mats = (dados.obraMateriais || []).filter(m => m.obraId === s.obraId);
-                if (!mats.length) { alert('Sem materiais estipulados para esta OS.'); return; }
-                const linhas = mats.map(m => {
-                    const art = dados.artigos?.find(a => a.id === m.artigoId);
-                    const prev = Number(m.qtdPrevista) || 0, cons = Number(m.qtdConsumida) || 0;
-                    const unid = art ? (art.unidade || 'un') : '';
-                    const estado = cons >= prev && prev > 0 ? '✅' : (cons > 0 ? '🟡' : '⚪');
-                    return estado + ' ' + (art ? art.nome : '(artigo removido)') + ' — Previsto: ' + prev + ' ' + unid + ' · Consumido: ' + cons + ' ' + unid;
-                }).join('\n');
-                alert('Materiais desta OS — ' + (obterNomeCliente(s.clienteId) || '') + ':\n\n' + linhas);
+                const s = (dados.servicos || []).find(x => x.id === servicoId && x.adminId === _tenantId());
+                if (!s) return;
+                abrirVerOS(s.id);
+                _verOsMostrar(s.id, 'materiais');
             };
             // Equivalentes das funções acima, mas para o card de Obra em "O Meu Dia" — mesmo
             // padrão, só muda a entidade (obra em vez de OS).

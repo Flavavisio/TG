@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - feature/os-obras-materiais-partilhados
+      - release/materials-os-obras-20261120
   pull_request:
     paths:
       - 'tg-materiais-partilhados.js'
@@ -13,6 +14,7 @@ on:
       - 'sw.js'
       - 'supabase/migrations/*_os_materiais_previstos.sql'
       - 'tests/materiais-*.test.cjs'
+      - 'tests/os-materiais-integration.test.cjs'
       - '.github/workflows/shared-materials.yml'
 permissions:
   contents: read
@@ -24,7 +26,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: npm install --no-save --no-package-lock jsdom@26
+      - run: npm install --no-save --no-package-lock jsdom@26 xlsx@0.18.5
       - run: node --check app-principal.js
       - run: node --check tg-materiais-partilhados.js
-      - run: node --test tests/materiais-partilhados.test.cjs tests/materiais-ui-integration.test.cjs tests/kiosk-planned-materials-ui.test.cjs tests/kiosk-planned-materials.test.cjs
+      - run: node --test tests/materiais-partilhados.test.cjs tests/materiais-ui-integration.test.cjs tests/os-materiais-integration.test.cjs tests/kiosk-planned-materials-ui.test.cjs tests/kiosk-planned-materials.test.cjs

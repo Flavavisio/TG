@@ -14,7 +14,9 @@ DECLARE
     artigo jsonb;
 BEGIN
     IF TG_OP = 'UPDATE' THEN
-        IF NEW.materiais_previstos IS NOT DISTINCT FROM OLD.materiais_previstos THEN
+        IF NEW.materiais_previstos IS NOT DISTINCT FROM OLD.materiais_previstos
+           AND (NEW.materiais_previstos = '[]'::jsonb OR
+                (NEW.obra_id IS NOT DISTINCT FROM OLD.obra_id AND NEW.admin_id IS NOT DISTINCT FROM OLD.admin_id)) THEN
             RETURN NEW;
         END IF;
     ELSIF NEW.materiais_previstos = '[]'::jsonb THEN
@@ -55,7 +57,6 @@ BEGIN
 END;
 $$;
 
-DROP TRIGGER IF EXISTS tg_validar_plano_materiais_os ON public.servicos;
-CREATE TRIGGER tg_validar_plano_materiais_os
-    BEFORE INSERT OR UPDATE OF materiais_previstos ON public.servicos
+CREATE OR REPLACE TRIGGER tg_validar_plano_materiais_os
+    BEFORE INSERT OR UPDATE OF materiais_previstos, obra_id, admin_id ON public.servicos
     FOR EACH ROW EXECUTE FUNCTION public.tg_validar_plano_materiais_os();
