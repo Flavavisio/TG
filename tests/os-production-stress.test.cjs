@@ -219,7 +219,7 @@ test('erros em telemóvel centrados e cache da PWA sincronizada',()=>{
    assert(html.includes(js),path);
    assert(html.includes(style),path);
  }
- assert(fs.readFileSync('sw.js','utf8').includes('totalgest-release-20261120-materiais-os-obras'));
+ assert(fs.readFileSync('sw.js','utf8').includes('totalgest-release-20261120-alertas-materiais-os'));
 });
 
 test('almoço: só Regresso de almoço ativo, dar entrada e intervenção esbatidos',()=>{

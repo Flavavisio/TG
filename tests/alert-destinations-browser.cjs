@@ -1,6 +1,7 @@
 const {chromium}=require('playwright'),fs=require('node:fs'),assert=require('node:assert/strict');
 const src=fs.readFileSync('app-principal.js','utf8');
-const helpers=src.slice(src.indexOf('        function _acaoPendenciasAlerta('),src.indexOf('        // ==================== ARMAZÉM / STOCK',src.indexOf('        function _acaoPendenciasAlerta(')));
+const materials=['_osComRelatoriosPorTerminar','_movimentosConsumoPorOS','_saldosPlanoOS'].map(name=>src.slice(src.indexOf('        function '+name+'(')).split('\n        }')[0]+'\n        }').join('\n');
+const helpers=materials+src.slice(src.indexOf('        function _acaoPendenciasAlerta('),src.indexOf('        // ==================== ARMAZÉM / STOCK',src.indexOf('        function _acaoPendenciasAlerta(')));
 (async()=>{
  const browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_BINARY,args:['--no-sandbox','--disable-dev-shm-usage']});
  try {
