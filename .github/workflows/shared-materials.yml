@@ -9,6 +9,9 @@ on:
       - 'tg-materiais-partilhados.css'
       - 'app-principal.js'
       - 'index.html'
+      - 'login.html'
+      - 'sw.js'
+      - 'supabase/migrations/*_os_materiais_previstos.sql'
       - 'tests/materiais-*.test.cjs'
       - '.github/workflows/shared-materials.yml'
 permissions:
@@ -24,4 +27,4 @@ jobs:
       - run: npm install --no-save --no-package-lock jsdom@26
       - run: node --check app-principal.js
       - run: node --check tg-materiais-partilhados.js
-      - run: node --test tests/materiais-partilhados.test.cjs tests/materiais-ui-integration.test.cjs tests/kiosk-planned-materials-ui.test.cjs
+      - run: node --test tests/materiais-partilhados.test.cjs tests/materiais-ui-integration.test.cjs tests/kiosk-planned-materials-ui.test.cjs tests/kiosk-planned-materials.test.cjs

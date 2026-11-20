@@ -25,7 +25,7 @@ function setup(extra = {}) {
     ctx.alert=message=>ctx.alerts.push(message);
     ctx.guardarDados=async()=>{ctx.saves++; if(ctx.fail)throw Error('offline');};
     ctx._quiosqueAgendaFecharSaida=()=>{ctx.exits++;};
-    const names=['_quiosqueAgendaResumoMateriais','_quiosqueAgendaToggleMateriais','_quiosqueAgendaContextoMateriais','_quiosqueAgendaPlanoMateriais','_quiosqueAgendaValidarMateriais','_quiosqueAgendaConfirmarFolha'];
+    const names=['_abrirSelecaoMateriais','_saldosPlanoOS','_quiosqueAgendaResumoMateriais','_quiosqueAgendaToggleMateriais','_quiosqueAgendaContextoMateriais','_quiosqueAgendaPlanoMateriais','_quiosqueAgendaValidarMateriais','_quiosqueAgendaConfirmarFolha'];
     const body=names.map(name=>source.match(new RegExp('        (?:async )?function '+name+'\\([^]*?\\n        \\}'))[0]).join('\n');
     const api=new Function('ctx','with(ctx){'+body+';return {'+names.join(',')+'};}')(ctx);
     return {ctx,...api};

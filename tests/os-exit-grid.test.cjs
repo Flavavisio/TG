@@ -90,7 +90,7 @@ test('index, login e PWA incluem grelha e cache atualizada',()=>{
   assert(s.includes('tg-os-exit-grid.js?v=1.0.2-work-exit-icons'),path);
   assert(s.includes('tg-os-exit-grid.css?v=1.0.2-work-exit-icons'),path);
  }
- assert(fs.readFileSync('sw.js','utf8').includes('totalgest-release-20261119-obras-icones-saida'));
+ assert(fs.readFileSync('sw.js','utf8').includes('totalgest-release-20261120-materiais-os-obras'));
 });
 
 test('modal com pausa nativa escondida não cria cinco cartões nem desloca Não para pausa',async()=>{

@@ -1,7 +1,4 @@
-/* Total Gest — núcleo partilhado de materiais de OS e Obras.
- * Sem efeitos laterais: não escreve em stock, Supabase ou registos históricos.
- * Integração com os formulários existentes e persistência será feita numa fase seguinte.
- */
+/* Total Gest — validação de importações e apresentação dos saldos de materiais. */
 (function (root, factory) {
   const api = factory();
   if (typeof module === 'object' && module.exports) module.exports = api;
@@ -21,7 +18,7 @@
     const descricao = id(row.descricao || row.nome || row.artigo);
     const quantidade = number(row.quantidade ?? row.previsto ?? row.quantidadePrevista);
     if (!referencia && !descricao) throw Error('O material necessita de referência ou descrição.');
-    if (!Number.isFinite(quantidade) || quantidade <= 0) throw Error('Quantidade prevista inválida.');
+    if (!Number.isFinite(quantidade) || round(quantidade) <= 0) throw Error('Quantidade prevista inválida.');
     return { referencia, descricao, quantidade: round(quantidade), unidade: id(row.unidade || 'un.') };
   }
   function importarLinhas(linhas) {
@@ -103,11 +100,37 @@
     });
     return importarLinhas(objetos);
   }
+  function associarImportacaoAoCatalogo(resultado, artigos) {
+    const normalizar = value => id(value).toLocaleLowerCase('pt-PT');
+    const referencias = new Map(), nomes = new Map();
+    for (const artigo of artigos) {
+      for (const [chave, indice] of [[artigo.referencia, referencias], [artigo.nome, nomes]]) {
+        const termo = normalizar(chave);
+        if (termo) indice.set(termo, [...(indice.get(termo) || []), artigo]);
+      }
+    }
+    const erros = resultado.erros.map(e => 'Linha ' + e.linha + ': ' + e.mensagem);
+    const quantidades = new Map();
+    for (const linha of resultado.materiais) {
+      const ref = normalizar(linha.referencia), nome = normalizar(linha.descricao);
+      const encontrados = referencias.get(ref) || referencias.get(nome) || nomes.get(nome || ref) || [];
+      if (encontrados.length !== 1) {
+        erros.push('Linha ' + linha.linha + ': artigo inexistente ou ambíguo (' + (linha.referencia || linha.descricao) + ').');
+        continue;
+      }
+      const artigoId = encontrados[0].id;
+      quantidades.set(artigoId, round((quantidades.get(artigoId) || 0) + linha.quantidade));
+    }
+    if (erros.length) throw Error(erros.slice(0, 8).join(' '));
+    if (!quantidades.size) throw Error('O ficheiro não tem materiais para importar.');
+    return quantidades;
+  }
+
   function importarFolhaXlsx(workbook, xlsx) {
     if (!workbook || !xlsx || !xlsx.utils || typeof xlsx.utils.sheet_to_json !== 'function') throw Error('Leitor Excel indisponível.');
     const primeira = workbook.Sheets && workbook.Sheets[workbook.SheetNames && workbook.SheetNames[0]];
     if (!primeira) throw Error('O ficheiro Excel não tem folhas válidas.');
-    const matriz = xlsx.utils.sheet_to_json(primeira, { header: 1, defval: '' });
+    const matriz = xlsx.utils.sheet_to_json(primeira, { header: 1, defval: '', raw: false });
     if (!matriz.length) return { materiais: [], erros: [{ linha: 1, mensagem: 'O Excel está vazio.' }], podeConfirmar: false };
     return importarMatriz(matriz[0], matriz.slice(1));
   }
@@ -180,5 +203,5 @@
       '<p class="tg-material-vazio">Esta obra ainda não tem materiais previstos.</p>');
     return true;
   }
-  return { normalizarPlano, importarLinhas, importarMatriz, importarFolhaXlsx, renderizarSaldos, saldosDaObra, atualizarPainelObra, atualizarPainelOS, resumo, destinoMovimento, movimentosDaObra };
+  return { normalizarPlano, importarLinhas, importarMatriz, associarImportacaoAoCatalogo, importarFolhaXlsx, renderizarSaldos, saldosDaObra, atualizarPainelObra, atualizarPainelOS, resumo, destinoMovimento, movimentosDaObra };
 });
