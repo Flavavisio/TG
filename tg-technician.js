@@ -440,9 +440,10 @@
                 const name=art?.nome||input.parentElement?.parentElement?.firstElementChild?.textContent||'Material';
                 return name+': '+input.value+(art?.unidade?' '+art.unidade:'');
             });
+            const resumoMateriais=document.querySelector('[data-tg-material-summary]')?.textContent;
             const notes=$('fo_materiais')?.value?.trim();
             const used=$('fo_mat_sim')?.classList.contains('ativo');
-            wizard.review.innerHTML=`<h3>Confirma antes de guardar</h3><dl><dt>Obra / OS</dt><dd>${esc($('fo_obra_desc')?.value)}</dd><dt>Data</dt><dd>${esc($('fo_data')?.value?.split('-').reverse().join('/')||'')}</dd><dt>Trabalho realizado</dt><dd>${esc($('fo_descricao')?.value)}</dd><dt>Horas trabalhadas</dt><dd>${esc(horasMinutos($('fo_horas')?.value||0))}</dd><dt>Materiais</dt><dd>${esc(materialRows.join(' · ')|| (used?'Sem quantidades de material indicadas':'Sem materiais'))}${notes?'<br>'+esc(notes):''}</dd></dl><p>A folha só fica guardada depois de confirmares.</p>`;
+            wizard.review.innerHTML=`<h3>Confirma antes de guardar</h3><dl><dt>Obra / OS</dt><dd>${esc($('fo_obra_desc')?.value)}</dd><dt>Data</dt><dd>${esc($('fo_data')?.value?.split('-').reverse().join('/')||'')}</dd><dt>Trabalho realizado</dt><dd>${esc($('fo_descricao')?.value)}</dd><dt>Horas trabalhadas</dt><dd>${esc(horasMinutos($('fo_horas')?.value||0))}</dd><dt>Materiais</dt><dd>${esc(resumoMateriais || materialRows.join(' · ')|| (used?'Sem quantidades de material indicadas':'Sem materiais'))}${notes?'<br>'+esc(notes):''}</dd></dl><p>A folha só fica guardada depois de confirmares.</p>`;
             // The native "Assinar" button measures the visible canvas before drawing.
             // Never initialize it again here: going back or rotating must retain the ink.
         }
