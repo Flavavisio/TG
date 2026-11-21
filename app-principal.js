@@ -3480,8 +3480,33 @@ function _assistEstado(value) {
             const dialog = document.createElement('dialog');
             dialog.id = 'qsa_materiais_modal';
             dialog.setAttribute('aria-labelledby', 'qsa_materiais_titulo');
-            dialog.style.cssText = 'width:min(620px,94vw);max-height:85dvh;overflow:auto;border:1px solid #e2e8f0;border-radius:14px;padding:20px;color:#152a52;background:#fff;';
-            dialog.innerHTML = '<h3 id="qsa_materiais_titulo">Materiais usados</h3><p>Assinala o material programado e indica a quantidade realmente usada.</p><div id="qsa_planeados"></div><h4>Material não planeado</h4><p>Os extras ficam identificados para o administrador.</p><label>Material<input id="qsa_extra_nome" maxlength="200" list="qsa_catalogo" placeholder="Pesquisar por nome ou referência" style="width:100%;"></label><datalist id="qsa_catalogo"></datalist><div style="display:flex;gap:8px;margin:10px 0;flex-wrap:wrap;"><label>Quantidade<input id="qsa_extra_qtd" type="number" min="0.001" step="any" style="width:100px;"></label><label>Unidade<select id="qsa_extra_un"><option>un</option><option>m</option><option>kg</option><option>L</option><option>cx</option><option>rolo</option><option>par</option></select></label><button id="qsa_extra_adicionar" type="button" class="btn btn-outline">Adicionar material</button></div><div id="qsa_extras"></div><p id="qsa_mat_erro" role="alert" style="color:#b91c1c;"></p><div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px;"><button id="qsa_mat_cancelar" type="button" class="btn btn-outline">Cancelar</button><button id="qsa_mat_confirmar" type="button" class="btn btn-primary">Confirmar materiais</button></div>';
+            dialog.className = 'tg-material-dialog';
+            dialog.innerHTML = `
+                <header class="tg-material-header">
+                    <h3 id="qsa_materiais_titulo" tabindex="-1" autofocus>Materiais usados</h3>
+                </header>
+                <div class="tg-material-scroll">
+                    <p>Assinala o material programado e indica a quantidade realmente usada.</p>
+                    <div id="qsa_planeados"></div>
+                    <h4>Material não planeado</h4>
+                    <p>Os extras ficam identificados para o administrador.</p>
+                    <label for="qsa_extra_nome">Material</label>
+                    <input id="qsa_extra_nome" maxlength="200" list="qsa_catalogo" placeholder="Pesquisar por nome ou referência">
+                    <datalist id="qsa_catalogo"></datalist>
+                    <div class="tg-material-extra">
+                        <label>Quantidade<input id="qsa_extra_qtd" type="number" min="0.001" step="any"></label>
+                        <label>Unidade<select id="qsa_extra_un"><option>un</option><option>m</option><option>kg</option><option>L</option><option>cx</option><option>rolo</option><option>par</option></select></label>
+                        <button id="qsa_extra_adicionar" type="button" class="btn btn-outline">Adicionar material</button>
+                    </div>
+                    <div id="qsa_extras"></div>
+                </div>
+                <footer class="tg-material-footer">
+                    <p id="qsa_mat_erro" class="tg-material-erro" role="alert"></p>
+                    <div class="tg-material-actions">
+                        <button id="qsa_mat_cancelar" type="button" class="btn btn-outline">Cancelar</button>
+                        <button id="qsa_mat_confirmar" type="button" class="btn btn-primary">Confirmar materiais</button>
+                    </div>
+                </footer>`;
             document.body.appendChild(dialog);
             const el = id => dialog.querySelector('#' + id);
             const erro = msg => { el('qsa_mat_erro').textContent = msg; };
@@ -3489,9 +3514,9 @@ function _assistEstado(value) {
             if (!plano.length) el('qsa_planeados').textContent = 'Sem materiais programados para esta obra/OS. Podes acrescentar os usados abaixo.';
             plano.forEach(({ plano: m, artigo: a }) => {
                 const linha = document.createElement('div');
-                linha.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #e2e8f0;';
+                linha.className = 'tg-material-linha';
                 const label = document.createElement('label'), check = document.createElement('input');
-                check.type = 'checkbox'; check.style.width = 'auto'; label.style.flex = '1';
+                check.type = 'checkbox';
                 const anterior = rascunho.find(x => x.artigoId === a.id);
                 check.checked = !!anterior;
                 const info = document.createElement('span'), nome = document.createElement('span');
@@ -3512,14 +3537,14 @@ function _assistEstado(value) {
                 });
                 label.append(check, info);
                 const qtd = document.createElement('input');
-                qtd.type = 'number'; qtd.min = '0.001'; qtd.step = 'any'; qtd.style.width = '95px';
+                qtd.type = 'number'; qtd.min = '0.001'; qtd.step = 'any';
                 qtd.setAttribute('aria-label', 'Quantidade usada de ' + a.nome);
                 qtd.value = anterior?.quantidade || ''; qtd.disabled = !check.checked;
                 const atualizar = () => {
                     rascunho = rascunho.filter(x => x.artigoId !== a.id);
                     if (check.checked) rascunho.push({ artigoId: a.id, nome: a.nome, unidade: a.unidade || 'un', quantidade: Number(qtd.value), extra: false });
                 };
-                check.onchange = () => { qtd.disabled = !check.checked; atualizar(); if (check.checked) qtd.focus(); };
+                check.onchange = () => { qtd.disabled = !check.checked; atualizar(); if (check.checked) qtd.focus({ preventScroll: true }); };
                 qtd.oninput = atualizar; linha.append(label, qtd); el('qsa_planeados').appendChild(linha);
             });
             const catalogo = (dados.artigos || []).filter(a => a.adminId === ctx.adminId);
@@ -6560,29 +6585,70 @@ function _assistEstado(value) {
             dialog.className = 'tg-material-dialog';
             dialog.setAttribute('aria-labelledby', 'tg-plano-os-titulo');
             dialog.innerHTML = `
-                <form>
-                    <h3 id="tg-plano-os-titulo">Plano de materiais da OS</h3>
-                    <label>Importar Excel ou CSV <input id="tg-plano-os-ficheiro" type="file" accept=".xlsx,.xls,.csv"></label>
-                    <p class="help-text">Colunas: Referência ou Artigo, e Quantidade. Os artigos devem existir no armazém. A importação acrescenta quantidades ao plano; revê a lista antes de guardar.</p>
-                    <div class="tg-material-actions">
-                        <label>Artigo <select id="tg-plano-os-artigos"><option value="">Selecionar</option></select></label>
-                        <button type="button" id="tg-plano-os-adicionar">Adicionar</button>
+                <form class="tg-material-frame">
+                    <header class="tg-material-header">
+                        <h3 id="tg-plano-os-titulo" tabindex="-1" autofocus>Plano de materiais da OS</h3>
+                    </header>
+                    <div class="tg-material-scroll">
+                        <label for="tg-plano-os-ficheiro">Importar Excel ou CSV</label>
+                        <input id="tg-plano-os-ficheiro" type="file" accept=".xlsx,.xls,.csv">
+                        <p class="help-text">Usa as colunas Referência ou Artigo e Quantidade. A importação soma as quantidades ao plano.</p>
+                        <label for="tg-plano-os-artigos">Pesquisar artigo</label>
+                        <input id="tg-plano-os-artigos" type="search" placeholder="Nome ou referência" autocomplete="off">
+                        <div id="tg-plano-os-resultados" class="tg-material-resultados"></div>
+                        <div id="tg-plano-os-escolhido" class="tg-material-item" aria-live="polite" hidden></div>
+                        <button type="button" id="tg-plano-os-adicionar" disabled>Adicionar ao plano</button>
+                        <div id="tg-plano-os-lista"></div>
                     </div>
-                    <div id="tg-plano-os-lista"></div>
-                    <p id="tg-plano-os-estado" role="status"></p>
-                    <div class="tg-material-actions">
-                        <button type="button" id="tg-plano-os-cancelar">Cancelar</button>
-                        <button type="submit">Guardar plano</button>
-                    </div>
+                    <footer class="tg-material-footer">
+                        <p id="tg-plano-os-estado" role="status"></p>
+                        <div class="tg-material-actions">
+                            <button type="button" id="tg-plano-os-cancelar">Cancelar</button>
+                            <button type="submit">Guardar plano</button>
+                        </div>
+                    </footer>
                 </form>`;
             document.body.appendChild(dialog);
             const el = id => dialog.querySelector('#tg-plano-os-' + id);
             const estado = el('estado');
             const guardar = dialog.querySelector('[type="submit"]');
             const catalogo = new Map(artigos.map(a => [a.id, a]));
-            for (const artigo of artigos) el('artigos').append(new Option(
-                artigo.referencia ? artigo.nome + ' — ' + artigo.referencia : artigo.nome, artigo.id
-            ));
+            const pesquisa = el('artigos');
+            const resultados = el('resultados');
+            const escolhido = el('escolhido');
+            const adicionar = el('adicionar');
+            let artigoEscolhido = null;
+            const rotuloArtigo = artigo => artigo.referencia ? artigo.nome + ' — ' + artigo.referencia : artigo.nome;
+            const selecionar = artigo => {
+                artigoEscolhido = artigo;
+                escolhido.textContent = artigo ? rotuloArtigo(artigo) : '';
+                escolhido.hidden = !artigo;
+                adicionar.disabled = !artigo;
+            };
+            const pesquisar = () => {
+                resultados.replaceChildren();
+                const termo = pesquisa.value.trim().toLowerCase();
+                const disponiveis = artigos.filter(a => !plano.has(a.id) && _artigoCorrespondePesquisa(a, termo));
+                for (const artigo of disponiveis.slice(0, 8)) {
+                    const opcao = document.createElement('button');
+                    opcao.type = 'button';
+                    opcao.textContent = rotuloArtigo(artigo);
+                    opcao.onclick = () => {
+                        selecionar(artigo);
+                        pesquisa.value = '';
+                        adicionar.focus({ preventScroll: true });
+                        resultados.replaceChildren();
+                    };
+                    resultados.append(opcao);
+                }
+                const mensagem = document.createElement('small');
+                if (!disponiveis.length) mensagem.textContent = 'Sem artigos disponíveis para adicionar.';
+                if (disponiveis.length > 8) mensagem.textContent = 'Escreve mais para filtrar os artigos.';
+                if (mensagem.textContent) resultados.append(mensagem);
+            };
+            pesquisa.onfocus = () => { if (!artigoEscolhido) pesquisar(); };
+            pesquisa.oninput = () => { selecionar(null); pesquisar(); };
+            pesquisa.onkeydown = event => { if (event.key === 'Enter') event.preventDefault(); };
             const renderizar = () => {
                 el('lista').replaceChildren();
                 for (const [artigoId, quantidade] of plano) {
@@ -6590,7 +6656,10 @@ function _assistEstado(value) {
                     const linha = document.createElement('div');
                     linha.className = 'tg-material-item';
                     const label = document.createElement('label');
-                    label.textContent = (artigo?.nome || 'Artigo removido') + ' — Previsto (' + (artigo?.unidade || 'un') + ') ';
+                    const nome = document.createElement('strong');
+                    nome.className = 'tg-material-nome';
+                    nome.textContent = artigo ? rotuloArtigo(artigo) : 'Artigo removido';
+                    label.textContent = 'Previsto (' + (artigo?.unidade || 'un') + ')';
                     const qtd = document.createElement('input');
                     qtd.type = 'number'; qtd.min = '0.0001'; qtd.step = 'any'; qtd.required = true; qtd.value = quantidade;
                     qtd.oninput = () => plano.set(artigoId, Number(qtd.value));
@@ -6599,15 +6668,18 @@ function _assistEstado(value) {
                     retirar.type = 'button';
                     retirar.textContent = 'Retirar do plano';
                     retirar.onclick = () => { plano.delete(artigoId); renderizar(); };
-                    linha.append(label, retirar);
+                    linha.append(nome, label, retirar);
                     el('lista').append(linha);
                 }
             };
-            el('adicionar').onclick = () => {
-                const artigoId = el('artigos').value;
-                if (!artigoId || plano.has(artigoId)) return;
-                plano.set(artigoId, 1);
+            adicionar.onclick = () => {
+                if (!artigoEscolhido || plano.has(artigoEscolhido.id)) return;
+                plano.set(artigoEscolhido.id, 1);
+                selecionar(null);
                 renderizar();
+                const quantidade = el('lista').lastElementChild.querySelector('input');
+                quantidade.focus({ preventScroll: true });
+                quantidade.scrollIntoView?.({ block: 'nearest' });
             };
             el('ficheiro').onchange = async event => {
                 const input = event.currentTarget;
@@ -6629,6 +6701,8 @@ function _assistEstado(value) {
                     for (const [artigoId, quantidade] of quantidades) {
                         plano.set(artigoId, Math.round(((plano.get(artigoId) || 0) + quantidade) * 10000) / 10000);
                     }
+                    if (artigoEscolhido && plano.has(artigoEscolhido.id)) selecionar(null);
+                    if (resultados.childElementCount) pesquisar();
                     renderizar();
                     estado.textContent = 'Ficheiro lido. Revê as quantidades e guarda o plano.';
                 } catch (e) { estado.textContent = e.message; }
@@ -28994,6 +29068,7 @@ async function salvarAdmin(e) {
             };
             document.addEventListener('keydown', function (ev) {
                 if ((ev.key !== 'Escape' && ev.key !== 'Esc') || ev.repeat || ev.isComposing || ev.defaultPrevented) return;
+                if (document.querySelector('dialog.tg-material-dialog[open]')) return;
                 const camadas = [];
                 const dlg = document.getElementById('tgAlertOverlay');
                 if (dlg && dlg.classList.contains('aberto') && visivel(dlg)) camadas.push({ el: dlg, tipo: 'dialogo' });

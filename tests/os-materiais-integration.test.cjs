@@ -6,7 +6,7 @@ const XLSX = require('xlsx');
 const materiais = require('../tg-materiais-partilhados.js');
 const source = fs.readFileSync('app-principal.js', 'utf8');
 const names = ['_saldosPlanoOS', '_podeGerirPlanoOS', 'abrirPlanoMateriaisOS',
-  '_parseCsvLine', '_contextoMateriaisFolha', '_quiosqueAgendaPlanoMateriais',
+  '_artigoCorrespondePesquisa', '_parseCsvLine', '_contextoMateriaisFolha', '_quiosqueAgendaPlanoMateriais',
   '_quiosqueAgendaValidarMateriais', '_abrirSelecaoMateriais', '_materializarConsumo',
   '_textoMateriaisSelecionados', '_somarConsumoObra', '_aplicarConsumoFolha', 'renderizarMateriaisDetalheOS'];
 
@@ -95,6 +95,32 @@ test('CSV: vírgula decimal e erros bloqueiam todo o ficheiro sem alterar a pré
     }
     assert.deepEqual(t.os.materiaisPlano, []);
     assert.deepEqual(t.ctx.calls, []);
+  } finally { t.close(); }
+});
+
+test('plano: seleciona artigo por referência e mantém o nome completo visível', () => {
+  const t = setup();
+  try {
+    const artigo = t.ctx.dados.artigos[0];
+    artigo.nome = 'Cabo para instalação exterior com isolamento e proteção adicionais';
+    t.api.abrirPlanoMateriaisOS('os');
+    const el = id => t.w.document.getElementById('tg-plano-os-' + id);
+    const pesquisa = el('artigos');
+    pesquisa.value = 'c6';
+    pesquisa.dispatchEvent(new t.w.Event('input'));
+    assert.equal(el('resultados').childElementCount, 1);
+    el('resultados').querySelector('button').click();
+    assert.equal(el('escolhido').textContent, artigo.nome + ' — C6');
+    assert.equal(el('escolhido').hidden, false);
+    assert.deepEqual(quantities(t), []);
+    el('adicionar').click();
+    assert.deepEqual(quantities(t), [1]);
+    assert.equal(el('lista').querySelector('strong').textContent, artigo.nome + ' — C6');
+    assert.equal(t.w.document.activeElement, el('lista').querySelector('input'));
+    pesquisa.value = 'c6';
+    pesquisa.dispatchEvent(new t.w.Event('input'));
+    assert.equal(el('resultados').querySelector('button'), null);
+    assert(el('adicionar').disabled);
   } finally { t.close(); }
 });
 
