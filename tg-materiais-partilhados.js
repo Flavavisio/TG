@@ -145,6 +145,7 @@
         '<span class="tg-material-saldo">Previsto: ' + esc(val(x.previsto)) + ' ' + unidade + '</span>' +
         '<span class="tg-material-saldo">Consumido: ' + esc(val(x.consumido)) + ' ' + unidade + '</span>' +
         '<span class="tg-material-saldo">Falta consumir: ' + esc(val(x.faltaConsumir)) + ' ' + unidade + '</span>' +
+        (x.excedente > 0 ? '<span class="tg-material-excedente">Excedente: ' + esc(val(x.excedente)) + ' ' + unidade + '</span>' : '') +
         (x.extraNaoPrevisto ? '<span class="tg-material-alerta">Material não previsto</span>' : '') +
         '</div>';
     }).join('');

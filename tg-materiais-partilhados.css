@@ -5,6 +5,7 @@
 .tg-material-ref{color:#64748b;font-size:12px}
 .tg-material-saldo{display:block;color:#475569;font-size:12px}
 .tg-material-alerta{color:#a16207;font-size:12px;font-weight:600}
+.tg-material-excedente{display:block;color:#dc2626;font-size:12px;font-weight:600}
 /* O conteúdo é a única área com scroll. O cabeçalho e as ações ficam visíveis. */
 .tg-material-dialog {
     position:fixed;

@@ -29,7 +29,7 @@ function setup() {
     _tenantId: () => 'a', _armazemPrincipalId: () => 'armazem',
     gerarId: () => 'id-' + (++id), getDataHoje: () => '2026-11-20',
     _guardarCacheLocal: () => {}, _verOsMostrar: () => {}, _armazemAtualizarAvisoStock: () => {},
-    guardarDados: async () => {}, calls: [], response: null, error: null
+    guardarDados: async () => {}, renderizarAlertas: () => {}, calls: [], response: null, error: null
   };
   ctx.supa = { from(table) {
     ctx.calls.push(['from', table]);
@@ -196,5 +196,23 @@ test('OS independente: modal usa plano próprio, soma folha e consumo direto uma
     assert.equal(t.api._saldosPlanoOS(t.os)[0].qtdConsumida, 3.5);
     assert.equal(t.ctx.dados.movimentosStock.filter(m => m.origemTipo === 'os').length, 1);
     assert.equal(t.ctx.dados.obraMateriais.length, 0);
+  } finally { t.close(); }
+});
+
+test('OS mostra excedente a vermelho abaixo do saldo e impede devolver material consumido', () => {
+  const t = setup();
+  try {
+    t.os.materiaisPlano = [{ artigoId: 'cabo', qtdPrevista: 5 }];
+    t.ctx.dados.movimentosStock.push({ id: 'm', adminId: 'a', artigoId: 'cabo', tipo: 'saida', origemTipo: 'os', origemId: 'os', quantidade: 6 });
+    const root = t.w.document.getElementById('root');
+    t.api.renderizarMateriaisDetalheOS(root, t.os);
+    const saldo = root.querySelector('.tg-material-item');
+    assert.match(saldo.textContent, /Falta consumir: 0 mExcedente: 1 m/);
+    assert.equal(saldo.querySelector('.tg-material-excedente').textContent, 'Excedente: 1 m');
+    assert(!root.textContent.includes('Devolver material ao armazém'));
+    [...root.querySelectorAll('button')].find(b => b.textContent === 'Registar consumo direto').click();
+    const detalhe = t.w.document.querySelector('#qsa_planeados .qsa_material_saldo:last-child');
+    assert.equal(detalhe.textContent, 'Excedente: 1 m');
+    assert.equal(detalhe.style.color, 'rgb(220, 38, 38)');
   } finally { t.close(); }
 });

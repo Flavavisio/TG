@@ -106,7 +106,9 @@ test('balances handle zero, complete and excess consumption without negative rem
             w.ctx.dados.obraMateriais[0].qtdConsumida=consumido;
             w._quiosqueAgendaToggleMateriais(true);
             const rows=[...w.dom.window.document.querySelectorAll('.qsa_material_saldo')].map(el=>el.textContent);
-            assert.deepEqual(rows,['Previsto: 10 m','Consumido: '+String(consumido).replace('.',',')+' m','Falta consumir: '+expected+' m']);
+            const saldos=['Previsto: 10 m','Consumido: '+String(consumido).replace('.',',')+' m','Falta consumir: '+expected+' m'];
+            if(consumido>10)saldos.push('Excedente: '+(consumido-10)+' m');
+            assert.deepEqual(rows,saldos);
         }finally{w.dom.window.close();}
     }
 });
