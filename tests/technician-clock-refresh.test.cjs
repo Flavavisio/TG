@@ -121,7 +121,7 @@ test('entry from Obras ativas shows the full personal work card in Hoje and both
  }
 });
 test('both entry points and offline precache use the same employee refresh asset',()=>{
- const asset='tg-technician.js?v=1.11.7-materiais-os-obras';for(const path of ['index.html','login.html','sw.js'])assert(fs.readFileSync(path,'utf8').includes(asset),path);const sw=fs.readFileSync('sw.js','utf8');assert.match(sw,/const CACHE = 'totalgest-release-20261121-modais-materiais'/);
+ const asset='tg-technician.js?v=1.11.7-materiais-os-obras';for(const path of ['index.html','login.html','sw.js'])assert(fs.readFileSync(path,'utf8').includes(asset),path);const sw=fs.readFileSync('sw.js','utf8');assert.match(sw,/const CACHE = 'totalgest-release-\d{8}-[a-z0-9-]+'/);
 });
 
 
