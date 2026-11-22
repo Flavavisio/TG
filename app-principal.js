@@ -6776,7 +6776,7 @@ function _assistEstado(value) {
                 _fecharModalGenerico();
                 abrirPlanoMateriais(obra.id);
             });
-            if (obra && (dados.obraMateriais || []).some(m => m.adminId === os.adminId && m.obraId === obra.id && _disponivelParaDevolver(obra.id, m.artigoId) > 0)) botao('Devolver material ao armazém', () => {
+            if (obra && _itensDisponiveisDevolucaoObra(obra.id).length) botao('Devolver material ao armazém', () => {
                 _fecharModalGenerico();
                 abrirDevolverMaterialOS(os.id);
             });
@@ -7069,23 +7069,12 @@ function _assistEstado(value) {
                 funcionarioId: usuarioLogado?.id || null, armazemId: _armazemPrincipalId(adminId),
                 observacoes: 'Registado diretamente na OS (Ver OS), por ' + (usuarioLogado?.nome || '') + '.'
             });
-            // Se esta OS estiver ligada a uma Obra, o material extra também tem de aparecer na
-            // lista de materiais dessa Obra (e no relatório final dela) — antes ficava só
-            // registado como movimento de stock, sem nunca chegar à Obra.
             const osDoMaterial = dados.servicos?.find(s => s.id === osId);
-            if (osDoMaterial?.obraId) {
-                dados.obraMateriais = dados.obraMateriais || [];
-                let om = dados.obraMateriais.find(m => m.obraId === osDoMaterial.obraId && m.artigoId === artigoId);
-                if (om) {
-                    om.qtdPrevista = (Number(om.qtdPrevista) || 0) + qtd;
-                    om.qtdConsumida = (Number(om.qtdConsumida) || 0) + qtd;
-                } else {
-                    dados.obraMateriais.push({ id: gerarId(), adminId, obraId: osDoMaterial.obraId, artigoId, qtdPrevista: qtd, qtdConsumida: qtd, qtdDevolvida: 0 });
-                }
-            }
+            if (osDoMaterial?.obraId) _somarConsumoObra(adminId, osDoMaterial.obraId, artigoId, qtd);
             guardarDados(dados);
             if (artigoNovo && osDoMaterial?.obraId) _avisarAdminArtigoNovo(artigoNovo.id, artigoNovo.nome, adminId, 'nos materiais da ordem de serviço');
             _verOsMostrar(osId, 'materiais');
+            renderizarAlertas();
         }
         function gerarRelatorioOSIndividual(osId, paraCliente) {
             const os = dados.servicos?.find(s => s.id === osId); if (!os) return;
@@ -14117,7 +14106,7 @@ function _assistEstado(value) {
             if (tipo === 'servico') { abrirVerOS(id); return; }
             if (tipo === 'contrato') { abrirModalContrato(id); return; }
             if (tipo === 'veiculo') { abrirModalVeiculo(id); return; }
-            if (tipo === 'obra') { abrirObraLongaDetalhe(id); return; }
+            if (tipo === 'obra') { abrirObraLongaDetalhe(id, 'materiais'); return; }
             if (tipo === 'artigo') { abrirModal('artigo', id); return; }
             const corpo = _painelPendenciasAlerta(_rotuloPendenciaAlerta(tipo, item));
             const detalhe = document.createElement('p'); detalhe.style.whiteSpace = 'pre-wrap';
@@ -14352,11 +14341,11 @@ function _assistEstado(value) {
                 const stockBaixoLista = (dados.artigos || []).filter(a => a.adminId === adminId && _estadoStockArtigo(a, stockAtualArtigo(a.id)).alerta);
                 if (stockBaixoLista.length) alertas.push({ tipo: 'warning', titulo: `${stockBaixoLista.length} ${stockBaixoLista.length === 1 ? 'artigo em falta' : 'artigos em falta'}`, sub: 'Stock no mínimo ou abaixo — reponha o armazém.', acao: _acaoPendenciasAlerta('artigo', stockBaixoLista) });
 
-                const obrasExced = new Set();
-                (dados.obraMateriais || []).forEach(m => {
-                    if (m.adminId === adminId && (m.qtdConsumida || 0) > (m.qtdPrevista || 0)) obrasExced.add(m.obraId);
-                });
-                if (obrasExced.size) alertas.push({ tipo: 'warning', titulo: `${obrasExced.size} ${obrasExced.size === 1 ? 'obra com excedente de materiais' : 'obras com excedente de materiais'}`, sub: 'Consumo acima do previsto. Verifique o plano da obra.', acao: _acaoPendenciasAlerta('obra', (dados.obras || []).filter(o => o.adminId === adminId && obrasExced.has(o.id))) });
+                const idsObrasExced = new Set((dados.obraMateriais || [])
+                    .filter(m => m.adminId === adminId && (Number(m.qtdConsumida) || 0) > (Number(m.qtdPrevista) || 0))
+                    .map(m => m.obraId));
+                const obrasExced = (dados.obras || []).filter(o => o.adminId === adminId && idsObrasExced.has(o.id));
+                if (obrasExced.length) alertas.push({ tipo: 'warning', titulo: `${obrasExced.length} ${obrasExced.length === 1 ? 'obra com excedente de materiais' : 'obras com excedente de materiais'}`, sub: 'Consumo acima do previsto ou material não previsto. Verifique os materiais da obra.', acao: _acaoPendenciasAlerta('obra', obrasExced) });
                 const osExced = (dados.servicos || []).filter(os => os.adminId === adminId && _saldosPlanoOS(os).some(m => {
                     const plano = os.obraId
                         ? (dados.obraMateriais || []).find(p => p.adminId === adminId && p.obraId === os.obraId && p.artigoId === m.artigoId)
@@ -15324,7 +15313,7 @@ function _assistEstado(value) {
             doc.setFontSize(12); doc.setTextColor(_corRel[0], _corRel[1], _corRel[2]); doc.text('Materiais usados', 14, y); y += 4;
             doc.autoTable({
                 startY: y,
-                head: [['Artigo', 'Un', 'Previsto', 'Consumido', 'Volta ao armazém', 'Excedente']],
+                head: [['Artigo', 'Un', 'Previsto', 'Consumido', 'Falta consumir', 'Excedente']],
                 body: matRows.length ? matRows.map(r => [r.artigo, r.un, String(r.prev), String(r.cons), String(r.sobra), String(r.exced)]) : [['Sem materiais registados nesta obra', '', '', '', '', '']],
                 styles: { fontSize: 9, cellPadding: 2 }, headStyles: { fillColor: _corRel },
                 didParseCell: function (d) { if (d.section === 'body' && d.column.index === 5 && matRows[d.row.index] && matRows[d.row.index].exced > 0) { d.cell.styles.textColor = [220, 38, 38]; d.cell.styles.fontStyle = 'bold'; } }
@@ -16591,6 +16580,7 @@ function _assistEstado(value) {
                 cont.innerHTML = `<div class="tg-material-actions">
                     <button type="button" class="btn btn-outline" onclick="_fecharModalGenerico();abrirPlanoMateriais('${obraId}')"><i class="fas fa-tasks"></i> Gerir plano de materiais</button>
                     <button type="button" class="btn btn-outline" onclick="_fecharModalGenerico();criarFolhaDaObra('${obraId}')">Registar consumo na folha de obra</button>
+                    ${_itensDisponiveisDevolucaoObra(obraId).length ? `<button type="button" class="btn btn-outline" onclick="abrirDevolverMaterialObra('${obraId}')"><i class="fas fa-truck-ramp-box"></i> Devolver material ao armazém</button>` : ''}
                 </div>`;
                 window.TGMateriaisPartilhados?.atualizarPainelObra(cont, {
                     obraId, adminId: obra.adminId, obraMateriais: dados.obraMateriais, artigos: dados.artigos
@@ -18429,31 +18419,45 @@ function _assistEstado(value) {
             document.getElementById('modalGenericoOverlay').classList.add('open');
         }
 
-        // ---- Devolução de material de Obra ou de OS avulsa (confirmação em 2 passos) ----
+        // ---- Devolução de material de Obra (confirmação em 2 passos) ----
         // Passo 1 (aqui): quem devolve diz o que está a devolver — NÃO mexe no stock ainda,
         // fica "pendente" à espera que o armazém confirme fisicamente o que chegou. Funciona
         // a partir da obra ou de uma OS associada à obra, com saldo recebido por consumir.
         function _jaDevolvidoOuPendente(chave, valor, artigoId, excluirDevolucaoId) {
-            return (dados.devolucoesObra || [])
-                .filter(d => d[chave] === valor && d.estado !== 'rejeitada' && d.id !== excluirDevolucaoId)
-                .flatMap(d => (dados.devolucaoObraItens || []).filter(it => it.devolucaoId === d.id && it.artigoId === artigoId))
-                .reduce((s, it) => s + (it.quantidadeConfirmada != null ? it.quantidadeConfirmada : it.quantidadeDeclarada), 0);
+            const devolucoes = new Map((dados.devolucoesObra || [])
+                .filter(d => d.adminId === _tenantId() && d[chave] === valor && d.estado !== 'rejeitada' && d.id !== excluirDevolucaoId)
+                .map(d => [d.id, d.estado]));
+            return (dados.devolucaoObraItens || [])
+                .filter(it => it.artigoId === artigoId && devolucoes.has(it.devolucaoId))
+                .reduce((total, it) => total + (Number(devolucoes.get(it.devolucaoId) === 'pendente'
+                    ? it.quantidadeDeclarada : it.quantidadeConfirmada ?? it.quantidadeDeclarada) || 0), 0);
         }
         function _disponivelParaDevolver(obraId, artigoId, excluirDevolucaoId) {
             const recebido = _recebidoObraArtigo(obraId, artigoId);
-            const om = (dados.obraMateriais || []).find(m => m.obraId === obraId && m.artigoId === artigoId);
-            const consumido = Number(om?.qtdConsumida) || 0;
-            return Math.max(0, recebido - consumido - _jaDevolvidoOuPendente('obraId', obraId, artigoId, excluirDevolucaoId));
+            const adminId = _tenantId();
+            const consumido = (dados.obraMateriais || [])
+                .filter(m => m.adminId === adminId && m.obraId === obraId && m.artigoId === artigoId)
+                .reduce((total, m) => total + (Number(m.qtdConsumida) || 0), 0);
+            const saldo = recebido - consumido - _jaDevolvidoOuPendente('obraId', obraId, artigoId, excluirDevolucaoId);
+            return Math.max(0, Number(saldo.toFixed(6)));
+        }
+        function _itensDisponiveisDevolucaoObra(obraId) {
+            const adminId = _tenantId();
+            const artigos = new Set((dados.movimentosStock || [])
+                .filter(m => m.adminId === adminId && m.obraId === obraId && m.tipo === 'entrada' && m.artigoId)
+                .map(m => m.artigoId));
+            return [...artigos].map(artigoId => ({ artigoId, disponivel: _disponivelParaDevolver(obraId, artigoId), qtd: 0 }))
+                .filter(it => it.disponivel > 0);
         }
         let _devObraId = null;
         let _devServicoId = null;
         let _devObraItens = [];
         function abrirDevolverMaterialObra(obraId) {
             const obra = dados.obras?.find(o => o.id === obraId && o.adminId === _tenantId()); if (!obra) return;
-            const materiais = (dados.obraMateriais || []).filter(m => m.obraId === obraId && m.adminId === obra.adminId);
             _devObraId = obraId; _devServicoId = null;
-            _devObraItens = materiais.map(m => ({ artigoId: m.artigoId, disponivel: _disponivelParaDevolver(obraId, m.artigoId), qtd: 0, series: [] })).filter(it => it.disponivel > 0);
-            _devAbrirModalComum('Devolver material — ' + obra.nome);
+            _devObraItens = _itensDisponiveisDevolucaoObra(obraId);
+            if (!_devObraItens.length) { alert('Não há material recebido disponível para devolver.'); return; }
+            _devAbrirModalComum('Devolver material — ' + escapeHtmlSimples(obra.nome));
         }
         function abrirDevolverMaterialOS(osId) {
             _devServicoId = null; _devObraId = null; _devObraItens = [];
@@ -18482,7 +18486,7 @@ function _assistEstado(value) {
                         <div style="font-weight:600;font-size:.88rem;">${escapeHtmlSimples(art?.nome || '—')}</div>
                         <div class="text-muted" style="font-size:.76rem;">Disponível para devolver: ${it.disponivel} ${art?.unidade || ''}</div>
                     </div>
-                    <label style="font-size:.78rem;color:#64748b;">Devolver: <input type="number" value="${it.qtd}" min="0" max="${it.disponivel}" step="1" style="width:70px;margin-left:4px;" onchange="_devObraItens[${i}].qtd=Math.min(Number(this.value)||0,${it.disponivel});_devRenderLista();" /></label>
+                    <label style="font-size:.78rem;color:#64748b;">Devolver: <input type="number" value="${it.qtd}" min="0" max="${it.disponivel}" step="${art?.temNumeroSerie ? '1' : 'any'}" style="width:70px;margin-left:4px;" onchange="_devObraItens[${i}].qtd=Math.min(Number(this.value)||0,${it.disponivel});_devRenderLista();" /></label>
                 </div>`;
             }).join('') : '<p class="text-muted" style="text-align:center;padding:16px;">Não há material por devolver.</p>';
         }
@@ -18562,7 +18566,7 @@ function _assistEstado(value) {
                         </div>
                         ${temSerie
                             ? `<button type="button" class="btn btn-sm btn-outline" onclick="_devConfAdicionarSerie('${it.id}')"><i class="fas fa-plus"></i> Nº de série</button>`
-                            : `<label style="font-size:.78rem;color:#64748b;">Confirmado: <input type="number" value="${it.quantidadeConfirmada}" min="0" step="1" style="width:70px;margin-left:4px;" onchange="const x=dados.devolucaoObraItens.find(y=>y.id==='${it.id}');x.quantidadeConfirmada=Number(this.value);_devConfRenderLista();" /></label>`}
+                            : `<label style="font-size:.78rem;color:#64748b;">Confirmado: <input type="number" value="${it.quantidadeConfirmada}" min="0" step="any" style="width:70px;margin-left:4px;" onchange="const x=dados.devolucaoObraItens.find(y=>y.id==='${it.id}');x.quantidadeConfirmada=Number(this.value);_devConfRenderLista();" /></label>`}
                     </div>
                     ${temSerie && it.series.length ? `<div style="display:flex;flex-wrap:wrap;gap:4px;">
                         ${it.series.map((s, i) => `<span style="font-family:monospace;font-size:.74rem;background:#eef2ff;border:1px solid #c7d2fe;border-radius:5px;padding:2px 7px;display:flex;align-items:center;gap:5px;">${escapeHtmlSimples(s)}<i class="fas fa-times" style="cursor:pointer;color:#94a3b8;" onclick="const x=dados.devolucaoObraItens.find(y=>y.id==='${it.id}');x.series.splice(${i},1);x.quantidadeConfirmada=x.series.length;_devConfRenderLista();"></i></span>`).join('')}
@@ -18643,10 +18647,11 @@ function _assistEstado(value) {
         // ---- Plano de materiais por obra (Fase 2) ----
         let _omItens = [], _omObraId = null;
         function _recebidoObraArtigo(obraId, artigoId) {
-            return (dados.movimentosStock || []).filter(m => m.obraId === obraId && m.artigoId === artigoId && m.tipo === 'entrada').reduce((s, m) => s + (Number(m.quantidade) || 0), 0);
+            const adminId = (dados.obras || []).find(o => o.id === obraId)?.adminId;
+            return (dados.movimentosStock || []).filter(m => m.adminId === adminId && m.obraId === obraId && m.artigoId === artigoId && m.tipo === 'entrada').reduce((s, m) => s + (Number(m.quantidade) || 0), 0);
         }
         function abrirPlanoMateriais(obraId) {
-            const obraPerm = dados.obras?.find(o => o.id === obraId);
+            const obraPerm = dados.obras?.find(o => o.id === obraId && o.adminId === _tenantId());
             const idsAtribPerm = obraPerm ? ((obraPerm.responsaveisIds && obraPerm.responsaveisIds.length) ? obraPerm.responsaveisIds : [obraPerm.responsavelId].filter(Boolean)) : [];
             const souResponsavelPerm = obraPerm && (!obraPerm.relatorioResponsavelId ? idsAtribPerm.includes(usuarioLogado?.id) : obraPerm.relatorioResponsavelId === usuarioLogado?.id);
             const podeGestaoPerm = usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin';
@@ -18670,7 +18675,7 @@ function _assistEstado(value) {
                     <button type="button" class="btn btn-outline" onclick="document.getElementById('om_import_file').click()"><i class="fas fa-file-import"></i> Importar Excel/CSV</button>
                     <input type="file" id="om_import_file" accept=".csv,.xlsx,.xls" style="display:none;" onchange="importarMateriaisObra(this)" />
                     <button type="button" class="btn btn-outline" onclick="exportarMateriaisObra('${obraId}')"><i class="fas fa-file-export"></i> Exportar Excel/CSV</button>
-                    <button type="button" class="btn btn-outline" style="margin-left:auto;" onclick="abrirDevolverMaterialObra('${obraId}')"><i class="fas fa-truck-ramp-box"></i> Devolver material ao armazém</button>
+                    ${_itensDisponiveisDevolucaoObra(obraId).length ? `<button type="button" class="btn btn-outline" style="margin-left:auto;" onclick="abrirDevolverMaterialObra('${obraId}')"><i class="fas fa-truck-ramp-box"></i> Devolver material ao armazém</button>` : ''}
                 </div>
                 <div class="help-text" style="margin:-4px 0 8px;">O ficheiro deve ter colunas "Artigo" (nome ou referência) e "Quantidade". Artigos que já existam no armazém são associados automaticamente pela referência ou nome.</div>
                 <div id="om_itens_cont"></div>
@@ -18845,19 +18850,11 @@ function _assistEstado(value) {
                 const un = art ? _unidadeLabel(art.unidade) : '';
                 const recebido = (it.artigoId && _omObraId) ? _recebidoObraArtigo(_omObraId, it.artigoId) : 0;
                 const omRec = (dados.obraMateriais || []).find(x => x.obraId === _omObraId && x.artigoId === it.artigoId);
-                const consumido = omRec ? (omRec.qtdConsumida || 0) : 0;
+                const consumido = Number(omRec?.qtdConsumida) || 0;
                 const prev = Number(it.qtdPrevista) || 0;
                 const excedente = Math.max(0, consumido - prev);
-                const sobra = Math.max(0, prev - consumido);
-                const _obraAtualOm = (dados.obras || []).find(o => o.id === _omObraId);
-                const _obraConcluidaOm = _obraAtualOm && _obraAtualOm.estado === 'concluida';
-                let estado = '';
-                if (excedente > 0) estado = `<span style="color:#dc2626;font-weight:700;">Excedente: ${excedente} ${un}</span>`;
-                else if (sobra > 0) {
-                    estado = _obraConcluidaOm
-                        ? `<span style="color:#16a34a;font-weight:600;">Volta ao armazém: ${sobra} ${un}</span>`
-                        : `<span style="color:#d97706;font-weight:600;">Falta aplicar: ${sobra} ${un}</span>`;
-                }
+                const faltaConsumir = Math.max(0, prev - consumido);
+                const formatar = quantidade => quantidade.toLocaleString('pt-PT', { maximumFractionDigits: 6 });
                 const _ehNovoItemOm = !omRec;
                 return `<div style="border:1px solid #e6eaf2;border-radius:8px;padding:8px;margin-bottom:8px;">
                     <div style="position:relative;margin-bottom:6px;">
@@ -18883,7 +18880,11 @@ function _assistEstado(value) {
                             <span style="font-size:.8rem;color:#64748b;white-space:nowrap;">${un}</span>
                         </div>
                         <div class="help-text" style="margin-top:2px;">Se já sabes quanto foi logo usado, indica aqui — fica registado imediatamente, sem precisar de criar uma folha à parte.</div>`
-                        : `<div style="font-size:.78rem;color:#475569;margin-top:4px;">Consumido: <strong>${consumido} ${un}</strong> ${estado ? '· ' + estado : ''}</div>`}
+                        : `<div style="margin-top:4px;">
+                            <span class="tg-material-saldo">Consumido: ${formatar(consumido)} ${un}</span>
+                            <span class="tg-material-saldo">Falta consumir: ${formatar(faltaConsumir)} ${un}</span>
+                            ${excedente > 0 ? `<span class="tg-material-excedente">Excedente: ${formatar(excedente)} ${un}</span>` : ''}
+                        </div>`}
                     <button type="button" class="btn btn-sm btn-danger" onclick="omRemItem(${idx})" style="margin-top:6px;"><i class="fas fa-trash"></i> Remover</button>
                 </div>`;
             }).join('');
@@ -18926,6 +18927,7 @@ function _assistEstado(value) {
             guardarDados(dados);
             _fecharGenerico();
             renderizarObras();
+            renderizarAlertas();
         }
 
         // ---- Consumo de materiais na folha de obra (Fase 3) ----
@@ -18943,7 +18945,7 @@ function _assistEstado(value) {
             const artigosDisponiveis = (dados.artigos || []).filter(a => a.adminId === adminId);
             const _idsJaListados = new Set(mats.map(m => m.artigoId).concat(_foMatExtra.map(m => m.artigoId)));
             let html = '<div style="border:1px solid #e6eaf2;border-radius:10px;padding:10px;margin-bottom:12px;"><div style="font-weight:700;color:#152a52;margin-bottom:6px;"><i class="fas fa-tasks"></i> Consumo de materiais</div>';
-            html += '<div style="font-size:.78rem;color:#64748b;margin-bottom:8px;">Indique o que foi <strong>realmente usado nesta folha</strong>. O que sobrar do previsto volta ao armazém; o que exceder é assinalado.</div>';
+            html += '<div style="font-size:.78rem;color:#64748b;margin-bottom:8px;">Indique o que foi <strong>realmente usado nesta folha</strong>. O consumo acima do previsto é assinalado no plano de materiais.</div>';
             if (!mats.length && !_foMatExtra.length) html += '<div class="help-text" style="margin-bottom:8px;">' + (obraId ? 'Esta obra ainda não tem plano de materiais — podes adicionar um abaixo.' : 'Podes adicionar os materiais usados diretamente abaixo.') + '</div>';
             mats.forEach(m => {
                 const art = dados.artigos?.find(a => a.id === m.artigoId);
@@ -19375,7 +19377,7 @@ function _assistEstado(value) {
                 if (startY > 180) { doc.addPage(); startY = 20; }
                 doc.setFontSize(12); doc.setTextColor(_corRel[0], _corRel[1], _corRel[2]); doc.text(o.nome, 14, startY);
                 doc.autoTable({
-                    head: [['Artigo', 'Un', 'Previsto', 'Recebido', 'Consumido', 'Volta armazém', 'Excedente']],
+                    head: [['Artigo', 'Un', 'Previsto', 'Recebido', 'Consumido', 'Falta consumir', 'Excedente']],
                     body: rows.length ? rows.map(r => [r.artigo, r.un, String(r.prev), String(r.rec), String(r.cons), String(r.sobra), String(r.exced)]) : [['Sem materiais no plano', '', '', '', '', '', '']],
                     startY: startY + 3, styles: { fontSize: 8, cellPadding: 2 }, headStyles: { fillColor: _corRel },
                     didParseCell: function (d) { if (d.section === 'body' && d.column.index === 6 && rows[d.row.index] && rows[d.row.index].exced > 0) { d.cell.styles.textColor = [220, 38, 38]; d.cell.styles.fontStyle = 'bold'; } }
@@ -19391,7 +19393,7 @@ function _assistEstado(value) {
             const aoa = [['Materiais por Obra — Previsto vs Consumido'], ['Data', new Date().toLocaleDateString('pt-PT')], []];
             obras.forEach(o => {
                 aoa.push([o.nome]);
-                aoa.push(['Artigo', 'Un', 'Previsto', 'Recebido', 'Consumido', 'Volta armazém', 'Excedente']);
+                aoa.push(['Artigo', 'Un', 'Previsto', 'Recebido', 'Consumido', 'Falta consumir', 'Excedente']);
                 const rows = _obraMatRows(o.id);
                 if (rows.length) rows.forEach(r => aoa.push([r.artigo, r.un, r.prev, r.rec, r.cons, r.sobra, r.exced]));
                 else aoa.push(['Sem materiais no plano']);

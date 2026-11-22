@@ -58,9 +58,15 @@ test('OS reference selection registers consumption against the existing article 
   try {
     w.document.body.insertAdjacentHTML('beforeend', '<div id="verOsConteudo"></div>');
     w.usuarioLogado = { id: 'a', role: 'admin' };
-    w.dados = { servicos: [{ id: 'os', adminId: 'a' }], artigos: [article, { ...article, id: 'foreign', adminId: 'b' }], folhasObra: [], movimentosStock: [] };
-    Object.assign(w, { gerarId: () => 'movement', getDataHoje: () => '2026-11-02', _armazemPrincipalId: () => 'warehouse', guardarDados: () => {} });
-    w.eval(['_verOsMostrar', '_verOsAdicionarMaterial'].map(fn).join('\n'));
+    w.dados = {
+      servicos: [{ id: 'os', adminId: 'a', obraId: 'obra' }],
+      artigos: [article, { ...article, id: 'foreign', adminId: 'b' }],
+      obraMateriais: [{ adminId: 'a', obraId: 'obra', artigoId: article.id, qtdPrevista: 1, qtdConsumida: 0 }],
+      folhasObra: [],
+      movimentosStock: []
+    };
+    Object.assign(w, { gerarId: () => 'movement', getDataHoje: () => '2026-11-02', _armazemPrincipalId: () => 'warehouse', guardarDados: () => {}, renderizarAlertas: () => {} });
+    w.eval(['_verOsMostrar', '_verOsAdicionarMaterial', '_somarConsumoObra'].map(fn).join('\n'));
     w._verOsMostrar('os', 'materiais');
     assert.deepEqual(Array.from(w._verOsArtigosDisponiveisCache, a => a.id), ['existing']);
     w.document.getElementById('veros_busca_artigo').value = article.referencia;
@@ -74,5 +80,7 @@ test('OS reference selection registers consumption against the existing article 
     assert.equal(w.dados.movimentosStock[0].quantidade, 2);
     assert.equal(w.dados.movimentosStock[0].origemId, 'os');
     assert.equal(w.dados.movimentosStock[0].adminId, 'a');
+    assert.equal(w.dados.obraMateriais[0].qtdPrevista, 1);
+    assert.equal(w.dados.obraMateriais[0].qtdConsumida, 2);
   } finally { w.close(); }
 });
