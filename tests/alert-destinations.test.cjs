@@ -43,3 +43,28 @@ test('draft report alert survives OS completion, opens that OS reports, then dis
  w.renderizarAlertas();const alert=[...w.document.querySelectorAll('.alerta-linha')].find(a=>a.textContent.includes('relatórios por terminar'));assert(alert);alert.click();assert.deepEqual(json(w.calls),[['os','one'],['tab','one','relatorios']]);
  w.dados.relatoriosEspecialidade[0].rascunho=false;w.renderizarAlertas();assert(!w.document.getElementById('alertasPendencias').textContent.includes('relatórios por terminar'));assert.equal(os.status,'concluído');w.close();
 });
+
+test('excedentes e materiais extra das OS geram alerta com acesso aos materiais e respeitam a empresa',()=>{
+ const w=setup();
+ try {
+  w.moduloArmazemAtivo=()=>true;
+  w._tiposEspecialidadePendentes=()=>[];
+  w._verOsMostrar=(id,tab)=>w.calls.push(['tab',id,tab]);
+  w.eval(src.match(/        function _saldosPlanoOS\([^]*?\n        \}/)[0]);
+  w.dados.servicos=[{id:'one',adminId:'tenant',status:'concluído',materiaisPlano:[{artigoId:'disco',qtdPrevista:5}]},
+   {id:'two',adminId:'tenant',materiaisPlano:[]},{id:'foreign',adminId:'other',materiaisPlano:[]}];
+  w.dados.movimentosStock=[
+   {id:'m1',adminId:'tenant',tipo:'saida',origemTipo:'os',origemId:'one',artigoId:'disco',quantidade:6},
+   {id:'m2',adminId:'tenant',tipo:'saida',origemTipo:'os',origemId:'two',artigoId:'extra',quantidade:1},
+   {id:'m3',adminId:'other',tipo:'saida',origemTipo:'os',origemId:'foreign',artigoId:'extra',quantidade:1}];
+  w.dados.movimentosStock.push({...w.dados.movimentosStock[0]});
+  w.renderizarAlertas();
+  const alerta=[...w.document.querySelectorAll('.alerta-linha')].find(a=>a.textContent.includes('2 OS com excedente de materiais'));
+  assert(alerta);alerta.click();
+  w.document.querySelectorAll('#tgPendenciasOverlay button')[1].click();
+  assert.deepEqual(json(w.calls),[['os','one'],['tab','one','materiais']]);
+  w.dados.servicos[0].materiaisPlano[0].qtdPrevista=6;
+  w.dados.movimentosStock=w.dados.movimentosStock.filter(m=>m.origemId!=='two');
+  w.renderizarAlertas();assert(!w.document.getElementById('alertasPendencias').textContent.includes('OS com excedente'));
+ } finally {w.close();}
+});

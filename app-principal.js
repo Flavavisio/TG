@@ -3528,10 +3528,13 @@ function _assistEstado(value) {
                 const numero = valor => Number.isFinite(Number(valor)) ? Math.max(0, Number(valor)) : 0;
                 const previsto = numero(m.qtdPrevista), consumido = numero(m.qtdConsumida);
                 // Only persisted consumption belongs in the work balance; the draft is saved with the sheet.
-                [['Previsto', previsto], ['Consumido', consumido], ['Falta consumir', Math.max(0, previsto - consumido)]].forEach(([titulo, valor]) => {
+                const detalhes = [['Previsto', previsto], ['Consumido', consumido], ['Falta consumir', Math.max(0, previsto - consumido)]];
+                if (consumido > previsto) detalhes.push(['Excedente', consumido - previsto]);
+                detalhes.forEach(([titulo, valor]) => {
                     const detalhe = document.createElement('span');
                     detalhe.className = 'qsa_material_saldo';
                     detalhe.style.cssText = 'display:block;font-size:.85rem;font-weight:400;color:#475569;';
+                    if (titulo === 'Excedente') detalhe.style.color = '#dc2626';
                     detalhe.textContent = titulo + ': ' + valor.toLocaleString('pt-PT', { maximumFractionDigits: 6 }) + ' ' + (a.unidade || 'un');
                     info.appendChild(detalhe);
                 });
@@ -6730,6 +6733,7 @@ function _assistEstado(value) {
                     if (!data) { estado.textContent = 'O plano mudou no servidor. Atualiza a página e volta a abrir o plano.'; return; }
                     atual.materiaisPlano = data.materiais_previstos;
                     _guardarCacheLocal();
+                    renderizarAlertas();
                     dialog.close();
                     _verOsMostrar(osId, 'materiais');
                 } catch (e) {
@@ -6755,7 +6759,8 @@ function _assistEstado(value) {
                 const previsto = Number(m.qtdPrevista) || 0;
                 return { descricao: artigo?.nome || 'Artigo removido', referencia: artigo?.referencia,
                     unidade: artigo?.unidade, previsto, consumido: m.qtdConsumida,
-                    faltaConsumir: Math.max(0, previsto - m.qtdConsumida), extraNaoPrevisto: !previsto };
+                    faltaConsumir: Math.max(0, previsto - m.qtdConsumida),
+                    excedente: Math.max(0, m.qtdConsumida - previsto), extraNaoPrevisto: !previsto };
             });
             cont.innerHTML = (saldos.length ? '<div class="tg-material-lista">' + api.renderizarSaldos(saldos) + '</div>' :
                 '<p class="help-text">Ainda não há materiais associados.</p>') +
@@ -6771,7 +6776,7 @@ function _assistEstado(value) {
                 _fecharModalGenerico();
                 abrirPlanoMateriais(obra.id);
             });
-            if (saldosOS.some(m => m.qtdConsumida > 0)) botao('Devolver material ao armazém', () => {
+            if (obra && (dados.obraMateriais || []).some(m => m.adminId === os.adminId && m.obraId === obra.id && _disponivelParaDevolver(obra.id, m.artigoId) > 0)) botao('Devolver material ao armazém', () => {
                 _fecharModalGenerico();
                 abrirDevolverMaterialOS(os.id);
             });
@@ -6801,6 +6806,7 @@ function _assistEstado(value) {
                     }
                     guardarDados().catch(() => alert('Consumo guardado no dispositivo. A sincronização continua pendente.'));
                     _verOsMostrar(os.id, 'materiais');
+                    renderizarAlertas();
                 }, event.currentTarget);
             });
         }
@@ -6957,8 +6963,7 @@ function _assistEstado(value) {
                 ` : '';
                 cont.innerHTML = blocoEstipulados +
                     (ids.length
-                        ? `<div style="display:flex;justify-content:flex-end;margin-bottom:8px;"><button type="button" class="btn btn-sm btn-outline" onclick="_fecharModalGenerico();abrirDevolverMaterialOS('${osId}')"><i class="fas fa-truck-ramp-box"></i> Devolver material ao armazém</button></div>
-                          <table style="width:100%;border-collapse:collapse;margin-bottom:12px;"><thead><tr style="text-align:left;font-size:.78rem;color:#64748b;"><th style="padding:4px 0;">Artigo</th><th style="padding:4px 0;">Quantidade</th></tr></thead><tbody>` +
+                        ? `<table style="width:100%;border-collapse:collapse;margin-bottom:12px;"><thead><tr style="text-align:left;font-size:.78rem;color:#64748b;"><th style="padding:4px 0;">Artigo</th><th style="padding:4px 0;">Quantidade</th></tr></thead><tbody>` +
                             ids.map(aid => {
                                 const art = dados.artigos?.find(a => a.id === aid);
                                 return `<tr style="border-top:1px solid #f1f5f9;"><td style="padding:6px 0;">${escapeHtmlSimples(art ? art.nome : '(artigo removido)')}</td><td style="padding:6px 0;">${porArtigo[aid]} ${art ? (art.unidade || 'un') : ''}</td></tr>`;
@@ -14049,7 +14054,7 @@ function _assistEstado(value) {
         }
         function _itensPendenciasAlerta(tipo, ids) {
             if (!['admin', 'subadmin'].includes(usuarioLogado?.role) || !Array.isArray(ids)) return [];
-            const colecoes = { visitaOS: 'servicos', relatorioOS: 'servicos', servico: 'servicos', contrato: 'contratos', veiculo: 'veiculos', requisicao: 'requisicoes', pedido: 'pedidos', artigo: 'artigos', obra: 'obras', assistencia: 'assistencias' };
+            const colecoes = { visitaOS: 'servicos', relatorioOS: 'servicos', materiaisOS: 'servicos', servico: 'servicos', contrato: 'contratos', veiculo: 'veiculos', requisicao: 'requisicoes', pedido: 'pedidos', artigo: 'artigos', obra: 'obras', assistencia: 'assistencias' };
             const lista = dados[colecoes[tipo]] || [];
             return lista.filter(i => i.adminId === _tenantId() && ids.includes(i.id));
         }
@@ -14108,6 +14113,7 @@ function _assistEstado(value) {
             document.getElementById('tgPendenciasOverlay')?.remove();
             if (tipo === 'visitaOS') { globalThis.TGUnsuccessfulVisits?.open(id); return; }
             if (tipo === 'relatorioOS') { abrirVerOS(id); _verOsMostrar(id, 'relatorios'); return; }
+            if (tipo === 'materiaisOS') { abrirVerOS(id); _verOsMostrar(id, 'materiais'); return; }
             if (tipo === 'servico') { abrirVerOS(id); return; }
             if (tipo === 'contrato') { abrirModalContrato(id); return; }
             if (tipo === 'veiculo') { abrirModalVeiculo(id); return; }
@@ -14351,6 +14357,13 @@ function _assistEstado(value) {
                     if (m.adminId === adminId && (m.qtdConsumida || 0) > (m.qtdPrevista || 0)) obrasExced.add(m.obraId);
                 });
                 if (obrasExced.size) alertas.push({ tipo: 'warning', titulo: `${obrasExced.size} ${obrasExced.size === 1 ? 'obra com excedente de materiais' : 'obras com excedente de materiais'}`, sub: 'Consumo acima do previsto. Verifique o plano da obra.', acao: _acaoPendenciasAlerta('obra', (dados.obras || []).filter(o => o.adminId === adminId && obrasExced.has(o.id))) });
+                const osExced = (dados.servicos || []).filter(os => os.adminId === adminId && _saldosPlanoOS(os).some(m => {
+                    const plano = os.obraId
+                        ? (dados.obraMateriais || []).find(p => p.adminId === adminId && p.obraId === os.obraId && p.artigoId === m.artigoId)
+                        : m;
+                    return m.qtdConsumida > (Number(plano?.qtdPrevista) || 0);
+                }));
+                if (osExced.length) alertas.push({ tipo: 'warning', titulo: `${osExced.length} OS com excedente de materiais`, sub: 'Consumo acima do previsto ou material não previsto. Verifique os materiais da OS.', acao: _acaoPendenciasAlerta('materiaisOS', osExced) });
             }
 
             if (!alertas.length) { cont.style.display = 'none'; cont.innerHTML = ''; return; }
@@ -18419,53 +18432,34 @@ function _assistEstado(value) {
         // ---- Devolução de material de Obra ou de OS avulsa (confirmação em 2 passos) ----
         // Passo 1 (aqui): quem devolve diz o que está a devolver — NÃO mexe no stock ainda,
         // fica "pendente" à espera que o armazém confirme fisicamente o que chegou. Funciona
-        // tanto a partir de uma Obra (obraId) como de uma OS avulsa sem obra (servicoId).
-        function _idsFolhasDaOS(osId) {
-            return new Set((dados.folhasObra || []).filter(f => f.servicoId === osId).map(f => f.id));
-        }
-        function _consumidoOS(osId, artigoId) {
-            const idsFolhas = _idsFolhasDaOS(osId);
-            return (dados.movimentosStock || []).filter(m => m.tipo === 'saida' && m.artigoId === artigoId && ((m.origemTipo === 'folha' && idsFolhas.has(m.origemId)) || (m.origemTipo === 'os' && m.origemId === osId))).reduce((s, m) => s + (Number(m.quantidade) || 0), 0);
-        }
-        function _artigosConsumidosOS(osId) {
-            const idsFolhas = _idsFolhasDaOS(osId);
-            const ids = new Set();
-            (dados.movimentosStock || []).forEach(m => {
-                if (m.tipo === 'saida' && ((m.origemTipo === 'folha' && idsFolhas.has(m.origemId)) || (m.origemTipo === 'os' && m.origemId === osId))) ids.add(m.artigoId);
-            });
-            return [...ids];
-        }
-        function _jaDevolvidoOuPendente(chave, valor, artigoId) {
+        // a partir da obra ou de uma OS associada à obra, com saldo recebido por consumir.
+        function _jaDevolvidoOuPendente(chave, valor, artigoId, excluirDevolucaoId) {
             return (dados.devolucoesObra || [])
-                .filter(d => d[chave] === valor && d.estado !== 'rejeitada')
+                .filter(d => d[chave] === valor && d.estado !== 'rejeitada' && d.id !== excluirDevolucaoId)
                 .flatMap(d => (dados.devolucaoObraItens || []).filter(it => it.devolucaoId === d.id && it.artigoId === artigoId))
                 .reduce((s, it) => s + (it.quantidadeConfirmada != null ? it.quantidadeConfirmada : it.quantidadeDeclarada), 0);
         }
-        function _disponivelParaDevolver(obraId, artigoId) {
+        function _disponivelParaDevolver(obraId, artigoId, excluirDevolucaoId) {
             const recebido = _recebidoObraArtigo(obraId, artigoId);
             const om = (dados.obraMateriais || []).find(m => m.obraId === obraId && m.artigoId === artigoId);
             const consumido = Number(om?.qtdConsumida) || 0;
-            return Math.max(0, recebido - consumido - _jaDevolvidoOuPendente('obraId', obraId, artigoId));
-        }
-        function _disponivelParaDevolverOS(osId, artigoId) {
-            const consumido = _consumidoOS(osId, artigoId);
-            return Math.max(0, consumido - _jaDevolvidoOuPendente('servicoId', osId, artigoId));
+            return Math.max(0, recebido - consumido - _jaDevolvidoOuPendente('obraId', obraId, artigoId, excluirDevolucaoId));
         }
         let _devObraId = null;
         let _devServicoId = null;
         let _devObraItens = [];
         function abrirDevolverMaterialObra(obraId) {
-            const obra = dados.obras?.find(o => o.id === obraId); if (!obra) return;
-            const materiais = (dados.obraMateriais || []).filter(m => m.obraId === obraId);
+            const obra = dados.obras?.find(o => o.id === obraId && o.adminId === _tenantId()); if (!obra) return;
+            const materiais = (dados.obraMateriais || []).filter(m => m.obraId === obraId && m.adminId === obra.adminId);
             _devObraId = obraId; _devServicoId = null;
             _devObraItens = materiais.map(m => ({ artigoId: m.artigoId, disponivel: _disponivelParaDevolver(obraId, m.artigoId), qtd: 0, series: [] })).filter(it => it.disponivel > 0);
             _devAbrirModalComum('Devolver material — ' + obra.nome);
         }
         function abrirDevolverMaterialOS(osId) {
-            const os = dados.servicos?.find(s => s.id === osId); if (!os) return;
-            _devServicoId = osId; _devObraId = null;
-            _devObraItens = _artigosConsumidosOS(osId).map(artigoId => ({ artigoId, disponivel: _disponivelParaDevolverOS(osId, artigoId), qtd: 0, series: [] })).filter(it => it.disponivel > 0);
-            _devAbrirModalComum('Devolver material — OS #' + (os.numero || osId.slice(-5)));
+            _devServicoId = null; _devObraId = null; _devObraItens = [];
+            const os = dados.servicos?.find(s => s.id === osId && s.adminId === _tenantId()); if (!os) return;
+            if (os.obraId) { abrirDevolverMaterialObra(os.obraId); return; }
+            alert('Esta OS só tem registos de consumo. A devolução ao armazém exige material recebido e ainda por consumir.');
         }
         function _devAbrirModalComum(titulo) {
             document.getElementById('modalGenericoTitulo').innerHTML = '<i class="fas fa-truck-ramp-box"></i> ' + titulo;
@@ -18497,6 +18491,9 @@ function _assistEstado(value) {
             if (!itensParaDevolver.length) { alert('Indica pelo menos uma quantidade a devolver.'); return; }
             const adminId = _devObraId ? dados.obras?.find(o => o.id === _devObraId)?.adminId : dados.servicos?.find(s => s.id === _devServicoId)?.adminId;
             if (!adminId) return;
+            if (!_devObraId || adminId !== _tenantId() || itensParaDevolver.some(it => !Number.isFinite(it.qtd) || it.qtd > _disponivelParaDevolver(_devObraId, it.artigoId))) {
+                alert('Confirma o material recebido e ainda por consumir antes de devolver.'); return;
+            }
             const devId = gerarId();
             (dados.devolucoesObra = dados.devolucoesObra || []).push({ id: devId, adminId, obraId: _devObraId || null, servicoId: _devServicoId || null, funcionarioId: usuarioLogado?.id || null, data: getDataHoje(), estado: 'pendente', armazemDestinoId: null, observacoes: document.getElementById('dev_obs').value.trim() || null, dataCriacao: Date.now(), dataConfirmacao: null, confirmadoPor: null });
             dados.devolucaoObraItens = dados.devolucaoObraItens || [];
@@ -18531,7 +18528,8 @@ function _assistEstado(value) {
         let _devConfId = null;
         let _devConfArmazemId = null;
         function abrirConfirmarDevolucaoObra(devolucaoId) {
-            const d = dados.devolucoesObra?.find(x => x.id === devolucaoId); if (!d) return;
+            const d = dados.devolucoesObra?.find(x => x.id === devolucaoId && x.adminId === _tenantId() && x.estado === 'pendente'); if (!d) return;
+            if (!d.obraId) { alert('Esta devolução foi criada a partir de material consumido numa OS. Revê o registo de consumo antes de repor stock.'); return; }
             const origem = d.obraId ? (dados.obras?.find(o => o.id === d.obraId)?.nome || '') : ('OS #' + (dados.servicos?.find(s => s.id === d.servicoId)?.numero || (d.servicoId || '').slice(-5)));
             const itens = (dados.devolucaoObraItens || []).filter(it => it.devolucaoId === devolucaoId);
             _devConfId = devolucaoId;
@@ -18591,8 +18589,14 @@ function _assistEstado(value) {
             _devConfRenderLista();
         }
         async function confirmarDevolucaoObra() {
-            const d = dados.devolucoesObra?.find(x => x.id === _devConfId); if (!d) return;
+            const d = dados.devolucoesObra?.find(x => x.id === _devConfId && x.adminId === _tenantId() && x.estado === 'pendente'); if (!d) return;
+            if (!d.obraId) { alert('Esta devolução foi criada a partir de material consumido numa OS. Revê o registo de consumo antes de repor stock.'); return; }
             const itens = (dados.devolucaoObraItens || []).filter(it => it.devolucaoId === _devConfId);
+            if (itens.some(it => {
+                const qtd = Number(it.quantidadeConfirmada);
+                const saldo = _disponivelParaDevolver(d.obraId, it.artigoId, d.id);
+                return !Number.isFinite(qtd) || qtd < 0 || qtd > Math.min(Number(it.quantidadeDeclarada), saldo);
+            })) { alert('A quantidade devolvida ultrapassa o material recebido e ainda por consumir.'); return; }
             const hoje = getDataHoje();
             itens.forEach(it => {
                 const qtd = it.quantidadeConfirmada || 0;
