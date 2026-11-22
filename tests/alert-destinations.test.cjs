@@ -68,3 +68,30 @@ test('excedentes e materiais extra das OS geram alerta com acesso aos materiais 
   w.renderizarAlertas();assert(!w.document.getElementById('alertasPendencias').textContent.includes('OS com excedente'));
  } finally {w.close();}
 });
+
+
+test('um alerta por obra agrupa excedentes e extras e abre diretamente os materiais', () => {
+ const w = setup();
+ try {
+  w.moduloArmazemAtivo = () => true;
+  w._tiposEspecialidadePendentes = () => [];
+  w._saldosPlanoOS = () => [];
+  w.abrirObraLongaDetalhe = (id, aba) => w.calls.push(['obra', id, aba]);
+  w.dados.obras = [{ id: 'obra', adminId: 'tenant', nome: 'Instalação' }];
+  w.dados.obraMateriais = [
+   { adminId: 'tenant', obraId: 'obra', qtdPrevista: '9', qtdConsumida: '10' },
+   { adminId: 'tenant', obraId: 'obra', qtdPrevista: 0, qtdConsumida: 2 },
+   { adminId: 'tenant', obraId: 'eliminada', qtdPrevista: 0, qtdConsumida: 2 },
+   { adminId: 'outra', obraId: 'obra', qtdPrevista: 0, qtdConsumida: 2 }
+  ];
+  w.renderizarAlertas();
+  const alerta = [...w.document.querySelectorAll('.alerta-linha')].find(a => a.textContent.includes('1 obra com excedente de materiais'));
+  assert(alerta);
+  alerta.click();
+  assert.deepEqual(json(w.calls), [['obra', 'obra', 'materiais']]);
+  w.dados.obraMateriais[0].qtdPrevista = 10;
+  w.dados.obraMateriais[1].qtdConsumida = 0;
+  w.renderizarAlertas();
+  assert(!w.document.getElementById('alertasPendencias').textContent.includes('excedente de materiais'));
+ } finally { w.close(); }
+});
