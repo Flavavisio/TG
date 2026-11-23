@@ -136,12 +136,27 @@ test('standalone OS with two precise clock records and one signed sheet totals 5
  const {ctx,dados}=standaloneTeamExample(),before=JSON.stringify(dados);const mapa=ctx._horasContabilizadasOSPorPessoa('os');assert.equal(Math.round(mapa.f*3600),1777);assert.equal(Math.round(mapa.r*3600),1742);
  const resumo=ctx._resumoTempoFolha(dados.folhasObra[0]);assert.equal(ctx._formatarTempoTrabalhado(resumo.horas),'58 min 39 s');assert.equal(resumo.total,10.76);assert.equal(JSON.stringify(dados),before);
 });
-test('OS PDF header, generated-sheet row and per-technician table agree; margin includes both salaries',()=>{
- const {ctx,tables}=standaloneTeamExample();ctx._gerarPDFRelatorioOS('os',false);
+test('OS PDF shows each technician and totals that match the financial summary',()=>{
+ const {ctx,dados,tables}=standaloneTeamExample();
+ dados.artigos=[own({id:'material',nome:'Material',precoCompra:2.50})];
+ dados.movimentosStock=[own({tipo:'saida',origemTipo:'os',origemId:'os',artigoId:'material',quantidade:2})];
+ ctx._unidadeLabel=()=> 'un';
+ ctx._gerarPDFRelatorioOS('os',false);
  const summary=tables.find(t=>t.body?.some(r=>r[0]==='Tempo total de mão de obra')).body;assert.equal(summary.find(r=>r[0]==='Tempo total de mão de obra')[1],'58 min 39 s');assert.equal(summary.find(r=>r[0]==='Nº de funcionários envolvidos')[1],'2');
  const sheets=tables.find(t=>t.head?.[0].includes('Tempo da equipa (dia)'));assert.equal(sheets.body[0][3],'58 min 39 s');
- const people=tables.find(t=>t.head?.[0].includes('Custo/hora'));assert.deepEqual(plain(people.body.map(r=>r[1])),['29 min 2 s','29 min 37 s']);assert.deepEqual(plain(people.body.map(r=>r[3])),['4.84 €','5.92 €']);
- const fin=tables.find(t=>t.body?.some(r=>r[0]==='Valor a faturar')).body;assert.equal(fin.find(r=>r[0]==='Custo de mão de obra')[1],'10.76 €');assert.equal(fin.find(r=>String(r[0]).startsWith('Margem'))[1],'69.24 €');
+ const people=tables.find(t=>t.head?.[0].includes('Custo/hora'));
+ assert.ok(tables.indexOf(people)<tables.indexOf(sheets));
+ assert.deepEqual(plain(people.body),[
+  ['Técnico A','29 min 2 s','10.00 €/h','4.84 €'],
+  ['Técnico B','29 min 37 s','12.00 €/h','5.92 €'],
+  ['TOTAL CUSTO PESSOAL','58 min 39 s','','10.76 €'],
+  ['Materiais consumidos','','','5.00 €'],
+  ['CUSTO TOTAL DA OS','','','15.76 €']
+ ]);
+ const fin=tables.find(t=>t.body?.some(r=>r[0]==='Valor a faturar')).body;
+ assert.equal(fin.find(r=>r[0]==='Custo de mão de obra')[1],'10.76 €');
+ assert.equal(fin.find(r=>r[0]==='Custo total')[1],'15.76 €');
+ assert.equal(fin.find(r=>String(r[0]).startsWith('Margem'))[1],'64.24 €');
 });
 test('client OS report retains combined exact time but excludes rates, costs, margins and missing-cost messages',()=>{
  const {ctx,tables,texts}=standaloneTeamExample();ctx._gerarPDFRelatorioOS('os',true);const output=JSON.stringify({tables,texts});assert.match(output,/58 min 39 s/);assert(!/Custo\/hora|Margem|10\.76|69\.24|Custo em falta/.test(output));
