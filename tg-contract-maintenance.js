@@ -220,16 +220,42 @@
     }
     function nextDate(c) {return schedule(c).map(x=>x.data).filter(Boolean).sort()[0] || null;}
     function due(c,localId,data) {return schedule(c).filter(s=>s.localId===(localId || '') && s.data && s.data<=data).map(s=>s.plan.id);}
-    function choices(c,localId,data) {
-        const rows=schedule(c).filter(s=>s.localId===(localId || '')),selected=new Set(due(c,localId,data));
-        return rows.map(s=>`<label style="display:flex;gap:8px;align-items:center;padding:5px 0"><input type="checkbox" class="ct-os-system" value="${esc(s.plan.id)}" ${selected.has(s.plan.id)?'checked':''} style="width:auto">${esc(planLabel(s.plan))} · próxima ${esc(s.data || 'por definir')}</label>`).join('');
+    function choices(c,localId,data,forOS=false) {
+        const rows=schedule(c).filter(s=>s.localId===(localId || ''));
+        const notice=c.gestaoManutencao?.alertas?.avisoDias ?? 30;
+        const today=getDataHoje();
+        const reference=data && data>today ? data : today;
+        return rows.map(s=>{
+            const existing=forOS && pendingOS(c,localId,s.plan.id);
+            const highlight=forOS && !existing && maintenanceDays(s.data,reference)<=notice;
+            const status=existing?' · OS agendada':highlight?(s.data<today?' · Em atraso':s.data===today?' · Vence hoje':' · A vencer'):'';
+            const checked=!existing && s.data && s.data<=data;
+            return `<label style="display:flex;gap:8px;align-items:center;padding:5px 0${highlight?';color:#b91c1c;font-weight:700':''}"><input type="checkbox" class="ct-os-system" value="${esc(s.plan.id)}" ${checked?'checked':''} ${existing?'disabled':''} style="width:auto">${esc(planLabel(s.plan))} · próxima ${esc(s.data || 'por definir')}${status}</label>`;
+        }).join('');
     }
-    function osPicker(c) {
+    function osPicker(c,abrirPeloAviso=false) {
         if(!plans(c).length)return;
         const local=document.getElementById('os_gerar_local'),date=document.getElementById('os_data');
+        if(abrirPeloAviso){
+            const today=getDataHoje(),notice=c.gestaoManutencao?.alertas?.avisoDias ?? 30;
+            const upcoming=schedule(c).filter(s=>maintenanceDays(s.data,today)<=notice).sort((a,b)=>a.data.localeCompare(b.data));
+            const next=upcoming.find(s=>!pendingOS(c,s.localId,s.plan.id)) || upcoming[0];
+            if(next)local.value=next.localId;
+        }
         const row=document.createElement('div');row.id='ct_os_planos';row.className='form-group';local.closest('.form-group').after(row);
-        const update=()=>{row.innerHTML='<label>Sistemas desta intervenção *</label>'+choices(c,local.value,date.value)+'<p class="help-text">Estão selecionados os sistemas com manutenção devida até esta data. Podes ajustar a seleção.</p>';};
-        local.addEventListener('change',update);date.addEventListener('change',update);update();
+        const update=()=>{row.innerHTML='<label>Sistemas desta intervenção *</label>'+choices(c,local.value,date.value,true)+'<p class="help-text">Os sistemas a intervir estão a vermelho. Podes incluir na mesma OS os sistemas que estão a vencer.</p>';};
+        const overrides=new Map();
+        row.addEventListener('change',e=>{
+            if(e.target.matches('.ct-os-system'))overrides.set(e.target.value,e.target.checked);
+        });
+        local.addEventListener('change',()=>{overrides.clear();update();});
+        date.addEventListener('change',()=>{
+            update();
+            for(const input of row.querySelectorAll('.ct-os-system:not(:disabled)')){
+                if(overrides.has(input.value))input.checked=overrides.get(input.value);
+            }
+        });
+        update();
     }
     function selectedOS(c,localId,rootId='ct_os_planos') {
         if(!plans(c).length)return [];
@@ -406,12 +432,17 @@
                     (e.osId?'<button class="btn btn-sm btn-outline" type="button" data-contract-os="'+esc(e.osId)+'">OS</button>':'')+'</div>').join(''):'<small>Sem visitas registadas ou previstas</small>')+'</section>';
         }).join('')+'</div></div>';
     }
+    function maintenanceDays(date,reference){
+        return Math.round((Date.parse(date+'T12:00:00Z')-Date.parse(reference+'T12:00:00Z'))/86400000);
+    }
     function contractWarning(c,today=getDataHoje()){
         if(!c)return null;
-        const dueDates=schedule(c).filter(x=>x.data && x.data<today).map(x=>x.data);
-        if(dueDates.length)return {type:'late',text:dueDates.length+' manutenção(ões) com data ultrapassada'};
-        const upcoming=schedule(c).filter(x=>x.data && x.data>=today && x.data<=new Date(new Date(today+'T12:00:00').getTime()+30*86400000).toISOString().slice(0,10));
-        return upcoming.length?{type:'soon',text:upcoming.length+' manutenção(ões) nos próximos 30 dias'}:null;
+        const notice=c.gestaoManutencao?.alertas?.avisoDias ?? 30;
+        const days=schedule(c).map(s=>maintenanceDays(s.data,today));
+        const overdue=days.filter(n=>n<0).length;
+        if(overdue)return {type:'late',text:overdue+' manutenção(ões) com data ultrapassada'};
+        const upcoming=days.filter(n=>n>=0 && n<=notice).length;
+        return upcoming?{type:'soon',text:upcoming+' manutenção(ões) a vencer'}:null;
     }
     function historyHTML(c,incomplete) {
         const orders=(dados.servicos || []).filter(os=>os.adminId===c.adminId && os.clienteId===c.clienteId && os.contratoId===c.id && !os.apagadoSuperAdmin).sort((a,b)=>String(b.data).localeCompare(String(a.data)));
@@ -461,7 +492,7 @@
             const settings=obj(c.gestaoManutencao?.alertas),notice=settings.avisoDias ?? 30,urgent=settings.urgenteDias ?? 7;
             const scheduled=plans(c).length?schedule(c):_contratoInstalacoes(c).map(l=>({localId:l.id,localNome:l.nome,plan:{id:'legacy',tipo:c.tipo || 'Manutenção'},data:calcularProximaManutencao(c)}));
             for(const s of scheduled){
-                if(!s.data)continue;const days=Math.round((new Date(s.data+'T12:00:00')-new Date(today+'T12:00:00'))/86400000);
+                const days=maintenanceDays(s.data,today);
                 if(!Number.isFinite(days) || days>notice)continue;
                 const os=pendingOS(c,s.localId,s.plan.id),expired=!!c.validadeContrato && c.validadeContrato<today;
                 rows.push({...s,contrato:c,cliente:(dados.clientes || []).find(cl=>cl.id===c.clienteId && cl.adminId===c.adminId),days,urgent,os,expired,state:expired?'Contrato expirado':os?'OS agendada':days<0?'Em atraso':days===0?'Vence hoje':days<=urgent?'Urgente':'A vencer'});
@@ -507,7 +538,10 @@
         const existing=ids.map(id=>pendingOS(c,localId,id)).find(Boolean);if(existing){alert('Já existe uma OS aberta para esta manutenção.');abrirVerOS(existing.id);return;}
         if(typeof _wsSairPara==='function' && document.getElementById('wsClienteOverlay')?.classList.contains('open'))_wsSairPara(c.clienteId);
         abrirGerarOSContrato(c.id);const local=document.getElementById('os_gerar_local');if(!local)return;local.value=localId || '';local.dispatchEvent(new Event('change'));
-        document.querySelectorAll('#ct_os_planos .ct-os-system').forEach(el=>el.checked=ids.includes(el.value));
+        for(const el of document.querySelectorAll('#ct_os_planos .ct-os-system:not(:disabled)')){
+            el.checked=ids.includes(el.value);
+            el.dispatchEvent(new Event('change',{bubbles:true}));
+        }
     }
     async function availability(c,localId,ids) {
         if(!manager(c))throw Error('Sem acesso ao contrato.');
@@ -517,6 +551,14 @@
         const existing=(ids.length?ids:['legacy']).map(id=>pendingOS(c,localId,id)).find(Boolean);
         if(existing)throw Error('Já existe uma OS aberta para esta manutenção: '+(existing.numeroRegisto || existing.id)+'.');
     }
+    document.addEventListener('click',e=>{
+        const row=e.target.closest('#tabelaContratos tr[data-ct-os]');
+        if(!row)return;
+        const control=e.target.closest('button,input,select,a,label');
+        if(control && !control.hasAttribute('data-ct-os-status'))return;
+        const c=(dados.contratos || []).find(c=>c.id===row.dataset.ctOs);
+        if(manager(c))abrirGerarOSContrato(c.id,true);
+    });
     document.addEventListener('click',async e=>{
         const b=e.target.closest('[data-maint-action]');if(!b || b.disabled)return;
         const group=b.closest('[data-maint-contract]');if(!group)return;
@@ -584,7 +626,7 @@
         for(const c of all){const w=contractWarning(c);if(!w)continue;(w.type==='late'?late:soon).push(c);}
         root.textContent='';
         const title=document.createElement('strong');title.textContent='Avisos de manutenção';root.appendChild(title);
-        const text=document.createElement('span');text.textContent='  '+late.length+' contrato(s) com manutenção atrasada · '+soon.length+' com manutenção nos próximos 30 dias';root.appendChild(text);
+        const text=document.createElement('span');text.textContent='  '+late.length+' contrato(s) com manutenção atrasada · '+soon.length+' com manutenção a vencer';root.appendChild(text);
         const caption=document.createElement('small');caption.textContent=' Alertas internos, calculados quando os dados são atualizados. Não são notificações push.';root.appendChild(caption);
     }
     function setupContractSearch(){

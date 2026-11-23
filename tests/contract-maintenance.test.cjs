@@ -134,3 +134,56 @@ test('equipment maintenance metadata overrides old contract grouping and advance
  let rows=w.TGContractMaintenance.schedule(w.c);assert.equal(rows.find(r=>r.plan.equipamentoId==='e1').data,'2027-02-01');assert.equal(rows.find(r=>r.plan.equipamentoId==='e3').data,'2026-12-01');const p=rows.find(r=>r.plan.equipamentoId==='e3').plan;w.dados.registosManutencao.push({id:'reg',adminId:'a',contratoId:'ct',localId:'l',dataRealizacao:'2026-12-01',sistemasIds:[p.id]});rows=w.TGContractMaintenance.schedule(w.c);assert.equal(rows.find(r=>r.plan.equipamentoId==='e3').data,'2027-06-01');assert.equal(rows.find(r=>r.plan.equipamentoId==='e1').data,'2027-02-01');
  w.abrirModalContrato('ct');const row=w.document.querySelector('[data-ct-equipment="e3"]');assert.equal(row.querySelector('[data-period]').value,'semestral');row.querySelector('[data-period]').value='mensal';w.TGContractMaintenance.refreshPlan();assert.equal(w.document.querySelector('[data-ct-equipment="e3"] [data-period]').value,'mensal');w.TGContractMaintenance.collect();assert.equal(alarm.fichaTecnica.manutencao.periodicidade,'mensal');const next=w.TGContractMaintenance.schedule({...w.c,gestaoManutencao:w.TGContractMaintenance.collect()}).find(r=>r.plan.equipamentoId==='e3');assert.equal(next.plan.id,p.id);
 }finally{w.close()}});
+
+test('maintenance warning row opens the existing OS modal at the installation with work due',()=>{
+ const w=setup();
+ try{
+  w.eval('var _contratosSelecionados=[];'+['estadoManutencao','renderizarContratos'].map(fn).join('\n'));
+  w.preencherFiltroSelect=()=>{};
+  w._atualizarBarraSelecaoContratos=()=>{};
+  w.obterNomeCliente=()=> 'Cliente';
+  w._margemContrato=()=>null;
+  w.document.body.insertAdjacentHTML('beforeend','<section id="secao-contratos"><table><tbody id="tabelaContratos"></tbody></table></section>');
+  const today=w.getDataHoje();
+  const [cctv,alarm]=w.c.gestaoManutencao.plano;
+  cctv.proximaData=w.addDias(today,6);
+  alarm.proximaData=w.addDias(today,60);
+  w.c.gestaoManutencao.alertas={avisoDias:10};
+  w.dados.registosManutencao.push({adminId:'a',contratoId:'ct',localId:'l',dataRealizacao:today,sistemasIds:[cctv.id]});
+  w.renderizarContratos();
+  const row=w.document.querySelector('#tabelaContratos tr');
+  assert(row.classList.contains('linha-fixa-amarelo'));
+  row.querySelector('input').click();
+  assert(!w.document.getElementById('modalGerarOSOverlay').classList.contains('open'));
+  row.cells[1].click();
+  assert(w.document.getElementById('modalGerarOSOverlay').classList.contains('open'));
+  assert.equal(w.document.getElementById('os_gerar_local').value,'b');
+  const cctvChoice=w.document.querySelector('.ct-os-system');
+  assert.equal(cctvChoice.value,cctv.id);
+  assert.match(cctvChoice.parentElement.textContent,/A vencer/);
+  assert.equal(cctvChoice.parentElement.style.color,'rgb(185, 28, 28)');
+  assert.equal(cctvChoice.checked,false);
+ }finally{w.close();}
+});
+
+test('OS highlights upcoming work by visit date and preserves an explicit system selection',()=>{
+ const w=setup();
+ try{
+  const [cctv,alarm]=w.c.gestaoManutencao.plano;
+  cctv.proximaData='2026-10-09';
+  alarm.proximaData='2026-10-20';
+  w.c.gestaoManutencao.alertas={avisoDias:7};
+  w.abrirGerarOSContrato('ct');
+  const picker=w.document.getElementById('ct_os_planos');
+  const date=w.document.getElementById('os_data');
+  assert.match(picker.querySelector('label:has([value="cctv-plan"])').textContent,/Em atraso/);
+  assert(!picker.querySelector('[value="alarm-plan"]').parentElement.style.color);
+  date.value='2026-10-15';
+  date.dispatchEvent(new w.Event('change'));
+  picker.querySelector('[value="alarm-plan"]').click();
+  assert.match(picker.querySelector('[value="alarm-plan"]').parentElement.textContent,/A vencer/);
+  date.value='2026-10-16';
+  date.dispatchEvent(new w.Event('change'));
+  assert.deepEqual(plain(w.TGContractMaintenance.selectedOS(w.c,'l')),[cctv.id,alarm.id]);
+ }finally{w.close();}
+});
