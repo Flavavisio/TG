@@ -8571,13 +8571,13 @@ function _assistEstado(value) {
                 return null;
             }
         }
-        function estadoManutencao(proximaStr) {
+        function estadoManutencao(proximaStr, avisoDias = 30) {
             if (!proximaStr) return { chave: 'sem', label: 'Sem agenda', cor: '#94a3b8', dias: null };
-            const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
-            const prox = new Date(proximaStr + 'T00:00:00');
+            const hoje = new Date(getDataHoje() + 'T00:00:00Z');
+            const prox = new Date(proximaStr + 'T00:00:00Z');
             const dias = Math.round((prox - hoje) / 86400000);
             if (dias < 0) return { chave: 'vencido', label: 'Vencido', cor: '#dc2626', dias };
-            if (dias <= 30) return { chave: 'a_vencer', label: 'A vencer', cor: '#f59e0b', dias };
+            if (dias <= avisoDias) return { chave: 'a_vencer', label: dias === 0 ? 'Vence hoje' : 'A vencer', cor: '#f59e0b', dias };
             return { chave: 'em_dia', label: 'Em dia', cor: '#16a34a', dias };
         }
         const PRECO_CONTRATOS_MENSAL = 14.99;
@@ -10140,7 +10140,7 @@ function _assistEstado(value) {
 
             let cV = 0, cA = 0, cE = 0;
             todos.forEach(c => {
-                const est = estadoManutencao(calcularProximaManutencao(c));
+                const est = estadoManutencao(calcularProximaManutencao(c), c.gestaoManutencao?.alertas?.avisoDias);
                 if (est.chave === 'vencido') cV++; else if (est.chave === 'a_vencer') cA++; else if (est.chave === 'em_dia') cE++;
             });
             const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
@@ -10180,7 +10180,7 @@ function _assistEstado(value) {
 
             let lista = todos.map(c => {
                 const prox = calcularProximaManutencao(c);
-                return { c, prox, est: estadoManutencao(prox) };
+                return { c, prox, est: estadoManutencao(prox, c.gestaoManutencao?.alertas?.avisoDias) };
             }).filter(({ c, est }) => {
                 if (fEstado && est.chave !== fEstado) return false;
                 const idsEquip = (c.equipamentosIds && c.equipamentosIds.length) ? c.equipamentosIds : (c.equipamentoId ? [c.equipamentoId] : []);
@@ -10206,7 +10206,8 @@ function _assistEstado(value) {
                 const tipoLabel = _equipStrContrato(c) || '-';
                 const podeOT = est.chave === 'vencido' || est.chave === 'a_vencer';
                 const linhaCor = est.chave === 'vencido' ? 'linha-fixa-vermelho' : est.chave === 'a_vencer' ? 'linha-fixa-amarelo' : '';
-                return `<tr class="${linhaCor}">
+                const badge = `<span class="badge" style="background:${est.cor};color:#fff;">${est.label}</span>`;
+                return `<tr class="${linhaCor}" ${podeOT ? `style="cursor:pointer" data-ct-os="${escapeHtmlSimples(c.id)}"` : ''}>
                             <td><input type="checkbox" class="chk-contrato" value="${c.id}" ${_contratosSelecionados.includes(c.id) ? 'checked' : ''} onchange="toggleSelecaoContrato('${c.id}', this.checked)" /></td>
                             <td><strong>${c.numero || '-'}</strong>${window.TGContractMaintenance?.alerts(c,getDataHoje()) ? '<div class="help-text" style="color:#b45309">'+(c.validadeContrato < getDataHoje() ? 'Contrato expirado' : 'Rever renovação até '+escapeHtmlSimples(c.validadeContrato))+'</div>' : ''}</td>
                             <td>${cli ? obterNomeCliente(cli.id) : 'Removido'}</td>
@@ -10217,7 +10218,7 @@ function _assistEstado(value) {
                             <td>${c.dataInicio || '-'}</td>
                             <td>${prox || '-'}</td>
                             <td>${c.valor != null ? Number(c.valor).toFixed(2) + ' €' : '-'}</td>
-                            <td><span class="badge" style="background:${est.cor};color:#fff;">${est.label}</span>${c.ultimaOSGeradaData ? `<div style="font-size:.68rem;color:#0e7490;"><i class="fas fa-clipboard-check"></i> OS ${_fmtDataPT(c.ultimaOSGeradaData)}</div>` : ''}${(() => { if (usuarioLogado?.role !== 'admin' && usuarioLogado?.role !== 'subadmin') return ''; const m = _margemContrato(c.id); return (m && m.nFolhas > 0 && m.margem < 0) ? `<div style="font-size:.68rem;color:#dc2626;font-weight:700;" title="Custo real (mão de obra + materiais) já ultrapassou o valor do contrato"><i class="fas fa-triangle-exclamation"></i> Margem negativa</div>` : ''; })()}</td>
+                            <td>${podeOT ? `<button type="button" class="badge" style="background:${est.cor};color:#fff;border:0;cursor:pointer;" title="Gerar Ordem de Serviço" data-ct-os-status>${est.label}</button>` : badge}${c.ultimaOSGeradaData ? `<div style="font-size:.68rem;color:#0e7490;"><i class="fas fa-clipboard-check"></i> OS ${_fmtDataPT(c.ultimaOSGeradaData)}</div>` : ''}${(() => { if (usuarioLogado?.role !== 'admin' && usuarioLogado?.role !== 'subadmin') return ''; const m = _margemContrato(c.id); return (m && m.nFolhas > 0 && m.margem < 0) ? `<div style="font-size:.68rem;color:#dc2626;font-weight:700;" title="Custo real (mão de obra + materiais) já ultrapassou o valor do contrato"><i class="fas fa-triangle-exclamation"></i> Margem negativa</div>` : ''; })()}</td>
                             <td><div class="acoes">
                                 ${c.vigilanciaAtiva ? `<button class="btn btn-sm" style="background:${c.ultimoMesFaturadoVigilancia === _mesAtualStr() ? '#94a3b8' : '#ea580c'};color:#fff;" title="${c.ultimoMesFaturadoVigilancia === _mesAtualStr() ? 'Já faturado este mês' : 'Faturar vigilância deste mês'}" onclick="faturarContratoVigilancia('${c.id}')"><i class="fas fa-shield-halved"></i></button>` : ''}
                                 <button class="btn btn-sm" style="background:#7c3aed;color:#fff;" title="Gerar Ordem de Serviço para um encarregado" onclick="abrirGerarOSContrato('${c.id}')"><i class="fas fa-clipboard-list"></i></button>
@@ -10352,7 +10353,7 @@ function _assistEstado(value) {
             const partes = [rua, local.codigoPostal, local.cidade, local.freguesia].filter(Boolean);
             return partes.length ? partes.join(', ') : null;
         }
-        function abrirGerarOSContrato(contratoId) {
+        function abrirGerarOSContrato(contratoId, abrirPeloAviso = false) {
             const c = dados.contratos?.find(x => x.id === contratoId);
             if (!c) return;
             const adminId = usuarioLogado?.adminId || usuarioLogado?.id;
@@ -10383,11 +10384,11 @@ function _assistEstado(value) {
                         <select id="os_gerar_responsavel" class="form-group"></select>
                         <div class="help-text">Só esta pessoa vai ser convidada a preencher, ao dar saída. Os restantes só picam entrada/saída.</div>
                     </div>
-                    <div class="form-group"><label>Data *</label><input type="date" id="os_data" value="${new Date().toISOString().slice(0, 10)}" /></div>
+                    <div class="form-group"><label>Data *</label><input type="date" id="os_data" value="${getDataHoje()}" /></div>
                     <div class="form-group"><label>Hora *</label><input type="time" id="os_hora" value="${new Date().toTimeString().slice(0,5)}" /></div>
                     <div class="form-group"><label>Notas</label><textarea id="os_notas" rows="2" placeholder="Instruções adicionais (opcional)"></textarea></div>
                 `;
-            window.TGContractMaintenance?.osPicker(c);
+            window.TGContractMaintenance?.osPicker(c, abrirPeloAviso);
             document.getElementById('modalGerarOSOverlay').classList.add('open');
         }
         function _gerarOSAtualizarResponsavel() {
