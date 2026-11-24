@@ -224,37 +224,29 @@
         const rows=schedule(c).filter(s=>s.localId===(localId || ''));
         const notice=c.gestaoManutencao?.alertas?.avisoDias ?? 30;
         const today=getDataHoje();
-        const reference=data && data>today ? data : today;
         return rows.map(s=>{
-            const existing=forOS && pendingOS(c,localId,s.plan.id);
-            const highlight=forOS && !existing && maintenanceDays(s.data,reference)<=notice;
-            const status=existing?' · OS agendada':highlight?(s.data<today?' · Em atraso':s.data===today?' · Vence hoje':' · A vencer'):'';
-            const checked=!existing && s.data && s.data<=data;
-            return `<label style="display:flex;gap:8px;align-items:center;padding:5px 0${highlight?';color:#b91c1c;font-weight:700':''}"><input type="checkbox" class="ct-os-system" value="${esc(s.plan.id)}" ${checked?'checked':''} ${existing?'disabled':''} style="width:auto">${esc(planLabel(s.plan))} · próxima ${esc(s.data || 'por definir')}${status}</label>`;
+            const days=maintenanceDays(s.data,today);
+            const overdue=forOS && days<0;
+            const upcoming=forOS && days>=0 && days<=notice;
+            const color=overdue?'#b91c1c':upcoming?'#854d0e':'';
+            const status=overdue?' · Vencido':upcoming?(days===0?' · Vence hoje':' · A vencer'):'';
+            const scheduled=forOS && pendingOS(c,localId,s.plan.id,false)?' · OS agendada':'';
+            const checked=!forOS && s.data && s.data<=data;
+            return `<label style="display:flex;gap:8px;align-items:center;padding:5px 0;cursor:pointer${color?`;color:${color};background:${overdue?'#fee2e2':'#fef9c3'};font-weight:700`:''}"><input type="checkbox" class="ct-os-system" value="${esc(s.plan.id)}" ${checked?'checked':''} style="width:auto;flex-shrink:0">${esc(planLabel(s.plan))} · próxima ${esc(s.data || 'por definir')}${status}${scheduled}</label>`;
         }).join('');
     }
     function osPicker(c,abrirPeloAviso=false) {
         if(!plans(c).length)return;
-        const local=document.getElementById('os_gerar_local'),date=document.getElementById('os_data');
+        const local=document.getElementById('os_gerar_local');
         if(abrirPeloAviso){
             const today=getDataHoje(),notice=c.gestaoManutencao?.alertas?.avisoDias ?? 30;
             const upcoming=schedule(c).filter(s=>maintenanceDays(s.data,today)<=notice).sort((a,b)=>a.data.localeCompare(b.data));
-            const next=upcoming.find(s=>!pendingOS(c,s.localId,s.plan.id)) || upcoming[0];
+            const next=upcoming.find(s=>!pendingOS(c,s.localId,s.plan.id,false)) || upcoming[0];
             if(next)local.value=next.localId;
         }
         const row=document.createElement('div');row.id='ct_os_planos';row.className='form-group';local.closest('.form-group').after(row);
-        const update=()=>{row.innerHTML='<label>Sistemas desta intervenção *</label>'+choices(c,local.value,date.value,true)+'<p class="help-text">Os sistemas a intervir estão a vermelho. Podes incluir na mesma OS os sistemas que estão a vencer.</p>';};
-        const overrides=new Map();
-        row.addEventListener('change',e=>{
-            if(e.target.matches('.ct-os-system'))overrides.set(e.target.value,e.target.checked);
-        });
-        local.addEventListener('change',()=>{overrides.clear();update();});
-        date.addEventListener('change',()=>{
-            update();
-            for(const input of row.querySelectorAll('.ct-os-system:not(:disabled)')){
-                if(overrides.has(input.value))input.checked=overrides.get(input.value);
-            }
-        });
+        const update=()=>{row.innerHTML='<label>Sistemas desta intervenção *</label>'+choices(c,local.value,null,true)+'<p class="help-text">Seleciona os sistemas que queres incluir nesta OS. Vermelho: vencido. Amarelo: a vencer.</p>';};
+        local.addEventListener('change',update);
         update();
     }
     function selectedOS(c,localId,rootId='ct_os_planos') {
@@ -482,8 +474,14 @@
         return delta<=days?{dias:delta,data:c.validadeContrato,renovacao:obj(c.gestaoManutencao?.comercial).renovacao || 'manual'}:null;
     }
     const openOS = os => !['concluído','concluido','cancelado','cancelada','anulado','anulada'].includes(String(os.status || '').toLowerCase()) && !os.apagadoSuperAdmin;
-    function pendingOS(c,localId,systemId) {
-        return (dados.servicos || []).find(os=>os.adminId===c.adminId && os.clienteId===c.clienteId && os.contratoId===c.id && (os.localId || '')===(localId || '') && openOS(os) && (!os.planoManutencao?.sistemasIds?.length || os.planoManutencao.sistemasIds.includes(systemId) || plans(c).some(p=>p.id===systemId && p.origemSistemaId && os.planoManutencao.sistemasIds.includes(p.origemSistemaId))));
+    function pendingOS(c,localId,systemId,includeUnspecified=true) {
+        const originalId=plans(c).find(p=>p.id===systemId)?.origemSistemaId;
+        return (dados.servicos || []).find(os=>{
+            if(os.adminId!==c.adminId || os.clienteId!==c.clienteId || os.contratoId!==c.id || (os.localId || '')!==(localId || '') || !openOS(os))return false;
+            const systems=os.planoManutencao?.sistemasIds;
+            if(!systems?.length)return includeUnspecified;
+            return systems.includes(systemId) || (originalId && systems.includes(originalId));
+        });
     }
     function maintenanceRows(clienteId,today=getDataHoje()) {
         const rows=[];
@@ -538,18 +536,23 @@
         const existing=ids.map(id=>pendingOS(c,localId,id)).find(Boolean);if(existing){alert('Já existe uma OS aberta para esta manutenção.');abrirVerOS(existing.id);return;}
         if(typeof _wsSairPara==='function' && document.getElementById('wsClienteOverlay')?.classList.contains('open'))_wsSairPara(c.clienteId);
         abrirGerarOSContrato(c.id);const local=document.getElementById('os_gerar_local');if(!local)return;local.value=localId || '';local.dispatchEvent(new Event('change'));
-        for(const el of document.querySelectorAll('#ct_os_planos .ct-os-system:not(:disabled)')){
+        for(const el of document.querySelectorAll('#ct_os_planos .ct-os-system')){
             el.checked=ids.includes(el.value);
-            el.dispatchEvent(new Event('change',{bubbles:true}));
         }
     }
-    async function availability(c,localId,ids) {
+    async function availability(c,localId,ids,allowConfirmation=false) {
         if(!manager(c))throw Error('Sem acesso ao contrato.');
         if(c.validadeContrato && c.validadeContrato<getDataHoje())throw Error('Reveja a validade do contrato antes de criar uma nova manutenção.');
         if(await loadHistory(c))throw Error('Não foi possível confirmar as OS existentes. Verifica a ligação e tenta novamente.');
         if(!manager(c))throw Error('Sem acesso ao contrato.');
         const existing=(ids.length?ids:['legacy']).map(id=>pendingOS(c,localId,id)).find(Boolean);
-        if(existing)throw Error('Já existe uma OS aberta para esta manutenção: '+(existing.numeroRegisto || existing.id)+'.');
+        if(!existing)return true;
+        const reference=existing.numeroRegisto || existing.id;
+        if(!allowConfirmation)throw Error('Já existe uma OS aberta para esta manutenção: '+reference+'.');
+        const detail=existing.planoManutencao?.sistemasIds?.length
+            ? 'A OS '+reference+' já inclui pelo menos um dos sistemas selecionados.'
+            : 'A OS '+reference+' está aberta neste contrato e não identifica os sistemas abrangidos.';
+        return confirm(detail+' Queres criar uma nova OS com os sistemas selecionados?');
     }
     document.addEventListener('click',e=>{
         const row=e.target.closest('#tabelaContratos tr[data-ct-os]');
