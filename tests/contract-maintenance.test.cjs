@@ -29,7 +29,7 @@ test('each site and system advances independently, legacy records remain support
  w.dados.registosManutencao[0].sistemasIds=['alarm-plan'];assert.equal(w.TGContractMaintenance.schedule(w.c).find(s=>s.localId==='l'&&s.plan.tipo==='cctv').data,'2026-04-01');
 }finally{w.close()}});
 test('OS picks valid systems at the chosen site and snapshots immutable tasks without commercial data',()=>{const w=setup();try{
- w.abrirGerarOSContrato('ct');const picker=w.document.getElementById('ct_os_planos');assert.equal(picker.querySelectorAll('input').length,2);assert.deepEqual(plain(w.TGContractMaintenance.selectedOS(w.c,'l')),['cctv-plan']);
+ w.abrirGerarOSContrato('ct');const picker=w.document.getElementById('ct_os_planos');assert.equal(picker.querySelectorAll('input').length,2);assert.equal(picker.querySelectorAll('input:checked').length,0);picker.querySelector('[value="cctv-plan"]').click();assert.deepEqual(plain(w.TGContractMaintenance.selectedOS(w.c,'l')),['cctv-plan']);
  const os={id:'os',localId:'l'};w.TGContractMaintenance.snapshot(os,w.c,['cctv-plan']);assert.deepEqual(plain(os.planoManutencao.equipamentosIds),['e1']);assert.equal(os.planoManutencao.tarefas[0].texto,'CCTV — Verificar gravações');assert(!JSON.stringify(os).includes('faturacao'));w.c.gestaoManutencao.plano[0].tarefas[0].texto='Nova tarefa';assert.equal(os.planoManutencao.tarefas[0].texto,'CCTV — Verificar gravações');
  assert.equal(w.TGContractMaintenance.checklist(os,{obrasChecklistItens:[{id:'global',texto:'EPI'},{id:'disabled',ativo:false}]}).length,2);
  w.document.getElementById('os_gerar_local').value='b';w.document.getElementById('os_gerar_local').dispatchEvent(new w.Event('change'));assert.equal(picker.querySelectorAll('input').length,1);picker.querySelector('input').checked=false;assert.throws(()=>w.TGContractMaintenance.selectedOS(w.c,'b'),/Seleciona/);assert.throws(()=>w.TGContractMaintenance.snapshot({localId:'b'},w.c,['alarm-plan']),/Sem sistemas/);
@@ -94,7 +94,7 @@ test('server status refresh releases a closed OS and preserves unsynchronized lo
  emptyHistory(w);w.M={servicos:{from:r=>r,to:r=>r}};let remote={id:'archived',numeroRegisto:'OLD',adminId:'a',clienteId:'c',contratoId:'ct',localId:'l',status:'pendente',planoManutencao:{sistemasIds:['cctv-plan']}};w._buscarPaginadoGenerico=async q=>({data:q===undefined?[]:[],error:null});w.supa={from:table=>({table,select(){return this},eq(){return this},in(){return this},order(){return this}})};w._buscarPaginadoGenerico=async q=>({data:q.table==='servicos'?[remote]:[],error:null});await assert.rejects(w.TGContractMaintenance.availability(w.c,'l',['cctv-plan']),/OLD/);remote={...remote,status:'concluído'};await w.TGContractMaintenance.availability(w.c,'l',['cctv-plan']);assert.equal(w.dados.servicos[0].status,'concluído');w.dados.servicos[0].descricao='local edit';remote={...remote,descricao:'server edit'};await w.TGContractMaintenance.availability(w.c,'l',['cctv-plan']);assert.equal(w.dados.servicos[0].descricao,'local edit');
 }finally{w.close()}});
 test('OS creation holds its lock until synchronization finishes and reports a pending sync accurately',async()=>{const w=setup();try{
- emptyHistory(w);w.eval(fn('confirmarGerarOS'));w.fecharGerarOS=()=>{};w._horaMin=v=>{const [h,m]=v.split(':').map(Number);return h*60+m};w.gerarNumeroRegistoServidor=async()=> 'OS-1';w.abrirGerarOSContrato('ct');w.document.querySelector('.os-gerar-func-chk').checked=true;w.document.getElementById('os_hora').value='';let release;w.guardarDados=()=>new Promise(r=>release=r);const first=w.confirmarGerarOS();await new Promise(r=>setTimeout(r,0));assert.equal(w.dados.servicos.length,1);await w.confirmarGerarOS();assert.equal(w.dados.servicos.length,1);assert.equal(w.confirmarGerarOS.emCurso,true);release();await first;assert.equal(w.confirmarGerarOS.emCurso,false);
+ emptyHistory(w);w.eval(fn('confirmarGerarOS'));w.fecharGerarOS=()=>{};w._horaMin=v=>{const [h,m]=v.split(':').map(Number);return h*60+m};w.gerarNumeroRegistoServidor=async()=> 'OS-1';w.abrirGerarOSContrato('ct');w.document.querySelector('.ct-os-system').click();w.document.querySelector('.os-gerar-func-chk').checked=true;w.document.getElementById('os_hora').value='';let release;w.guardarDados=()=>new Promise(r=>release=r);const first=w.confirmarGerarOS();await new Promise(r=>setTimeout(r,0));assert.equal(w.dados.servicos.length,1);await w.confirmarGerarOS();assert.equal(w.dados.servicos.length,1);assert.equal(w.confirmarGerarOS.emCurso,true);release();await first;assert.equal(w.confirmarGerarOS.emCurso,false);
  w.dados.servicos[0].status='concluído';w.guardarDados=async()=>{throw Error('offline')};await w.confirmarGerarOS();assert.equal(w.dados.servicos.length,2);assert(w.alerts.at(-1).includes('neste dispositivo'));assert.equal(w.confirmarGerarOS.emCurso,false);
 }finally{w.close()}});
 
@@ -161,29 +161,62 @@ test('maintenance warning row opens the existing OS modal at the installation wi
   const cctvChoice=w.document.querySelector('.ct-os-system');
   assert.equal(cctvChoice.value,cctv.id);
   assert.match(cctvChoice.parentElement.textContent,/A vencer/);
-  assert.equal(cctvChoice.parentElement.style.color,'rgb(185, 28, 28)');
+  assert.equal(cctvChoice.parentElement.style.backgroundColor,'rgb(254, 249, 195)');
   assert.equal(cctvChoice.checked,false);
  }finally{w.close();}
 });
 
-test('OS highlights upcoming work by visit date and preserves an explicit system selection',()=>{
+test('OS selection is independent of system deadline and an existing order',async()=>{
  const w=setup();
  try{
   const [cctv,alarm]=w.c.gestaoManutencao.plano;
   cctv.proximaData='2026-10-09';
-  alarm.proximaData='2026-10-20';
+  alarm.proximaData='2026-10-15';
   w.c.gestaoManutencao.alertas={avisoDias:7};
+  const oldOrder={id:'old',numeroRegisto:'OS-OLD',adminId:'a',clienteId:'c',contratoId:'ct',localId:'l',status:'pendente'};
+  w.dados.servicos.push(oldOrder);
+  emptyHistory(w);
+  w.eval(fn('confirmarGerarOS'));
+  w.fecharGerarOS=()=>{};
+  w.gerarNumeroRegistoServidor=async()=> 'OS-NEW';
   w.abrirGerarOSContrato('ct');
   const picker=w.document.getElementById('ct_os_planos');
+  const overdue=picker.querySelector('[value="cctv-plan"]');
+  const upcoming=picker.querySelector('[value="alarm-plan"]');
+  assert.equal(picker.querySelectorAll('input:checked,input:disabled').length,0);
+  assert.match(overdue.parentElement.textContent,/Vencido/);
+  assert.equal(overdue.parentElement.style.backgroundColor,'rgb(254, 226, 226)');
+  assert.match(upcoming.parentElement.textContent,/A vencer/);
+  assert.equal(upcoming.parentElement.style.backgroundColor,'rgb(254, 249, 195)');
+  assert.doesNotMatch(picker.textContent,/OS agendada/);
+  upcoming.click();
   const date=w.document.getElementById('os_data');
-  assert.match(picker.querySelector('label:has([value="cctv-plan"])').textContent,/Em atraso/);
-  assert(!picker.querySelector('[value="alarm-plan"]').parentElement.style.color);
-  date.value='2026-10-15';
+  date.value='2026-10-20';
   date.dispatchEvent(new w.Event('change'));
-  picker.querySelector('[value="alarm-plan"]').click();
-  assert.match(picker.querySelector('[value="alarm-plan"]').parentElement.textContent,/A vencer/);
-  date.value='2026-10-16';
-  date.dispatchEvent(new w.Event('change'));
-  assert.deepEqual(plain(w.TGContractMaintenance.selectedOS(w.c,'l')),[cctv.id,alarm.id]);
+  assert.deepEqual(plain(w.TGContractMaintenance.selectedOS(w.c,'l')),[alarm.id]);
+  w.document.getElementById('os_hora').value='';
+  w.document.querySelector('.os-gerar-func-chk').checked=true;
+  w.confirm=message=>{assert.match(message,/OS-OLD/);return false;};
+  await w.confirmarGerarOS();
+  assert.equal(w.dados.servicos.length,1);
+  w.confirm=()=>true;
+  await w.confirmarGerarOS();
+  assert.equal(w.dados.servicos.length,2);
+  assert.deepEqual(plain(w.dados.servicos[1].planoManutencao.sistemasIds),[alarm.id]);
+
+  oldOrder.planoManutencao={sistemasIds:[cctv.id]};
+  w.dados.servicos[1].status='concluído';
+  w.abrirGerarOSContrato('ct');
+  const updated=w.document.getElementById('ct_os_planos');
+  assert.match(updated.querySelector('[value="cctv-plan"]').parentElement.textContent,/Vencido · OS agendada/);
+  assert.equal(updated.querySelector('[value="cctv-plan"]').disabled,false);
+  assert.doesNotMatch(updated.querySelector('[value="alarm-plan"]').parentElement.textContent,/OS agendada/);
+
+  alarm.proximaData='2026-11-15';
+  w.abrirGerarOSContrato('ct');
+  const current=w.document.querySelector('.ct-os-system[value="alarm-plan"]');
+  assert.equal(current.parentElement.style.backgroundColor,'');
+  current.click();
+  assert.deepEqual(plain(w.TGContractMaintenance.selectedOS(w.c,'l')),[alarm.id]);
  }finally{w.close();}
 });

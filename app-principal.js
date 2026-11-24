@@ -10424,7 +10424,7 @@ function _assistEstado(value) {
             if (confirmarGerarOS.emCurso) return;
             confirmarGerarOS.emCurso=true;
             try {
-            await window.TGContractMaintenance?.availability(c,localId,sistemasIds);
+            if (await window.TGContractMaintenance?.availability(c,localId,sistemasIds,true) === false) return;
             if (data && hora) {
                 const duracaoMin = 60;
                 const inicioNovo = _horaMin(hora);
