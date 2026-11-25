@@ -34657,6 +34657,7 @@ window._relPrefill = function(msg){
             }
         }
         function _atualizarBreadcrumb(t) {
+            if (usuarioLogado) document.title = (t || 'Início') + ' — Total Gest';
             const bc = document.getElementById('tgBreadcrumb');
             if (bc) bc.innerHTML = 'TOTALGEST&nbsp;/&nbsp;<b>' + (t || 'Início') + '</b>';
         }
