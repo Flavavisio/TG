@@ -2,6 +2,12 @@
 (function () {
     'use strict';
     let current = null, serial = 0;
+    const contractBucket = 'contratos-instalacoes';
+    const contractTypes = {
+        pdf: 'application/pdf',
+        doc: 'application/msword',
+        docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    };
     const esc = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const object = v => v && typeof v === 'object' && !Array.isArray(v) ? v : {};
     const actor = () => typeof usuarioLogado === 'undefined' ? null : usuarioLogado;
@@ -154,6 +160,8 @@
         st.host.oninput=event=>{if(event.target.matches('[data-pp-search]')){st.term=event.target.value;renderEquipment(st);}};
         st.host.onchange=event=>{if(event.target.matches('[data-pp-type]')){st.type=event.target.value;renderEquipment(st);}};
         renderEquipment(st);
+        const contractHost = st.host.querySelector('[data-pp-contract-files]');
+        if (contractHost) mountContractFiles(contractHost, s.customerId, s.localId);
     }
     function renderEquipment(st) {
         if(!valid(st))return;const s=scope(st.customerId,st.localId),root=st.host.querySelector('[data-pp-equipment]');if(!root)return;
@@ -166,13 +174,129 @@
         return (dados.contratos || []).filter(c=>c.adminId===s.tenant && c.clienteId===s.customerId && _contratoAbrangeLocal(c,s.localId));
     }
     function contractPanel(s) {
-        if(!s.manager || !contracts(s).length)return '';
-        return '<section class="tg-pp-panel"><h3>Contratos desta instalação</h3>'+contracts(s).map(c=>'<div class="tg-pp-document"><span>Contrato '+esc(c.numero || '—')+'</span>'+button('contract','Ver contrato',c.id)+'</div>').join('')+'</section>';
+        if (!s.manager) return '';
+        const linked = contracts(s).map(c => {
+            const link = url(c.documentoUrl);
+            return `<div class="tg-pp-document tg-pp-contract-file"><span>Contrato ${esc(c.numero || '—')}</span>${button('contract','Ver contrato',c.id)}
+                ${link ? `<a href="${esc(link)}" target="_blank" rel="noopener noreferrer">${esc(c.documentoNome || 'Abrir documento')}</a>` : ''}</div>`;
+        }).join('');
+        return `<section class="tg-pp-panel"><h3>Contratos</h3>${linked}<div data-pp-contract-files></div></section>`;
     }
     function documents(s) {
-        const all=Array.isArray(s.meta.documentos)?s.meta.documentos.slice():[];
-        if(typeof moduloContratosAtivo==='function' && moduloContratosAtivo(adminDoUtilizador()))(dados.contratos || []).filter(c=>c.adminId===s.tenant && c.clienteId===s.customerId && _contratoAbrangeLocal(c,s.localId) && c.documentoUrl).forEach(c=>all.push({nome:c.documentoNome || 'Contrato '+(c.numero || ''),url:c.documentoUrl}));
-        return all.filter(d=>url(d.url));
+        return (Array.isArray(s.meta.documentos) ? s.meta.documentos : []).filter(d => url(d.url));
+    }
+    function mountContractFiles(host, customerId, localId = '') {
+        const u = actor();
+        if (!host || !['admin','subadmin'].includes(u?.role)) return;
+        const tenant = u.role === 'admin' ? u.id : u.adminId;
+        if (!tenant || !(dados.clientes || []).some(c => c.id === customerId && c.adminId === tenant)) return;
+        if (localId && !(dados.locais || []).some(l => l.id === localId && l.adminId === tenant && l.clienteId === customerId)) return;
+        const openedBy = identity();
+        const prefix = [tenant, customerId, localId || '__sede'].join('/');
+        const live = () => host.isConnected && identity() === openedBy;
+        host.innerHTML = `
+            <div class="tg-pp-actions">
+                <button type="button" class="btn btn-outline" data-choose-contract>Carregar contrato</button><input type="file" accept=".pdf,.doc,.docx" hidden>
+            </div>
+            <p class="tg-pp-muted">PDF, DOC ou DOCX até 15 MB.</p>
+            <p data-contract-status role="status"></p><div data-contract-list></div>`;
+        const input = host.querySelector('input[type="file"]');
+        const choose = host.querySelector('[data-choose-contract]');
+        choose.onclick = () => { if (live()) input.click(); };
+        const status = host.querySelector('[data-contract-status]');
+        const list = host.querySelector('[data-contract-list]');
+        let busy = false;
+        const storage = () => supa.storage.from(contractBucket);
+
+        async function readFiles() {
+            status.textContent = 'A carregar contratos…';
+            const files = [];
+            const limit = 100;
+            for (let offset = 0; ; offset += limit) {
+                const { data, error } = await storage().list(prefix, { limit, offset, sortBy: { column: 'name', order: 'asc' } });
+                if (!live()) return;
+                if (error) throw error;
+                files.push(...data.filter(f => f.id));
+                if (data.length < limit) break;
+            }
+            list.innerHTML = files.map((file, index) => {
+                const name = file.name.replace(/^[a-f0-9-]{36}_/, '');
+                return `<div class="tg-pp-document tg-pp-contract-file"><span>${esc(name)}</span>
+                    <button type="button" class="btn btn-sm btn-outline" data-download-contract="${index}">Descarregar</button>
+                    <button type="button" class="btn btn-sm btn-danger" data-remove-contract="${index}">Apagar</button></div>`;
+            }).join('') || '<p class="tg-pp-empty">Sem ficheiros de contrato nesta instalação.</p>';
+            status.textContent = '';
+            list.onclick = async event => {
+                const btn = event.target.closest('[data-download-contract], [data-remove-contract]');
+                if (!btn || busy || !live()) return;
+                const deleting = btn.hasAttribute('data-remove-contract');
+                const file = files[Number(deleting ? btn.dataset.removeContract : btn.dataset.downloadContract)];
+                if (!file) return;
+                busy = true;
+                input.disabled = choose.disabled = true;
+                try {
+                    const path = prefix + '/' + file.name;
+                    if (deleting) {
+                        if (!await tgConfirm('Apagar este ficheiro de contrato?', { textoOk: 'Apagar contrato' }) || !live()) return;
+                        const { data, error } = await storage().remove([path]);
+                        if (error || !data?.length) throw error || new Error('Ficheiro indisponível.');
+                        if (live()) await readFiles();
+                    } else {
+                        const { data, error } = await storage().download(path);
+                        if (error) throw error;
+                        if (!live()) return;
+                        const target = URL.createObjectURL(data);
+                        const link = document.createElement('a');
+                        link.href = target;
+                        link.download = file.name.replace(/^[a-f0-9-]{36}_/, '');
+                        document.body.appendChild(link);
+                        link.click();
+                        link.remove();
+                        setTimeout(() => URL.revokeObjectURL(target), 10000);
+                        status.textContent = '';
+                    }
+                } catch (_) {
+                    if (live()) status.textContent = deleting ? 'Não foi possível apagar o contrato.' : 'Não foi possível descarregar o contrato.';
+                } finally {
+                    busy = false;
+                    input.disabled = choose.disabled = false;
+                }
+            };
+        }
+
+        input.onchange = async () => {
+            const file = input.files?.[0];
+            if (!file || busy || !live()) return;
+            const extension = file.name.split('.').pop().toLowerCase();
+            if (!Object.hasOwn(contractTypes, extension) || !file.size || file.size > 15 * 1024 * 1024) {
+                status.textContent = 'Seleciona um PDF, DOC ou DOCX até 15 MB.';
+                input.value = '';
+                return;
+            }
+            const base = file.name.slice(0, -(extension.length + 1)).normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9._-]+/gi, '_').slice(0, 100) || 'Contrato';
+            busy = true;
+            input.disabled = choose.disabled = true;
+            status.textContent = 'A carregar o ficheiro…';
+            try {
+                const path = prefix + '/' + crypto.randomUUID() + '_' + base + '.' + extension;
+                const { error } = await storage().upload(path, file, { contentType: contractTypes[extension], upsert: false });
+                if (error) throw error;
+                if (live()) {
+                    await readFiles();
+                    if (live()) status.textContent = 'Contrato carregado.';
+                }
+            } catch (_) {
+                if (live()) status.textContent = 'Não foi possível confirmar o ficheiro. Atualiza a instalação para consultar os contratos.';
+            } finally {
+                busy = false;
+                input.disabled = choose.disabled = false;
+                input.value = '';
+            }
+        };
+        readFiles().catch(() => {
+            if (live()) status.textContent = 'Não foi possível carregar a lista de contratos.';
+        });
     }
     const canEditOS=(r,s)=>s.manager || (r.status!=='concluído' && assigned(r,actor()));
     function getOS(st,id) {return records(scope(st.customerId,st.localId),st.services).find(r=>r.id===id);}
@@ -328,5 +452,5 @@
         if(current && !valid(current)){if((current.identity!==identity() || !scope(current.customerId,current.localId)) && current.host.querySelector('.tg-passport'))current.host.innerHTML='';if(!current.workspace)document.getElementById('tgPassportOverlay')?.classList.remove('open');current=null;++serial;}
         const q=new URLSearchParams(location.search);if(q.get('tg_passaporte')==='1' && actor() && scope(q.get('tg_cliente'),q.get('tg_local') || '')){const cid=q.get('tg_cliente'),lid=q.get('tg_local') || '';q.delete('tg_passaporte');q.delete('tg_cliente');q.delete('tg_local');window.history.replaceState(null,'',location.pathname+(q.size?'?'+q:'')+location.hash);open(cid,lid);}
     });
-    window.TGPassport={show,open,scope,equipment,records,osButton,url};
+    window.TGPassport={show,open,scope,mountContractFiles,equipment,records,osButton,url};
 })();

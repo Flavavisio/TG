@@ -10,8 +10,8 @@ function setup(){
  obraPontoLonga:[own({id:'long',obraId:'w',funcionarioId:'m',entrada:'08:00',saida:'17:00'})]};
  const tables=[],texts=[],screen={innerHTML:''};let materials=[{artigo:'Material A',cons:1,prev:1,precoUnit:277.96,valorConsumido:277.96},{artigo:'Espelho',cons:1,prev:0,precoUnit:null,valorConsumido:null}];
  const doc={lastAutoTable:{finalY:20},setFontSize(){},setTextColor(){},text(t){texts.push(t)},addPage(){},autoTable(o){tables.push(o);this.lastAutoTable={finalY:(o.startY||20)+20}}};
- const ctx=vm.createContext({dados:data,usuarioLogado:{id:'admin',role:'admin'},document:{getElementById:()=>screen},calcularHoras:(a,b)=>{const h=s=>Number(s.slice(0,2))+Number(s.slice(3))/60;return h(b)-h(a)},_obraMatRows:()=>materials,_finEur:n=>Number(n).toFixed(2)+' €',escapeHtmlSimples:s=>String(s).replace(/</g,'&lt;'),_novoPdf:()=>doc,_pdfArmHeader:()=>20,_hexParaRgb:()=>[0,0,100],_tenantArmazem:()=> 'admin',_moradaCompletaObra:()=> 'Morada',obterNomeFuncionario:id=>id,obterNomeCliente:()=> 'Cliente',_estadoBadgeObra:()=>{},getDataHoje:()=> '2026-10-28',_kmPercorridosObra:()=>0,_tgGuardarPdf:()=>{},_hoje10:()=> '2026-10-28'});
- vm.runInContext(['_horasContabilizadasOSPorPessoa','_custosPessoasHoras','_resumoTempoFolha','_colegasEnvolvidosNaFolha','_formatarTempoTrabalhado','_somarIntervalosPicagem','_horasObraPorFuncionario','_horasContabilizadasObraPorPessoa','totalHorasObra','_custoHoraPessoa','_custosContabilizadosObra','gerarReportFinalObra','_renderizarFinanceiroObra'].map(fn).join('\n'),ctx);
+ const ctx=vm.createContext({dados:data,usuarioLogado:{id:'admin',role:'admin'},_tenantId:()=> 'admin',document:{getElementById:()=>screen},calcularHoras:(a,b)=>{const h=s=>Number(s.slice(0,2))+Number(s.slice(3))/60;return h(b)-h(a)},_obraMatRows:()=>materials,_finEur:n=>Number(n).toFixed(2)+' €',escapeHtmlSimples:s=>String(s).replace(/</g,'&lt;'),_novoPdf:()=>doc,_pdfArmHeader:()=>20,_hexParaRgb:()=>[0,0,100],_tenantArmazem:()=> 'admin',_moradaCompletaObra:()=> 'Morada',obterNomeFuncionario:id=>id,obterNomeCliente:()=> 'Cliente',_estadoBadgeObra:()=>{},getDataHoje:()=> '2026-10-28',_kmPercorridosObra:()=>0,_tgGuardarPdf:()=>{},_hoje10:()=> '2026-10-28'});
+ vm.runInContext(['_horasContabilizadasOSPorPessoa','_custosPessoasHoras','_resumoTempoFolha','_colegasEnvolvidosNaFolha','_formatarTempoTrabalhado','_somarIntervalosPicagem','_horasObraPorFuncionario','_horasContabilizadasObraPorPessoa','totalHorasObra','_custoHoraPessoa','_custosContabilizadosObra','_podeGerirRegisto','gerarReportFinalObra','_renderizarFinanceiroObra'].map(fn).join('\n'),ctx);
  return {ctx,data,tables,screen,texts,setMaterials:x=>materials=x};
 }
 test('historic OS-only and direct sheets yield 42 h 30 min in total, costs and final PDF table, without duplicate clock time',()=>{
@@ -42,4 +42,33 @@ test('foreign tenant time, invalid salaries and unused unpriced materials cannot
 });
 test('client PDFs keep the same hours and never expose salaries, rates, costs or missing-cost warnings',()=>{
  const {ctx,tables,texts}=setup();ctx.gerarReportFinalObra('w',true);const output=JSON.stringify({tables,texts});assert(!/Custo\/hora|Subtotal|Custo em falta|Custo de mão|Ficha da pessoa|62\.93/.test(output));assert.equal(tables.at(-1).body.at(-1)[1],'42 h 30 min');
+});
+
+test('administrative expenses reduce the margin and appear itemised in the internal PDF only', () => {
+ const {ctx, data, setMaterials, tables, screen} = setup();
+ data.obras[0].custoHora = 0;
+ data.funcionarios[0].ordenadoBruto = null;
+ setMaterials([]);
+ const gastos = [{descricao:'Hotel', valor_centimos:12345}, {descricao:'Alimentação', valor_centimos:2055}];
+ const custos = ctx._custosContabilizadosObra('w', [], gastos);
+ assert.equal(custos.totalOutrosGastos, 144);
+ assert.equal(custos.total, 144);
+
+ ctx._renderizarFinanceiroObra('w', gastos);
+ assert.match(screen.innerHTML, /1306.00 €/);
+ ctx.gerarReportFinalObra('w', false, gastos);
+ const linhas = tables.find(t => t.body.some(r => r[0] === 'Valor faturado')).body;
+ assert(linhas.some(([desc, total]) => desc === 'Outros gastos — Hotel' && total === '123.45 €'));
+ assert(linhas.some(([desc, total]) => desc.startsWith('Margem') && total.startsWith('1306.00 €')));
+
+ for (const role of ['funcionario', 'encarregado', 'cliente', 'superadmin']) {
+     ctx.usuarioLogado = {role, adminId:'admin'};
+     tables.length = 0;
+     ctx.gerarReportFinalObra('w', false, gastos);
+     assert.doesNotMatch(JSON.stringify(tables), /Hotel|Alimentação|Outros gastos|Margem/);
+ }
+ ctx.usuarioLogado = {role:'subadmin', id:'sub', adminId:'admin'};
+ tables.length = 0;
+ ctx.gerarReportFinalObra('w', true, gastos);
+ assert.doesNotMatch(JSON.stringify(tables), /Hotel|Alimentação|Outros gastos|Margem/);
 });

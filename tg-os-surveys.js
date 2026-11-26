@@ -124,7 +124,7 @@ function showOSResponse(osId){
 function rowHtml(r){
  const os=(records().servicos||[]).find(x=>String(x.id)===String(r.servico_id));
  const rating=r.avaliacao_geral;const mark=rating===null?'<span class="tg-sat-pill">Pendente</span>':'<span class="tg-sat-pill '+(rating<=2?'bad':'good')+'">'+rating+'/5 · '+label(rating)+'</span>';
- return '<article class="tg-sat-record"><div class="tg-sat-record-head"><strong>OS '+esc(os?.numeroRegisto||r.servico_id)+'</strong>'+mark+'</div><div class="tg-sat-record-meta">'+esc(stamp(os?.data||r.criado_em))+' · Técnico: '+esc(technician(os))+'</div>'+
+ return '<article class="tg-sat-record"><div class="tg-sat-record-head"><strong>OS '+esc(os?.numeroRegisto||r.servico_id||'apagada')+'</strong>'+mark+'</div><div class="tg-sat-record-meta">'+esc(stamp(os?.data||r.criado_em))+' · Técnico: '+esc(technician(os))+'</div>'+
  (r.respondido_em?'<div class="tg-sat-five">'+
  ((Array.isArray(r.formulario_snapshot?.perguntas)&&r.formulario_snapshot.perguntas.length)?r.formulario_snapshot.perguntas:
   [['avaliacao_tecnico','Técnico'],['avaliacao_execucao','Execução'],['avaliacao_pontualidade','Pontualidade'],['avaliacao_limpeza','Limpeza'],['avaliacao_geral','Geral']].map(([id,label])=>({id,label,type:'rating'})))
@@ -290,7 +290,7 @@ async function warnCustomer(id,select){
    '<h3 id="tgSatWarningTitle"><i class="fas fa-triangle-exclamation"></i> Atenção — último inquérito negativo</h3>'+
    '<p id="tgSatWarningBody">O último inquérito preenchido pelo cliente <strong>'+esc(customerName(id))+
    '</strong> foi de caráter negativo (<strong>'+esc(rating)+'/5</strong>).</p>'+
-   '<p>OS '+esc(os?.numeroRegisto||last.servico_id)+' · '+esc(stamp(last.respondido_em))+'</p>'+
+   '<p>OS '+esc(os?.numeroRegisto||last.servico_id||'apagada')+' · '+esc(stamp(last.respondido_em))+'</p>'+
    (last.comentario?'<p>'+esc(last.comentario)+'</p>':'')+
    '<p>Deseja continuar a registar esta ordem de serviço?</p>'+
    '<div class="tg-sat-warning-actions"><button type="button" class="btn btn-outline" data-sat-cancel>Cancelar</button><button type="button" class="btn btn-primary" data-sat-ok>OK — Continuar</button></div></div>';

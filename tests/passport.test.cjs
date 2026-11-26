@@ -124,3 +124,51 @@ test('last completed intervention never uses a future or pending OS; next schedu
  const last=panels.find(p=>p.textContent.includes('ÚLTIMA INTERVENÇÃO CONCLUÍDA'));assert(last.textContent.includes('DONE'));assert(!last.textContent.includes('FUTURE'));
  const next=panels.find(p=>p.textContent.includes('PRÓXIMO SERVIÇO AGENDADO'));assert(next.textContent.includes('FUTURE'));assert(!next.textContent.includes('LATER'));next.querySelector('[data-pp-action="view-os"]').click();assert.equal(w.opened,'future');assert.equal(JSON.stringify(w.dados),before);
 }finally{w.close()}});
+
+test('contracts are listed above documents and uploads are scoped to the selected installation', async () => {
+ const w = setup();
+ try {
+     const uploaded = [];
+     const fileList = [{id:'first', name:'12345678-abcd-abcd-abcd-123456789012_Contrato.pdf'}];
+     w.supa.storage = {from(bucket) {
+         assert.equal(bucket, 'contratos-instalacoes');
+         return {
+             async list(prefix) {
+                 assert.equal(prefix, 'a/c/l');
+                 return {data:fileList};
+             },
+             async upload(path, file, options) {
+                 assert.match(path, /^a\/c\/l\/[a-f\d-]{36}_Manutencao.pdf$/);
+                 assert.equal(options.contentType, 'application/pdf');
+                 uploaded.push(file.name);
+                 return {data:{path}};
+             }
+         };
+     }};
+     w.usuarioLogado = {id:'sub', adminId:'a', role:'subadmin'};
+     await w.TGPassport.open('c', 'l');
+     const headings = Array.from(w.document.querySelectorAll('.tg-passport aside h3'), h => h.textContent);
+     assert(headings.indexOf('Contratos') < headings.indexOf('Documentos e esquemas'));
+     assert(w.document.querySelector('[data-contract-list]').textContent.includes('Contrato.pdf'));
+     const input = w.document.querySelector('[data-pp-contract-files] input');
+     Object.defineProperty(input, 'files', {value:[new w.File(['PDF'], 'Manutenção.pdf', {type:'application/pdf'})]});
+     await input.onchange();
+     assert.deepEqual(uploaded, ['Manutenção.pdf']);
+ } finally { w.close(); }
+});
+
+test('assigned technicians neither see nor fetch contract files or linked contract documents', async () => {
+ const w = setup();
+ try {
+     w.dados.contratos[0].documentoUrl = 'https://example.com/contrato-antigo.pdf';
+     w.dados.contratos[0].documentoNome = 'Contrato confidencial';
+     let calls = 0;
+     w.supa.storage = {from() { calls++; throw Error('Unexpected storage access'); }};
+     w.usuarioLogado = {id:'f', adminId:'a', role:'funcionario'};
+     await w.TGPassport.open('c', 'l');
+     assert.equal(calls, 0);
+     assert(!w.document.querySelector('[data-pp-contract-files]'));
+     assert(!w.document.body.innerHTML.includes('contrato-antigo.pdf'));
+     assert(w.document.body.innerHTML.includes('esquema.pdf'));
+ } finally { w.close(); }
+});
