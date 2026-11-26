@@ -5255,6 +5255,9 @@ function _assistEstado(value) {
             XLSX.writeFile(wb, `clientes_totalgest_${new Date().toISOString().slice(0, 10)}.xlsx`);
         }
 
+        function _numeroClienteValido(numero) {
+            return !numero || /^[0-9]{1,15}$/.test(numero);
+        }
         // Mapa flexível: várias formas comuns de escrever cada cabeçalho (Moloni e genérico) → campo interno
         const _MAPA_COLUNAS_CLIENTE = {
             nome: ['nome', 'name', 'cliente'],
@@ -5307,6 +5310,12 @@ function _assistEstado(value) {
                         const nome = get('nome');
                         if (!nome) { ignorados++; continue; }
                         const nif = get('nif');
+                        const numeroCliente = get('numeroCliente');
+                        if (!_numeroClienteValido(numeroCliente)) {
+                            ignorados++;
+                            resumoErros.push(i + 1);
+                            continue;
+                        }
 
                         // tenta encontrar o cliente já existente: por NIF (mais fiável) ou por nome exato
                         let existente = null;
@@ -5324,7 +5333,7 @@ function _assistEstado(value) {
                             email: get('email') || undefined,
                             telefone: get('telefone') || undefined,
                             pessoaContacto: get('pessoaContacto') || undefined,
-                            numeroCliente: get('numeroCliente') || undefined,
+                            numeroCliente: numeroCliente || undefined,
                         };
                         Object.keys(campos).forEach(k => campos[k] === undefined && delete campos[k]);
 
@@ -5339,7 +5348,7 @@ function _assistEstado(value) {
                         }
                     }
 
-                    if (!confirm(`Pronto a importar:\n- ${novos} cliente(s) novo(s)\n- ${atualizados} cliente(s) atualizado(s) (correspondência por NIF ou nome)\n- ${ignorados} linha(s) ignorada(s) (sem nome)\n\nConfirmar?`)) {
+                    if (!confirm(`Pronto a importar:\n- ${novos} cliente(s) novo(s)\n- ${atualizados} cliente(s) atualizado(s) (correspondência por NIF ou nome)\n- ${ignorados} linha(s) ignorada(s) (sem nome ou código inválido)${resumoErros.length ? '\nCódigo de cliente inválido nas linhas: ' + resumoErros.join(', ') : ''}\n\nConfirmar?`)) {
                         // desfaz as alterações em memória se cancelar
                         return carregarDados().then(() => renderizarTudo());
                     }
@@ -6083,7 +6092,9 @@ function _assistEstado(value) {
             const osLocal = (dados.servicos || []).filter(s => s.clienteId === clienteId && (s.localId || null) === localId && (s.data || '') >= desde).sort((a, b) => (b.data || '').localeCompare(a.data || ''));
             const relLocal = (dados.relatoriosEspecialidade || []).filter(r => r.clienteId === clienteId && (r.localId || null) === localId && !r.rascunho).sort((a, b) => (b.data || '').localeCompare(a.data || ''));
             const nomesRelatorio = { REX: 'Extintores', RBI: 'Bocas de Incêndio', RSI: 'Central de Incêndio', RCM: 'Central de Monóxido', RIE: 'Iluminação de Emergência', RCP: 'Portas Corta-Fogo', RCCTV: 'Videovigilância', RIN: 'Deteção de Intrusão', RDI: 'Declaração de Instalação', TRSI: 'Termo de Responsabilidade SCIE — Instalação', TRSM: 'Termo de Responsabilidade SCIE — Manutenção', RAVAC: 'AVAC', RLIM: 'Limpeza e Desinfeção', RELE: 'Eletricidade' };
-            if (!osLocal.length && !relLocal.length) { painel.innerHTML = '<p class="help-text" style="margin:6px 0 0;">Sem intervenções nem relatórios registados aqui (últimos 12 meses).</p>'; painel.dataset.carregado = '1'; return; }
+            const semHistorico = !osLocal.length && !relLocal.length ? '<p class="help-text">Sem intervenções nem relatórios registados aqui (últimos 12 meses).</p>' : '';
+            const ficheirosContratos = _podeGerirRegisto((dados.clientes || []).find(c => c.id === clienteId))
+                ? '<section class="tg-pp-panel"><h3>Contratos</h3><div data-contratos-instalacao></div></section>' : '';
             // Mesmo estilo de linha da aba "Ordens de Serviço" (título a negrito, data por baixo
             // a cinza) — antes estava tudo numa única linha pequena, inconsistente com o resto.
             const osHtml = osLocal.length ? `
@@ -6108,7 +6119,9 @@ function _assistEstado(value) {
                     </div>
                 </div>`).join('')}
                 </div>` : '';
-            painel.innerHTML = osHtml + relHtml;
+            painel.innerHTML = ficheirosContratos + osHtml + relHtml + semHistorico;
+            const suporteContratos = painel.querySelector('[data-contratos-instalacao]');
+            if (suporteContratos) window.TGPassport?.mountContractFiles(suporteContratos, clienteId, localId || '');
             painel.dataset.carregado = '1';
         }
         // Abre a criação de OS já com este cliente escolhido — poupa o passo de o
@@ -6351,8 +6364,8 @@ function _assistEstado(value) {
                                         ${s.notaCreditoMoloniUrl ? `<a href="${s.notaCreditoMoloniUrl}" target="_blank" class="btn btn-sm btn-outline" title="Abrir o PDF da nota de crédito na Moloni"><i class="fas fa-file-pdf"></i> Nota Créd.</a>` : ''}
                                     ` : ''}
 
-                                    ${usuarioLogado?.role === 'admin' ? `
-                                        <button class="btn btn-sm btn-danger" onclick="excluirEntidade('servico','${s.id}')"><i class="fas fa-trash"></i></button>
+                                    ${_podeGerirRegisto(s) ? `
+                                        <button type="button" class="btn btn-sm btn-danger" title="Apagar OS" aria-label="Apagar OS" onclick="excluirEntidade('servico','${s.id}')"><i class="fas fa-trash"></i></button>
                                     ` : ''}
                                 </div>
                             </td>
@@ -6549,6 +6562,7 @@ function _assistEstado(value) {
                     <button type="button" class="btn btn-sm" id="verOsBtnChecklist" onclick="_verOsMostrar('${osId}','checklist')" style="flex:1;min-width:110px;background:#f1f5f9;color:#334155;"><i class="fas fa-clipboard-check"></i> Checklist</button>
                     <button type="button" class="btn btn-sm" id="verOsBtnFotos" onclick="_verOsMostrar('${osId}','fotos')" style="flex:1;min-width:110px;background:#f1f5f9;color:#334155;"><i class="fas fa-camera"></i> Fotos${(os.fotos || []).length ? ' (' + os.fotos.length + ')' : ''}</button>
                     `}
+                    ${_podeGerirRegisto(os) ? `<button type="button" class="btn btn-sm btn-danger" onclick="excluirEntidade('servico','${os.id}').then(apagada => { if (apagada && this.isConnected) _fecharModalGenerico(); })"><i class="fas fa-trash"></i> Apagar OS</button>` : ''}
                 </div>
                 <div id="verOsConteudo"></div>
             `;
@@ -9001,11 +9015,15 @@ function _assistEstado(value) {
                 const itens = data?.itens || [];
                 const existentesPorNif = new Set((dados.clientes || []).filter(c => c.adminId === admin.id && c.nif).map(c => String(c.nif)));
                 let criados = 0, ignorados = 0;
+                let codigosInvalidos = 0;
                 dados.clientes = dados.clientes || [];
                 itens.forEach(it => {
                     if (it.nif && existentesPorNif.has(String(it.nif))) { ignorados++; return; }
+                    const codigo = String(it.numero ?? '').trim();
+                    const codigoValido = _numeroClienteValido(codigo);
+                    if (!codigoValido) codigosInvalidos++;
                     dados.clientes.push({
-                        id: gerarId(), adminId: admin.id, nome: it.nomeMoloni || 'Cliente Moloni', numeroCliente: it.numero || null,
+                        id: gerarId(), adminId: admin.id, nome: it.nomeMoloni || 'Cliente Moloni', numeroCliente: codigoValido ? (codigo || null) : null,
                         telefone: it.telefone || '', endereco: it.morada || '', morada: it.morada || '', codigoPostal: it.codigoPostal || '',
                         cidade: it.cidade || '', freguesia: '', nif: it.nif || '', pessoaContacto: '', email: it.email || '', portalAtivo: false
                     });
@@ -9014,7 +9032,7 @@ function _assistEstado(value) {
                 });
                 guardarDados(dados);
                 renderizarTudo();
-                alert(`✅ Importação concluída.\n\nNovos clientes criados: ${criados}\nJá existiam (ignorados): ${ignorados}\nTotal recebido da Moloni: ${itens.length}` + (data?.diagnostico ? '\n\nResposta em bruto da Moloni (para diagnóstico): ' + JSON.stringify(data.diagnostico) : ''));
+                alert(`✅ Importação concluída.\n\nNovos clientes criados: ${criados}\nJá existiam (ignorados): ${ignorados}\nTotal recebido da Moloni: ${itens.length}` + (codigosInvalidos ? `\nClientes importados sem código válido: ${codigosInvalidos}` : '') + (data?.diagnostico ? '\n\nResposta em bruto da Moloni (para diagnóstico): ' + JSON.stringify(data.diagnostico) : ''));
             } catch (err) {
                 console.error('importar-moloni (clientes):', err);
                 const motivo = await _erroMoloniDetalhado(err);
@@ -15132,7 +15150,7 @@ function _assistEstado(value) {
         function totalHorasObra(obraId) {
             return Object.values(_horasContabilizadasObraPorPessoa(obraId)).reduce((total, h) => total + h, 0);
         }
-        function _custosContabilizadosObra(obraId, materiais) {
+        function _custosContabilizadosObra(obraId, materiais, gastos = []) {
             const obra = (dados.obras || []).find(o => o.id === obraId);
             if (!obra) return null;
             const dinheiro = n => Math.round((n + Number.EPSILON) * 100) / 100;
@@ -15155,6 +15173,7 @@ function _assistEstado(value) {
             const rows = materiais || _obraMatRows(obraId).filter(x => x.cons > 0 || x.prev > 0);
             const semPreco = rows.filter(x => Number(x.cons) > 0 && !valido(x.precoUnit));
             const subtotalMateriais = dinheiro(rows.reduce((n, x) => n + (valido(x.precoUnit) && Number(x.cons) > 0 ? Number(x.valorConsumido) || 0 : 0), 0));
+            const totalOutrosGastos = gastos.reduce((n, gasto) => n + gasto.valor_centimos, 0) / 100;
             const completo = !semCusto.length && !semPreco.length;
             const avisos = divergencias.map(d => {
                 const pessoa = linhas.find(x => x.id === d.id);
@@ -15163,8 +15182,8 @@ function _assistEstado(value) {
             if (semCusto.length) avisos.push('Custo/hora por definir: ' + semCusto.map(x => x.nome).join(', ') + '.');
             if (semPreco.length) avisos.push('Material sem preço: ' + semPreco.map(x => x.artigo).join(', ') + '.');
             return { linhas, horas: Object.values(mapa).reduce((n, h) => n + h, 0), semCusto, semPreco,
-                subtotalPessoal, subtotalMateriais, maoDeObra: semCusto.length ? null : subtotalPessoal,
-                total: completo ? dinheiro(subtotalPessoal + subtotalMateriais) : null, completo, avisos };
+                subtotalPessoal, subtotalMateriais, totalOutrosGastos, maoDeObra: semCusto.length ? null : subtotalPessoal,
+                total: completo ? dinheiro(subtotalPessoal + subtotalMateriais + totalOutrosGastos) : null, completo, avisos };
         }
         function _obraLongaPontoAberto(obraId) {
             if (!usuarioLogado) return null;
@@ -15211,12 +15230,16 @@ function _assistEstado(value) {
             obra.dataConclusao = getDataHoje();
             guardarDados(dados);
             renderizarTudo();
-            gerarReportFinalObra(obraId);
-            alert('Obra finalizada ✓ Relatório final gerado.');
+            _descarregarRelatorioObra(obraId).then(gerado => {
+                alert(gerado ? 'Obra finalizada ✓ Relatório final gerado.' : 'Obra finalizada ✓');
+            });
         }
         // Pequeno popup para escolher qual dos dois relatórios gerar — o interno (com
         // financeiro e custos) ou o do cliente (só o trabalho realizado, sem valores).
         function _obraEscolherRelatorio(obraId) {
+            const obra = (dados.obras || []).find(o => o.id === obraId);
+            if (!obra || obra.adminId !== _tenantId()) return;
+            if (!_podeGerirRegisto(obra)) return _descarregarRelatorioObra(obraId, true);
             const wrap = document.createElement('div');
             wrap.id = 'obraRelatorioEscolhaOverlay';
             wrap.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:100000;display:flex;align-items:center;justify-content:center;padding:16px;';
@@ -15224,17 +15247,31 @@ function _assistEstado(value) {
                 <div style="background:#fff;border-radius:16px;padding:22px;max-width:340px;width:100%;">
                     <div style="font-weight:800;font-size:1.05rem;margin-bottom:4px;"><i class="fas fa-file-lines" style="color:#0f766e;"></i> Relatório da Obra</div>
                     <div class="help-text" style="margin-bottom:16px;">Qual versão precisas?</div>
-                    <button type="button" class="btn" style="width:100%;margin-bottom:8px;background:#f1f5f9;" onclick="document.getElementById('obraRelatorioEscolhaOverlay').remove(); gerarReportFinalObra('${obraId}', false);"><i class="fas fa-lock"></i> Interno (com custos e margens)</button>
-                    <button type="button" class="btn btn-primary" style="width:100%;margin-bottom:8px;" onclick="document.getElementById('obraRelatorioEscolhaOverlay').remove(); gerarReportFinalObra('${obraId}', true);"><i class="fas fa-user-tie"></i> Para o Cliente (sem valores)</button>
+                    <button type="button" class="btn" style="width:100%;margin-bottom:8px;background:#f1f5f9;" onclick="document.getElementById('obraRelatorioEscolhaOverlay').remove(); _descarregarRelatorioObra('${obraId}', false);"><i class="fas fa-lock"></i> Interno (com custos e margens)</button>
+                    <button type="button" class="btn btn-primary" style="width:100%;margin-bottom:8px;" onclick="document.getElementById('obraRelatorioEscolhaOverlay').remove(); _descarregarRelatorioObra('${obraId}', true);"><i class="fas fa-user-tie"></i> Para o Cliente (sem valores)</button>
                     <button type="button" class="btn" style="width:100%;background:#f1f5f9;" onclick="document.getElementById('obraRelatorioEscolhaOverlay').remove();">Cancelar</button>
                 </div>
             `;
             document.body.appendChild(wrap);
         }
-        function gerarReportFinalObra(obraId, paraCliente) {
+        async function _descarregarRelatorioObra(obraId, paraCliente) {
+            const obra = (dados.obras || []).find(o => o.id === obraId);
+            if (!obra || obra.adminId !== _tenantId()) return;
+            const interno = !paraCliente && _podeGerirRegisto(obra);
+            try {
+                const gastos = interno ? await _buscarOutrosGastosObra(obra) : [];
+                if (obra.adminId !== _tenantId() || (interno && !_podeGerirRegisto(obra))) return;
+                return gerarReportFinalObra(obraId, !interno, gastos);
+            } catch (err) {
+                tgAlert('Não foi possível gerar o relatório interno. ' + (err?.message || ''), { tipo: 'erro' });
+            }
+        }
+        function gerarReportFinalObra(obraId, paraCliente, gastos = []) {
             const obra = (dados.obras || []).find(o => o.id === obraId); if (!obra) return;
+            paraCliente = paraCliente || !_podeGerirRegisto(obra);
+            if (paraCliente) gastos = [];
             const matRows = _obraMatRows(obraId).filter(r => r.cons > 0 || r.prev > 0);
-            const custos = _custosContabilizadosObra(obraId, matRows);
+            const custos = _custosContabilizadosObra(obraId, matRows, gastos);
             const totalMateriais = custos.subtotalMateriais;
             const horas = custos.horas;
             const doc = _novoPdf(false); if (!doc) return;
@@ -15312,7 +15349,7 @@ function _assistEstado(value) {
                 y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y) + 10;
             }
 
-            if ((usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin') && !paraCliente) {
+            if (!paraCliente) {
                 const valorFaturado = obra.valor != null ? Number(obra.valor) : (dados.servicos || []).filter(s => s.obraId === obraId).reduce((s, x) => s + (Number(x.valor) || 0), 0);
                 const custoMaoDeObra = custos.maoDeObra;
                 const custoTotal = custos.total;
@@ -15323,8 +15360,10 @@ function _assistEstado(value) {
                     ['Base do custo de mão de obra', 'Por pessoa; custo/hora da obra como alternativa'],
                     [custoMaoDeObra != null ? 'Custo de mão de obra (horas × custo/hora por pessoa)' : 'Subtotal de mão de obra — incompleto', _finEur(custos.subtotalPessoal)],
                     [custos.semPreco.length ? 'Subtotal de materiais — incompleto' : 'Custo de materiais consumidos', _finEur(totalMateriais)],
+                    ...gastos.map(gasto => ['Outros gastos — ' + gasto.descricao, _finEur(gasto.valor_centimos / 100)]),
+                    ['Total de outros gastos', _finEur(custos.totalOutrosGastos)],
                     ['Km percorridos (equipa)', _kmPercorridosObra(obraId).toLocaleString('pt-PT') + ' km'],
-                    ['Custo total da obra (mão de obra + materiais)', custoTotal != null ? _finEur(custoTotal) : 'Total incompleto — faltam custos']
+                    ['Custo total da obra', custoTotal != null ? _finEur(custoTotal) : 'Total incompleto — faltam custos']
                 ];
                 custos.avisos.forEach(aviso => linhasFin.push(['Aviso de apuramento', aviso]));
                 linhasFin.push(['Valores de referência', 'Custos/hora e preços atualmente definidos nas fichas.']);
@@ -15341,7 +15380,7 @@ function _assistEstado(value) {
                 y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y) + 10;
             }
 
-            if ((usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin') && !paraCliente) {
+            if (!paraCliente) {
                 if (linhasTempo.length) {
                     if (y > 240) { doc.addPage(); y = 20; }
                     doc.setFontSize(12); doc.setTextColor(_corRel[0], _corRel[1], _corRel[2]); doc.text('Horas e custo por pessoa (uso interno)', 14, y); y += 4;
@@ -15369,7 +15408,7 @@ function _assistEstado(value) {
             });
             y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y) + 10;
 
-            if ((usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin') && !paraCliente && matRows.length) {
+            if (!paraCliente && matRows.length) {
                 if (y > 240) { doc.addPage(); y = 20; }
                 doc.setFontSize(12); doc.setTextColor(_corRel[0], _corRel[1], _corRel[2]); doc.text('Custo de materiais (uso interno)', 14, y); y += 4;
                 const linhasMat = matRows.map(r => [
@@ -15410,6 +15449,7 @@ function _assistEstado(value) {
             }
 
             _tgGuardarPdf(doc, `relatorio_${paraCliente ? 'cliente' : 'interno'}_obra_${(obra.nome || 'obra').replace(/[^a-z0-9]+/gi, '_')}_${_hoje10()}.pdf`);
+            return true;
         }
         let _picandoEntradaObraLonga = false;
         async function obraLongaPicarEntrada(obraId) {
@@ -16532,6 +16572,7 @@ function _assistEstado(value) {
                     <button type="button" class="btn btn-sm" id="verObraBtnFolhas" onclick="_verObraMostrar('${obraId}','folhas')" style="flex:1;min-width:100px;background:#0ea5e9;color:#fff;"><i class="fas fa-clipboard-list"></i> Folhas de obra</button>
                     <button type="button" class="btn btn-sm" id="verObraBtnMateriais" onclick="_verObraMostrar('${obraId}','materiais')" style="flex:1;min-width:100px;background:#f1f5f9;color:#334155;"><i class="fas fa-boxes-stacked"></i> Materiais</button>
                     <button type="button" class="btn btn-sm" id="verObraBtnDocumentos" onclick="_verObraMostrar('${obraId}','documentos')" style="flex:1;min-width:100px;background:#f1f5f9;color:#334155;"><i class="fas fa-folder-open"></i> Documentos</button>
+                    ${_podeGerirRegisto(obra) ? `<button type="button" class="btn btn-sm" id="verObraBtnGastos" onclick="_verObraMostrar('${obraId}','gastos')" style="flex:1;min-width:100px;background:#f1f5f9;color:#334155;"><i class="fas fa-receipt"></i> Outros gastos</button>` : ''}
                     ${_obraAutosMedicaoDisponiveis(obra) ? `<button type="button" class="btn btn-sm" id="verObraBtnAutos" onclick="_verObraMostrar('${obraId}','autos')" style="flex:1;min-width:100px;background:#f1f5f9;color:#334155;"><i class="fas fa-file-invoice-dollar"></i> Auto de Medição</button>` : ''}
                     ${(obrasAvancadoAtivo(dados.administradores?.find(a => a.id === obra.adminId)) && (usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin')) ? `<button type="button" class="btn btn-sm" id="verObraBtnFinanceiro" onclick="_verObraMostrar('${obraId}','financeiro')" style="flex:1;min-width:100px;background:#f1f5f9;color:#334155;"><i class="fas fa-sack-dollar"></i> Financeiro</button>` : ''}
                     ${obrasAvancadoAtivo(dados.administradores?.find(a => a.id === obra.adminId)) ? `<button type="button" class="btn btn-sm" id="verObraBtnMarcos" onclick="_verObraMostrar('${obraId}','marcos')" style="flex:1;min-width:100px;background:#f1f5f9;color:#334155;"><i class="fas fa-list-check"></i> Marcos</button>` : ''}
@@ -16611,18 +16652,22 @@ function _assistEstado(value) {
             const btnDocumentos = document.getElementById('verObraBtnDocumentos');
             const btnAutos = document.getElementById('verObraBtnAutos');
             const btnFinanceiro = document.getElementById('verObraBtnFinanceiro');
+            const btnGastos = document.getElementById('verObraBtnGastos');
             const btnMarcos = document.getElementById('verObraBtnMarcos');
             const btnChecklist = document.getElementById('verObraBtnChecklist');
-            [['folhas', btnFolhas], ['materiais', btnMateriais], ['documentos', btnDocumentos], ['autos', btnAutos], ['financeiro', btnFinanceiro], ['marcos', btnMarcos], ['checklist', btnChecklist]].forEach(([chave, btn]) => {
+            [['folhas', btnFolhas], ['materiais', btnMateriais], ['documentos', btnDocumentos], ['autos', btnAutos], ['financeiro', btnFinanceiro], ['gastos', btnGastos], ['marcos', btnMarcos], ['checklist', btnChecklist]].forEach(([chave, btn]) => {
                 if (!btn) return;
                 btn.style.background = aba === chave ? '#0ea5e9' : '#f1f5f9';
                 btn.style.color = aba === chave ? '#fff' : '#334155';
             });
             if (aba === 'checklist') { if (!obrasAvancadoAtivo(dados.administradores?.find(a => a.id === obra.adminId))) { aba = 'folhas'; } else { _renderizarChecklistObra(obraId); return; } }
             if (aba === 'marcos') { if (!obrasAvancadoAtivo(dados.administradores?.find(a => a.id === obra.adminId))) { aba = 'folhas'; } else { _renderizarMarcosObra(obraId); return; } }
-            if (aba === 'financeiro') {
-                if (!(usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin') || !obrasAvancadoAtivo(dados.administradores?.find(a => a.id === obra.adminId))) { aba = 'folhas'; }
-                else { _renderizarFinanceiroObra(obraId); return; }
+            if (aba === 'financeiro' || aba === 'gastos') {
+                if (_podeGerirRegisto(obra) && (aba === 'gastos' || obrasAvancadoAtivo(dados.administradores?.find(a => a.id === obra.adminId)))) {
+                    _abrirCustosObra(obra, cont, aba);
+                    return;
+                }
+                aba = 'folhas';
             }
             if (aba === 'materiais') {
                 if (obra.adminId !== _tenantId()) { cont.replaceChildren(); return; }
@@ -17088,12 +17133,133 @@ function _assistEstado(value) {
         // Painel financeiro da obra (só admin/subadmin) — mesma lógica de custos e margem já usada
         // na exportação em PDF do relatório de obra, mas aqui visível diretamente no ecrã, sem
         // ser preciso gerar/abrir um PDF só para ver se a obra está a dar lucro.
-        function _renderizarFinanceiroObra(obraId) {
-            const obra = (dados.obras || []).find(o => o.id === obraId); if (!obra) return;
+        async function _buscarOutrosGastosObra(obra) {
+            if (!_podeGerirRegisto(obra)) throw new Error('Sem acesso aos gastos desta obra.');
+            const query = supa.from('obra_outros_gastos').select('id,descricao,valor_centimos')
+                .eq('admin_id', obra.adminId).eq('obra_id', obra.id).order('criado_em').order('id');
+            const { data, error } = await _buscarPaginadoGenerico(query);
+            if (error) throw error;
+            return data;
+        }
+        async function _abrirCustosObra(obra, cont, aba) {
+            cont.innerHTML = '<p role="status">A carregar os gastos da obra…</p>';
+            const loading = cont.firstElementChild;
+            try {
+                const gastos = await _buscarOutrosGastosObra(obra);
+                if (!loading.isConnected || !_podeGerirRegisto(obra)) return;
+                if (aba === 'gastos') _renderizarOutrosGastosObra(obra, cont, gastos);
+                else _renderizarFinanceiroObra(obra.id, gastos);
+            } catch (err) {
+                if (!loading.isConnected) return;
+                loading.textContent = 'Não foi possível carregar os gastos da obra. ';
+                const retry = document.createElement('button');
+                retry.type = 'button';
+                retry.className = 'btn btn-sm btn-outline';
+                retry.textContent = 'Tentar novamente';
+                retry.onclick = () => _abrirCustosObra(obra, cont, aba);
+                loading.appendChild(retry);
+            }
+        }
+        function _renderizarOutrosGastosObra(obra, cont, gastos) {
+            if (!_podeGerirRegisto(obra)) return;
+            const total = gastos.reduce((soma, g) => soma + g.valor_centimos, 0) / 100;
+            cont.innerHTML = `
+                <section>
+                    <h3>Outros gastos</h3>
+                    <p><strong>Total:</strong> ${_finEur(total)}</p>
+                    ${gastos.length ? `<div class="table-wrapper"><table><thead><tr><th>Descrição</th><th>Valor</th><th>Ações</th></tr></thead><tbody>
+                        ${gastos.map(g => `<tr><td>${escapeHtmlSimples(g.descricao)}</td><td>${_finEur(g.valor_centimos / 100)}</td><td><button type="button" class="btn btn-sm btn-outline" data-editar-gasto="${g.id}">Editar</button> <button type="button" class="btn btn-sm btn-danger" data-apagar-gasto="${g.id}">Apagar</button></td></tr>`).join('')}
+                    </tbody></table></div>` : '<p class="help-text">Ainda sem gastos registados.</p>'}
+                    <div data-gasto-form>
+                        <div class="form-group"><label for="obra-gasto-descricao">Descrição</label><input id="obra-gasto-descricao" placeholder="Ex.: hotel ou alimentação" maxlength="200" required></div>
+                        <div class="form-group"><label for="obra-gasto-valor">Valor (€)</label><input id="obra-gasto-valor" inputmode="decimal" maxlength="10" placeholder="0,00" required></div>
+                        <button type="button" class="btn btn-primary" data-guardar-gasto>Adicionar gasto</button>
+                        <button type="button" class="btn btn-outline" data-cancelar-gasto hidden>Cancelar edição</button>
+                    </div>
+                    <p data-gasto-estado role="status"></p>
+                </section>`;
+            const panel = cont.firstElementChild;
+            const descricao = panel.querySelector('#obra-gasto-descricao');
+            const valor = panel.querySelector('#obra-gasto-valor');
+            const guardar = panel.querySelector('[data-guardar-gasto]');
+            const cancelar = panel.querySelector('[data-cancelar-gasto]');
+            const estado = panel.querySelector('[data-gasto-estado]');
+            let emEdicao = null;
+            let novoGastoId = null;
+            let ocupado = false;
+            const mudarEdicao = gasto => {
+                emEdicao = gasto?.id || null;
+                descricao.value = gasto?.descricao || '';
+                valor.value = gasto ? (gasto.valor_centimos / 100).toFixed(2).replace('.', ',') : '';
+                guardar.textContent = gasto ? 'Guardar alterações' : 'Adicionar gasto';
+                cancelar.hidden = !gasto;
+            };
+            const gravar = async (operacao, id, campos) => {
+                if (ocupado || !panel.isConnected || !_podeGerirRegisto(obra)) return;
+                ocupado = true;
+                guardar.disabled = true;
+                estado.textContent = 'A guardar…';
+                try {
+                    const tabela = supa.from('obra_outros_gastos');
+                    if (operacao === 'adicionar') {
+                        const row = { id, admin_id: obra.adminId, obra_id: obra.id, ...campos };
+                        const { error } = await tabela.upsert(row, { onConflict: 'id', ignoreDuplicates: true });
+                        if (error) throw error;
+                    } else {
+                        const query = operacao === 'editar' ? tabela.update(campos) : tabela.delete();
+                        const { error } = await query.eq('admin_id', obra.adminId).eq('obra_id', obra.id).eq('id', id)
+                            .select('id').single();
+                        if (error) throw error;
+                    }
+                    if (panel.isConnected) _abrirCustosObra(obra, cont, 'gastos');
+                } catch (err) {
+                    estado.textContent = 'Não foi possível guardar a alteração. Tenta novamente.';
+                    ocupado = false;
+                    guardar.disabled = false;
+                }
+            };
+            guardar.onclick = () => {
+                const valorTexto = valor.value.trim();
+                const centimos = Math.round(Number(valorTexto.replace(',', '.')) * 100);
+                if (!descricao.value.trim() || !/^\d{1,7}([,.]\d{1,2})?$/.test(valorTexto) || centimos <= 0) {
+                    estado.textContent = 'Indica uma descrição e um valor positivo com até duas casas decimais.';
+                    return;
+                }
+                if (!emEdicao) novoGastoId ||= crypto.randomUUID();
+                gravar(emEdicao ? 'editar' : 'adicionar', emEdicao || novoGastoId, { descricao: descricao.value.trim(), valor_centimos: centimos });
+            };
+            [descricao, valor].forEach(input => {
+                input.onkeydown = event => {
+                    if (event.key === 'Enter') {
+                        event.preventDefault();
+                        guardar.click();
+                    }
+                };
+            });
+            cancelar.onclick = () => { if (!ocupado) mudarEdicao(null); };
+            panel.querySelectorAll('[data-editar-gasto]').forEach(btn => {
+                btn.onclick = () => {
+                    if (!ocupado) {
+                        mudarEdicao(gastos.find(g => g.id === btn.dataset.editarGasto));
+                        descricao.focus();
+                    }
+                };
+            });
+            panel.querySelectorAll('[data-apagar-gasto]').forEach(btn => {
+                btn.onclick = async () => {
+                    if (!ocupado && await tgConfirm('Apagar este gasto da obra?', { textoOk: 'Apagar gasto' })) {
+                        gravar('apagar', btn.dataset.apagarGasto);
+                    }
+                };
+            });
+        }
+        function _renderizarFinanceiroObra(obraId, gastos = []) {
+            const obra = (dados.obras || []).find(o => o.id === obraId);
+            if (!_podeGerirRegisto(obra)) return;
             const cont = document.getElementById('verObraConteudo');
             if (!cont) return;
             const matRows = _obraMatRows(obraId).filter(r => r.cons > 0 || r.prev > 0);
-            const custos = _custosContabilizadosObra(obraId, matRows);
+            const custos = _custosContabilizadosObra(obraId, matRows, gastos);
             const totalMateriais = custos.subtotalMateriais;
             const horas = custos.horas;
             const valorFaturado = obra.valor != null ? Number(obra.valor) : (dados.servicos || []).filter(s => s.obraId === obraId).reduce((s, x) => s + (Number(x.valor) || 0), 0);
@@ -17128,6 +17294,7 @@ function _assistEstado(value) {
                         <tr><td style="padding:4px 0;color:#64748b;">Total de horas trabalhadas</td><td style="padding:4px 0;text-align:right;font-weight:600;">${_formatarTempoTrabalhado(horas)}</td></tr>
                         <tr><td style="padding:4px 0;color:#64748b;">Custo/hora da obra (alternativa)</td><td style="padding:4px 0;text-align:right;font-weight:600;">${obra.custoHora != null ? _finEur(obra.custoHora) + '/h' : '—'}</td></tr>
                         <tr><td style="padding:4px 0;color:#64748b;">Km percorridos (equipa)</td><td style="padding:4px 0;text-align:right;font-weight:600;color:#0ea5e9;">${_kmPercorridosObra(obraId).toLocaleString('pt-PT')} km</td></tr>
+                        <tr><td style="padding:4px 0;color:#64748b;"><button type="button" class="btn btn-sm btn-outline" onclick="_verObraMostrar('${obraId}','gastos')">Outros gastos</button></td><td style="padding:4px 0;text-align:right;font-weight:600;">${_finEur(custos.totalOutrosGastos)}</td></tr>
                         <tr><td style="padding:4px 0;color:#64748b;">Custo total da obra</td><td style="padding:4px 0;text-align:right;font-weight:600;">${custoTotal != null ? _finEur(custoTotal) : 'Total incompleto — faltam custos'}</td></tr>
                     </tbody>
                 </table>
@@ -26579,7 +26746,7 @@ async function salvarAdmin(e) {
                         <div class="ff-secao ff-tint-id">
                             <div class="ff-secao-head"><i class="fas fa-location-dot"></i> Morada</div>
                             <div class="ff-secao-body">
-                                <div class="form-group ff-span2"><label>Número de cliente</label><input type="text" id="c_numero_cliente" value="${item ? (item.numeroCliente||'') : ''}" maxlength="9" inputmode="numeric" pattern="[0-9]*" placeholder="Até 9 dígitos" /></div>
+                                <div class="form-group ff-span2"><label>Número de cliente</label><input type="text" id="c_numero_cliente" value="${escapeHtmlSimples(item?.numeroCliente || '')}" maxlength="15" inputmode="numeric" pattern="[0-9]{1,15}" placeholder="Até 15 dígitos" /></div>
                                 <div class="form-group ff-span2"><label>Morada</label><input type="text" id="c_morada" value="${item ? (item.morada||item.endereco||'') : ''}" autocomplete="off" /></div>
                                 <div class="form-group"><label>Número de porta</label><input type="text" id="c_numero_porta" value="${item ? (item.numeroPorta||'') : ''}" placeholder="ex.: 3, 3A, Lote 2" /></div>
                                 <div class="form-group"><label>Código Postal</label><input type="text" id="c_cp" value="${item ? (item.codigoPostal||'') : ''}" placeholder="0000-000" autocomplete="off" oninput="aplicarMascaraCP(this); _cttPreencherPorCP(this.value,{cidade:'c_cidade',freguesia:'c_freguesia',morada:'c_morada'})" maxlength="8" /></div>
@@ -28271,8 +28438,8 @@ async function salvarAdmin(e) {
                     }
                 }
                 if (!obj.nome) obj.nome = 'Cliente ' + obj.nif;
-                if (obj.numeroCliente && !/^\d{1,9}$/.test(obj.numeroCliente)) {
-                    alert('O número de cliente deve ter só dígitos, até 9 no máximo.');
+                if (!_numeroClienteValido(obj.numeroCliente)) {
+                    alert('O número de cliente deve ter até 15 dígitos.');
                     return;
                 }
                 if (obj.portalAtivo && obj.nif === _NIF_CONSUMIDOR_FINAL) {
@@ -28894,7 +29061,55 @@ async function salvarAdmin(e) {
             return limpo + (empresaCurta ? '.' + empresaCurta : '') + '@clientes.totalgest.pt';
         }
 
+        function _podeGerirRegisto(registo) {
+            return !!registo && ['admin', 'subadmin'].includes(usuarioLogado?.role) && registo.adminId === _tenantId();
+        }
+        async function _apagarOSGestao(os) {
+            if (!_podeGerirRegisto(os)) return;
+            if (!await tgConfirm('Apagar esta ordem de serviço? As folhas, os relatórios e as picagens associados à OS também serão apagados.', { textoOk: 'Apagar OS' })) return;
+            const tentativa = _syncChain.then(async () => {
+                if (!_podeGerirRegisto(os)) return;
+                const { data: apagada, error } = await supa.rpc('tg_apagar_ordem_servico', { p_os_id: os.id });
+                if (error || !apagada) throw error || new Error('A ordem de serviço já não está disponível.');
+                if (!_podeGerirRegisto(os)) return;
+                dados.servicos = dados.servicos.filter(r => r.id !== os.id);
+                _snap.servicos?.delete(os.id);
+                for (const col of ['folhasObra', 'relatoriosEspecialidade', 'ponto']) {
+                    dados[col] = (dados[col] || []).filter(r => {
+                        if (r.adminId !== os.adminId || r.servicoId !== os.id) return true;
+                        _snap[col]?.delete(r.id);
+                        return false;
+                    });
+                }
+                (dados.assistencias || []).forEach(a => {
+                    if (a.adminId !== os.adminId || a.osGeradaId !== os.id) return;
+                    a.osGeradaId = null;
+                    const snap = _snap.assistencias?.get(a.id);
+                    if (snap) _snap.assistencias.set(a.id, JSON.stringify({ ...JSON.parse(snap), os_gerada_id: null }));
+                });
+                (dados.requisicoes || []).forEach(r => {
+                    if (r.adminId !== os.adminId || r.servicoId !== os.id) return;
+                    r.servicoId = null;
+                    const snap = _snap.requisicoes?.get(r.id);
+                    if (snap) _snap.requisicoes.set(r.id, JSON.stringify({ ...JSON.parse(snap), servico_id: null }));
+                });
+                _guardarCacheLocal();
+                return true;
+            });
+            _syncChain = tentativa.catch(() => {});
+            try {
+                if (!await tentativa || !_podeGerirRegisto(os)) return;
+                registarAuditoria('eliminar', 'servico', os.id, '');
+                renderizarTudo();
+                return true;
+            } catch (err) {
+                tgAlert('Não foi possível apagar a OS. ' + (err?.message || ''), { tipo: 'erro' });
+            }
+        }
         async function excluirEntidade(entidade, id) {
+            if (entidade === 'servico' && ['admin', 'subadmin'].includes(usuarioLogado?.role)) {
+                return _apagarOSGestao((dados.servicos || []).find(os => os.id === id));
+            }
             if (usuarioLogado?.role === 'superadmin') {
                 alert('O Super Admin não pode excluir estas entidades.');
                 return;
@@ -33418,7 +33633,7 @@ window._relPrefill = function(msg){
             _obraLongaRegistarSaida(_obraIdSaida);
             if (_terminouObra) {
                 alert('Obra "' + (obra ? obra.nome : '') + '" marcada como Concluída ✓ A gerar relatório final...');
-                gerarReportFinalObra(_obraIdSaida);
+                _descarregarRelatorioObra(_obraIdSaida);
             } else {
                 alert('Folha de obra guardada ✓ A obra "' + (obra ? obra.nome : '') + '" ficou em Stand By.');
             }

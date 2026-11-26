@@ -6,8 +6,8 @@ function setup(){
  w.usuarioLogado={id:'a',role:'admin'};w.state={};w._dashCentralFiltroOS=null;w._servicosCarregadoDesde='2026-07-28';
  w.dados={servicos:['pendente','em andamento','stand by','por aprovar','concluído','concluido','cancelado'].map((status,i)=>({id:String(i),numeroRegisto:'OS-'+i,status,adminId:'a',funcionarioId:'f',descricao:'Trabalho '+i,data:'2026-10-28',hora:'09:00'})),funcionarios:[{id:'f',adminId:'a'}]};
  w.dados.servicos.push({id:'foreign',numeroRegisto:'OUTRA',status:'pendente',adminId:'b'});
- Object.assign(w,{_getTableState:()=>w.state,_toolbarHtml:()=>'',_tiposEspecialidadePendentes:()=>[],obterNomeCliente:()=> 'Cliente',obterNomeFuncionario:()=> 'Técnico',statusBadge:()=>'',escapeHtmlSimples:s=>s,_osTemMateriais:()=>false,_tiposTrabalhoBadgesHTML:()=>'',getDataHoje:()=> '2026-10-28'});
- w.eval("let _servicosEstadoFiltro='todos',_servicosEstadoConta='';"+['_servicosGrupoEstado','servicosFiltrarEstado','_servicosContadores','_aplicarFiltroOrdenacao','renderizarServicos'].map(fn).join('\n'));
+ Object.assign(w,{_tenantId:()=>w.usuarioLogado?.adminId || w.usuarioLogado?.id,_getTableState:()=>w.state,_toolbarHtml:()=>'',_tiposEspecialidadePendentes:()=>[],obterNomeCliente:()=> 'Cliente',obterNomeFuncionario:()=> 'Técnico',statusBadge:()=>'',escapeHtmlSimples:s=>s,_osTemMateriais:()=>false,_tiposTrabalhoBadgesHTML:()=>'',getDataHoje:()=> '2026-10-28'});
+ w.eval("let _servicosEstadoFiltro='todos',_servicosEstadoConta='';"+['_servicosGrupoEstado','servicosFiltrarEstado','_servicosContadores','_aplicarFiltroOrdenacao','_podeGerirRegisto','renderizarServicos'].map(fn).join('\n'));
  w.renderizarServicos();return w;
 }
 const count=(w,state)=>Number(w.document.querySelector(`[data-servicos-estado="${state}"] strong`).textContent);
@@ -45,4 +45,20 @@ test('multiple OS open a native chooser and the chosen OS opens directly for sch
  const w=setup();try{w.eval(fs.readFileSync('tg-unsuccessful-visits.js','utf8'));failedVisit(w,0);failedVisit(w,1);w.renderizarServicos();w.servicosFiltrarEstado('reagendar');assert.equal(count(w,'reagendar'),2);assert.deepEqual(rows(w).sort(),['OS-0','OS-1']);assert.equal(w.document.getElementById('modalGenericoTitulo').textContent,'OS por reagendar');
  const form=w.document.getElementById('modalGenericoForm');form.elements.os.value='1';form.dispatchEvent(new w.Event('submit',{cancelable:true}));assert.equal(w.document.getElementById('modalGenericoTitulo').textContent,'Agendar visita');assert.match(form.textContent,/OS OS-1/);assert.equal(w.document.querySelectorAll('.modal-overlay.open').length,1);
  }finally{w.close();}
+});
+
+test('the OS list offers deletion to tenant admins and subadmins only', () => {
+ const w = setup();
+ try {
+     const countButtons = () => w.document.querySelectorAll('#tabelaServicos button[aria-label="Apagar OS"]').length;
+     assert.equal(countButtons(), 7);
+     w.usuarioLogado = {id:'sub', adminId:'a', role:'subadmin'};
+     w.renderizarServicos();
+     assert.equal(countButtons(), 7);
+     for (const role of ['funcionario', 'encarregado']) {
+         w.usuarioLogado = {id:'f', adminId:'a', role};
+         w.renderizarServicos();
+         assert.equal(countButtons(), 0);
+     }
+ } finally { w.close(); }
 });

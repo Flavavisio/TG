@@ -10,3 +10,9 @@
  #tgPassportOverlay .tg-pp-modal{height:calc(100dvh - 112px)!important;max-height:calc(100dvh - 112px)!important;min-height:0;border-radius:18px}
  #tgPassportOverlay .tg-pp-modal>.close-modal{position:sticky;top:0;float:right;width:46px;height:46px;min-width:46px;min-height:46px;display:flex;align-items:center;justify-content:center;margin:-4px -4px 0 8px;border-radius:12px;z-index:5}
 }
+
+.tg-pp-contract-file { flex-wrap: wrap; }
+.tg-pp-contract-file span { min-width: 0; overflow-wrap: anywhere; white-space: normal; }
+@media (max-width: 480px) {
+    .tg-pp-contract-file span { flex-basis: 100%; }
+}
