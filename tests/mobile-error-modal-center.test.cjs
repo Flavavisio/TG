@@ -32,7 +32,7 @@ test('erro longo mantém scroll interno e altura automática e respeita safe are
  assert.match(styles.slice(i-650,i+700),/safe-area-inset-top/);
 });
 test('PWA distribui CSS corrigido no login, index e cache offline',()=>{
- const ver='styles.css?v=20261113-modal-erro-centrado';
+ const ver=index.match(/styles\.css\?v=[\w.-]+/)?.[0];assert(ver);
  for(const [file,source] of [['index',index],['login',login],['sw',sw]])assert(source.includes(ver),file);
- assert(sw.includes("totalgest-release-20261113-modal-erro-center"));
+ assert.match(sw,/totalgest-release-\d{8}-[\w-]+/);
 });

@@ -13,7 +13,7 @@ for (const width of [390, 1440]) {
     for (const role of ['admin', 'encarregado', 'subadmin']) {
         context.usuarioLogado={id:role==='admin'?'a':'staff',adminId:'a',role};
         context.dados.administradores[0].layout=null;
-        assert.equal(vm.runInContext('obterLayout()',context),'aurora');
+        assert.equal(vm.runInContext('obterLayout()',context),role==='encarregado'&&width<=900?'cards':'aurora');
         context.dados.administradores[0].layout='sidebar';
         assert.equal(vm.runInContext('obterLayout()',context),width<=900?'cards':'sidebar');
     }
@@ -30,7 +30,7 @@ for (const width of [390, 1440]) {
 for (const file of ['index.html', 'login.html']) {
     const setup=new JSDOM(fs.readFileSync(file,'utf8'),{url:'https://totalgest.test/',runScripts:'outside-only'});
     const x=setup.window, admin={id:'a',layout:null};
-    x.adminAtual=()=>admin; x.dados={administradores:[admin]};
+    x.usuarioLogado={id:'a',role:'admin'}; x.adminAtual=()=>admin; x.dados={administradores:[admin]};
     x.guardarDados=()=>{}; x.renderizarTudo=()=>{}; x._tourJaVisto=()=>true;
     x.eval("let _onbLayout='aurora', _onbLogo=null;\n" + ['abrirOnboarding','onbEscolherLayout','_numeroJaUsado','onbConcluir'].map(fn).join('\n'));
     for (const skip of [false,true]) {

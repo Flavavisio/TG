@@ -5467,6 +5467,7 @@ function _assistEstado(value) {
             const overlay = document.getElementById('wsClienteOverlay');
             overlay?.classList.remove('open');
             if (overlay) overlay.dataset.clienteAtual = ''; // força a refazer a "casca" na próxima vez que abrir (dados podem ter mudado entretanto)
+            window._wsPedidoAba = null;
             window._wsVoltarCliente = null; // fechou de propósito (X) — não reabrir
         }
         // Sai do workspace para abrir outro modal (editar local, contrato, ver OS...) e fica a
@@ -5474,11 +5475,13 @@ function _assistEstado(value) {
         // aba. Assim editar algo não te atira de volta para a lista de Clientes.
         function _wsSairPara(clienteId) {
             document.getElementById('wsClienteOverlay')?.classList.remove('open');
-            window._wsVoltarCliente = { id: clienteId, aba: window._wsAbaAtual || 'resumo' };
+            window._wsPedidoAba = null;
+            window._wsVoltarCliente = { id: clienteId, aba: window._wsAbaAtual || 'resumo',
+                scroll: document.getElementById('wsClienteConteudo')?.scrollTop || 0 };
         }
         function _wsTentarVoltar() {
             if (!window._wsVoltarCliente) return;
-            setTimeout(() => {
+            setTimeout(async () => {
                 const alvo = window._wsVoltarCliente;
                 if (!alvo) return;
                 // Só reabre quando já não há NENHUM outro modal aberto — se o fecho foi cancelado
@@ -5489,7 +5492,11 @@ function _assistEstado(value) {
                 const overlay = document.getElementById('wsClienteOverlay');
                 if (!overlay || !dados.clientes?.some(c => c.id === alvo.id)) return;
                 overlay.classList.add('open');
-                _wsClienteAba(alvo.id, alvo.aba);
+                const carregamento = _wsClienteAba(alvo.id, alvo.aba);
+                const pedido = window._wsPedidoAba;
+                await carregamento;
+                const conteudo = document.getElementById('wsClienteConteudo');
+                if (conteudo && pedido === window._wsPedidoAba) conteudo.scrollTop = alvo.scroll;
             }, 350);
         }
         async function _wsClienteAba(clienteId, aba) {
@@ -5511,6 +5518,8 @@ function _assistEstado(value) {
             const cliente = dados.clientes?.find(c => c.id === clienteId);
             const overlay = document.getElementById('wsClienteOverlay');
             if (!cliente || !overlay) return;
+            const pedido = window._wsPedidoAba = Symbol();
+
             // A "casca" do modal (cabeçalho, ações rápidas, barra de separadores) só se constrói
             // de novo se for mesmo um cliente diferente do que já lá estava — trocar de separador
             // no MESMO cliente só troca o conteúdo lá dentro. Antes reconstruía tudo sempre,
@@ -5546,19 +5555,21 @@ function _assistEstado(value) {
             const barraAbas = document.getElementById('wsClienteAbas');
             if (barraAbas) barraAbas.innerHTML = abasVisiveis.map(a => `<button class="ws-cliente-aba-btn ${a === aba ? 'active' : ''}" onclick="_wsClienteAba('${clienteId}','${a}')">${WS_CLIENTE_ABAS_LABEL[a]}</button>`).join('');
             const conteudo = document.getElementById('wsClienteConteudo');
-            if (aba === 'resumo') conteudo.innerHTML = await _wsResumoHtml(clienteId);
+            const mostrar = html => { if (window._wsPedidoAba === pedido) conteudo.innerHTML = html; };
+            if (['resumo', 'os', 'financeiro'].includes(aba)) mostrar('<p role="status">A carregar…</p>');
+            if (aba === 'resumo') mostrar(await _wsResumoHtml(clienteId));
             else if (aba === 'historico') await window.TGClientHistory.show(clienteId);
             else if (aba === 'locais') {
                 if (moduloPassaporteAtivo(admin) && window.TGPassport) await window.TGPassport.show(clienteId);
                 else conteudo.innerHTML = _wsLocaisHtml(clienteId);
             }
-            else if (aba === 'os') conteudo.innerHTML = await _wsOsHtml(clienteId);
+            else if (aba === 'os') mostrar(await _wsOsHtml(clienteId));
             else if (aba === 'obras') conteudo.innerHTML = _wsObrasHtml(clienteId);
             else if (aba === 'contratos') conteudo.innerHTML = _wsContratosHtml(clienteId);
             else if (aba === 'relatorios') conteudo.innerHTML = _wsRelatoriosHtml(clienteId);
             else if (aba === 'assistencias') conteudo.innerHTML = _wsAssistenciasHtml(clienteId);
             else if (aba === 'equipamentos') conteudo.innerHTML = _wsEquipamentosHtml(clienteId);
-            else if (aba === 'financeiro') conteudo.innerHTML = await _wsFinanceiroHtml(clienteId);
+            else if (aba === 'financeiro') mostrar(await _wsFinanceiroHtml(clienteId));
             else conteudo.innerHTML = `<p class="help-text">Este separador ainda não está pronto nesta primeira fase do workspace — por agora, usa "${WS_CLIENTE_ABAS_LABEL[aba]}" no menu principal, já filtrando por este cliente se precisares.</p>`;
         }
         // Financeiro por cliente — usa o valor e o estado de pagamento já registados em cada OS
@@ -5570,7 +5581,9 @@ function _assistEstado(value) {
             await _pagoTogglarOS(osId);
             const conteudo = document.getElementById('wsClienteConteudo');
             if (conteudo && document.getElementById('wsClienteOverlay')?.classList.contains('open')) {
-                conteudo.innerHTML = await _wsFinanceiroHtml(clienteId);
+                if (window._wsAbaAtual === 'financeiro' && document.getElementById('wsClienteOverlay').dataset.clienteAtual === clienteId) {
+                    await _wsClienteAba(clienteId, 'financeiro');
+                }
             }
         }
         async function _wsFinanceiroHtml(clienteId) {

@@ -2,6 +2,7 @@ const {test}=require('node:test'),assert=require('node:assert/strict'),fs=requir
 const source=fs.readFileSync('tg-unsuccessful-visits.js','utf8');
 function setup(){
  const w=new JSDOM('<button id="origin">Origem</button>',{runScripts:'outside-only',url:'https://example.invalid'}).window;
+ const NativeDate=w.Date;w.Date=class extends NativeDate{constructor(...args){super(...(args.length?args:['2026-11-05T12:00:00']));}};
  w.usuarioLogado={id:'e',adminId:'a',role:'funcionario',nome:'Técnico'};
  w.dados={servicos:[{id:'os',adminId:'a',numeroRegisto:'125',status:'em andamento',data:'2026-11-05',hora:'10:00',descricao:'Manutenção',funcionariosIds:['e'],checklist:{check:true}}],ponto:[{id:'p',adminId:'a',servicoId:'os',funcionarioId:'e',data:'2026-11-05',entrada:'09:00:00',saida:null}],funcionarios:[{id:'e',adminId:'a',nome:'Técnico'}],encarregados:[],administradores:[{id:'a',nome:'Admin'}]};
  w.alerts=[];w.alert=s=>w.alerts.push(s);w.renderizarTudo=()=>{};w.renderizarAgendaObras=()=>{};w.saved=[];w.guardarDados=async()=>{if(w.fail)throw Error('Servidor indisponível');w.saved.push(JSON.parse(JSON.stringify(w.dados)));};w._guardarCacheLocal=()=>{w.cache=JSON.parse(JSON.stringify(w.dados));};w._notificarAdminESubadmin=()=>{w.notified=true;};w.getDataHoje=()=> '2026-11-05';w.tgConfirm=async()=>true;w.eval(source);return w;

@@ -34,6 +34,7 @@ function setup() {
     ${['_wsClienteAba','_wsClienteFechar','_wsSairPara','_wsTentarVoltar'].map(name=>source.match(new RegExp('        (?:async )?function '+name+'\\([^]*?\\n        \\}'))[0]).join('\n')}
   `,context);
   vm.runInContext(fs.readFileSync(path.join(root,'navegacao-clientes.js'),'utf8'),context);
+  context.window.TGClientHistory = {show: async () => { elements.get('wsClienteConteudo').innerHTML = 'HISTÓRICO'; }};
   return {context,elements,run:code=>vm.runInContext(code,context)};
 }
 test('sidebar has six areas, excludes hidden cards, delegates original gates',()=>{
@@ -50,14 +51,14 @@ test('reports are isolated by client, category and escaped',async()=>{
  let html=await run("_tgClienteDocumentos('c1','documentos')");assert.match(html,/R1/);assert.doesNotMatch(html,/SECRET|CUSTOM1|<script>/);
  html=await run("_tgClienteDocumentos('c1','personalizados')");assert.match(html,/CUSTOM1/);assert.doesNotMatch(html,/SECRET|R1/);
 });
-test('main tabs and nested tabs respect existing module flags',async()=>{
+test('the current workspace tabs respect existing module flags',async()=>{
  const {run,elements}=setup();await run("_wsClienteAba('c1','assistencias')");assert.match(elements.get('wsClienteConteudo').innerHTML,/ASSISTENCIAS/);
- assert.match(elements.get('wsClienteSubAbas').innerHTML,/Manutenções/);
+ assert.match(elements.get('wsClienteAbas').innerHTML,/Contratos/);
  run('flags.assist=false;flags.contratos=false;flags.obras=false');await run("_wsClienteAba('c1','assistencias')");assert.equal(elements.get('wsClienteConteudo').innerHTML,'RESUMO');assert.doesNotMatch(elements.get('wsClienteAbas').innerHTML,/>Obras<|>Contratos</);
 });
 test('a stale request cannot replace a more recently selected tab',async()=>{
- const {run,elements}=setup();const first=run("_wsOsHtml=()=>new Promise(r=>window.resolveOS=r);_wsClienteAba('c1','os')");await run("_wsClienteAba('c1','registos')");run("window.resolveOS('STALE')");await first;assert.match(elements.get('wsClienteConteudo').innerHTML,/RP1/);assert.doesNotMatch(elements.get('wsClienteConteudo').innerHTML,/STALE/);
+ const {run,elements}=setup();const first=run("_wsOsHtml=()=>new Promise(r=>window.resolveOS=r);_wsClienteAba('c1','os')");await run("_wsClienteAba('c1','historico')");run("window.resolveOS('STALE')");await first;assert.match(elements.get('wsClienteConteudo').innerHTML,/HISTÓRICO/);assert.doesNotMatch(elements.get('wsClienteConteudo').innerHTML,/STALE/);
 });
 test('return from form retains tab and scroll; explicit close cancels return',async()=>{
- const {run,elements}=setup();await run("_wsClienteAba('c1','personalizados')");elements.get('wsClienteConteudo').scrollTop=180;run("_wsSairPara('c1')");assert.equal(run('window._wsVoltarCliente.aba'),'personalizados');run('_wsTentarVoltar()');await new Promise(r=>setTimeout(r,380));assert(elements.get('wsClienteOverlay').classList.contains('open'));assert.equal(elements.get('wsClienteConteudo').scrollTop,180);run('_wsClienteFechar()');assert.equal(run('window._wsVoltarCliente'),null);
+ const {run,elements}=setup();await run("_wsClienteAba('c1','contratos')");elements.get('wsClienteConteudo').scrollTop=180;run("_wsSairPara('c1')");assert.equal(run('window._wsVoltarCliente.aba'),'contratos');elements.get('wsClienteConteudo').scrollTop=0;run('_wsTentarVoltar()');await new Promise(r=>setTimeout(r,380));assert(elements.get('wsClienteOverlay').classList.contains('open'));assert.equal(elements.get('wsClienteConteudo').scrollTop,180);run('_wsClienteFechar()');assert.equal(run('window._wsVoltarCliente'),null);
 });
