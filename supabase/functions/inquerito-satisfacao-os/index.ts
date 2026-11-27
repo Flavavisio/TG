@@ -43,10 +43,22 @@ Deno.serve(async(req:Request)=>{
   else{const raw=await req.text();if(raw.length>15000)return response({error:'Formulário demasiado extenso'},413);body=JSON.parse(raw);token=String(body.token||'');}
  }catch{return response({error:'Pedido inválido'},400);}
  if(!valid(token))return response({error:'Ligação inválida'},404);
- const {data:survey,error}=await db.from('inqueritos_satisfacao_os').select('id,admin_id,cliente_id,servico_id,expira_em,respondido_em,formulario_snapshot').eq('token',token).maybeSingle();
+ const {data:survey,error}=await db.from('inqueritos_satisfacao_os').select('id,admin_id,cliente_id,servico_id,obra_id,expira_em,respondido_em,formulario_snapshot').eq('token',token).maybeSingle();
  if(error)return response({error:'Não foi possível consultar o inquérito'},503);
  if(!survey)return response({error:'Inquérito não encontrado'},404);
  if(new Date(survey.expira_em).getTime()<Date.now())return response({error:'Este inquérito expirou'},410);
+ const isWork=!!survey.obra_id;
+ const interventionId=isWork?survey.obra_id:survey.servico_id;
+ if(!interventionId)return response({error:'Intervenção não encontrada'},404);
+ const intervention=await (isWork
+  ? db.from('obras').select('id,referencia:nome,estado,tecnico_id:responsavel_id,data:data_conclusao,descricao:observacoes,local_id')
+  : db.from('servicos').select('id,referencia:numero_registo,estado:status,tecnico_id:funcionario_id,data,descricao,local_id'))
+  .eq('id',interventionId).eq('admin_id',survey.admin_id).eq('cliente_id',survey.cliente_id).maybeSingle();
+ if(intervention.error)return response({error:'Não foi possível consultar a intervenção'},503);
+ const item=intervention.data;
+ if(!item||!(isWork?['concluida','concluída']:['concluído','concluido']).includes(item.estado)){
+  return response({error:'O inquérito fica disponível após a conclusão da intervenção'},410);
+ }
  const snapshot=form(survey.formulario_snapshot);
  if(req.method==='POST'){
   if(survey.respondido_em)return response({error:'Este inquérito já foi respondido'},409);
@@ -66,27 +78,27 @@ Deno.serve(async(req:Request)=>{
   const comment=String(body.comentario||'').trim();if(comment.length>3000)return response({error:'Comentário demasiado longo'},400);
   const values=Object.fromEntries(defaultQuestions.map(f=>[f.id,body[f.id]]));
   const {data:changed,error:saveError}=await db.from('inqueritos_satisfacao_os').update({...values,respostas_personalizadas:clean,comentario:comment,respondido_em:new Date().toISOString()}).eq('id',survey.id).is('respondido_em',null).select('id').maybeSingle();
+  if(saveError?.code==='23514')return response({error:'O inquérito já não está disponível'},410);
   if(saveError)return response({error:'Não foi possível guardar a resposta'},503);
   if(!changed)return response({error:'Este inquérito já foi respondido'},409);
   return response({ok:true});
  }
  if(survey.respondido_em)return response({respondido:true});
- const [cl,os,admin]=await Promise.all([
+ const [cl,admin]=await Promise.all([
   db.from('clientes').select('id,nome').eq('id',survey.cliente_id).eq('admin_id',survey.admin_id).maybeSingle(),
-  db.from('servicos').select('id,numero_registo,cliente_id,admin_id,funcionario_id,data,descricao,local_id').eq('id',survey.servico_id).eq('admin_id',survey.admin_id).maybeSingle(),
   db.from('administradores').select('empresa,logo').eq('id',survey.admin_id).maybeSingle()
  ]);
- if(cl.error||os.error||!cl.data||!os.data||os.data.cliente_id!==cl.data.id)return response({error:'Serviço não encontrado'},404);
+ if(cl.error||!cl.data)return response({error:'Cliente não encontrado'},404);
  let tecnico='';
- if(os.data.funcionario_id){
-  const t=await db.from('funcionarios').select('nome').eq('id',os.data.funcionario_id).eq('admin_id',survey.admin_id).maybeSingle();
+ if(item.tecnico_id){
+  const t=await db.from('funcionarios').select('nome').eq('id',item.tecnico_id).eq('admin_id',survey.admin_id).maybeSingle();
   tecnico=t.data?.nome||'';
  }
  let instalacao='';
- if(os.data.local_id){
-  const l=await db.from('locais').select('nome').eq('id',os.data.local_id).eq('admin_id',survey.admin_id).eq('cliente_id',survey.cliente_id).maybeSingle();
+ if(item.local_id){
+  const l=await db.from('locais').select('nome').eq('id',item.local_id).eq('admin_id',survey.admin_id).eq('cliente_id',survey.cliente_id).maybeSingle();
   instalacao=l.data?.nome||'';
  }
- return response({ok:true,cliente:cl.data.nome||'',instalacao,os:os.data.numero_registo||'',data:os.data.data||'',tecnico,descricao:os.data.descricao||'',
+ return response({ok:true,cliente:cl.data.nome||'',instalacao,os:isWork?'':item.referencia||'',obra:isWork?item.referencia||'':'',data:item.data||'',tecnico,descricao:item.descricao||'',
   formulario:snapshot,empresa:admin.data?.empresa||'',logo:safeLogo(admin.data?.logo)});
 });

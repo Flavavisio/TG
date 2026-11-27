@@ -10,7 +10,17 @@ const yes=()=>tenant()&&typeof supa!=='undefined'&&!!supa?.from;
 const base=location.origin+location.pathname.replace(/[^/]*$/,'')+'inquerito-satisfacao.html?token=';
 const label=n=>Number(n)<=2?'Insatisfeito':Number(n)===3?'Neutro':'Satisfeito';
 const stamp=v=>v?new Date(v).toLocaleDateString('pt-PT'):'—';
-let cache={owner:'',at:0,items:[]},activeOS='',warned='';
+let cache={owner:'',at:0,items:[]},warned='';
+const targets={
+ os:{collection:'servicos',column:'servico_id',complete:item=>['concluído','concluido'].includes(item.status)&&!item.apagadoSuperAdmin},
+ obra:{collection:'obras',column:'obra_id',complete:item=>['concluída','concluida'].includes(item.estado)}
+};
+function completed(kind,id){
+ const config=targets[kind],owner=tenant();
+ if(!config||!owner)return null;
+ const item=(records()[config.collection]||[]).find(x=>String(x.id)===String(id)&&String(x.adminId)===owner);
+ return item?.clienteId&&config.complete(item)?item:null;
+}
 async function fetchRows(force=false){
  const t=tenant();if(!yes())return [];
  if(!force&&cache.owner===t&&Date.now()-cache.at<20000)return cache.items;
@@ -22,109 +32,131 @@ function surveyUrl(row){return base+encodeURIComponent(row.token);}
 function uuidToken(){
  const bytes=new Uint8Array(32);crypto.getRandomValues(bytes);return Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');
 }
-async function linkForOS(osId){
+async function linkFor(kind,id){
  if(!yes())throw Error('Não tem permissões para gerar o link.');
- const os=(records().servicos||[]).find(x=>String(x.id)===String(osId)&&String(x.adminId)===tenant());
- if(!os||!os.clienteId)throw Error('OS ou cliente não encontrado.');
- const existing=(await fetchRows()).find(r=>String(r.servico_id)===String(os.id));
+ const item=completed(kind,id), owner=tenant();
+ if(!item)throw Error('O inquérito fica disponível após concluir a intervenção.');
+ const field=targets[kind].column;
+ const matching=rows=>rows.find(r=>r[field]!=null&&String(r[field])===String(item.id));
+ const existing=matching(await fetchRows());
+ if(tenant()!==owner||!completed(kind,id))throw Error('A intervenção deixou de estar concluída ou a sessão mudou.');
  if(existing){
-  if(new Date(existing.expira_em).getTime()<Date.now())throw Error('O link desta OS expirou. É necessário criar um novo inquérito.');
+  if(new Date(existing.expira_em).getTime()<Date.now())throw Error('O link deste inquérito expirou.');
   return existing;
  }
  const snapshot=await window.TGSurveyConfig?.snapshot();
  if(!snapshot)throw Error('Não foi possível carregar a configuração do inquérito.');
- const payload={admin_id:tenant(),servico_id:os.id,cliente_id:os.clienteId,token:uuidToken(),formulario_snapshot:snapshot};
+ if(tenant()!==owner||!completed(kind,id))throw Error('A intervenção deixou de estar concluída ou a sessão mudou.');
+ const payload={admin_id:owner,[field]:item.id,cliente_id:item.clienteId,token:uuidToken(),formulario_snapshot:snapshot};
  const {data,error}=await supa.from('inqueritos_satisfacao_os').insert(payload).select('*').single();
  if(error){
-   const rows=await fetchRows(true);const other=rows.find(r=>String(r.servico_id)===String(os.id));
-   if(other)return other;
-   throw Error(error.message||'Não foi possível gerar o link.');
+  const other=matching(await fetchRows(true));if(other&&tenant()===owner&&completed(kind,id))return other;
+  throw Error(error.message||'Não foi possível gerar o link.');
  }
  cache.at=0;return data;
 }
-function shareDialog(link){
+const linkForOS=id=>linkFor('os',id);
+function shareDialog(link,valid){
  document.getElementById('tgSurveyShare')?.remove();
  const overlay=document.createElement('div');overlay.id='tgSurveyShare';overlay.className='tg-sat-warning';
- overlay.innerHTML='<div class="tg-sat-warning-card" role="dialog" aria-modal="true" aria-label="Enviar inquérito"><h3 style="color:#183b69"><i class="fas fa-star"></i> Enviar inquérito ao cliente</h3><p>Copie o link ou abra o WhatsApp para enviar o inquérito relativo a esta OS.</p><label for="tgSurveyLink">Ligação do inquérito</label><input id="tgSurveyLink" style="width:100%;padding:10px;border:1px solid #cad5e4;border-radius:8px;margin:8px 0" readonly><div style="display:flex;gap:9px;flex-wrap:wrap"><button type="button" class="btn btn-outline" data-share-copy>Copiar link</button><button type="button" class="btn btn-success" data-share-whatsapp>WhatsApp</button><button type="button" class="btn" data-share-close>Fechar</button></div></div>';
+ overlay.innerHTML='<div class="tg-sat-warning-card" role="dialog" aria-modal="true" aria-label="Enviar inquérito"><h3 style="color:#183b69"><i class="fas fa-star"></i> Enviar inquérito ao cliente</h3><p>Copie o link ou abra o WhatsApp para enviar o inquérito relativo a esta intervenção.</p><label for="tgSurveyLink">Ligação do inquérito</label><input id="tgSurveyLink" style="width:100%;padding:10px;border:1px solid #cad5e4;border-radius:8px;margin:8px 0" readonly><div style="display:flex;gap:9px;flex-wrap:wrap"><button type="button" class="btn btn-outline" data-share-copy>Copiar link</button><button type="button" class="btn btn-success" data-share-whatsapp>WhatsApp</button><button type="button" class="btn" data-share-close>Fechar</button></div></div>';
  document.body.append(overlay);const input=overlay.querySelector('#tgSurveyLink');input.value=link;
  overlay.querySelector('[data-share-close]').addEventListener('click',()=>overlay.remove());
  overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove();});
  overlay.querySelector('[data-share-copy]').addEventListener('click',async()=>{
+  if(!valid())return overlay.remove();
   try{if(navigator.clipboard?.writeText)await navigator.clipboard.writeText(link);else{input.select();if(!document.execCommand('copy'))throw Error('Cópia indisponível');}toast('Link copiado.');}
   catch(e){input.focus();input.select();toast('Selecione e copie o link apresentado.',true);}
  });
  overlay.querySelector('[data-share-whatsapp]').addEventListener('click',()=>{
+  if(!valid())return overlay.remove();
   const message='Obrigado pela sua confiança. Agradecemos a sua avaliação do serviço realizado: '+link;
   window.open('https://wa.me/?text='+encodeURIComponent(message),'_blank','noopener,noreferrer');
  });
  input.focus();input.select();
 }
-async function copyLink(osId){
- const button=document.querySelector('[data-sat-os-button]');
+async function copyInterventionLink(kind,id,button){
+ const owner=tenant();
+ const valid=()=>tenant()===owner&&!!completed(kind,id)&&(!button||button.isConnected&&button.getClientRects().length>0);
  if(button)button.disabled=true;
- try{const row=await linkForOS(osId);shareDialog(surveyUrl(row));}
+ try{const row=await linkFor(kind,id);if(valid())shareDialog(surveyUrl(row),valid);}
  catch(e){toast(e.message||'Erro ao gerar link.',true);}
  finally{if(button)button.disabled=false;}
 }
+const copyLink=id=>copyInterventionLink('os',id);
 function toast(message,error=false){
  let node=document.getElementById('tg-survey-toast');if(!node){node=document.createElement('div');node.id='tg-survey-toast';document.body.append(node);}
  node.textContent=message;node.className=error?'tg-survey-toast is-error':'tg-survey-toast';node.hidden=false;
  clearTimeout(window.__tgSurveyToastTimer);window.__tgSurveyToastTimer=setTimeout(()=>node.hidden=true,6500);
 }
-function mountOS(osId){
- if(!yes())return;
- const os=(records().servicos||[]).find(x=>String(x.id)===String(osId)&&String(x.adminId)===tenant());if(!os)return;
- const target=[...document.querySelectorAll('#modalGenericoOverlay.modal-veros,.modal-overlay.open,.modal.open,[role="dialog"][open],[role="dialog"].open,.ws-os-overlay.open,.tgm-modal.open')].filter(x=>x.offsetWidth>0||x.getClientRects().length).at(-1);
- if(!target)return;
- let host=target.querySelector('[data-survey-os-action]');
- if(host?.dataset.osId===String(osId))return;
- if(!host){host=document.createElement('div');host.className='tg-survey-actions';host.dataset.surveyOsAction='';(target.querySelector('#verOsConteudo,#modalGenericoCampos,.modal-content,.modal-body,.modal-card,.tgm-modal-content')||target).append(host);}
- host.dataset.osId=String(osId);
- host.innerHTML='<strong><i class="fas fa-star"></i> Inquérito de satisfação</strong><p>Envie um link personalizado ao cliente após a intervenção.</p><button type="button" class="btn btn-outline" data-sat-os-button>Enviar inquérito</button><button type="button" class="btn btn-outline" data-sat-view-response disabled>Ver resposta</button><small data-sat-os-state>Inquérito respondido: Não</small>';
- host.querySelector('[data-sat-os-button]').addEventListener('click',()=>copyLink(osId));
- host.querySelector('[data-sat-view-response]').addEventListener('click',()=>showOSResponse(osId));
- fetchRows(true).then(rows=>{
-  if(!host.isConnected||host.dataset.osId!==String(osId))return;
-  const row=rows.find(r=>String(r.servico_id)===String(osId));
-  const answered=!!row?.respondido_em;
-  host.querySelector('[data-sat-os-state]').textContent='Inquérito respondido: '+(answered?'Sim':'Não');
-  host.querySelector('[data-sat-view-response]').disabled=!answered;
-  host.querySelector('[data-sat-os-button]').disabled=answered;
-  host.querySelector('[data-sat-os-button]').textContent=answered?'Já respondido':'Enviar inquérito';
- }).catch(()=>{if(host.isConnected)host.querySelector('[data-sat-os-state]').textContent='Não foi possível consultar o estado';});
+function mount(kind,id,container){
+ if(!container)return;
+ const host=document.createElement('div');
+ host.dataset.surveyIntervention=kind;
+ host.dataset.surveyId=String(id);
+ host.className='tg-survey-actions';
+ host.hidden=true;
+ container.append(host);
+ refreshIntervention(host);
 }
-function installOS(){
- if(typeof window.abrirVerOS!=='function'||window.abrirVerOS.__surveyWrapped)return;
- const original=window.abrirVerOS;
- const wrapped=function(...args){const answer=original.apply(this,args);activeOS=String(args[0]||'');setTimeout(()=>mountOS(activeOS),180);return answer;};
- wrapped.__surveyWrapped=true;window.abrirVerOS=wrapped;
+function refreshIntervention(host){
+ const kind=host.dataset.surveyIntervention,id=host.dataset.surveyId,owner=tenant();
+ if(!yes()||!completed(kind,id)){
+  host.hidden=true;
+  host.replaceChildren();
+  return;
+ }
+ host.hidden=false;
+ if(host.firstChild&&host.dataset.surveyOwner===owner)return;
+ host.dataset.surveyOwner=owner;
+ host.innerHTML='<strong><i class="fas fa-star"></i> Inquérito de satisfação</strong><p>Envie um link personalizado ao cliente.</p><button type="button" class="btn btn-outline" data-sat-os-button>Enviar inquérito</button><button type="button" class="btn btn-outline" data-sat-view-response disabled>Ver resposta</button><small data-sat-os-state>A consultar o estado…</small>';
+ const send=host.querySelector('[data-sat-os-button]');
+ const reply=host.querySelector('[data-sat-view-response]');
+ const status=host.querySelector('[data-sat-os-state]');
+ send.addEventListener('click',()=>copyInterventionLink(kind,id,send));
+ reply.addEventListener('click',()=>showResponse(kind,id));
+ fetchRows(true).then(rows=>{
+  if(!send.isConnected||tenant()!==owner||!completed(kind,id))return;
+  const field=targets[kind].column;
+  const row=rows.find(r=>r[field]!=null&&String(r[field])===id);
+  const answered=!!row?.respondido_em;
+  status.textContent='Inquérito respondido: '+(answered?'Sim':'Não');
+  reply.disabled=!answered;
+  send.disabled=answered;
+  send.textContent=answered?'Já respondido':'Enviar inquérito';
+ }).catch(()=>{if(status.isConnected)status.textContent='Não foi possível consultar o estado';});
 }
 function customerName(id){return (records().clientes||[]).find(x=>String(x.id)===String(id)&&String(x.adminId)===tenant())?.nome||'Cliente';}
 function rowsForCustomer(rows,id){return rows.filter(r=>String(r.cliente_id)===String(id));}
 function technician(os){return (records().funcionarios||[]).find(p=>p.id===os?.funcionarioId)?.nome||(records().encarregados||[]).find(p=>p.id===os?.funcionarioId)?.nome||'—';}
-function showOSResponse(osId){
- if(!tenant())return;
- const os=(records().servicos||[]).find(x=>String(x.id)===String(osId)&&String(x.adminId)===tenant());
- if(!os)return;
+function showResponse(kind,id){
+ const owner=tenant(),item=completed(kind,id);
+ if(!item)return;
+ const title=kind==='obra'?'Obra '+item.nome:'OS '+(item.numeroRegisto||item.id);
  const overlay=document.createElement('div');overlay.className='tg-sat-warning';overlay.id='tgOsSurveyResponse';
  const frame=document.createElement('div');frame.className='tg-sat-warning-card tg-sat-response-dialog';
  frame.setAttribute('role','dialog');frame.setAttribute('aria-modal','true');frame.setAttribute('aria-label','Resposta ao inquérito da OS');
- frame.innerHTML='<h3 style="color:#173b68"><i class="fas fa-star"></i> Inquérito da OS '+esc(os.numeroRegisto||os.id)+'</h3><div data-os-survey-response><p>A carregar resposta do cliente…</p></div><button type="button" class="btn btn-outline" data-os-survey-close>Fechar</button>';
+ frame.innerHTML='<h3 style="color:#173b68"><i class="fas fa-star"></i> Inquérito · '+esc(title)+'</h3><div data-os-survey-response><p>A carregar resposta do cliente…</p></div><button type="button" class="btn btn-outline" data-os-survey-close>Fechar</button>';
  overlay.append(frame);document.getElementById('tgOsSurveyResponse')?.remove();document.body.append(overlay);
  const close=()=>overlay.remove();
  frame.querySelector('[data-os-survey-close]').addEventListener('click',close);
  overlay.addEventListener('click',e=>{if(e.target===overlay)close();});
  fetchRows(true).then(rows=>{
   if(!overlay.isConnected)return;
-  const row=rows.find(r=>String(r.servico_id)===String(os.id));
+  if(tenant()!==owner||!completed(kind,id))return close();
+  const field=targets[kind].column;
+  const row=rows.find(r=>r[field]!=null&&String(r[field])===String(id));
   const target=frame.querySelector('[data-os-survey-response]');
   target.innerHTML=row?.respondido_em?rowHtml(row):'<p>O inquérito ainda não foi respondido.</p>';
  }).catch(()=>{if(overlay.isConnected)frame.querySelector('[data-os-survey-response]').textContent='Não foi possível carregar a resposta.';});
 }
+const showOSResponse=id=>showResponse('os',id);
 function rowHtml(r){
  const os=(records().servicos||[]).find(x=>String(x.id)===String(r.servico_id));
+ const obra=r.obra_id&&(records().obras||[]).find(x=>String(x.id)===String(r.obra_id)&&String(x.adminId)===tenant());
+ const title=r.obra_id?'Obra '+(obra?.nome||r.obra_id):'OS '+(os?.numeroRegisto||r.servico_id||'apagada');
  const rating=r.avaliacao_geral;const mark=rating===null?'<span class="tg-sat-pill">Pendente</span>':'<span class="tg-sat-pill '+(rating<=2?'bad':'good')+'">'+rating+'/5 · '+label(rating)+'</span>';
- return '<article class="tg-sat-record"><div class="tg-sat-record-head"><strong>OS '+esc(os?.numeroRegisto||r.servico_id||'apagada')+'</strong>'+mark+'</div><div class="tg-sat-record-meta">'+esc(stamp(os?.data||r.criado_em))+' · Técnico: '+esc(technician(os))+'</div>'+
+ return '<article class="tg-sat-record"><div class="tg-sat-record-head"><strong>'+esc(title)+'</strong>'+mark+'</div><div class="tg-sat-record-meta">'+esc(stamp(os?.data||r.criado_em))+' · Técnico: '+esc(technician(os))+'</div>'+
  (r.respondido_em?'<div class="tg-sat-five">'+
  ((Array.isArray(r.formulario_snapshot?.perguntas)&&r.formulario_snapshot.perguntas.length)?r.formulario_snapshot.perguntas:
   [['avaliacao_tecnico','Técnico'],['avaliacao_execucao','Execução'],['avaliacao_pontualidade','Pontualidade'],['avaliacao_limpeza','Limpeza'],['avaliacao_geral','Geral']].map(([id,label])=>({id,label,type:'rating'})))
@@ -140,7 +172,7 @@ async function openCustomer(id){
   if(!container.isConnected||document.getElementById('wsClienteOverlay')?.dataset.clienteAtual!==id)return;
   const rated=rows.filter(x=>x.respondido_em);const negatives=rated.filter(x=>x.avaliacao_geral<=2);
   container.innerHTML='<section class="tg-sat-client"><header><div><small>FICHA DO CLIENTE</small><h2>Satisfação</h2><p>'+esc(customerName(id))+'</p></div><span>'+rated.length+' avaliações · '+negatives.length+' negativas</span></header>'+
-  (rows.length?rows.map(rowHtml).join(''):'<p>Este cliente ainda não tem inquéritos de satisfação associados a OS.</p>')+'</section>';
+  (rows.length?rows.map(rowHtml).join(''):'<p>Este cliente ainda não tem inquéritos de satisfação associados a intervenções.</p>')+'</section>';
  }catch(e){container.innerHTML='<p class="tg-sat-error">Não foi possível consultar a satisfação. '+esc(e.message)+'</p>';}
 }
 let tabObservedOverlay=null;
@@ -192,7 +224,7 @@ async function expandSurveyDashboard(){
  panel.className='tg-os-survey-modal-panel';
  panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','true');
  panel.setAttribute('aria-label','Detalhes de satisfação dos inquéritos');
- panel.innerHTML='<header><div><small>INQUÉRITOS DAS ORDENS DE SERVIÇO</small><h2>Satisfação dos Inquéritos</h2><p>Classificações de cada pergunta, exclusivamente de inquéritos respondidos por link.</p></div><button type="button" data-survey-modal-close aria-label="Fechar">✕</button></header><div data-survey-modal-content> A carregar avaliações… </div>';
+ panel.innerHTML='<header><div><small>INQUÉRITOS DE OS E OBRAS</small><h2>Satisfação dos Inquéritos</h2><p>Classificações de cada pergunta, exclusivamente de inquéritos respondidos por link.</p></div><button type="button" data-survey-modal-close aria-label="Fechar">✕</button></header><div data-survey-modal-content> A carregar avaliações… </div>';
  overlay.append(panel);document.body.append(overlay);
  const close=()=>{document.removeEventListener('keydown',escape);overlay.remove();};
  panel.querySelector('[data-survey-modal-close]').addEventListener('click',close);
@@ -231,7 +263,7 @@ async function expandSurveyDashboard(){
      (q.type==='text'?'<p class="tg-sat-source">Pergunta de texto livre: apenas o total de respostas é apresentado neste resumo.</p>':
        '<div class="tg-os-survey-question-chart">'+counts.map((n,i)=>'<div class="tg-os-survey-question-row"><small>'+esc(names[i])+'</small><div class="tg-os-survey-bar-track"><div class="tg-os-survey-bar-fill rating-'+(q.type==='rating'?i+1:3+i*2)+'" style="width:'+(100*n/max)+'%"></div></div><span>'+n+'</span></div>').join('')+'</div>')+'</section>';
   }).join('')+'</div>'+
-  '<p class="tg-sat-source">Resultados agregados por pergunta e versão. As respostas individuais só estão disponíveis na ficha do cliente e na OS.</p>';
+  '<p class="tg-sat-source">Resultados agregados por pergunta e versão. As respostas individuais só estão disponíveis na ficha do cliente e no detalhe da intervenção.</p>';
  }catch(e){if(overlay.isConnected)panel.querySelector('[data-survey-modal-content]').textContent='Não foi possível carregar as avaliações. Tente novamente.';}
 }
 async function dashboard(){
@@ -253,7 +285,7 @@ async function dashboard(){
   mount.innerHTML='<header class="tg-os-survey-heading"><h4><i class="fas fa-chart-column"></i> Satisfação dos Inquéritos</h4><button type="button" class="btn btn-outline" data-sat-expand title="Expandir inquéritos">Expandir <i class="fas fa-expand"></i></button></header>'+
    '<div class="tg-sat-metrics"><span><b>'+rated.length+'</b> respostas</span><span><b>'+avg+'</b> média / 5</span><span class="'+(neg.length?'negative':'')+'"><b>'+neg.length+'</b> negativas</span></div>'+
    '<div class="tg-os-survey-chart" role="img" aria-label="Distribuição das avaliações gerais dos inquéritos por estrelas">'+count.map((n,i)=>'<div class="tg-os-survey-bar-row"><span>'+String(i+1)+' ★</span><div class="tg-os-survey-bar-track"><div class="tg-os-survey-bar-fill rating-'+String(i+1)+'" style="width:'+(100*n/max)+'%"></div></div><b>'+n+'</b></div>').join('')+'</div>'+
-   '<p class="tg-sat-source">Respostas aos inquéritos das OS · Escala 1 a 5</p>';
+   '<p class="tg-sat-source">Respostas aos inquéritos de OS e obras · Escala 1 a 5</p>';
   mount.querySelector('[data-sat-expand]')?.addEventListener('click',expandSurveyDashboard);
  }catch(e){mount.textContent='Não foi possível atualizar os inquéritos.';}
 }
@@ -284,13 +316,14 @@ async function warnCustomer(id,select){
   const last=responses[0],rating=Number(last?.avaliacao_geral);
   if(!last||!Number.isFinite(rating)||rating>2)return false;
   const os=services.get(String(last.servico_id));
+  const origin=last.obra_id?'Obra '+((records().obras||[]).find(x=>String(x.id)===String(last.obra_id)&&String(x.adminId)===tenant())?.nome||last.obra_id):'OS '+(os?.numeroRegisto||last.servico_id||'apagada');
   const box=document.createElement('div');
   box.className='tg-sat-warning';
   box.innerHTML='<div class="tg-sat-warning-card" role="alertdialog" aria-modal="true" aria-labelledby="tgSatWarningTitle" aria-describedby="tgSatWarningBody" tabindex="-1">'+
    '<h3 id="tgSatWarningTitle"><i class="fas fa-triangle-exclamation"></i> Atenção — último inquérito negativo</h3>'+
    '<p id="tgSatWarningBody">O último inquérito preenchido pelo cliente <strong>'+esc(customerName(id))+
    '</strong> foi de caráter negativo (<strong>'+esc(rating)+'/5</strong>).</p>'+
-   '<p>OS '+esc(os?.numeroRegisto||last.servico_id||'apagada')+' · '+esc(stamp(last.respondido_em))+'</p>'+
+   '<p>'+esc(origin)+' · '+esc(stamp(last.respondido_em))+'</p>'+
    (last.comentario?'<p>'+esc(last.comentario)+'</p>':'')+
    '<p>Deseja continuar a registar esta ordem de serviço?</p>'+
    '<div class="tg-sat-warning-actions"><button type="button" class="btn btn-outline" data-sat-cancel>Cancelar</button><button type="button" class="btn btn-primary" data-sat-ok>OK — Continuar</button></div></div>';
@@ -342,7 +375,7 @@ function watchCustomerSelect(event){
 }
 let ticking=false;
 function refresh(){
- if(ticking)return;ticking=true;setTimeout(()=>{ticking=false;installOS();injectCustomerTab();if(activeOS)mountOS(activeOS);removeLegacySurveyColumn();if(document.getElementById('hdcSatisfacao')&&!document.getElementById('tgOsSatisfactionDashboard'))dashboard();},200);
+ if(ticking)return;ticking=true;setTimeout(()=>{ticking=false;injectCustomerTab();document.querySelectorAll('[data-survey-intervention]').forEach(refreshIntervention);removeLegacySurveyColumn();if(document.getElementById('hdcSatisfacao')&&!document.getElementById('tgOsSatisfactionDashboard'))dashboard();},200);
 }
 document.addEventListener('change',watchCustomerSelect,true);
 document.addEventListener('tg:interface-updated',()=>{cache.at=0;refresh();dashboard();removeLegacySurveyColumn();});
@@ -364,7 +397,7 @@ document.addEventListener('click',event=>{
 document.addEventListener('DOMContentLoaded',()=>{
  observeClientNavigation();
  refresh();
- setInterval(()=>{if(tenant()){installOS();injectCustomerTab();removeLegacySurveyColumn();}if(document.getElementById('hdcSatisfacao'))dashboard();},30000);
+ setInterval(()=>{if(tenant()){injectCustomerTab();removeLegacySurveyColumn();}if(document.getElementById('hdcSatisfacao'))dashboard();},30000);
 });
-window.TGOSSurveys={linkForOS,copyLink,openCustomer,fetchRows,dashboard,warnCustomer,showOSResponse};
+window.TGOSSurveys={mount,linkForOS,copyLink,openCustomer,fetchRows,dashboard,warnCustomer,showOSResponse};
 })();

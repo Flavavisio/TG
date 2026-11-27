@@ -27,7 +27,7 @@ const form=data=>{
   logo.src=data.logo;logo.onerror=()=>{logo.src='icon-192.png';};
  }
  document.getElementById('surveyBrandName').textContent=data.empresa||'Inquérito de satisfação';
- const meta=[['Cliente',data.cliente],['Instalação',data.instalacao],['Ordem de serviço',data.os],['Data',data.data],['Técnico',data.tecnico]].filter(x=>x[1]);
+ const meta=[['Cliente',data.cliente],['Instalação',data.instalacao],['Ordem de serviço',data.os],['Obra',data.obra],['Data',data.data],['Técnico',data.tecnico]].filter(x=>x[1]);
  const input=(q)=>{
   const k=esc(q.id),required=q.required?' required':'';
   let field='';
