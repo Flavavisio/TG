@@ -184,7 +184,7 @@ function _assistEstado(value) {
 
         async function carregarConfig() {
             const { data, error } = await supa
-                .from('config_superadmin').select('*').eq('id', true).maybeSingle();
+                .from('config_superadmin').select('nome,email,logo,mostrar_estado_online,layout').eq('id', true).maybeSingle();
             if (error) { console.error('carregarConfig:', error.message); return; }
             if (data) {
                 configCache = {
@@ -9711,11 +9711,11 @@ function _assistEstado(value) {
             } else {
                 const mol = cfg.moloni || {};
                 alvo.innerHTML = `
-                    <div class="help-text" style="margin-bottom:10px;">Estes dados ficam guardados de forma segura e só são usados no servidor para autenticar com a Moloni — nunca ficam visíveis no browser depois de gravados.</div>
-                    <div class="form-group"><label>Client ID *</label><input type="text" id="fat_client_id" value="${(mol.clientId || '').replace(/"/g,'&quot;')}" /></div>
-                    <div class="form-group"><label>Client Secret *</label><input type="password" id="fat_client_secret" value="${(mol.clientSecret || '').replace(/"/g,'&quot;')}" /></div>
-                    <div class="form-group"><label>Utilizador (email da Moloni) *</label><input type="text" id="fat_username" value="${(mol.username || '').replace(/"/g,'&quot;')}" /></div>
-                    <div class="form-group"><label>Password *</label><input type="password" id="fat_password" value="${(mol.password || '').replace(/"/g,'&quot;')}" /></div>
+                    <div class="help-text" style="margin-bottom:10px;">As credenciais são guardadas no servidor e só são usadas para autenticar com a Moloni. Se já configurou a ligação, deixe os campos de acesso em branco para manter as credenciais atuais. no browser depois de gravados.</div>
+                    <div class="form-group"><label>Client ID *</label><input type="text" id="fat_client_id" autocomplete="off" /></div>
+                    <div class="form-group"><label>Client Secret *</label><input type="password" id="fat_client_secret" autocomplete="off" /></div>
+                    <div class="form-group"><label>Utilizador (email da Moloni) *</label><input type="text" id="fat_username" autocomplete="off" /></div>
+                    <div class="form-group"><label>Password *</label><input type="password" id="fat_password" autocomplete="off" /></div>
                     <div class="form-group"><label>ID da Empresa na Moloni *</label><input type="text" id="fat_company_id" value="${(mol.companyId || '').replace(/"/g,'&quot;')}" placeholder="ex: 123456" /></div>
                     <div class="form-group"><label>ID da Série de Documentos (opcional)</label><input type="text" id="fat_document_set_id" value="${(mol.documentSetId || '').replace(/"/g,'&quot;')}" placeholder="Deixa em branco para usar a série pré-definida" /></div>
                     <label style="display:flex;align-items:center;gap:8px;font-weight:400;margin-top:6px;">
@@ -9755,24 +9755,42 @@ function _assistEstado(value) {
                 alert('✅ Configuração de faturação guardada.');
                 return;
             }
+            return guardarConfigMoloni(admin);
+        }
+
+        async function guardarConfigMoloni(admin) {
             const companyId = document.getElementById('fat_company_id').value.trim();
             if (!companyId) { alert('O ID da Empresa na Moloni é obrigatório.'); return; }
-            admin.integracaoFaturacao = {
-                provider: 'moloni',
-                phcDrafts: admin.integracaoFaturacao?.phcDrafts || {},
-                simulacao: document.getElementById('fat_simulacao').checked,
-                moloni: {
-                    clientId: document.getElementById('fat_client_id').value.trim(),
-                    clientSecret: document.getElementById('fat_client_secret').value.trim(),
-                    username: document.getElementById('fat_username').value.trim(),
-                    password: document.getElementById('fat_password').value.trim(),
-                    companyId: companyId,
-                    documentSetId: document.getElementById('fat_document_set_id').value.trim() || null
+            const campos = ['fat_client_id', 'fat_client_secret', 'fat_username', 'fat_password'].map(id => document.getElementById(id));
+            const [clientId, clientSecret, username, password] = campos.map(campo => campo.value);
+            const credenciais = campos.some(campo => campo.value) ? { clientId, clientSecret, username, password } : null;
+            if (!credenciais && !admin.integracaoFaturacao?.moloni?.configurada) {
+                alert('Preencha todos os campos de acesso à Moloni.');
+                return;
+            }
+            try {
+                const { data, error } = await supa.functions.invoke('configurar-moloni', { body: {
+                    admin_id: admin.id,
+                    companyId,
+                    documentSetId: document.getElementById('fat_document_set_id').value.trim() || null,
+                    simulacao: document.getElementById('fat_simulacao').checked,
+                    credenciais,
+                } });
+                if (error || !data?.configuracao) throw new Error(error ? await _extrairErroEdgeFunction(error) : 'Resposta inesperada do servidor.');
+                campos.forEach(campo => { campo.value = ''; });
+                admin.integracaoFaturacao = data.configuracao;
+                const anterior = _snap?.administradores?.get(admin.id);
+                if (anterior) {
+                    const linha = JSON.parse(anterior);
+                    linha.integracao_faturacao = data.configuracao;
+                    _snap.administradores.set(admin.id, JSON.stringify(linha));
                 }
-            };
-            guardarDados(dados);
-            document.getElementById('modalGenericoOverlay').classList.remove('open');
-            alert('✅ Configuração de faturação guardada.');
+                _guardarCacheLocal();
+                document.getElementById('modalGenericoOverlay').classList.remove('open');
+                alert('Configuração de faturação guardada.');
+            } catch (erro) {
+                alert('Não foi possível guardar a integração Moloni. ' + erro.message);
+            }
         }
         // Inicia o OAuth2 da TOConline — só é preciso fazer isto uma vez. Guarda o id do admin
         // e o URL de origem antes de sair da app, para conseguirmos retomar exatamente onde
