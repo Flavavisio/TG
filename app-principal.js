@@ -14801,6 +14801,10 @@ function _assistEstado(value) {
             const obra = (dados.obras || []).find(o => o.id === obraId); if (!obra) return;
             if (usuarioLogado?.role !== 'admin' && usuarioLogado?.role !== 'subadmin' && usuarioLogado?.role !== 'encarregado') { alert('Sem permissão para alterar o estado da obra.'); return; }
             const estadoAnterior = obra.estado;
+            if (novoEstado === 'concluida' && estadoAnterior !== 'concluida' && _podeGerirRegisto(obra)) {
+                renderizarArmazemTudo();
+                return finalizarObraLonga(obraId);
+            }
             obra.estado = novoEstado;
             if (novoEstado === 'concluida' && !obra.dataConclusao) obra.dataConclusao = getDataHoje();
             guardarDados(dados);
@@ -15195,23 +15199,27 @@ function _assistEstado(value) {
             const hoje = getDataHoje();
             return (dados.obraPontoLonga || []).find(p => p.funcionarioId === usuarioLogado.id && p.data === hoje && p.entrada && !p.saida) || null;
         }
-        function finalizarObraLonga(obraId) {
-            const obra0 = (dados.obras || []).find(o => o.id === obraId);
-            const idsAtrib0 = obra0 ? ((obra0.responsaveisIds && obra0.responsaveisIds.length) ? obra0.responsaveisIds : [obra0.responsavelId].filter(Boolean)) : [];
-            const souResponsavelDaObra = obra0 && (!obra0.relatorioResponsavelId ? idsAtrib0.includes(usuarioLogado?.id) : obra0.relatorioResponsavelId === usuarioLogado?.id);
-            const podeGestao = usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin' || usuarioLogado?.role === 'encarregado';
-            if (!podeGestao && !(usuarioLogado?.role === 'funcionario' && souResponsavelDaObra)) {
+        function _podeFinalizarObra(obra) {
+            if (!obra || obra.estado === 'concluida' || obra.adminId !== _tenantId()) return false;
+            if (_podeGerirRegisto(obra) || usuarioLogado?.role === 'encarregado') return true;
+            const atribuidos = obra.responsaveisIds?.length ? obra.responsaveisIds : [obra.responsavelId];
+            const responsaveis = obra.relatorioResponsavelId ? [obra.relatorioResponsavelId] : atribuidos;
+            return usuarioLogado?.role === 'funcionario' && responsaveis.includes(usuarioLogado.id);
+        }
+        async function finalizarObraLonga(obraId) {
+            const obra = (dados.obras || []).find(o => o.id === obraId);
+            if (!obra || obra.estado === 'concluida') return;
+            if (!_podeFinalizarObra(obra)) {
                 alert('Apenas o administrador, encarregado, ou o funcionário responsável por esta obra pode finalizá-la.');
                 return;
             }
-            const obra = obra0; if (!obra) return;
             // Obras criadas antes de a descrição passar a ser obrigatória podem não ter nenhuma —
             // nesse caso o servidor recusa gravar (constraint "obras_descricao_obrigatoria").
             // Em vez de rebentar com um erro técnico, pede a descrição em falta aqui mesmo.
-            if (!obra.observacoes || obra.observacoes.trim().length < 3) {
-                const desc = prompt('Esta obra ainda não tem descrição preenchida (passou a ser obrigatória). Escreve uma descrição para poderes concluir a obra:');
+            let desc = obra.observacoes;
+            if (!desc || desc.trim().length < 3) {
+                desc = prompt('Esta obra ainda não tem descrição preenchida (passou a ser obrigatória). Escreve uma descrição para poderes concluir a obra:');
                 if (!desc || desc.trim().length < 3) { alert('É preciso uma descrição com pelo menos 3 caracteres para concluir a obra.'); return; }
-                obra.observacoes = desc.trim();
             }
             const emAberto = (dados.obraPontoLonga || []).filter(p => p.obraId === obraId && !p.saida).length;
             const aviso = emAberto ? ('\n\nAtenção: ' + emAberto + ' funcionário(s) ainda ' + (emAberto === 1 ? 'tem' : 'têm') + ' entrada em aberto nesta obra.') : '';
@@ -15225,14 +15233,30 @@ function _assistEstado(value) {
                     return;
                 }
             }
-            if (!confirm('Finalizar a obra "' + obra.nome + '"? Fica marcada como Concluída e será gerado um relatório final.' + aviso)) return;
-            obra.estado = 'concluida';
-            obra.dataConclusao = getDataHoje();
-            guardarDados(dados);
-            renderizarTudo();
-            _descarregarRelatorioObra(obraId).then(gerado => {
+            const concluir = async () => {
+                if (!_podeFinalizarObra(obra)) return;
+                if (!obra.observacoes || obra.observacoes.trim().length < 3) obra.observacoes = desc.trim();
+                obra.estado = 'concluida';
+                obra.dataConclusao = getDataHoje();
+                const modal = document.getElementById('modalGenericoOverlay');
+                if (modal?.dataset.obraAtual === obraId && document.getElementById('verObraConteudo')) _fecharModalGenerico();
+                guardarDados(dados);
+                renderizarTudo();
+                const gerado = await _descarregarRelatorioObra(obraId);
                 alert(gerado ? 'Obra finalizada ✓ Relatório final gerado.' : 'Obra finalizada ✓');
-            });
+            };
+            if (_podeGerirRegisto(obra)) {
+                const teveGastos = await tgEscolher(
+                    'Esta obra teve gastos extra, como alimentação ou hotel?' + aviso,
+                    [{ rotulo: 'Sim, registar gastos', valor: true }, { rotulo: 'Não, finalizar obra', valor: false }],
+                    { titulo: 'Finalizar a obra "' + obra.nome + '"' }
+                );
+                if (!_podeGerirRegisto(obra) || !_podeFinalizarObra(obra)) return;
+                if (teveGastos === true) return abrirObraLongaDetalhe(obraId, 'financeiro', concluir);
+                if (teveGastos === false) return concluir();
+            } else if (confirm('Finalizar a obra "' + obra.nome + '"? Fica marcada como Concluída e será gerado um relatório final.' + aviso)) {
+                return concluir();
+            }
         }
         // Pequeno popup para escolher qual dos dois relatórios gerar — o interno (com
         // financeiro e custos) ou o do cliente (só o trabalho realizado, sem valores).
@@ -16532,13 +16556,13 @@ function _assistEstado(value) {
             if (obra.estado === 'concluida') return '';
             return `<button type="button" class="btn btn-sm" style="background:#16a34a;color:#fff;" onclick="event.stopPropagation();obraLongaPicarEntrada('${obra.id}')"><i class="fas fa-fingerprint"></i> Entrada</button>`;
         }
-        function abrirObraLongaDetalhe(obraId, abaInicial = 'folhas') {
+        function abrirObraLongaDetalhe(obraId, abaInicial = 'folhas', concluir = null) {
             const obra = (dados.obras || []).find(o => o.id === obraId); if (!obra) return;
             return _verificarAvisoDocsObra(obra).then(() => {
-                _abrirObraLongaDetalheReal(obraId, abaInicial);
+                return _abrirObraLongaDetalheReal(obraId, abaInicial, concluir);
             });
         }
-        function _abrirObraLongaDetalheReal(obraId, abaInicial = 'folhas') {
+        function _abrirObraLongaDetalheReal(obraId, abaInicial = 'folhas', concluir = null) {
             const obra = (dados.obras || []).find(o => o.id === obraId); if (!obra) return;
             document.getElementById('modalGenericoOverlay').dataset.obraAtual = obraId;
             document.getElementById('modalGenericoOverlay').classList.add('open');
@@ -16572,18 +16596,28 @@ function _assistEstado(value) {
                     <button type="button" class="btn btn-sm" id="verObraBtnFolhas" onclick="_verObraMostrar('${obraId}','folhas')" style="flex:1;min-width:100px;background:#0ea5e9;color:#fff;"><i class="fas fa-clipboard-list"></i> Folhas de obra</button>
                     <button type="button" class="btn btn-sm" id="verObraBtnMateriais" onclick="_verObraMostrar('${obraId}','materiais')" style="flex:1;min-width:100px;background:#f1f5f9;color:#334155;"><i class="fas fa-boxes-stacked"></i> Materiais</button>
                     <button type="button" class="btn btn-sm" id="verObraBtnDocumentos" onclick="_verObraMostrar('${obraId}','documentos')" style="flex:1;min-width:100px;background:#f1f5f9;color:#334155;"><i class="fas fa-folder-open"></i> Documentos</button>
-                    ${_podeGerirRegisto(obra) ? `<button type="button" class="btn btn-sm" id="verObraBtnGastos" onclick="_verObraMostrar('${obraId}','gastos')" style="flex:1;min-width:100px;background:#f1f5f9;color:#334155;"><i class="fas fa-receipt"></i> Outros gastos</button>` : ''}
                     ${_obraAutosMedicaoDisponiveis(obra) ? `<button type="button" class="btn btn-sm" id="verObraBtnAutos" onclick="_verObraMostrar('${obraId}','autos')" style="flex:1;min-width:100px;background:#f1f5f9;color:#334155;"><i class="fas fa-file-invoice-dollar"></i> Auto de Medição</button>` : ''}
-                    ${(obrasAvancadoAtivo(dados.administradores?.find(a => a.id === obra.adminId)) && (usuarioLogado?.role === 'admin' || usuarioLogado?.role === 'subadmin')) ? `<button type="button" class="btn btn-sm" id="verObraBtnFinanceiro" onclick="_verObraMostrar('${obraId}','financeiro')" style="flex:1;min-width:100px;background:#f1f5f9;color:#334155;"><i class="fas fa-sack-dollar"></i> Financeiro</button>` : ''}
+                    ${_podeGerirRegisto(obra) ? `<button type="button" class="btn btn-sm" id="verObraBtnFinanceiro" onclick="_verObraMostrar('${obraId}','financeiro')" style="flex:1;min-width:100px;background:#f1f5f9;color:#334155;"><i class="fas fa-sack-dollar"></i> Financeiro</button>` : ''}
                     ${obrasAvancadoAtivo(dados.administradores?.find(a => a.id === obra.adminId)) ? `<button type="button" class="btn btn-sm" id="verObraBtnMarcos" onclick="_verObraMostrar('${obraId}','marcos')" style="flex:1;min-width:100px;background:#f1f5f9;color:#334155;"><i class="fas fa-list-check"></i> Marcos</button>` : ''}
                     ${obrasAvancadoAtivo(dados.administradores?.find(a => a.id === obra.adminId)) ? `<button type="button" class="btn btn-sm" id="verObraBtnChecklist" onclick="_verObraMostrar('${obraId}','checklist')" style="flex:1;min-width:100px;background:#f1f5f9;color:#334155;"><i class="fas fa-shield-halved"></i> Checklist</button>` : ''}
                 </div>
                 <div id="verObraConteudo"></div>
             `;
-            document.getElementById('modalGenericoForm').onsubmit = function (ev) { ev.preventDefault(); _fecharModalGenerico(); };
-            const _bg = document.querySelector('#modalGenericoOverlay .modal-actions .btn-success'); if (_bg) { _bg.style.display = ''; _bg.innerHTML = '<i class="fas fa-check"></i> Finalizar'; }
+            const podeFinalizar = _podeFinalizarObra(obra);
+            document.getElementById('modalGenericoForm').onsubmit = function (ev) {
+                ev.preventDefault();
+                if (!podeFinalizar) return _fecharModalGenerico();
+                const formGastos = document.querySelector('#verObraConteudo [data-gasto-form]');
+                if (formGastos?.querySelector('[data-guardar-gasto]').disabled) return;
+                if (formGastos && Array.from(formGastos.querySelectorAll('input')).some(input => input.value.trim())) {
+                    return tgAlert('Guarda o gasto ou limpa os campos antes de finalizar a obra.', { titulo: 'Outros gastos' });
+                }
+                return concluir ? concluir() : finalizarObraLonga(obraId);
+            };
+            const _bg = document.querySelector('#modalGenericoOverlay .modal-actions .btn-success');
+            if (_bg) { _bg.style.display = ''; _bg.innerHTML = podeFinalizar ? '<i class="fas fa-check"></i> Finalizar' : 'Fechar'; }
             document.getElementById('modalGenericoOverlay').classList.add('open', 'modal-veros');
-            _verObraMostrar(obraId, abaInicial);
+            return _verObraMostrar(obraId, abaInicial, !!concluir);
         }
         // Pasta atual aberta na aba Documentos de cada obra (id da pasta, ou null = raiz)
         let _verObraPastaAtual = null;
@@ -16643,7 +16677,7 @@ function _assistEstado(value) {
                 <button type="button" class="btn btn-outline" style="margin-bottom:12px;" onclick="abrirCriarAutoMedicao('${obraId}')"><i class="fas fa-plus"></i> Criar Auto de Medição</button>
                 <div class="table-wrapper"><table><thead><tr><th>Nº</th><th>Período</th><th>Horas</th><th>Materiais</th><th>Mão de obra</th><th>Total</th><th>Ações</th></tr></thead><tbody>${linhas}</tbody></table></div>`;
         }
-        function _verObraMostrar(obraId, aba) {
+        function _verObraMostrar(obraId, aba, abrirGastos = false) {
             const obra = (dados.obras || []).find(o => o.id === obraId); if (!obra) return;
             const cont = document.getElementById('verObraConteudo');
             if (!cont) return;
@@ -16652,21 +16686,17 @@ function _assistEstado(value) {
             const btnDocumentos = document.getElementById('verObraBtnDocumentos');
             const btnAutos = document.getElementById('verObraBtnAutos');
             const btnFinanceiro = document.getElementById('verObraBtnFinanceiro');
-            const btnGastos = document.getElementById('verObraBtnGastos');
             const btnMarcos = document.getElementById('verObraBtnMarcos');
             const btnChecklist = document.getElementById('verObraBtnChecklist');
-            [['folhas', btnFolhas], ['materiais', btnMateriais], ['documentos', btnDocumentos], ['autos', btnAutos], ['financeiro', btnFinanceiro], ['gastos', btnGastos], ['marcos', btnMarcos], ['checklist', btnChecklist]].forEach(([chave, btn]) => {
+            [['folhas', btnFolhas], ['materiais', btnMateriais], ['documentos', btnDocumentos], ['autos', btnAutos], ['financeiro', btnFinanceiro], ['marcos', btnMarcos], ['checklist', btnChecklist]].forEach(([chave, btn]) => {
                 if (!btn) return;
                 btn.style.background = aba === chave ? '#0ea5e9' : '#f1f5f9';
                 btn.style.color = aba === chave ? '#fff' : '#334155';
             });
             if (aba === 'checklist') { if (!obrasAvancadoAtivo(dados.administradores?.find(a => a.id === obra.adminId))) { aba = 'folhas'; } else { _renderizarChecklistObra(obraId); return; } }
             if (aba === 'marcos') { if (!obrasAvancadoAtivo(dados.administradores?.find(a => a.id === obra.adminId))) { aba = 'folhas'; } else { _renderizarMarcosObra(obraId); return; } }
-            if (aba === 'financeiro' || aba === 'gastos') {
-                if (_podeGerirRegisto(obra) && (aba === 'gastos' || obrasAvancadoAtivo(dados.administradores?.find(a => a.id === obra.adminId)))) {
-                    _abrirCustosObra(obra, cont, aba);
-                    return;
-                }
+            if (aba === 'financeiro') {
+                if (_podeGerirRegisto(obra)) return _abrirCustosObra(obra, cont, abrirGastos);
                 aba = 'folhas';
             }
             if (aba === 'materiais') {
@@ -17141,14 +17171,29 @@ function _assistEstado(value) {
             if (error) throw error;
             return data;
         }
-        async function _abrirCustosObra(obra, cont, aba) {
+        async function _abrirCustosObra(obra, cont, abrirGastos) {
             cont.innerHTML = '<p role="status">A carregar os gastos da obra…</p>';
             const loading = cont.firstElementChild;
             try {
                 const gastos = await _buscarOutrosGastosObra(obra);
                 if (!loading.isConnected || !_podeGerirRegisto(obra)) return;
-                if (aba === 'gastos') _renderizarOutrosGastosObra(obra, cont, gastos);
-                else _renderizarFinanceiroObra(obra.id, gastos);
+                if (obrasAvancadoAtivo(dados.administradores?.find(a => a.id === obra.adminId))) {
+                    _renderizarFinanceiroObra(obra.id, gastos);
+                } else {
+                    cont.replaceChildren();
+                }
+                const detalhes = document.createElement('details');
+                detalhes.open = abrirGastos;
+                detalhes.style.marginBottom = '14px';
+                const resumo = document.createElement('summary');
+                const total = gastos.reduce((soma, gasto) => soma + gasto.valor_centimos, 0) / 100;
+                resumo.textContent = 'Outros gastos · ' + _finEur(total);
+                resumo.style.cursor = 'pointer';
+                detalhes.appendChild(resumo);
+                const editor = document.createElement('div');
+                detalhes.appendChild(editor);
+                cont.prepend(detalhes);
+                _renderizarOutrosGastosObra(obra, editor, gastos, () => _abrirCustosObra(obra, cont, detalhes.open));
             } catch (err) {
                 if (!loading.isConnected) return;
                 loading.textContent = 'Não foi possível carregar os gastos da obra. ';
@@ -17156,23 +17201,20 @@ function _assistEstado(value) {
                 retry.type = 'button';
                 retry.className = 'btn btn-sm btn-outline';
                 retry.textContent = 'Tentar novamente';
-                retry.onclick = () => _abrirCustosObra(obra, cont, aba);
+                retry.onclick = () => _abrirCustosObra(obra, cont, abrirGastos);
                 loading.appendChild(retry);
             }
         }
-        function _renderizarOutrosGastosObra(obra, cont, gastos) {
+        function _renderizarOutrosGastosObra(obra, cont, gastos, atualizarFinanceiro) {
             if (!_podeGerirRegisto(obra)) return;
-            const total = gastos.reduce((soma, g) => soma + g.valor_centimos, 0) / 100;
             cont.innerHTML = `
                 <section>
-                    <h3>Outros gastos</h3>
-                    <p><strong>Total:</strong> ${_finEur(total)}</p>
                     ${gastos.length ? `<div class="table-wrapper"><table><thead><tr><th>Descrição</th><th>Valor</th><th>Ações</th></tr></thead><tbody>
                         ${gastos.map(g => `<tr><td>${escapeHtmlSimples(g.descricao)}</td><td>${_finEur(g.valor_centimos / 100)}</td><td><button type="button" class="btn btn-sm btn-outline" data-editar-gasto="${g.id}">Editar</button> <button type="button" class="btn btn-sm btn-danger" data-apagar-gasto="${g.id}">Apagar</button></td></tr>`).join('')}
                     </tbody></table></div>` : '<p class="help-text">Ainda sem gastos registados.</p>'}
                     <div data-gasto-form>
-                        <div class="form-group"><label for="obra-gasto-descricao">Descrição</label><input id="obra-gasto-descricao" placeholder="Ex.: hotel ou alimentação" maxlength="200" required></div>
-                        <div class="form-group"><label for="obra-gasto-valor">Valor (€)</label><input id="obra-gasto-valor" inputmode="decimal" maxlength="10" placeholder="0,00" required></div>
+                        <div class="form-group"><label for="obra-gasto-descricao">Descrição</label><input id="obra-gasto-descricao" placeholder="Ex.: hotel ou alimentação" maxlength="200"></div>
+                        <div class="form-group"><label for="obra-gasto-valor">Valor (€)</label><input id="obra-gasto-valor" inputmode="decimal" maxlength="10" placeholder="0,00"></div>
                         <button type="button" class="btn btn-primary" data-guardar-gasto>Adicionar gasto</button>
                         <button type="button" class="btn btn-outline" data-cancelar-gasto hidden>Cancelar edição</button>
                     </div>
@@ -17211,7 +17253,7 @@ function _assistEstado(value) {
                             .select('id').single();
                         if (error) throw error;
                     }
-                    if (panel.isConnected) _abrirCustosObra(obra, cont, 'gastos');
+                    if (panel.isConnected) atualizarFinanceiro();
                 } catch (err) {
                     estado.textContent = 'Não foi possível guardar a alteração. Tenta novamente.';
                     ocupado = false;
@@ -17294,7 +17336,6 @@ function _assistEstado(value) {
                         <tr><td style="padding:4px 0;color:#64748b;">Total de horas trabalhadas</td><td style="padding:4px 0;text-align:right;font-weight:600;">${_formatarTempoTrabalhado(horas)}</td></tr>
                         <tr><td style="padding:4px 0;color:#64748b;">Custo/hora da obra (alternativa)</td><td style="padding:4px 0;text-align:right;font-weight:600;">${obra.custoHora != null ? _finEur(obra.custoHora) + '/h' : '—'}</td></tr>
                         <tr><td style="padding:4px 0;color:#64748b;">Km percorridos (equipa)</td><td style="padding:4px 0;text-align:right;font-weight:600;color:#0ea5e9;">${_kmPercorridosObra(obraId).toLocaleString('pt-PT')} km</td></tr>
-                        <tr><td style="padding:4px 0;color:#64748b;"><button type="button" class="btn btn-sm btn-outline" onclick="_verObraMostrar('${obraId}','gastos')">Outros gastos</button></td><td style="padding:4px 0;text-align:right;font-weight:600;">${_finEur(custos.totalOutrosGastos)}</td></tr>
                         <tr><td style="padding:4px 0;color:#64748b;">Custo total da obra</td><td style="padding:4px 0;text-align:right;font-weight:600;">${custoTotal != null ? _finEur(custoTotal) : 'Total incompleto — faltam custos'}</td></tr>
                     </tbody>
                 </table>

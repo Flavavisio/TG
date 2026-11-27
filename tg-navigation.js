@@ -280,7 +280,7 @@
     wrap('_voltarMeuDia',function(original,args){returnToMore=false;const result=original.apply(this,args);mark('home');return result;});
     wrap('_voltarAoMenuAnterior',function(original,args){if(!legacyMobile()&&returnToMore&&_ehPerfilMobile())return more();return original.apply(this,args);});
     wrap('abrirObraLongaDetalhe',function(original,args){if(args.length<2)args.push('resumo');return original.apply(this,args);});
-    wrap('_abrirObraLongaDetalheReal',function(original,args){const initial=args[1]||'resumo';const result=original.call(this,args[0],['resumo','os','relatorios'].includes(initial)?'folhas':initial);enhanceWork(args[0],initial);return result;});
+    wrap('_abrirObraLongaDetalheReal',function(original,args){const initial=args[1]||'resumo';const result=original.call(this,args[0],['resumo','os','relatorios'].includes(initial)?'folhas':initial,args[2]);enhanceWork(args[0],initial);return result;});
     wrap('_verObraMostrar',function(original,args){if(['resumo','os','relatorios'].includes(args[1])&&workTab(args[0],args[1]))return;document.querySelectorAll('[data-tgn-work-tab]').forEach(button=>{button.style.background='#f1f5f9';button.style.color='#334155';button.setAttribute('aria-pressed','false');});const result=original.apply(this,args);workSelection(args[1]);return result;});
     document.addEventListener('click',event=>{
         const workAction=event.target.closest('[data-tgn-work-os],[data-tgn-work-report]');
