@@ -76,7 +76,106 @@
             });
         }
 
+        function instalarRevisao(documento) {
+            const perfil = documento.getElementById('perfilCampos');
+            if (!perfil) return () => {};
+            const botao = documento.createElement('button');
+            botao.type = 'button';
+            botao.className = 'btn btn-outline';
+            botao.hidden = true;
+            perfil.after(botao);
+            let painel;
+            let revisaoSessao = 0;
+
+            function fechar() {
+                if (!painel) return;
+                painel.close();
+                painel.remove();
+                painel = null;
+            }
+
+            async function listar() {
+                const { data, error } = await supa.rpc('tg_ficheiros_em_revisao');
+                if (error) throw new Error('Não foi possível carregar os ficheiros em revisão.');
+                return (data || []).filter(item => referencia(origem + prefixo + 'ficheiros/' + item.caminho));
+            }
+
+            function desenhar(items) {
+                fechar();
+                painel = documento.createElement('dialog');
+                painel.setAttribute('aria-labelledby', 'tg-revisao-titulo');
+                painel.style.cssText = 'width:min(34rem,calc(100% - 2rem));border:1px solid #cbd5e1;border-radius:14px;padding:1.25rem;color:#152a52;';
+                const titulo = documento.createElement('h3');
+                titulo.id = 'tg-revisao-titulo';
+                titulo.textContent = 'Ficheiros em revisão';
+                const descricao = documento.createElement('p');
+                descricao.textContent = 'Ficheiros recuperados para a sua empresa. Confirme o conteúdo antes de os voltar a anexar.';
+                const lista = documento.createElement('ul');
+                lista.style.cssText = 'display:grid;gap:0.85rem;padding-left:1.25rem;';
+                const formato = new Intl.DateTimeFormat('pt-PT', { dateStyle: 'medium', timeZone: 'Europe/Lisbon' });
+                for (const item of items) {
+                    const linha = documento.createElement('li');
+                    const data = new Date(item.carregado_em);
+                    const etiqueta = item.tipo === 'os_fotos'
+                        ? 'Fotografia de ordem de serviço' + (item.numero_os ? ' ' + item.numero_os : '')
+                        : 'Ficheiro de passaporte técnico';
+                    linha.append(etiqueta + (Number.isFinite(data.getTime()) ? ' · ' + formato.format(data) : ''));
+                    const abrirFicheiro = documento.createElement('button');
+                    abrirFicheiro.type = 'button';
+                    abrirFicheiro.className = 'btn btn-outline';
+                    abrirFicheiro.style.marginLeft = '0.5rem';
+                    abrirFicheiro.textContent = 'Abrir ficheiro';
+                    abrirFicheiro.setAttribute('aria-label', 'Abrir ' + etiqueta);
+                    abrirFicheiro.onclick = () => abrir(origem + prefixo + 'ficheiros/' + item.caminho, '_blank');
+                    linha.append(abrirFicheiro);
+                    lista.append(linha);
+                }
+                const fecharBotao = documento.createElement('button');
+                fecharBotao.type = 'button';
+                fecharBotao.className = 'btn btn-outline';
+                fecharBotao.textContent = 'Fechar';
+                fecharBotao.onclick = fechar;
+                painel.append(titulo, descricao, lista, fecharBotao);
+                painel.addEventListener('close', () => {
+                    if (!painel || painel.open) return;
+                    painel.remove();
+                    painel = null;
+                });
+                documento.body.append(painel);
+                painel.showModal();
+            }
+
+            botao.onclick = async () => {
+                const atual = revisaoSessao;
+                try {
+                    const items = await listar();
+                    if (atual !== revisaoSessao) return;
+                    if (items.length) desenhar(items);
+                    else { botao.hidden = true; window.alert('Já não há ficheiros disponíveis para revisão.'); }
+                } catch (error) {
+                    if (atual === revisaoSessao) window.alert(error.message);
+                }
+            };
+
+            return id => {
+                const atual = ++revisaoSessao;
+                fechar();
+                botao.hidden = true;
+                if (!id) return;
+                // Supabase auth listeners must finish before a new request uses the client.
+                setTimeout(async () => {
+                    try {
+                        const items = await listar();
+                        if (atual !== revisaoSessao || !items.length) return;
+                        botao.textContent = 'Ficheiros em revisão (' + items.length + ')';
+                        botao.hidden = false;
+                    } catch (_) {}
+                }, 0);
+            };
+        }
+
         function instalar(documento) {
+            const atualizarRevisao = instalarRevisao(documento);
             const elementos = new WeakMap();
             const seletor = 'a[href], img[src]';
             function atualizar(el) {
@@ -134,6 +233,7 @@
                 if (id === utilizador) return;
                 const anterior = utilizador;
                 utilizador = id;
+                atualizarRevisao(id);
                 sessao++;
                 pendentes.clear();
                 if (anterior) documento.querySelectorAll('img[src]').forEach(img => {
