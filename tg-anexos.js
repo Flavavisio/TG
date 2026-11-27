@@ -79,87 +79,191 @@
         function instalarRevisao(documento) {
             const perfil = documento.getElementById('perfilCampos');
             if (!perfil) return () => {};
-            const botao = documento.createElement('button');
-            botao.type = 'button';
-            botao.className = 'btn btn-outline';
-            botao.hidden = true;
-            perfil.after(botao);
+
+            function criarBotao(texto, acao, classe = 'btn btn-outline') {
+                const botao = documento.createElement('button');
+                botao.type = 'button';
+                botao.className = classe;
+                botao.textContent = texto;
+                botao.onclick = acao;
+                return botao;
+            }
+
+            const atalho = criarBotao('Ficheiros em revisão');
+            atalho.hidden = true;
+            perfil.after(atalho);
+            const secoes = { pendente: 'Por rever', validado: 'Validados', arquivado: 'Arquivo' };
+            const tipos = {
+                passaportes: 'Ficheiro de passaporte técnico',
+                folhasObra: 'Anexo de folha de obra',
+                obras: 'Documento de obra',
+                pedidos: 'Anexo de pedido',
+                relatoriosEspecialidade: 'Imagem de relatório de especialidade',
+                veiculoDocumentos: 'Documento de viatura'
+            };
+            const formato = new Intl.DateTimeFormat('pt-PT', {
+                dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Lisbon'
+            });
             let painel;
             let revisaoSessao = 0;
 
             function fechar() {
                 if (!painel) return;
-                painel.close();
-                painel.remove();
+                const anterior = painel;
                 painel = null;
+                anterior.close();
+                anterior.remove();
             }
 
             async function listar() {
-                const { data, error } = await supa.rpc('tg_ficheiros_em_revisao');
+                const { data, error } = await supa.rpc('tg_listar_ficheiros_revisao');
                 if (error) throw new Error('Não foi possível carregar os ficheiros em revisão.');
-                return (data || []).filter(item => referencia(origem + prefixo + 'ficheiros/' + item.caminho));
+                return (data || []).filter(item =>
+                    Object.hasOwn(secoes, item.estado) && referencia(origem + prefixo + 'ficheiros/' + item.caminho)
+                );
+            }
+
+            function mostrarAtalho(items) {
+                const pendentes = items.filter(item => item.estado === 'pendente').length;
+                atalho.textContent = 'Ficheiros em revisão' + (pendentes ? ' (' + pendentes + ')' : '');
+                atalho.hidden = !items.length;
             }
 
             function desenhar(items) {
                 fechar();
-                painel = documento.createElement('dialog');
-                painel.setAttribute('aria-labelledby', 'tg-revisao-titulo');
-                painel.style.cssText = 'width:min(34rem,calc(100% - 2rem));border:1px solid #cbd5e1;border-radius:14px;padding:1.25rem;color:#152a52;';
+                const dialogo = documento.createElement('dialog');
+                painel = dialogo;
+                dialogo.setAttribute('aria-labelledby', 'tg-revisao-titulo');
+                dialogo.style.cssText = 'position:fixed;inset:0;margin:auto;box-sizing:border-box;width:min(42rem,calc(100% - 2rem));max-width:none;height:fit-content;max-height:calc(100dvh - 2rem);overflow:auto;border:1px solid #cbd5e1;border-radius:14px;padding:1.25rem;text-align:left;color:#152a52;';
                 const titulo = documento.createElement('h3');
                 titulo.id = 'tg-revisao-titulo';
                 titulo.textContent = 'Ficheiros em revisão';
                 const descricao = documento.createElement('p');
-                descricao.textContent = 'Ficheiros recuperados para a sua empresa. Confirme o conteúdo antes de os voltar a anexar.';
+                descricao.textContent = 'Valide os ficheiros que reconhece. Pode recuperar um ficheiro arquivado. A validação não o anexa a um registo.';
+                const navegacao = documento.createElement('div');
+                navegacao.setAttribute('aria-label', 'Estado dos ficheiros');
+                navegacao.style.cssText = 'display:flex;flex-wrap:wrap;gap:.4rem;margin:.75rem 0;';
                 const lista = documento.createElement('ul');
-                lista.style.cssText = 'display:grid;gap:0.85rem;padding-left:1.25rem;';
-                const formato = new Intl.DateTimeFormat('pt-PT', { dateStyle: 'medium', timeZone: 'Europe/Lisbon' });
-                const tipos = {
-                    passaportes: 'Ficheiro de passaporte técnico',
-                    folhasObra: 'Anexo de folha de obra',
-                    obras: 'Documento de obra',
-                    pedidos: 'Anexo de pedido',
-                    relatoriosEspecialidade: 'Imagem de relatório de especialidade',
-                    veiculoDocumentos: 'Documento de viatura'
-                };
-                for (const item of items) {
-                    const linha = documento.createElement('li');
-                    const data = new Date(item.carregado_em);
-                    const etiqueta = item.tipo === 'os_fotos'
-                        ? 'Fotografia de ordem de serviço' + (item.numero_os ? ' ' + item.numero_os : '')
-                        : (tipos[item.tipo] || 'Ficheiro recuperado');
-                    linha.append(etiqueta + (Number.isFinite(data.getTime()) ? ' · ' + formato.format(data) : ''));
-                    const abrirFicheiro = documento.createElement('button');
-                    abrirFicheiro.type = 'button';
-                    abrirFicheiro.className = 'btn btn-outline';
-                    abrirFicheiro.style.marginLeft = '0.5rem';
-                    abrirFicheiro.textContent = 'Abrir ficheiro';
-                    abrirFicheiro.setAttribute('aria-label', 'Abrir ' + etiqueta);
-                    abrirFicheiro.onclick = () => abrir(origem + prefixo + 'ficheiros/' + item.caminho, '_blank');
-                    linha.append(abrirFicheiro);
-                    lista.append(linha);
+                lista.style.cssText = 'display:grid;gap:.75rem;list-style:none;padding:0;margin:.75rem 0;';
+                const informacao = documento.createElement('p');
+                informacao.setAttribute('role', 'status');
+                informacao.setAttribute('aria-live', 'polite');
+                informacao.style.margin = '.5rem 0';
+                const fecharBotao = criarBotao('Fechar', fechar);
+                let secao = items.some(item => item.estado === 'pendente') ? 'pendente' : items[0].estado;
+                let ocupado = false;
+
+                async function decidir(item, estado) {
+                    const atual = revisaoSessao;
+                    const estadoAnterior = item.estado;
+                    ocupado = true;
+                    informacao.textContent = 'A guardar decisão…';
+                    dialogo.querySelectorAll('button').forEach(botao => { botao.disabled = true; });
+                    try {
+                        const { data, error } = await supa.rpc('tg_decidir_ficheiro_revisao', {
+                            p_caminho: item.caminho, p_anterior: estadoAnterior, p_estado: estado
+                        });
+                        if (atual !== revisaoSessao || painel !== dialogo) return;
+                        if (error) throw new Error('Não foi possível guardar a decisão.');
+                        if (!data) {
+                            items = await listar();
+                            if (atual !== revisaoSessao || painel !== dialogo) return;
+                            informacao.textContent = 'O estado mudou entretanto. A lista foi atualizada.';
+                        } else {
+                            item.estado = estado;
+                            informacao.textContent = {
+                                validado: 'Ficheiro validado.',
+                                arquivado: 'Ficheiro arquivado. Pode devolvê-lo à revisão no separador Arquivo.',
+                                pendente: 'Ficheiro devolvido à revisão.'
+                            }[estado];
+                        }
+                        mostrarAtalho(items);
+                    } catch (error) {
+                        if (atual === revisaoSessao && painel === dialogo) informacao.textContent = error.message;
+                    } finally {
+                        ocupado = false;
+                        if (atual === revisaoSessao && painel === dialogo) {
+                            fecharBotao.disabled = false;
+                            renderizar();
+                            informacao.tabIndex = -1;
+                            informacao.focus({ preventScroll: true });
+                        }
+                    }
                 }
-                const fecharBotao = documento.createElement('button');
-                fecharBotao.type = 'button';
-                fecharBotao.className = 'btn btn-outline';
-                fecharBotao.textContent = 'Fechar';
-                fecharBotao.onclick = fechar;
-                painel.append(titulo, descricao, lista, fecharBotao);
-                painel.addEventListener('close', () => {
-                    if (!painel || painel.open) return;
-                    painel.remove();
-                    painel = null;
+
+                function renderizar() {
+                    navegacao.replaceChildren();
+                    const contagens = {};
+                    for (const [chave, nome] of Object.entries(secoes)) {
+                        const total = items.filter(item => item.estado === chave).length;
+                        contagens[chave] = total;
+                        const botao = criarBotao(nome + ' (' + total + ')', () => {
+                            secao = chave;
+                            informacao.textContent = '';
+                            renderizar();
+                            navegacao.querySelector('[aria-pressed="true"]').focus({ preventScroll: true });
+                        }, chave === secao ? 'btn btn-primary' : 'btn btn-outline');
+                        botao.setAttribute('aria-pressed', String(chave === secao));
+                        botao.disabled = ocupado;
+                        navegacao.append(botao);
+                    }
+
+                    lista.replaceChildren();
+                    if (!contagens[secao]) {
+                        const vazio = documento.createElement('li');
+                        vazio.textContent = 'Sem ficheiros neste separador.';
+                        lista.append(vazio);
+                        return;
+                    }
+
+                    for (const item of items.filter(item => item.estado === secao)) {
+                        const linha = documento.createElement('li');
+                        linha.style.cssText = 'border:1px solid #dbe3ed;border-radius:10px;padding:.8rem;overflow-wrap:anywhere;';
+                        const data = new Date(item.carregado_em);
+                        const etiqueta = item.tipo === 'os_fotos'
+                            ? 'Fotografia de ordem de serviço' + (item.numero_os ? ' ' + item.numero_os : '')
+                            : (tipos[item.tipo] || 'Ficheiro recuperado');
+                        const nome = documento.createElement('strong');
+                        nome.textContent = etiqueta + (Number.isFinite(data.getTime()) ? ' · ' + formato.format(data) : '');
+                        const ficheiro = documento.createElement('small');
+                        ficheiro.style.display = 'block';
+                        ficheiro.textContent = item.caminho.split('/').pop();
+                        const acoes = documento.createElement('div');
+                        acoes.style.cssText = 'display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.55rem;';
+                        const abrirFicheiro = criarBotao('Abrir ficheiro', () =>
+                            abrir(origem + prefixo + 'ficheiros/' + item.caminho, '_blank'));
+                        acoes.append(abrirFicheiro);
+                        if (secao === 'pendente') {
+                            acoes.append(
+                                criarBotao('Validar', () => decidir(item, 'validado'), 'btn btn-success'),
+                                criarBotao('Arquivar', () => decidir(item, 'arquivado'))
+                            );
+                        } else {
+                            acoes.append(criarBotao('Voltar a pôr em revisão', () => decidir(item, 'pendente')));
+                        }
+                        linha.append(nome, ficheiro, acoes);
+                        lista.append(linha);
+                    }
+                }
+
+                dialogo.addEventListener('cancel', evento => {
+                    evento.preventDefault();
+                    if (!ocupado) fechar();
                 });
-                documento.body.append(painel);
-                painel.showModal();
+                dialogo.append(titulo, descricao, navegacao, lista, informacao, fecharBotao);
+                renderizar();
+                documento.body.append(dialogo);
+                dialogo.showModal();
             }
 
-            botao.onclick = async () => {
+            atalho.onclick = async () => {
                 const atual = revisaoSessao;
                 try {
                     const items = await listar();
                     if (atual !== revisaoSessao) return;
+                    mostrarAtalho(items);
                     if (items.length) desenhar(items);
-                    else { botao.hidden = true; window.alert('Já não há ficheiros disponíveis para revisão.'); }
+                    else window.alert('Já não há ficheiros disponíveis para revisão.');
                 } catch (error) {
                     if (atual === revisaoSessao) window.alert(error.message);
                 }
@@ -168,15 +272,13 @@
             return id => {
                 const atual = ++revisaoSessao;
                 fechar();
-                botao.hidden = true;
+                atalho.hidden = true;
                 if (!id) return;
                 // Supabase auth listeners must finish before a new request uses the client.
                 setTimeout(async () => {
                     try {
                         const items = await listar();
-                        if (atual !== revisaoSessao || !items.length) return;
-                        botao.textContent = 'Ficheiros em revisão (' + items.length + ')';
-                        botao.hidden = false;
+                        if (atual === revisaoSessao) mostrarAtalho(items);
                     } catch (_) {}
                 }, 0);
             };
