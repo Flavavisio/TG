@@ -101,6 +101,8 @@ function _assistEstado(value) {
             }
         }
         const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const anexosTG = window.TGAnexos.criar(supa, SUPABASE_URL);
+        anexosTG.instalar(document);
 
         // Deteta falhas de sessão (ex.: token de sessão que deixou de ser válido) e mostra um
         // aviso claro em vez de deixar a app num estado inconsistente sem a pessoa perceber
@@ -968,12 +970,12 @@ function _assistEstado(value) {
                 reader.readAsDataURL(file);
             });
         }
-        async function uploadDataURL(dataUrl, pasta) {
+        async function uploadDataURL(dataUrl, pasta, empresa) {
             const m = /^data:([^;]+);base64,(.*)$/.exec(dataUrl || '');
             if (!m) return dataUrl; // já é URL ou está vazio
             const mime = m[1].toLowerCase();
             if (!_TIPOS_FICHEIRO_PERMITIDOS.includes(mime)) {
-                throw new Error('Tipo de ficheiro não permitido (' + mime + '). Só são aceites imagens (PNG, JPG, WEBP, GIF, SVG) ou PDF.');
+                throw new Error('Tipo de ficheiro não permitido (' + mime + '). Só são aceites imagens (PNG, JPG, WEBP, GIF) ou PDF.');
             }
             const bin = atob(m[2]);
             if (bin.length > _TAMANHO_MAX_FICHEIRO) {
@@ -982,15 +984,25 @@ function _assistEstado(value) {
             const arr = new Uint8Array(bin.length);
             for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
             const ext = (mime.split('/')[1] || 'bin').split('+')[0];
-            const path = pasta + '/' + Date.now() + '_' + Math.random().toString(36).slice(2, 8) + '.' + ext;
-            const { error } = await supa.storage.from('ficheiros').upload(path, arr, { contentType: mime, upsert: false });
+            const logotipo = pasta === 'config' || pasta === 'administradores';
+            const tenant = empresa || usuarioLogado?.adminId || usuarioLogado?.id;
+            const partes = [tenant, ...pasta.split('/')];
+            if (!partes.every(parte => typeof parte === 'string' && /^[A-Za-z0-9_-]+$/.test(parte))) {
+                throw new Error('Falta a empresa ou o registo associado ao ficheiro.');
+            }
+            if (logotipo && !mime.startsWith('image/')) throw new Error('O logótipo deve ser uma imagem.');
+            const path = partes.join('/') + '/' + crypto.randomUUID() + '.' + ext;
+            const bucket = logotipo ? 'logotipos' : 'anexos-privados';
+            const { error } = await supa.storage.from(bucket).upload(path, arr, {
+                contentType: mime, cacheControl: logotipo ? '3600' : '0', upsert: false
+            });
             if (error) throw error;
-            return supa.storage.from('ficheiros').getPublicUrl(path).data.publicUrl;
+            return SUPABASE_URL + '/storage/v1/object/public/' + bucket + '/' + path;
         }
 
         // Fotos de uma OS — qualquer técnico ou admin pode adicionar, a partir do telemóvel
         // (câmara) ou da galeria. Ficam sempre comprimidas antes de subir, e guardadas no mesmo
-        // bucket "ficheiros" já usado para o resto da app — nunca em base64 dentro da própria OS,
+        // armazenamento privado — nunca em base64 dentro da própria OS,
         // para não fazer crescer os dados sincronizados a cada abertura da app.
         function _osPedirFoto(osId) {
             const input = document.createElement('input');
@@ -1073,7 +1085,7 @@ function _assistEstado(value) {
                     for (const campo of FICHEIRO_CAMPOS[col]) {
                         const v = o[campo];
                         if (typeof v === 'string' && v.startsWith('data:')) {
-                            try { o[campo] = await uploadDataURL(v, col); }
+                            try { o[campo] = await uploadDataURL(v, col === 'administradores' ? col : col + '/' + o.id, col === 'administradores' ? o.id : o.adminId); }
                             catch (e) { console.error('upload ' + col + '.' + campo + ':', e.message || e); } // mantém base64 como fallback
                         }
                     }
@@ -7624,7 +7636,7 @@ function _assistEstado(value) {
                     const entradaTxt = foiEditado ? `<span style="color:#0ea5e9;" title="${tituloEdicao}">${r.entrada || '--:--'} <i class="fas fa-pen" style="font-size:.65em;"></i></span>` : (r.entrada || '--:--');
                     const saidaTxtBase = r.pausaAlmoco ? `<span style="color:#d97706;"><i class="fas fa-utensils" title="Pausa almoço"></i> ${r.saida || '--:--'}</span>` : (r.saidaAutomatica ? `${r.saida} <i class="fas fa-triangle-exclamation" title="Saída automática após 12h" style="color:#d97706;"></i>` : (r.saida || '--:--'));
                     const saidaTxt = (foiEditado && !r.pausaAlmoco) ? `<span style="color:#0ea5e9;" title="${tituloEdicao}">${saidaTxtBase} <i class="fas fa-pen" style="font-size:.65em;"></i></span>` : saidaTxtBase;
-                    const fotoHtml = r.foto ? `<img src="${r.foto}" alt="foto" class="foto-miniatura" onclick="window.open('${r.foto}','_blank')" />` : '';
+                    const fotoHtml = r.foto ? `<img src="${r.foto}" alt="foto" class="foto-miniatura" onclick="anexosTG.abrir('${escapeHtmlSimples(r.foto)}','_blank')" />` : '';
                     const gpsEntradaHtml = (r.lat && r.lng) ? `<a href="https://www.google.com/maps?q=${r.lat},${r.lng}" target="_blank" title="Ver no mapa"><i class="fas fa-map-pin gps-icon"></i></a>` : '<span style="color:#cbd5e1;">—</span>';
                     const gpsSaidaHtml = (r.latSaida && r.lngSaida) ? `<a href="https://www.google.com/maps?q=${r.latSaida},${r.lngSaida}" target="_blank" title="Ver no mapa"><i class="fas fa-map-pin gps-icon"></i></a>` : '<span style="color:#cbd5e1;">—</span>';
                     const dataHtml = _pontoNavModo === 'semana'
@@ -8313,6 +8325,17 @@ function _assistEstado(value) {
             if (!f) { alert('Folha não encontrada.'); return; }
             if (!window.jspdf || !window.jspdf.jsPDF) { alert('Biblioteca de PDF não carregada. Verifique a ligação à internet.'); return; }
             let _assinaturaPdf = f.assinatura || '';
+            if (anexosTG.referencia(_assinaturaPdf)) {
+                try {
+                    const ficheiro = await (await anexosTG.descarregar(_assinaturaPdf)).blob();
+                    _assinaturaPdf = await new Promise((resolve, reject) => {
+                        const leitor = new FileReader();
+                        leitor.onload = () => resolve(leitor.result);
+                        leitor.onerror = reject;
+                        leitor.readAsDataURL(ficheiro);
+                    });
+                } catch { _assinaturaPdf = ''; }
+            }
             if (!_assinaturaPdf && f.assinaturaPath) {
                 try {
                     const url = await _obterUrlStorage(f.assinaturaPath);
@@ -10602,6 +10625,7 @@ function _assistEstado(value) {
         }
 
         let contratoEditandoId = null;
+        let contratoNovoId = null;
         function _ctRenderTiposTrabalho(selecionados) {
             const cont = document.getElementById('ct_tipos_trabalho_cont');
             if (!cont) return;
@@ -10615,6 +10639,7 @@ function _assistEstado(value) {
             const admin = adminAtual();
             if (!moduloContratosAtivo(admin)) { alert('Módulo de Contratos de Manutenção não está ativo.'); return; }
             contratoEditandoId = id;
+            contratoNovoId = id ? null : gerarId();
             const c = id ? dados.contratos?.find(x => x.id === id && x.adminId === (usuarioLogado?.adminId || usuarioLogado?.id)) : null;
             if (id && !c) { alert('Contrato indisponível.'); return; }
             document.getElementById('modalContratoTitulo').innerHTML = '<i class="fas fa-file-signature"></i> ' + (id ? 'Editar Contrato' : 'Novo Contrato');
@@ -10769,8 +10794,7 @@ function _assistEstado(value) {
 
         // Documento anexo do contrato (apólice, condições assinadas, etc.) — só PDF, até 2 MB,
         // um único ficheiro por contrato (carregar um novo substitui sempre o anterior). Usa o
-        // mesmo bucket "ficheiros" já usado no resto da app, mas com um limite bem mais apertado
-        // do que o geral (15 MB) e sem aceitar imagens aqui — só PDF.
+        // armazenamento privado, com um limite mais apertado do que o geral (15 MB).
         const _TAMANHO_MAX_DOCUMENTO_CONTRATO = 2 * 1024 * 1024; // 2 MB
         async function uploadDocumentoContrato(inputEl) {
             const file = inputEl.files?.[0];
@@ -10794,7 +10818,7 @@ function _assistEstado(value) {
                     reader.onerror = reject;
                     reader.readAsDataURL(file);
                 });
-                const url = await uploadDataURL(dataUrl, 'contratos-documentos');
+                const url = await uploadDataURL(dataUrl, 'contratos-documentos/' + (contratoEditandoId || contratoNovoId));
                 document.getElementById('ct_documento_url').value = url;
                 document.getElementById('ct_documento_nome').value = file.name;
                 const atualEl = document.getElementById('ct_documento_atual');
@@ -11356,7 +11380,7 @@ function _assistEstado(value) {
                     c.proximaManutencao = calcularProximaManutencao(c);
                 }
             } else {
-                const novo = { id: gerarId(), numero: gerarNumeroContrato(clienteId), ...(gestaoManutencao ? { gestaoManutencao } : {}), adminId, clienteId, localId, locaisIds, equipamentoId, equipamentosIds, tipo, tiposTrabalho, periodicidade, tipoIntervencao, tecnicoId, dataInicio, valor, vigilanciaAtiva, valorMensalVigilancia, validadeContrato, documentoUrl, documentoNome, dataCriacao: Date.now() };
+                const novo = { id: contratoNovoId || gerarId(), numero: gerarNumeroContrato(clienteId), ...(gestaoManutencao ? { gestaoManutencao } : {}), adminId, clienteId, localId, locaisIds, equipamentoId, equipamentosIds, tipo, tiposTrabalho, periodicidade, tipoIntervencao, tecnicoId, dataInicio, valor, vigilanciaAtiva, valorMensalVigilancia, validadeContrato, documentoUrl, documentoNome, dataCriacao: Date.now() };
                 novo.proximaManutencao = calcularProximaManutencao(novo);
                 dados.contratos.push(novo);
             }
@@ -17729,7 +17753,8 @@ function _assistEstado(value) {
         // Descarrega efetivamente o ficheiro (em vez de o abrir no browser) via fetch+blob.
         async function _baixarFicheiroUrl(url, nomeFicheiro) {
             try {
-                const resp = await fetch(url);
+                const resp = await anexosTG.descarregar(url);
+                if (!resp.ok) throw new Error('Ficheiro indisponível.');
                 const blob = await resp.blob();
                 const blobUrl = URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -17737,7 +17762,7 @@ function _assistEstado(value) {
                 document.body.appendChild(a); a.click(); a.remove();
                 setTimeout(() => URL.revokeObjectURL(blobUrl), 4000);
             } catch (e) {
-                window.open(url, '_blank'); // falha no download forçado — abre numa nova aba como alternativa
+                anexosTG.abrir(url, '_blank');
             }
         }
         function _verObraTransferirDocumento(docId) {
@@ -18303,9 +18328,8 @@ function _assistEstado(value) {
             else finish(null, null);
         }
         function verFaturaEncomenda(id) {
-            const e = dados.encomendas?.find(x => x.id === id); if (!e || !e.fatura) return;
-            const w = window.open('', '_blank');
-            if (w) w.document.write('<title>' + (e.faturaNome || 'Fatura') + '</title><iframe src="' + e.fatura + '" style="position:fixed;inset:0;width:100%;height:100%;border:0;"></iframe>');
+            const e = dados.encomendas?.find(x => x.id === id);
+            if (e?.fatura) anexosTG.abrir(e.fatura, '_blank');
         }
         function eliminarEncomenda(id) {
             const e = dados.encomendas?.find(x => x.id === id); if (!e) return;
@@ -27780,7 +27804,7 @@ async function salvarAdmin(e) {
             if (existente) {
                 const img = new Image();
                 img.onload = () => _assinaturaCtx.drawImage(img, 0, 0, canvas.getBoundingClientRect().width || 300, 160);
-                img.src = existente;
+                anexosTG.urlImagem(existente).then(url => { img.src = url; }).catch(() => {});
                 _assinaturaDesenhou = true;
             }
             let desenhando = false, ult = null;
@@ -31091,7 +31115,7 @@ window._relPrefill = function(msg){
                 let feitos = 0;
                 for (const t of tarefas) {
                     try {
-                        const resp = await fetch(t.url);
+                        const resp = await anexosTG.descarregar(t.url);
                         if (resp.ok) {
                             const blob = await resp.blob();
                             const ext = (t.url.split('.').pop() || 'bin').split('?')[0].slice(0, 5);
