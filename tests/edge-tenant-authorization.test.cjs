@@ -12,6 +12,8 @@ const profiles = {
     admin: { papel: 'admin', admin_id: null, registo_id: 'empresa-a' },
     deputy: { papel: 'subadmin', admin_id: 'empresa-a', registo_id: 'sub-a' },
     worker: { papel: 'funcionario', admin_id: 'empresa-a', registo_id: 'tec-a' },
+    workerB: { papel: 'funcionario', admin_id: 'empresa-b', registo_id: 'tec-b' },
+    workerWithInvalidEndpoint: { papel: 'funcionario', admin_id: 'empresa-a', registo_id: 'tec-c' },
     portal: { papel: 'cliente', admin_id: 'empresa-a', registo_id: 'cli-a' },
     foreign: { papel: 'admin', admin_id: null, registo_id: 'empresa-b' },
 };
@@ -39,9 +41,8 @@ function serve(slug) {
                     return { data };
                 },
                 then(resolve) {
-                    const data = table === 'push_subscriptions'
-                        ? subscriptions.filter(row => [...filters].every(([key, value]) => row[key] === value))
-                        : [];
+                    const rows = table === 'push_subscriptions' ? subscriptions : table === 'perfis' ? Object.values(profiles) : [];
+                    const data = rows.filter(row => [...filters].every(([key, value]) => row[key] === value));
                     resolve({ data });
                 },
             };

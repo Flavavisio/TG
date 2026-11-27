@@ -74,6 +74,14 @@ Deno.serve(async (req) => {
         (icone != null && (typeof icone !== "string" || icone.length > 2048))) {
       return json({ erro: "Dados da notificação inválidos." }, 400);
     }
+    if (empresa) {
+      const { data: destinatarios, error: erroDestinatario } = await admin.from("perfis")
+        .select("papel,admin_id,registo_id").eq("registo_id", utilizador_id);
+      if (erroDestinatario) throw erroDestinatario;
+      if (!destinatarios?.some(destinatario => empresaDoPerfil(destinatario) === empresa)) {
+        return json({ ok: true, enviados: 0 });
+      }
+    }
     let inscricoes = admin.from("push_subscriptions").select("id,endpoint,p256dh,auth").eq("utilizador_id", utilizador_id);
     if (empresa) inscricoes = inscricoes.eq("admin_id", empresa);
     const { data: subs, error: erroInscricoes } = await inscricoes;
