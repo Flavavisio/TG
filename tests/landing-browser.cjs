@@ -29,7 +29,7 @@ await page.setViewportSize({width:390,height:844});await page.locator('.tg-menu-
 await page.locator('#tg-precos').scrollIntoViewIfNeeded();await page.screenshot({path:path.join(out,'landing-prices-mobile.png')});
 await page.locator('.tg-plan-help button').click();await page.screenshot({path:path.join(out,'landing-wizard.png')});await page.keyboard.press('Escape');
 await page.evaluate(()=>abrirModalSignup());
-for (const [id,value] of Object.entries({su_empresa:'Teste local',su_nome:'Utilizador Teste',su_email:'teste@example.invalid',su_telefone:'912345678',su_nif:'123456789',su_colaboradores:'5',su_senha:'Teste1234!',su_senha2:'Teste1234!'})) await page.locator('#'+id).fill(value);
-await page.locator('#tg-signup-card button[aria-label="Mostrar palavra-passe"]').first().click();assert.equal(await page.locator('#su_senha').getAttribute('type'),'text');
+for (const [id,value] of Object.entries({su_empresa:'Teste local',su_nome:'Utilizador Teste',su_email:'teste@example.invalid',su_telefone:'912345678',su_nif:'123456789',su_colaboradores:'5'})) await page.locator('#'+id).fill(value);
+assert.equal(await page.locator('#su_senha').count(),0);
 await page.locator('#su_btn').click();await page.waitForSelector('#tg-confirm-email');assert.equal(await page.locator('#tg-confirm-email').innerText(),'teste@example.invalid');await page.keyboard.press('Escape');await page.evaluate(()=>abrirModalSignup('express'));assert(await page.locator('#su_empresa').isVisible());await page.keyboard.press('Escape');
 assert.deepEqual(errors,[]);await browser.close();server.close();console.log('PASS: shared pack prices, monthly/annual links, signup selection and extra blocks, invalid/>100 teams, Assistance recommendation, comparison, anchors, login delegation, recovery, preview, Escape, mobile navigation and 320/390/768/1024px overflow.');})().catch(e=>{console.error(e);server.close();process.exit(1)});

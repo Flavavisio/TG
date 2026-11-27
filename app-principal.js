@@ -148,14 +148,12 @@ function _assistEstado(value) {
         // o "Ver código-fonte" do site). Fica agora "null" de propósito: sem password
         // definida na base de dados, ninguém consegue entrar como Super Admin — falha
         // sempre do lado seguro (fechado), nunca do lado aberto.
-        const SUPER_ADMIN_SENHA = null;
         const SUPER_ADMIN_NOME = 'Super Admin';
 
         // Cache em memória da config do Super Admin (mantém obterConfig síncrono)
         let configCache = {
             nome: SUPER_ADMIN_NOME,
             email: SUPER_ADMIN_EMAIL,
-            senha: SUPER_ADMIN_SENHA,
             logo: null
         };
 
@@ -176,7 +174,6 @@ function _assistEstado(value) {
                     id: true,
                     nome: config.nome ?? null,
                     email: config.email ?? null,
-                    senha: config.senha ?? null,
                     logo: logo ?? null,
                     mostrar_estado_online: config.mostrarEstadoOnline === true,
                     layout: config.layout || null
@@ -193,7 +190,6 @@ function _assistEstado(value) {
                 configCache = {
                     nome: data.nome || SUPER_ADMIN_NOME,
                     email: data.email || SUPER_ADMIN_EMAIL,
-                    senha: data.senha || SUPER_ADMIN_SENHA,
                     logo: data.logo || null,
                     mostrarEstadoOnline: data.mostrar_estado_online === true,
                     layout: data.layout || null
@@ -271,22 +267,22 @@ function _assistEstado(value) {
             administradores: {
                 tabela: 'administradores',
                 from: r => ({ testePontoAssiduidadeAtivo: r.teste_tg_ponto_assiduidade_ativo !== false, id: r.id, nome: r.nome, email: r.email, empresa: r.empresa || '', nif: r.nif || null, logo: r.logo || null, licencaFeedback: r.licenca_feedback || null, contratosPlano: r.contratos_plano || null, contratosExpiracao: isoToMs(r.contratos_expiracao), frotaPlano: r.frota_plano || null, frotaExpiracao: isoToMs(r.frota_expiracao), armazemPlano: r.armazem_plano || null, armazemExpiracao: isoToMs(r.armazem_expiracao), portalPlano: r.portal_plano || null, portalExpiracao: isoToMs(r.portal_expiracao), crmPlano: r.crm_plano || null, crmExpiracao: isoToMs(r.crm_expiracao), assistPlano: r.assist_plano || null, assistExpiracao: isoToMs(r.assist_expiracao), erpPlano: r.erp_plano || null, erpExpiracao: isoToMs(r.erp_expiracao), notificacoesPlano: r.notificacoes_plano || null, notificacoesExpiracao: isoToMs(r.notificacoes_expiracao), dadosBancarios: r.dados_bancarios || null, integracaoFaturacao: r.integracao_faturacao || null, ativo: r.ativo, mudarSenha: r.mudar_senha === true, ultimoLogin: isoToMs(r.ultimo_login), ultimaAtividade: isoToMs(r.ultima_atividade), mostrarEstadoOnline: r.mostrar_estado_online === true, layout: r.layout || null, tiposEquipamento: r.tipos_equipamento || [], logo: r.logo, notificarAprovacao: r.notificar_aprovacao === true, nomeFiscal: r.nome_fiscal || null, numeroRegistoPrevio: r.numero_registo_previo || null, dataRegistoPrevio: r.data_registo_previo || null, numeroAnepc: r.numero_anepc || null, dataAnepc: r.data_anepc || null, anepcValidade: r.anepc_validade || null, registoPrevioValidade: r.registo_previo_validade || null, corCorporativa: r.cor_corporativa || null, favoritos: Array.isArray(r.favoritos) ? r.favoritos : [], ivaPeriodicidade: r.iva_periodicidade || 'mensal', irsPeriodicidade: r.irs_periodicidade || 'semestral', painelTvAtivo: r.painel_tv_ativo === true, descricoesRapidasOS: Array.isArray(r.descricoes_rapidas_os) ? r.descricoes_rapidas_os : ['Instalação', 'Manutenção', 'Visita', 'Formação'], horaEntradaHabitual: r.hora_entrada_habitual || '09:00', toleranciaAtrasoMin: r.tolerancia_atraso_min != null ? r.tolerancia_atraso_min : 15, certificadoraLogo: r.certificadora_logo || null, ehDistribuidor: r.eh_distribuidor === true, distribuidorDesconto: r.distribuidor_desconto != null ? Number(r.distribuidor_desconto) : null, distribuidorId: r.distribuidor_id || null, precoDistribuidorCobrado: r.preco_distribuidor_cobrado != null ? Number(r.preco_distribuidor_cobrado) : null, distribuidorPagamentoPrazo: isoToMs(r.distribuidor_pagamento_prazo), precoFundador: r.preco_fundador === true, obrasAvancadoAtivo: r.obras_avancado_ativo === true, expressAtivo: r.express_ativo === true, obrasChecklistItens: Array.isArray(r.obras_checklist_itens) ? r.obras_checklist_itens : [], checklistEntradaItens: Array.isArray(r.checklist_entrada_itens) ? r.checklist_entrada_itens : [], osModoWizard: r.os_modo_wizard === true, contratoModoWizard: r.contrato_modo_wizard === true, kmPontoGeralAtivo: r.km_ponto_geral_ativo === true, kmPorOsAtivo: r.km_por_os_ativo === true, segurancaAtivo: r.seguranca_ativo === true, segurosAtivo: r.seguros_ativo === true, shstAtivo: r.shst_ativo === true, materiaisEntregaAtivo: r.materiais_entrega_ativo === true, packAtual: r.pack_atual || null, packEscalao: r.pack_escalao || null, packBlocos: r.pack_blocos || 0, areasNegocio: Array.isArray(r.areas_negocio) ? r.areas_negocio : null, onboardingComoTrabalha: Array.isArray(r.onboarding_como_trabalha) ? r.onboarding_como_trabalha : [], modulosAtivos: Array.isArray(r.modulos_ativos) ? r.modulos_ativos : null, onboardingAtividadeConcluido: r.onboarding_atividade_concluido === true, lembretePagamentoEm: isoToMs(r.lembrete_pagamento_em), concelho: r.concelho || null, contratosDemoDias: r.contratos_demo_dias || null, frotaDemoDias: r.frota_demo_dias || null, armazemDemoDias: r.armazem_demo_dias || null, crmDemoDias: r.crm_demo_dias || null, erpDemoDias: r.erp_demo_dias || null, rondasPlano: r.rondas_plano || null, rondasExpiracao: isoToMs(r.rondas_expiracao), rondasDemoDias: r.rondas_demo_dias || null, usoSecoes: r.uso_secoes ? (typeof r.uso_secoes === 'string' ? JSON.parse(r.uso_secoes) : r.uso_secoes) : {}, usoSecoesUltima: isoToMs(r.uso_secoes_ultima), ultimaSincronizacaoMoloniArtigos: isoToMs(r.ultima_sincronizacao_moloni_artigos), licencaFaseAvisada: r.licenca_fase_avisada || null, dataCriacao: isoToMs(r.data_criacao) }),
-                to:   o => ({ id: o.id, nome: o.nome, email: o.email, senha: o.senha, empresa: o.empresa || null, nif: o.nif || null, logo: o.logo || null, licenca_feedback: o.licencaFeedback || null, contratos_plano: o.contratosPlano || null, contratos_expiracao: msToISO(o.contratosExpiracao), frota_plano: o.frotaPlano || null, frota_expiracao: msToISO(o.frotaExpiracao), armazem_plano: o.armazemPlano || null, armazem_expiracao: msToISO(o.armazemExpiracao), portal_plano: o.portalPlano || null, portal_expiracao: msToISO(o.portalExpiracao), crm_plano: o.crmPlano || null, crm_expiracao: msToISO(o.crmExpiracao), assist_plano: o.assistPlano || null, assist_expiracao: msToISO(o.assistExpiracao), erp_plano: o.erpPlano || null, erp_expiracao: msToISO(o.erpExpiracao), notificacoes_plano: o.notificacoesPlano || null, notificacoes_expiracao: msToISO(o.notificacoesExpiracao), dados_bancarios: o.dadosBancarios || null, integracao_faturacao: o.integracaoFaturacao || null, ativo: o.ativo !== false, mudar_senha: o.mudarSenha === true, ultimo_login: o.ultimoLogin ? msToISO(o.ultimoLogin) : null, ultima_atividade: o.ultimaAtividade ? msToISO(o.ultimaAtividade) : null, mostrar_estado_online: o.mostrarEstadoOnline === true, layout: o.layout || null, tipos_equipamento: o.tiposEquipamento || [], logo: o.logo || null, notificar_aprovacao: o.notificarAprovacao === true, nome_fiscal: o.nomeFiscal || null, numero_registo_previo: o.numeroRegistoPrevio || null, data_registo_previo: o.dataRegistoPrevio || null, numero_anepc: o.numeroAnepc || null, data_anepc: o.dataAnepc || null, anepc_validade: o.anepcValidade || null, registo_previo_validade: o.registoPrevioValidade || null, cor_corporativa: o.corCorporativa || null, favoritos: o.favoritos || [], iva_periodicidade: o.ivaPeriodicidade || 'mensal', irs_periodicidade: o.irsPeriodicidade || 'semestral', painel_tv_ativo: o.painelTvAtivo === true, descricoes_rapidas_os: o.descricoesRapidasOS || null, hora_entrada_habitual: o.horaEntradaHabitual || '09:00', tolerancia_atraso_min: o.toleranciaAtrasoMin != null ? o.toleranciaAtrasoMin : 15, certificadora_logo: o.certificadoraLogo || null, eh_distribuidor: o.ehDistribuidor === true, distribuidor_desconto: o.distribuidorDesconto ?? null, distribuidor_id: o.distribuidorId || null, preco_distribuidor_cobrado: o.precoDistribuidorCobrado ?? null, distribuidor_pagamento_prazo: o.distribuidorPagamentoPrazo ? msToISO(o.distribuidorPagamentoPrazo) : null, preco_fundador: o.precoFundador === true, obras_avancado_ativo: o.obrasAvancadoAtivo === true, express_ativo: o.expressAtivo === true, obras_checklist_itens: o.obrasChecklistItens || [], checklist_entrada_itens: o.checklistEntradaItens || [], os_modo_wizard: o.osModoWizard === true, contrato_modo_wizard: o.contratoModoWizard === true, km_ponto_geral_ativo: o.kmPontoGeralAtivo === true, km_por_os_ativo: o.kmPorOsAtivo === true, seguranca_ativo: o.segurancaAtivo === true, seguros_ativo: o.segurosAtivo === true, shst_ativo: o.shstAtivo === true, materiais_entrega_ativo: o.materiaisEntregaAtivo === true, pack_atual: o.packAtual || null, pack_escalao: o.packEscalao || null, pack_blocos: o.packBlocos || 0, areas_negocio: o.areasNegocio || null, onboarding_como_trabalha: o.onboardingComoTrabalha || [], modulos_ativos: o.modulosAtivos || null, onboarding_atividade_concluido: o.onboardingAtividadeConcluido === true, lembrete_pagamento_em: o.lembretePagamentoEm ? msToISO(o.lembretePagamentoEm) : null, concelho: o.concelho || null, contratos_demo_dias: o.contratosDemoDias || null, frota_demo_dias: o.frotaDemoDias || null, armazem_demo_dias: o.armazemDemoDias || null, crm_demo_dias: o.crmDemoDias || null, erp_demo_dias: o.erpDemoDias || null, rondas_plano: o.rondasPlano || null, rondas_expiracao: msToISO(o.rondasExpiracao), rondas_demo_dias: o.rondasDemoDias || null, uso_secoes: JSON.stringify(o.usoSecoes || {}), uso_secoes_ultima: o.usoSecoesUltima ? msToISO(o.usoSecoesUltima) : null, ultima_sincronizacao_moloni_artigos: o.ultimaSincronizacaoMoloniArtigos ? msToISO(o.ultimaSincronizacaoMoloniArtigos) : null, licenca_fase_avisada: o.licencaFaseAvisada || null, data_criacao: msToISO(o.dataCriacao) })
+                to:   o => ({ id: o.id, nome: o.nome, email: o.email, empresa: o.empresa || null, nif: o.nif || null, logo: o.logo || null, licenca_feedback: o.licencaFeedback || null, contratos_plano: o.contratosPlano || null, contratos_expiracao: msToISO(o.contratosExpiracao), frota_plano: o.frotaPlano || null, frota_expiracao: msToISO(o.frotaExpiracao), armazem_plano: o.armazemPlano || null, armazem_expiracao: msToISO(o.armazemExpiracao), portal_plano: o.portalPlano || null, portal_expiracao: msToISO(o.portalExpiracao), crm_plano: o.crmPlano || null, crm_expiracao: msToISO(o.crmExpiracao), assist_plano: o.assistPlano || null, assist_expiracao: msToISO(o.assistExpiracao), erp_plano: o.erpPlano || null, erp_expiracao: msToISO(o.erpExpiracao), notificacoes_plano: o.notificacoesPlano || null, notificacoes_expiracao: msToISO(o.notificacoesExpiracao), dados_bancarios: o.dadosBancarios || null, integracao_faturacao: o.integracaoFaturacao || null, ativo: o.ativo !== false, mudar_senha: o.mudarSenha === true, ultimo_login: o.ultimoLogin ? msToISO(o.ultimoLogin) : null, ultima_atividade: o.ultimaAtividade ? msToISO(o.ultimaAtividade) : null, mostrar_estado_online: o.mostrarEstadoOnline === true, layout: o.layout || null, tipos_equipamento: o.tiposEquipamento || [], logo: o.logo || null, notificar_aprovacao: o.notificarAprovacao === true, nome_fiscal: o.nomeFiscal || null, numero_registo_previo: o.numeroRegistoPrevio || null, data_registo_previo: o.dataRegistoPrevio || null, numero_anepc: o.numeroAnepc || null, data_anepc: o.dataAnepc || null, anepc_validade: o.anepcValidade || null, registo_previo_validade: o.registoPrevioValidade || null, cor_corporativa: o.corCorporativa || null, favoritos: o.favoritos || [], iva_periodicidade: o.ivaPeriodicidade || 'mensal', irs_periodicidade: o.irsPeriodicidade || 'semestral', painel_tv_ativo: o.painelTvAtivo === true, descricoes_rapidas_os: o.descricoesRapidasOS || null, hora_entrada_habitual: o.horaEntradaHabitual || '09:00', tolerancia_atraso_min: o.toleranciaAtrasoMin != null ? o.toleranciaAtrasoMin : 15, certificadora_logo: o.certificadoraLogo || null, eh_distribuidor: o.ehDistribuidor === true, distribuidor_desconto: o.distribuidorDesconto ?? null, distribuidor_id: o.distribuidorId || null, preco_distribuidor_cobrado: o.precoDistribuidorCobrado ?? null, distribuidor_pagamento_prazo: o.distribuidorPagamentoPrazo ? msToISO(o.distribuidorPagamentoPrazo) : null, preco_fundador: o.precoFundador === true, obras_avancado_ativo: o.obrasAvancadoAtivo === true, express_ativo: o.expressAtivo === true, obras_checklist_itens: o.obrasChecklistItens || [], checklist_entrada_itens: o.checklistEntradaItens || [], os_modo_wizard: o.osModoWizard === true, contrato_modo_wizard: o.contratoModoWizard === true, km_ponto_geral_ativo: o.kmPontoGeralAtivo === true, km_por_os_ativo: o.kmPorOsAtivo === true, seguranca_ativo: o.segurancaAtivo === true, seguros_ativo: o.segurosAtivo === true, shst_ativo: o.shstAtivo === true, materiais_entrega_ativo: o.materiaisEntregaAtivo === true, pack_atual: o.packAtual || null, pack_escalao: o.packEscalao || null, pack_blocos: o.packBlocos || 0, areas_negocio: o.areasNegocio || null, onboarding_como_trabalha: o.onboardingComoTrabalha || [], modulos_ativos: o.modulosAtivos || null, onboarding_atividade_concluido: o.onboardingAtividadeConcluido === true, lembrete_pagamento_em: o.lembretePagamentoEm ? msToISO(o.lembretePagamentoEm) : null, concelho: o.concelho || null, contratos_demo_dias: o.contratosDemoDias || null, frota_demo_dias: o.frotaDemoDias || null, armazem_demo_dias: o.armazemDemoDias || null, crm_demo_dias: o.crmDemoDias || null, erp_demo_dias: o.erpDemoDias || null, rondas_plano: o.rondasPlano || null, rondas_expiracao: msToISO(o.rondasExpiracao), rondas_demo_dias: o.rondasDemoDias || null, uso_secoes: JSON.stringify(o.usoSecoes || {}), uso_secoes_ultima: o.usoSecoesUltima ? msToISO(o.usoSecoesUltima) : null, ultima_sincronizacao_moloni_artigos: o.ultimaSincronizacaoMoloniArtigos ? msToISO(o.ultimaSincronizacaoMoloniArtigos) : null, licenca_fase_avisada: o.licencaFaseAvisada || null, data_criacao: msToISO(o.dataCriacao) })
             },
             funcionarios: {
                 tabela: 'funcionarios',
                 from: r => ({ id: r.id, nome: r.nome, foto: r.foto || null, cargo: r.cargo, telefone: r.telefone, email: r.email, horasSemanais: r.horas_semanais, role: r.role, adminId: r.admin_id, morada: r.morada, codigoPostal: r.codigo_postal, dataNascimento: r.data_nascimento, ordenadoBruto: r.ordenado_bruto, veiculoId: r.veiculo_id, mudarSenha: r.mudar_senha === true, gpsPonto: r.gps_ponto !== false, ultimaAtividade: isoToMs(r.ultima_atividade), ultimoLogin: isoToMs(r.ultimo_login), diasFerias: r.dias_ferias != null ? r.dias_ferias : 22, pin: r.pin || null, permissoesNegadas: Array.isArray(r.permissoes_negadas) ? r.permissoes_negadas : [], apoliceNumero: r.apolice_numero || null, apoliceSeguradora: r.apolice_seguradora || null, apoliceValidade: r.apolice_validade || null, saudeApoliceNumero: r.saude_apolice_numero || null, saudeApoliceSeguradora: r.saude_apolice_seguradora || null, saudeApoliceValidade: r.saude_apolice_validade || null, shstUltimaConsulta: r.shst_ultima_consulta || null, favoritos: Array.isArray(r.favoritos) ? r.favoritos : [], suspenso: r.suspenso === true, podeAssinarRelatorios: r.pode_assinar_relatorios !== false, contaConfirmada: r.conta_confirmada !== false, tokenConfirmacaoConta: r.token_confirmacao_conta || null, contaCriadaEm: isoToMs(r.conta_criada_em), vigilanteSupervisorId: r.vigilante_supervisor_id || null }),
-                to:   o => ({ id: o.id, nome: o.nome, foto: o.foto || null, cargo: o.cargo || null, telefone: o.telefone || null, email: o.email, senha: o.senha, horas_semanais: o.horasSemanais || 40, role: o.role || 'funcionario', admin_id: o.adminId || null, morada: o.morada || null, codigo_postal: o.codigoPostal || null, data_nascimento: nn(o.dataNascimento), ordenado_bruto: (o.ordenadoBruto === '' || o.ordenadoBruto == null) ? null : Number(o.ordenadoBruto), veiculo_id: o.veiculoId || null, mudar_senha: o.mudarSenha === true, gps_ponto: o.gpsPonto !== false, ultima_atividade: o.ultimaAtividade ? msToISO(o.ultimaAtividade) : null, ultimo_login: o.ultimoLogin ? msToISO(o.ultimoLogin) : null, dias_ferias: o.diasFerias != null ? o.diasFerias : 22, pin: o.pin || null, permissoes_negadas: o.permissoesNegadas || [], apolice_numero: o.apoliceNumero || null, apolice_seguradora: o.apoliceSeguradora || null, apolice_validade: o.apoliceValidade || null, saude_apolice_numero: o.saudeApoliceNumero || null, saude_apolice_seguradora: o.saudeApoliceSeguradora || null, saude_apolice_validade: o.saudeApoliceValidade || null, shst_ultima_consulta: o.shstUltimaConsulta || null, favoritos: o.favoritos || [], suspenso: o.suspenso === true, pode_assinar_relatorios: o.podeAssinarRelatorios !== false, conta_confirmada: o.contaConfirmada !== false, token_confirmacao_conta: o.tokenConfirmacaoConta || null, conta_criada_em: o.contaCriadaEm ? msToISO(o.contaCriadaEm) : null, vigilante_supervisor_id: o.vigilanteSupervisorId || null })
+                to:   o => ({ id: o.id, nome: o.nome, foto: o.foto || null, cargo: o.cargo || null, telefone: o.telefone || null, email: o.email, horas_semanais: o.horasSemanais || 40, role: o.role || 'funcionario', admin_id: o.adminId || null, morada: o.morada || null, codigo_postal: o.codigoPostal || null, data_nascimento: nn(o.dataNascimento), ordenado_bruto: (o.ordenadoBruto === '' || o.ordenadoBruto == null) ? null : Number(o.ordenadoBruto), veiculo_id: o.veiculoId || null, mudar_senha: o.mudarSenha === true, gps_ponto: o.gpsPonto !== false, ultima_atividade: o.ultimaAtividade ? msToISO(o.ultimaAtividade) : null, ultimo_login: o.ultimoLogin ? msToISO(o.ultimoLogin) : null, dias_ferias: o.diasFerias != null ? o.diasFerias : 22, pin: o.pin || null, permissoes_negadas: o.permissoesNegadas || [], apolice_numero: o.apoliceNumero || null, apolice_seguradora: o.apoliceSeguradora || null, apolice_validade: o.apoliceValidade || null, saude_apolice_numero: o.saudeApoliceNumero || null, saude_apolice_seguradora: o.saudeApoliceSeguradora || null, saude_apolice_validade: o.saudeApoliceValidade || null, shst_ultima_consulta: o.shstUltimaConsulta || null, favoritos: o.favoritos || [], suspenso: o.suspenso === true, pode_assinar_relatorios: o.podeAssinarRelatorios !== false, conta_confirmada: o.contaConfirmada !== false, token_confirmacao_conta: o.tokenConfirmacaoConta || null, conta_criada_em: o.contaCriadaEm ? msToISO(o.contaCriadaEm) : null, vigilante_supervisor_id: o.vigilanteSupervisorId || null })
             },
             encarregados: {
                 tabela: 'encarregados',
                 from: r => ({ id: r.id, nome: r.nome, email: r.email, adminId: r.admin_id, funcionariosIds: [], dataCriacao: isoToMs(r.data_criacao), cargo: r.cargo, telefone: r.telefone, morada: r.morada, codigoPostal: r.codigo_postal, dataNascimento: r.data_nascimento, horasSemanais: r.horas_semanais, ordenadoBruto: r.ordenado_bruto, veiculoId: r.veiculo_id, mudarSenha: r.mudar_senha === true, gpsPonto: r.gps_ponto !== false, ultimaAtividade: isoToMs(r.ultima_atividade), ultimoLogin: isoToMs(r.ultimo_login), diasFerias: r.dias_ferias != null ? r.dias_ferias : 22, pin: r.pin || null, favoritos: Array.isArray(r.favoritos) ? r.favoritos : [], suspenso: r.suspenso === true, contaConfirmada: r.conta_confirmada !== false, tokenConfirmacaoConta: r.token_confirmacao_conta || null, contaCriadaEm: isoToMs(r.conta_criada_em), apoliceNumero: r.apolice_numero || null, apoliceSeguradora: r.apolice_seguradora || null, apoliceValidade: r.apolice_validade || null, saudeApoliceNumero: r.saude_apolice_numero || null, saudeApoliceSeguradora: r.saude_apolice_seguradora || null, saudeApoliceValidade: r.saude_apolice_validade || null, shstUltimaConsulta: r.shst_ultima_consulta || null }),
-                to:   o => ({ id: o.id, nome: o.nome, email: o.email, senha: o.senha, admin_id: o.adminId, data_criacao: msToISO(o.dataCriacao), cargo: o.cargo || null, telefone: o.telefone || null, morada: o.morada || null, codigo_postal: o.codigoPostal || null, data_nascimento: nn(o.dataNascimento), horas_semanais: o.horasSemanais || 40, ordenado_bruto: (o.ordenadoBruto === '' || o.ordenadoBruto == null) ? null : Number(o.ordenadoBruto), veiculo_id: o.veiculoId || null, mudar_senha: o.mudarSenha === true, ultima_atividade: o.ultimaAtividade ? msToISO(o.ultimaAtividade) : null, ultimo_login: o.ultimoLogin ? msToISO(o.ultimoLogin) : null, dias_ferias: o.diasFerias != null ? o.diasFerias : 22, pin: o.pin || null, favoritos: o.favoritos || [], suspenso: o.suspenso === true, conta_confirmada: o.contaConfirmada !== false, token_confirmacao_conta: o.tokenConfirmacaoConta || null, conta_criada_em: o.contaCriadaEm ? msToISO(o.contaCriadaEm) : null, apolice_numero: o.apoliceNumero || null, apolice_seguradora: o.apoliceSeguradora || null, apolice_validade: o.apoliceValidade || null, saude_apolice_numero: o.saudeApoliceNumero || null, saude_apolice_seguradora: o.saudeApoliceSeguradora || null, saude_apolice_validade: o.saudeApoliceValidade || null, shst_ultima_consulta: o.shstUltimaConsulta || null })
+                to:   o => ({ id: o.id, nome: o.nome, email: o.email, admin_id: o.adminId, data_criacao: msToISO(o.dataCriacao), cargo: o.cargo || null, telefone: o.telefone || null, morada: o.morada || null, codigo_postal: o.codigoPostal || null, data_nascimento: nn(o.dataNascimento), horas_semanais: o.horasSemanais || 40, ordenado_bruto: (o.ordenadoBruto === '' || o.ordenadoBruto == null) ? null : Number(o.ordenadoBruto), veiculo_id: o.veiculoId || null, mudar_senha: o.mudarSenha === true, ultima_atividade: o.ultimaAtividade ? msToISO(o.ultimaAtividade) : null, ultimo_login: o.ultimoLogin ? msToISO(o.ultimoLogin) : null, dias_ferias: o.diasFerias != null ? o.diasFerias : 22, pin: o.pin || null, favoritos: o.favoritos || [], suspenso: o.suspenso === true, conta_confirmada: o.contaConfirmada !== false, token_confirmacao_conta: o.tokenConfirmacaoConta || null, conta_criada_em: o.contaCriadaEm ? msToISO(o.contaCriadaEm) : null, apolice_numero: o.apoliceNumero || null, apolice_seguradora: o.apoliceSeguradora || null, apolice_validade: o.apoliceValidade || null, saude_apolice_numero: o.saudeApoliceNumero || null, saude_apolice_seguradora: o.saudeApoliceSeguradora || null, saude_apolice_validade: o.saudeApoliceValidade || null, shst_ultima_consulta: o.shstUltimaConsulta || null })
             },
             clientes: {
                 tabela: 'clientes',
                 from: r => ({ id: r.id, nome: r.nome, numeroCliente: r.numero_cliente || null, telefone: r.telefone, endereco: r.endereco, morada: r.morada, numeroPorta: r.numero_porta || null, codigoPostal: r.codigo_postal, cidade: r.cidade, freguesia: r.freguesia, nif: r.nif, pessoaContacto: r.pessoa_contacto, email: r.email, portalAtivo: r.portal_ativo === true, adminId: r.admin_id, pinMapa: r.pin_mapa || null, moloniCustomerId: r.moloni_customer_id || null, toconlineCustomerId: r.toconline_customer_id || null, ...(r.passaporte_tecnico != null ? { passaporteTecnico: r.passaporte_tecnico } : {}) }),
-                to:   o => ({ id: o.id, nome: o.nome, numero_cliente: o.numeroCliente || null, telefone: o.telefone || null, endereco: o.endereco || null, morada: o.morada || null, numero_porta: o.numeroPorta || null, codigo_postal: o.codigoPostal || null, cidade: o.cidade || null, freguesia: o.freguesia || null, nif: o.nif || null, pessoa_contacto: o.pessoaContacto || null, email: o.email || null, senha: o.senha || null, portal_ativo: o.portalAtivo === true, admin_id: o.adminId, pin_mapa: o.pinMapa || null, moloni_customer_id: o.moloniCustomerId || null, toconline_customer_id: o.toconlineCustomerId || null, ...(o.passaporteTecnico !== undefined ? { passaporte_tecnico: o.passaporteTecnico } : {}) })
+                to:   o => ({ id: o.id, nome: o.nome, numero_cliente: o.numeroCliente || null, telefone: o.telefone || null, endereco: o.endereco || null, morada: o.morada || null, numero_porta: o.numeroPorta || null, codigo_postal: o.codigoPostal || null, cidade: o.cidade || null, freguesia: o.freguesia || null, nif: o.nif || null, pessoa_contacto: o.pessoaContacto || null, email: o.email || null, portal_ativo: o.portalAtivo === true, admin_id: o.adminId, pin_mapa: o.pinMapa || null, moloni_customer_id: o.moloniCustomerId || null, toconline_customer_id: o.toconlineCustomerId || null, ...(o.passaporteTecnico !== undefined ? { passaporte_tecnico: o.passaporteTecnico } : {}) })
             },
             leads: {
                 tabela: 'leads',
@@ -853,11 +849,29 @@ function _assistEstado(value) {
                 tx.onerror = () => reject(tx.error);
             });
         }
+        function _limparSegredosDaCache(dadosLocais) {
+            if (!dadosLocais) return dadosLocais;
+            const copia = { ...dadosLocais };
+            for (const colecao of ['administradores', 'funcionarios', 'encarregados', 'clientes']) {
+                if (!Array.isArray(copia[colecao])) continue;
+                copia[colecao] = copia[colecao].map(registo => {
+                    const limpo = { ...registo };
+                    delete limpo.senha;
+                    const config = limpo.integracaoFaturacao;
+                    if (config?.moloni) {
+                        const { clientId, companyId, documentSetId, configurada } = config.moloni;
+                        limpo.integracaoFaturacao = { ...config, moloni: { clientId, companyId, documentSetId, configurada } };
+                    }
+                    return limpo;
+                });
+            }
+            return copia;
+        }
         async function _guardarCacheLocal() {
             try {
                 const snapPlano = {};
                 for (const col of ORDEM) snapPlano[col] = Object.fromEntries(_snap[col] || new Map());
-                await _kvCacheSet('tg_cache_dados_v1', dados);
+                await _kvCacheSet('tg_cache_dados_v1', _limparSegredosDaCache(dados));
                 await _kvCacheSet('tg_cache_snap_v1', {
                     porColuna: snapPlano,
                     lic: Object.fromEntries(_snapLic || new Map()),
@@ -889,7 +903,10 @@ function _assistEstado(value) {
             try {
                 await _migrarCacheLocalAntiga();
                 const val = await _kvCacheGet('tg_cache_dados_v1');
-                return val ?? null;
+                if (!val) return null;
+                const limpo = _limparSegredosDaCache(val);
+                await _kvCacheSet('tg_cache_dados_v1', limpo).catch(() => {});
+                return limpo;
             } catch (e) { console.warn('cache local (ler):', e); return null; }
         }
         // Restaura o snapshot guardado (o que já estava confirmado no servidor antes de ficar offline),
@@ -21472,7 +21489,7 @@ function _assistEstado(value) {
                         const dataExp = c.licenca ? new Date(c.licenca.dataExpiracao).toLocaleDateString('pt-PT') : '-';
                         const planoLabel = c.licenca ? PLANOS[c.licenca.plano]?.label || c.licenca.plano : 'Sem licença';
                         html += `<tr>
-                            <td>${c.empresa || '-'}</td><td>${c.nome}</td><td>${planoLabel}</td><td>${dataExp}</td><td>${funcs}</td>
+                            <td>${_esc(c.empresa || '-')}</td><td>${_esc(c.nome)}</td><td>${planoLabel}</td><td>${dataExp}</td><td>${funcs}</td>
                             <td style="text-align:center;color:${temContratos ? '#16a34a' : '#cbd5e1'};">${temContratos ? '✓' : '—'}</td>
                             <td style="text-align:center;color:${temFrota ? '#16a34a' : '#cbd5e1'};">${temFrota ? '✓' : '—'}</td>
                             <td style="text-align:center;color:${temArmazem ? '#16a34a' : '#cbd5e1'};">${temArmazem ? '✓' : '—'}</td>
@@ -25566,18 +25583,6 @@ async function salvarAdmin(e) {
             };
             dados.pedidosRenovacao = dados.pedidosRenovacao || [];
             dados.pedidosRenovacao.push(pedido);
-            // Janela de 24h: só se a licença já expirou ou expira nas próximas 24h. Nesse caso, a
-            // licença fica ativa já, mas com uma hora-limite — se o Super Admin não confirmar o
-            // pagamento até lá, _verificarJanela24hPacks suspende-a. Se a licença ainda é válida
-            // com folga, não se arma nada (o cliente não é penalizado por mudar de plano).
-            const _diasRest = admin.licenca ? calcularDiasRestantes(admin.licenca.dataExpiracao) : 0;
-            const _licValida = admin.licenca && isLicencaValida(admin.licenca.dataExpiracao);
-            if (admin.licenca && (!_licValida || _diasRest <= 1)) {
-                admin.licenca.ativa = true;                 // ativa já
-                admin.licenca.pendente24h = true;
-                admin.licenca.limite24hMs = Date.now() + 24 * 60 * 60 * 1000;
-                if (!_licValida) admin.licenca.dataExpiracao = admin.licenca.limite24hMs; // dá acesso durante a janela
-            }
             guardarDados(dados);
             document.getElementById('renPackOverlay').classList.remove('open');
             // Os dois emails que qualquer pedido de add-on já manda: um ao cliente, com o valor
@@ -25596,7 +25601,7 @@ async function salvarAdmin(e) {
                 total: c.total.toFixed(2),
                 observacao: 'Pedido de pack' + (obs ? ' — ' + obs : '') + ' (via "O meu pack")'
             }).catch(err => console.warn('email pedido de pack (interno):', err));
-            alert(`Pedido enviado! 🎉\n\nPack ${PACKS[_renPack.pack].nome} · ${_renPackFmt(c.total)}${c.sufixo}\n\nA licença fica ativa e o Super Admin vai confirmar o pagamento. Enviámos-te um email com os dados para pagamento.`);
+            alert(`Pedido enviado! 🎉\n\nPack ${PACKS[_renPack.pack].nome} · ${_renPackFmt(c.total)}${c.sufixo}\n\nO Super Admin vai confirmar o pagamento antes de alterar a licença. Enviámos-te um email com os dados para pagamento.`);
         }
         function abrirModalRenovacao(tipo) {
             if (!usuarioLogado || usuarioLogado.role !== 'admin' && usuarioLogado.role !== 'subadmin') {
@@ -34730,24 +34735,6 @@ window._relPrefill = function(msg){
             return false;
         }
 
-        // Cria a conta de login (Supabase Auth) de um novo utilizador, via Edge Function.
-        async function migrarContasAuth() {
-            if (usuarioLogado?.role !== 'superadmin') { alert('Apenas o Super Admin pode executar a migração.'); return; }
-            if (!confirm('Criar contas Supabase Auth para todos os utilizadores com email e senha?\n\nÉ seguro repetir: contas já existentes são ignoradas. Pode demorar alguns segundos.')) return;
-            const lotes = [
-                ...(dados.administradores || []).map(a => ({ email: a.email, senha: a.senha, papel: 'admin', adminId: a.id, registoId: a.id, nome: a.nome })),
-                ...(dados.encarregados || []).map(e => ({ email: e.email, senha: e.senha, papel: 'encarregado', adminId: e.adminId, registoId: e.id, nome: e.nome })),
-                ...(dados.funcionarios || []).filter(f => f.role !== 'superadmin').map(f => ({ email: f.email, senha: f.senha, papel: f.role === 'subadmin' ? 'subadmin' : (f.role === 'vigilante' || f.role === 'supervisor_vigilantes') ? f.role : 'funcionario', adminId: f.adminId, registoId: f.id, nome: f.nome })),
-                ...(dados.clientes || []).filter(c => c.portalAtivo && c.nif && c.nif !== '999999990').map(c => ({ email: _emailFantasmaCliente(c.nif, c.adminId), senha: c.senha, papel: 'cliente', adminId: c.adminId, registoId: c.id, nome: c.nome }))
-            ];
-            let ok = 0, ignorados = 0, semDados = 0;
-            for (const u of lotes) {
-                if (!u.email || !u.senha) { semDados++; continue; }
-                try { const r = await criarUtilizadorAuth(u.email, u.senha, u.papel, u.adminId, u.registoId, u.nome); if (r && r.ok) ok++; else ignorados++; }
-                catch (e) { ignorados++; }
-            }
-            alert(`Migração concluída.\n\nContas criadas: ${ok}\nJá existiam/erro: ${ignorados}\nSem email/senha (ignoradas): ${semDados}\n\nTotal de utilizadores: ${lotes.length}`);
-        }
         async function _extrairErroEdgeFunction(error) {
             const generico = error?.message || String(error) || 'erro';
             const ctx = error?.context;
@@ -36451,15 +36438,6 @@ window._relPrefill = function(msg){
                             </div>
                         </div>
 
-                        <div class="ff-secao ff-tint-doc">
-                            <div class="ff-secao-head"><i class="fas fa-shield-halved"></i> Segurança (RLS)</div>
-                            <div class="ff-secao-body">
-                                <div class="form-group ff-span2"><p style="font-size:.82rem;color:#64748b;margin:0 0 10px;">Antes de ativar o RLS, crie as contas de autenticação para todos os utilizadores (incl. clientes do portal). É seguro repetir.</p>
-                                    <button type="button" class="btn btn-primary" onclick="migrarContasAuth()" style="width:100%;"><i class="fas fa-user-shield"></i> Criar/atualizar contas de acesso</button>
-                                </div>
-                            </div>
-                        </div>
-
                         <div class="ff-secao ff-tint-contacto">
                             <div class="ff-secao-head"><i class="fas fa-user-clock"></i> Monitorização</div>
                             <div class="ff-secao-body">
@@ -36853,22 +36831,25 @@ window._relPrefill = function(msg){
             reader.onload = (ev) => { window._perfCertificadoraLogoNova = ev.target.result; };
             reader.readAsDataURL(input.files[0]);
         }
-        function salvarPerfil(e) {
+        async function salvarPerfil(e) {
             e.preventDefault();
             if (!usuarioLogado) return;
             const nome = document.getElementById('perf_nome').value.trim();
             const senha = document.getElementById('perf_senha').value;
             if (!nome) { alert('Nome é obrigatório.'); return; }
             if (usuarioLogado.role === 'superadmin') {
+                if (senha) {
+                    const { error } = await supa.auth.updateUser({ password: senha });
+                    if (error) { alert('Não foi possível atualizar a palavra-passe de acesso.'); return; }
+                }
                 const config = obterConfig();
                 config.nome = nome;
                 const novoEmailSA = document.getElementById('perf_email')?.value.trim();
                 if (novoEmailSA) config.email = novoEmailSA;
-                if (senha) config.senha = senha;
                 config.mostrarEstadoOnline = document.getElementById('perf_estado_online_equipa')?.checked || false;
                 config.layout = document.getElementById('perf_layout')?.value || 'sidebar';
                 const saRec = dados.administradores?.find(a => a.id === 'superadmin') || (() => {
-                    const novo = { id: 'superadmin', nome: 'Super Admin', email: 'superadmin@totalgest.pt', senha: 'nao-usado-login-separado', empresa: 'Total Gest', ativo: true, dataCriacao: Date.now() };
+                    const novo = { id: 'superadmin', nome: 'Super Admin', email: 'superadmin@totalgest.pt', empresa: 'Total Gest', ativo: true, dataCriacao: Date.now() };
                     dados.administradores = dados.administradores || [];
                     dados.administradores.push(novo);
                     return novo;
@@ -36892,7 +36873,6 @@ window._relPrefill = function(msg){
                         const superAdmin = dados.funcionarios?.find(f => f.role === 'superadmin');
                         if (superAdmin) {
                             superAdmin.nome = nome;
-                            if (senha) superAdmin.senha = senha;
                         }
                         guardarDados(dados);
                         fecharModalPerfil();
@@ -36906,7 +36886,6 @@ window._relPrefill = function(msg){
                     const superAdmin = dados.funcionarios?.find(f => f.role === 'superadmin');
                     if (superAdmin) {
                         superAdmin.nome = nome;
-                        if (senha) superAdmin.senha = senha;
                     }
                     guardarDados(dados);
                     fecharModalPerfil();

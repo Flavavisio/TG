@@ -1,12 +1,4 @@
-// Edge Function: criar_pedido_trial
-// ⚠️ VERSÃO TEMPORÁRIA PARA TESTES — o limite de 2 pedidos/dia por IP está DESATIVADO.
-// Quando acabares de testar, volta a publicar o ficheiro original
-// (criar_pedido_trial_edge_function.ts) para reativar a proteção.
-//
-// NOVO: além do email de confirmação enviado ao lead, esta versão também
-// avisa o dono da plataforma (totalgestpro@gmail.com) sempre que alguém
-// pede o trial de 30 dias, com os dados de quem se inscreveu.
-
+// Solicita a confirmação de email. A palavra-passe é escolhida ao ativar o trial.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { validarPackTrial, PACKS_TRIAL } from '../_shared/packs.ts';
 
@@ -34,10 +26,11 @@ function obterIp(req: Request): string {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  if (req.method !== "POST") return json({ erro: "Método não permitido." }, 405);
 
   try {
     const body = await req.json().catch(() => ({}));
-    const { empresa, nome, email, telefone, colaboradores, nif, senha } = body;
+    const { empresa, nome, email, telefone, colaboradores, nif } = body;
     let pack;
     try {
       if (body.plano && !Object.hasOwn(PACKS_TRIAL, String(body.plano)) && !['5', '10', '25', '50', '100'].includes(String(body.plano))) {
@@ -48,37 +41,21 @@ Deno.serve(async (req) => {
       return json({ erro: (err as Error).message }, 400);
     }
 
-    if (!empresa || !nome || !email || !telefone || !senha) {
-      return json({ erro: "Faltam dados obrigatórios (empresa, nome, email, telefone, senha)." }, 400);
+    if (![empresa, nome, email, telefone].every(valor => typeof valor === "string" && valor.trim())) {
+      return json({ erro: "Faltam dados obrigatórios (empresa, nome, email, telefone)." }, 400);
     }
-    const senhaValida = senha.length >= 9 && /[A-Z]/.test(senha) && /[^A-Za-z0-9]/.test(senha);
-    if (!senhaValida) {
-      return json({ erro: "A palavra-passe precisa de pelo menos 9 caracteres, 1 maiúscula e 1 símbolo." }, 400);
-    }
-
     const ip = obterIp(req);
+    const inicioDia = new Date();
+    inicioDia.setUTCHours(0, 0, 0, 0);
+    const { count, error: errContagem } = await admin.from("pedidos_trial")
+      .select("id", { count: "exact", head: true }).eq("ip", ip).gte("criado_em", inicioDia.toISOString());
+    if (errContagem) return json({ erro: "Não foi possível validar o pedido." }, 500);
+    if ((count ?? 0) >= 2) return json({ erro: "Já foram feitos 2 pedidos a partir desta ligação hoje." }, 429);
 
-    // ------------------------------------------------------------------
-    // LIMITE DE 2 PEDIDOS/DIA POR IP — TEMPORARIAMENTE DESATIVADO
-    // Para reativar: descomenta o bloco abaixo (ou publica de novo o
-    // ficheiro criar_pedido_trial_edge_function.ts original).
-    // ------------------------------------------------------------------
-    // const inicioDia = new Date();
-    // inicioDia.setUTCHours(0, 0, 0, 0);
-    // const { count, error: errContagem } = await admin
-    //   .from("pedidos_trial")
-    //   .select("id", { count: "exact", head: true })
-    //   .eq("ip", ip)
-    //   .gte("criado_em", inicioDia.toISOString());
-    // if (errContagem) {
-    //   console.error(errContagem);
-    //   return json({ erro: "Erro ao validar o pedido. Tenta novamente." }, 500);
-    // }
-    // if ((count ?? 0) >= 2) {
-    //   return json({ erro: "Já foram feitos 2 pedidos a partir desta ligação hoje. Tenta novamente amanhã, ou contacta-nos diretamente." }, 429);
-    // }
-
-    const emailNormalizado = String(email).toLowerCase();
+    const emailNormalizado = email.trim().toLowerCase();
+    if (emailNormalizado.length > 254 || !/^[^\s@<>,;]+@[^\s@<>,;]+\.[^\s@<>,;]+$/.test(emailNormalizado)) {
+      return json({ erro: "Email inválido." }, 400);
+    }
 
     // Impede pedir trial com um email que já tem conta (ou já confirmou um trial antes)
     const { data: adminExistente, error: errAdmin } = await admin
@@ -106,13 +83,12 @@ Deno.serve(async (req) => {
     const token = crypto.randomUUID();
 
     const { error: errInsert } = await admin.from("pedidos_trial").insert([{
-      empresa, nome, email: String(email).toLowerCase(), telefone,
+      empresa, nome, email: emailNormalizado, telefone,
       colaboradores: colaboradores || null,
       nif: nif || null,
       token,
       ip,
       confirmado: false,
-      senha_pendente: senha,
       plano: body.plano || null,
       addons: Array.isArray(body.addons) ? body.addons.filter((v: unknown) => typeof v === 'string') : [],
       pack_escalao: pack?.escalao || null,
@@ -143,7 +119,7 @@ Deno.serve(async (req) => {
         },
         body: JSON.stringify({
           tipo: "confirmar_trial",
-          to_email: String(email).toLowerCase(),
+          to_email: emailNormalizado,
           to_name: nome,
           plataforma,
           logo_url,
@@ -171,7 +147,7 @@ Deno.serve(async (req) => {
           to_email: "totalgestpro@gmail.com",
           plataforma: "Total Gest",
           empresa, nome,
-          email_lead: String(email).toLowerCase(),
+          email_lead: emailNormalizado,
           telefone, colaboradores, nif, ip,
         }),
       });

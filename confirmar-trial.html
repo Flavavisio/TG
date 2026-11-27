@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Confirmar conta — Total Gest</title>
 <meta name="robots" content="noindex" />
+<meta name="referrer" content="no-referrer" />
 <!-- Impede que este link abra dentro da app instalada (PWA) em vez do browser normal —
      assim quem recebe o email vê sempre a barra de endereço (totalgest.pt) antes de clicar,
      o que ajuda a confiar que a página é legítima. -->
@@ -19,6 +20,10 @@
   h1.erro{color:#dc2626;}
   p{color:#5a6781;font-size:.92rem;margin:0 0 10px;line-height:1.5;}
   .botao{display:inline-block;background:#f4520e;color:#fff;padding:14px 30px;border-radius:10px;text-decoration:none;font-weight:bold;margin-top:14px;}
+  [hidden]{display:none!important;}
+  form{display:grid;gap:10px;text-align:left;}
+  form input{padding:12px;border:1px solid #cbd5e1;border-radius:8px;font:inherit;}
+  form button{font:inherit;border:0;cursor:pointer;}
   .selo{display:inline-block;background:#ecfdf5;color:#16a34a;font-weight:700;font-size:.8rem;padding:6px 14px;border-radius:999px;margin-bottom:14px;}
   .spinner{width:34px;height:34px;border:4px solid #e6eaf2;border-top-color:#f4520e;border-radius:50%;margin:0 auto 18px;animation:girar 0.8s linear infinite;}
   @keyframes girar{ to{ transform:rotate(360deg); } }
@@ -30,62 +35,62 @@
     <div style="font-size:.72rem;color:#94a3b8;margin-bottom:10px;letter-spacing:.03em;">🔒 totalgest.pt</div>
     <img class="logo" src="logo-totalgest.png" alt="Total Gest" />
     <h1>Confirme a sua conta Total Gest</h1>
-    <p>Clique no botão abaixo para ativar a sua conta de teste de 30 dias.</p>
-    <a class="botao" id="botaoConfirmar" href="#">Confirmar conta</a>
-    <p class="aviso" id="avisoSemCodigo" style="display:none;">Este link não parece válido. Verifique se copiou o endereço completo do email.</p>
+    <p>Defina uma palavra-passe para ativar os seus 14 dias de teste.</p>
+    <form id="confirmarConta">
+      <label for="senha">Palavra-passe</label>
+      <input id="senha" type="password" autocomplete="new-password" minlength="9" maxlength="72" required />
+      <p>Use pelo menos 9 caracteres, uma maiúscula e um símbolo.</p>
+      <label for="confirmacao">Confirme a palavra-passe</label>
+      <input id="confirmacao" type="password" autocomplete="new-password" minlength="9" maxlength="72" required />
+      <button type="submit" class="botao">Ativar conta</button>
+    </form>
+    <p class="aviso" id="resultado" role="status"></p>
+    <a class="botao" id="entrar" href="login.html" hidden>Entrar agora</a>
   </div>
 
   <script>
-    var FUNCAO_URL = 'https://rfniufasivfnrqfntzog.supabase.co/functions/v1/confirmar-trial';
-
-    function obterToken() {
-      var partes = window.location.search.replace('?', '').split('&');
-      for (var i = 0; i < partes.length; i++) {
-        var par = partes[i].split('=');
-        if (par[0] === 'token') return decodeURIComponent(par[1] || '');
-      }
-      return '';
+    const url = 'https://rfniufasivfnrqfntzog.supabase.co/functions/v1/confirmar-trial';
+    const token = new URLSearchParams(window.location.search).get('token');
+    const formulario = document.getElementById('confirmarConta');
+    const resultado = document.getElementById('resultado');
+    const senha = document.getElementById('senha');
+    const confirmacao = document.getElementById('confirmacao');
+    if (!token) {
+      formulario.hidden = true;
+      resultado.textContent = 'Abra o endereço completo enviado por email.';
     }
-
-    function mostrarResultado(titulo, mensagem, sucesso) {
-      var extra = sucesso
-        ? '<p style="margin-top:16px;">A sua conta fica ativa gratuitamente durante <strong>30 dias</strong>. Pode adquirir o seu plano a qualquer momento, sem perder nada do que já configurou.</p>' +
-          '<a class="botao" href="login.html">Entrar agora</a>'
-        : '<a class="botao" href="https://www.totalgest.pt/">Voltar ao site</a>';
-      document.getElementById('cartao').innerHTML =
-        '<div style="font-size:.72rem;color:#94a3b8;margin-bottom:10px;letter-spacing:.03em;">🔒 totalgest.pt</div>' +
-        '<img class="logo" src="logo-totalgest.png" alt="Total Gest" />' +
-        (sucesso ? '<div class="selo">✓ Conta ativada</div>' : '') +
-        '<h1 class="' + (sucesso ? 'ok' : 'erro') + '">' + titulo + '</h1>' +
-        '<p>' + mensagem + '</p>' + extra;
-    }
-
-    function confirmarConta(token) {
-      document.getElementById('cartao').innerHTML =
-        '<div class="spinner"></div><h1>A ativar a sua conta…</h1><p>Só demora um instante.</p>';
-      fetch(FUNCAO_URL + '?token=' + encodeURIComponent(token))
-        .then(function (r) { return r.json().then(function (dados) { return { status: r.status, dados: dados }; }); })
-        .then(function (res) {
-          mostrarResultado(res.dados.titulo, res.dados.mensagem, !!res.dados.sucesso);
-        })
-        .catch(function () {
-          mostrarResultado('Ocorreu um erro', 'Não foi possível ligar ao servidor. Tente novamente dentro de momentos ou contacte-nos.', false);
-        });
-    }
-
-    (function () {
-      var token = obterToken();
-      var botao = document.getElementById('botaoConfirmar');
-      if (!token) {
-        botao.style.display = 'none';
-        document.getElementById('avisoSemCodigo').style.display = 'block';
+    confirmacao.addEventListener('input', () => confirmacao.setCustomValidity(''));
+    senha.addEventListener('input', () => confirmacao.setCustomValidity(''));
+    formulario.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (!token) return;
+      if (senha.value !== confirmacao.value) {
+        confirmacao.setCustomValidity('As palavras-passe não coincidem.');
+        confirmacao.reportValidity();
         return;
       }
-      botao.addEventListener('click', function (ev) {
-        ev.preventDefault();
-        confirmarConta(token);
-      });
-    })();
+      const botao = formulario.querySelector('button');
+      botao.disabled = true;
+      resultado.textContent = 'A ativar a conta…';
+      try {
+        const resposta = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token, senha: senha.value })
+        });
+        const dados = await resposta.json();
+        resultado.textContent = dados.mensagem || 'Não foi possível ativar a conta.';
+        if (dados.sucesso) {
+          formulario.reset();
+          formulario.hidden = true;
+          document.getElementById('entrar').hidden = false;
+        }
+      } catch {
+        resultado.textContent = 'Não foi possível ligar ao servidor. Tente novamente.';
+      } finally {
+        botao.disabled = false;
+      }
+    });
   </script>
 </body>
 </html>

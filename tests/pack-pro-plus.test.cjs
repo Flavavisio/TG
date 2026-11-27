@@ -46,25 +46,25 @@ test('calculator and public checkout offer Pro+ with correct capacity and price'
 });
 function edge(slug,pedido={}){
  const writes=[];let handler;
- const admin={from(table){const b={select(){return b},eq(){return b},limit(){return b},maybeSingle:async()=>({data:slug==='renovacao-cliente' ? (table==='administradores'?pedido:table==='licencas'?pedido.licenca:null) : table==='pedidos_trial'&&slug==='confirmar-trial'?pedido:null,error:null}),insert:async rows=>{writes.push({table,rows});return {error:null}},upsert:async rows=>{writes.push({table,rows});return {error:null}},update(row){writes.push({table,rows:[row]});return b},then(resolve){resolve({error:null})}};return b},auth:{admin:{createUser:async()=>({data:{user:{id:'auth-test'}},error:null})}}};
- const c=vm.createContext({Date,console,Request,Response,URL,crypto,fetch:async()=>({ok:true}),createClient:()=>admin,Deno:{env:{get:()=> 'mock'},serve:f=>{handler=f}},serve:f=>{handler=f}});
+ const admin={from(table){const b={select(){return b},eq(){return b},gte(){return b},limit(){return b},maybeSingle:async()=>({data:slug==='renovacao-cliente' ? (table==='administradores'?pedido:table==='licencas'?pedido.licenca:null) : table==='pedidos_trial'&&slug==='confirmar-trial'?pedido:null,error:null}),insert:async rows=>{writes.push({table,rows});return {error:null}},upsert:async rows=>{writes.push({table,rows});return {error:null}},update(row){writes.push({table,rows:[row]});return b},then(resolve){resolve({error:null})}};return b},auth:{admin:{createUser:async()=>({data:{user:{id:'auth-test',created_at:new Date().toISOString()}},error:null})}}};
+ const c=vm.createContext({Date,console,Request,Response,URL,TextEncoder,crypto,fetch:async()=>({ok:true}),createClient:()=>admin,Deno:{env:{get:()=> 'mock'},serve:f=>{handler=f}},serve:f=>{handler=f}});
  for(const path of ['supabase/functions/_shared/packs.ts',`supabase/functions/${slug}/index.ts`]){
   const code=fs.readFileSync(path,'utf8').replace(/^import .*;\s*$/gm,'').replace(/^export /gm,'');vm.runInContext(stripTypeScriptTypes(code,{mode:'strip'}),c);
  }
  return {call:handler,writes,c};
 }
 test('request function persists Pro+ tier and blocks; invalid capacity writes nothing',async()=>{
- const e=edge('criar_pedido_trial'),body={empresa:'Teste',nome:'Teste',email:'test@example.invalid',telefone:'000',senha:'Teste123!@',plano:'pro_plus',escalao:'10',blocosExtra:2};
+ const e=edge('criar_pedido_trial'),body={empresa:'Teste',nome:'Teste',email:'test@example.invalid',telefone:'000',plano:'pro_plus',escalao:'10',blocosExtra:2};
  assert.equal((await e.call(new Request('https://test.invalid',{method:'POST',body:JSON.stringify(body)}))).status,200);
- const row=e.writes.find(w=>w.table==='pedidos_trial').rows[0];assert.equal(row.plano,'pro_plus');assert.equal(row.pack_escalao,'10');assert.equal(row.pack_blocos,2);
+ const row=e.writes.find(w=>w.table==='pedidos_trial').rows[0];assert.equal(row.plano,'pro_plus');assert.equal(row.pack_escalao,'10');assert.equal(row.pack_blocos,2);assert.ok(!Object.hasOwn(row,'senha_pendente'));
  const bad=edge('criar_pedido_trial');assert.equal((await bad.call(new Request('https://test.invalid',{method:'POST',body:JSON.stringify({...body,blocosExtra:100})}))).status,400);assert.equal(bad.writes.length,0);
 });
 test('confirmation creates Pro+ trial rights and capacity; legacy numeric trials remain compatible',async()=>{
- const pedido={plano:'pro_plus',pack_escalao:'10',pack_blocos:2,senha_pendente:'Teste123!@',email:'test@example.invalid',nome:'Teste',empresa:'Teste',criado_em:new Date().toISOString()};
- const e=edge('confirmar-trial',pedido);assert.equal((await e.call(new Request('https://test.invalid?token=test'))).status,200);
+ const pedido={id:'pedido-test',plano:'pro_plus',pack_escalao:'10',pack_blocos:2,email:'test@example.invalid',nome:'Teste',empresa:'Teste',criado_em:new Date().toISOString()};
+ const e=edge('confirmar-trial',pedido);assert.equal((await e.call(new Request('https://test.invalid',{method:'POST',body:JSON.stringify({token:'test',senha:'Teste123!@'})}))).status,200);
  const a=e.writes.find(w=>w.table==='administradores').rows[0],l=e.writes.find(w=>w.table==='licencas').rows[0];
  assert.equal(a.pack_atual,'pro_plus');assert.equal(a.crm_plano,'demo');assert.equal(a.assist_plano,'demo');assert.equal(a.crm_expiracao,l.data_expiracao);assert.equal(l.max_funcionarios,20);assert.equal(l.dias,14);assert.equal(a.erp_plano,undefined);
- const legacy=edge('confirmar-trial',{...pedido,plano:'25'});await legacy.call(new Request('https://test.invalid?token=test'));assert.equal(legacy.writes.find(w=>w.table==='licencas').rows[0].max_funcionarios,25);
+ const legacy=edge('confirmar-trial',{...pedido,plano:'25'});await legacy.call(new Request('https://test.invalid',{method:'POST',body:JSON.stringify({token:'test',senha:'Teste123!@'})}));assert.equal(legacy.writes.find(w=>w.table==='licencas').rows[0].max_funcionarios,25);
 });
 test('saving company settings never resends cached pack or expiry fields',async()=>{
  const old={id:'a',nome:'Antes',pack_atual:'pro',crm_expiracao:'2026-10-28T00:00:00Z'};

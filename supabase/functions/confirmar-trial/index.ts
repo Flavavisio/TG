@@ -1,24 +1,4 @@
-// Edge Function: confirmar-trial
-// Deploy: supabase functions deploy confirmar-trial --no-verify-jwt
-// (--no-verify-jwt porque é chamada por um link de email, sem sessão iniciada)
-//
-// Precisa de duas variáveis de ambiente (a service role key NUNCA deve ir para o frontend):
-// supabase secrets set SUPABASE_URL=https://xxxx.supabase.co
-// supabase secrets set SUPABASE_SERVICE_ROLE_KEY=xxxxx   (Project Settings → API → service_role)
-//
-// A pessoa já escolheu a password no formulário (guardada em pedidos_trial.senha_pendente).
-// Esta função só confirma o email e cria a conta já com essa password — não há
-// segundo email nenhum a enviar, a pessoa pode entrar logo a seguir.
-//
-// ALTERAÇÃO (checkout com plano/add-ons): o formulário de signup agora deixa a pessoa escolher
-// já um plano (nº de funcionários) e marcar add-ons de interesse. Se `criar_pedido_trial` gravar
-// isso em pedidos_trial.plano e pedidos_trial.addons (colunas novas — ver migração em baixo),
-// esta função usa o plano para definir o limite de funcionários correto da licença de trial (em
-// vez do 5 fixo que tinha antes), e grava o que a pessoa pretendia em administradores, para o
-// Super Admin ver isso ao acompanhar a conversão do trial em plano pago. Se essas colunas ainda
-// não existirem ou vierem vazias, o comportamento cai sempre no que já era antes (5 lugares,
-// nada de pretendido gravado) — não faz a função falhar.
-
+// Ativa o trial mediante o token enviado por email e guarda a palavra-passe apenas no Supabase Auth.
 import { serve } from "https://deno.land/std@0.192.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { validarPackTrial, direitosPackTrial } from '../_shared/packs.ts';
@@ -27,12 +7,10 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
-function gerarId() {
-  return 'a' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-}
 const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 function resposta(titulo: string, mensagem: string, sucesso: boolean, status: number) {
   return new Response(JSON.stringify({ titulo, mensagem, sucesso }), {
@@ -55,15 +33,20 @@ const MAX_FUNC_POR_PLANO: Record<string, number> = {
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
 
-  const url = new URL(req.url);
-  const token = url.searchParams.get("token");
-
-  if (!token) {
+  if (req.method !== "POST") {
+    return resposta("Defina a sua palavra-passe", "Abra o link de confirmação numa janela atualizada.", false, 405);
+  }
+  const { token, senha } = await req.json().catch(() => ({}));
+  if (typeof token !== "string" || !token || token.length > 128) {
     return resposta("Falta o token", "Este link não é válido.", false, 400);
+  }
+  if (typeof senha !== "string" || senha.length < 9 || new TextEncoder().encode(senha).length > 72 ||
+      !/[A-Z]/.test(senha) || !/[^A-Za-z0-9]/.test(senha)) {
+    return resposta("Palavra-passe inválida", "Use pelo menos 9 caracteres, uma maiúscula e um símbolo, até 72 bytes.", false, 400);
   }
 
   const { data: pedido, error: errPedido } = await admin
-    .from("pedidos_trial").select("*").eq("token", token).maybeSingle();
+    .from("pedidos_trial").select("id, email, confirmado, criado_em, plano, pack_escalao, pack_blocos, nome, empresa, addons").eq("token", token).maybeSingle();
 
   if (errPedido || !pedido) {
     return resposta("Link inválido", "Não encontrámos este pedido. Pode já ter sido usado, ou o link expirou.", false, 404);
@@ -71,10 +54,6 @@ serve(async (req) => {
   if (pedido.confirmado) {
     return resposta("Já confirmado", "Esta conta já foi ativada anteriormente. Pode entrar normalmente com o email e a password que escolheu.", true, 200);
   }
-  if (!pedido.senha_pendente) {
-    return resposta("Ocorreu um erro", "Não encontrámos a password escolhida para este pedido. Contacte-nos e resolvemos manualmente.", false, 500);
-  }
-
   const HORAS_VALIDADE = 48;
   const criadoEm = new Date(pedido.criado_em).getTime();
   const horasPassadas = (Date.now() - criadoEm) / (1000 * 60 * 60);
@@ -88,43 +67,30 @@ serve(async (req) => {
   }
 
   try {
-    const agora = new Date();
-    const expiracao = new Date(agora.getTime() + 14 * 24 * 60 * 60 * 1000);
     const pack = validarPackTrial(pedido.plano, pedido.pack_escalao, pedido.pack_blocos);
     const maxFuncionarios = pack?.maxFuncionarios || MAX_FUNC_POR_PLANO[pedido.plano as string] || 5;
-
-    let userId: string;
+    const novoAdminId = "trial_" + pedido.id;
     const { data: authUser, error: errAuth } = await admin.auth.admin.createUser({
       email: pedido.email,
-      password: pedido.senha_pendente,
+      password: senha,
       email_confirm: true,
+      app_metadata: { pedido_trial_id: pedido.id },
     });
-
+    let userId = authUser?.user?.id;
+    let ativadoEm = authUser?.user?.created_at;
     if (errAuth) {
-      const jaExiste = /already.*registered|already been registered/i.test(errAuth.message || "");
-      if (!jaExiste) throw errAuth;
-      const { data: listaUsers, error: errLista } = await admin.auth.admin.listUsers();
-      if (errLista) throw errLista;
-      const existente = listaUsers.users.find(u => (u.email || "").toLowerCase() === pedido.email.toLowerCase());
-      if (!existente) throw new Error("utilizador diz que já existe mas não foi encontrado");
-      userId = existente.id;
-      const { error: errUpdatePw } = await admin.auth.admin.updateUserById(userId, { password: pedido.senha_pendente });
-      if (errUpdatePw) throw errUpdatePw;
-    } else {
-      if (!authUser?.user) throw new Error("falha ao criar utilizador de autenticação");
-      userId = authUser.user.id;
+      if (!["email_exists", "user_already_exists"].includes(errAuth.code || "")) throw errAuth;
+      // A retoma só aceita a conta Auth criada para este pedido. Nunca redefine a
+      // palavra-passe de uma conta existente, mesmo quando o email é o mesmo.
+      const { data: conta, error } = await admin.rpc("tg_conta_auth_trial", { pedido: pedido.id }).maybeSingle();
+      if (error) throw error;
+      if (!conta) return resposta("Email já registado", "Entre na sua conta ou recupere a sua palavra-passe.", false, 409);
+      userId = conta.id;
+      ativadoEm = conta.created_at;
     }
-
-    const { data: perfilExistente, error: errPerfilLer } = await admin
-      .from("perfis").select("registo_id").eq("id", userId).maybeSingle();
-    if (errPerfilLer) throw errPerfilLer;
-
-    const novoAdminId = perfilExistente?.registo_id || gerarId();
-
-    if (!perfilExistente) {
-      const { error: errPerfil } = await admin.from("perfis").insert([{ id: userId, papel: "admin", registo_id: novoAdminId }]);
-      if (errPerfil) throw errPerfil;
-    }
+    if (!userId || !ativadoEm) throw new Error("Conta Auth indisponível.");
+    const agora = new Date(ativadoEm);
+    const expiracao = new Date(agora.getTime() + 14 * 24 * 60 * 60 * 1000);
 
     // No trial, os add-ons ficam ativos durante os 14 dias para a pessoa experimentar a app
     // completa, independentemente dos que marcou como "de interesse" no checkout — isso fica
@@ -134,7 +100,6 @@ serve(async (req) => {
       id: novoAdminId,
       nome: pedido.nome,
       email: pedido.email,
-      senha: "",
       empresa: pedido.empresa,
       ativo: true,
       data_criacao: agora.toISOString(),
@@ -160,7 +125,7 @@ serve(async (req) => {
         pack_atual: pack.plano, pack_escalao: pack.escalao, pack_blocos: pack.blocos,
         ...direitosPackTrial(pack.plano, expiracao.toISOString()),
       } : {}),
-    }], { onConflict: "id" });
+    }], { onConflict: "id", ignoreDuplicates: true });
     if (errAdmin) throw errAdmin;
 
     // Mantém o identificador interno "demo_30" por compatibilidade com a app;
@@ -175,19 +140,25 @@ serve(async (req) => {
       dias: 14,
       max_funcionarios: maxFuncionarios,
       ativa: true
-    }], { onConflict: "admin_id" });
+    }], { onConflict: "admin_id", ignoreDuplicates: true });
     if (errLic) throw errLic;
 
-    await admin.from("pedidos_trial").update({
+    const { error: errPerfil } = await admin.from("perfis").upsert(
+      [{ id: userId, email: pedido.email, papel: "admin", admin_id: novoAdminId, registo_id: novoAdminId }],
+      { onConflict: "id", ignoreDuplicates: true },
+    );
+    if (errPerfil) throw errPerfil;
+
+    const { error: errConfirmacao } = await admin.from("pedidos_trial").update({
       confirmado: true,
       confirmado_em: agora.toISOString(),
       admin_id: novoAdminId,
-      senha_pendente: null,
     }).eq("token", token);
+    if (errConfirmacao) throw errConfirmacao;
 
     return resposta(
       "Conta ativada! 🎉",
-      "A sua conta está pronta. Já pode entrar com o email e a password que escolheu no formulário.",
+      "A sua conta está pronta. Já pode entrar com o email e a palavra-passe que definiu.",
       true,
       200
     );

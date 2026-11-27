@@ -288,36 +288,6 @@ function fecharModalSignup() {
     document.getElementById('tg-signup-overlay').classList.remove('open');
     document.body.style.overflow = '';
 }
-function _suAlternarOlho(idCampo, btn) {
-    const campo = document.getElementById(idCampo);
-    const icone = btn.querySelector('i');
-    btn.setAttribute('aria-label', campo.type === 'password' ? 'Ocultar palavra-passe' : 'Mostrar palavra-passe');
-    btn.setAttribute('aria-pressed', String(campo.type === 'password'));
-    if (campo.type === 'password') { campo.type = 'text'; icone.className = 'fas fa-eye-slash'; }
-    else { campo.type = 'password'; icone.className = 'fas fa-eye'; }
-}
-function _suSenhaValida(senha) {
-    return senha.length >= 9 && /[A-Z]/.test(senha) && /[^A-Za-z0-9]/.test(senha);
-}
-function _suValidarSenha() {
-    const s1 = document.getElementById('su_senha').value;
-    const s2 = document.getElementById('su_senha2').value;
-    const msg = document.getElementById('su_senha_msg');
-    if (!s1) { msg.textContent = ''; return; }
-    if (!_suSenhaValida(s1)) {
-        msg.textContent = 'Precisa de pelo menos 9 caracteres, 1 maiúscula e 1 símbolo (ex: ! @ # $ %).';
-        msg.style.color = '#dc2626';
-        return;
-    }
-    if (s2 && s1 !== s2) {
-        msg.textContent = 'As palavras-passe não coincidem.';
-        msg.style.color = '#dc2626';
-        return;
-    }
-    msg.textContent = s2 ? '✓ Palavra-passe válida.' : 'Palavra-passe válida — confirme-a abaixo.';
-    msg.style.color = '#16a34a';
-}
-
 async function submeterSignup(e) {
     e.preventDefault();
     const btn = document.getElementById('su_btn');
@@ -328,7 +298,6 @@ async function submeterSignup(e) {
         telefone: document.getElementById('su_telefone').value.trim(),
         colaboradores: document.getElementById('su_colaboradores').value.trim() || null,
         nif: document.getElementById('su_nif').value.trim() || null,
-        senha: document.getElementById('su_senha').value,
         // Modelo de packs: manda o pack escolhido, o escalão e (se for 50+) os blocos de +5.
         // "plano" fica com o nome do pack, para a Edge Function/super admin saberem o que ativar.
         plano: _suPackSelecionado || null,
@@ -336,17 +305,8 @@ async function submeterSignup(e) {
         blocosExtra: _suPackSelecionado ? _suBlocosExtra : 0,
         addons: [],
     };
-    const senha2 = document.getElementById('su_senha2').value;
     if (!dadosPedido.empresa || !dadosPedido.nome || !dadosPedido.email || !dadosPedido.telefone || !dadosPedido.colaboradores || !dadosPedido.nif) {
         alert('Por favor preencha todos os campos — são todos obrigatórios.');
-        return false;
-    }
-    if (!_suSenhaValida(dadosPedido.senha)) {
-        alert('A palavra-passe precisa de pelo menos 9 caracteres, 1 maiúscula e 1 símbolo (ex: ! @ # $ %).');
-        return false;
-    }
-    if (dadosPedido.senha !== senha2) {
-        alert('As palavras-passe não coincidem.');
         return false;
     }
     btn.disabled = true;
