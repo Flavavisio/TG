@@ -757,6 +757,7 @@ function _assistEstado(value) {
                     if (clienteId && !TABELAS_PORTAL_CLIENTE.has(t)) {
                         return Promise.resolve({ data: [], error: null }); // nem chega a pedir à rede
                     }
+                    if (clienteId && t === 'administradores') return supa.rpc('tg_portal_empresa');
                     let q = supa.from(t).select('*');
                     if (t === 'ponto') q = supa.from(t).select('*').gte('data', _pontoCarregadoDesde);
                     else if (t === 'servicos') q = supa.from(t).select('*').or(`status.neq.concluído,data.gte.${_servicosCarregadoDesde}`);
@@ -764,8 +765,7 @@ function _assistEstado(value) {
                     else if (t === 'auditoria') q = supa.from(t).select('*').gte('data', _auditoriaCarregadaDesde);
                     if (clienteId) {
                         // portal do cliente: restringe ainda mais, só ao que é dele
-                        if (t === 'administradores') q = q.eq('id', tenantId);
-                        else if (t === 'clientes') q = q.eq('id', clienteId);
+                        if (t === 'clientes') q = q.eq('id', clienteId);
                         else if (t === 'assistencias' || t === 'locais' || t === 'contratos' || t === 'servicos' || t === 'obras' || t === 'relatorios_especialidade') q = q.eq('cliente_id', clienteId);
                         else if (t === 'folhas_obra') q = q.eq('admin_id', tenantId); // esta tabela não tem coluna cliente_id
                         else if (tenantId) q = q.eq('admin_id', tenantId);
@@ -12652,8 +12652,7 @@ function _assistEstado(value) {
             else if (tabela === 'folhas_obra') q = q.or(`assinatura.is.null,validada.eq.false,validada.is.null,data.gte.${_folhasCarregadoDesde || _dataCorteMeses(3)}`);
             else if (tabela === 'auditoria') q = q.gte('data', _dataCorteMeses(6));
             if (clienteId) {
-                if (tabela === 'administradores') q = q.eq('id', aid);
-                else if (tabela === 'clientes') q = q.eq('id', clienteId);
+                if (tabela === 'clientes') q = q.eq('id', clienteId);
                 else if (['locais', 'contratos', 'servicos', 'obras', 'relatorios_especialidade'].includes(tabela)) q = q.eq('cliente_id', clienteId);
                 else if (tabela === 'folhas_obra') q = q.eq('admin_id', aid);
                 else q = q.eq('admin_id', aid);
