@@ -207,6 +207,7 @@
         const list = host.querySelector('[data-contract-list]');
         let busy = false;
         const storage = () => supa.storage.from(contractBucket);
+        window.TGCraContracts?.mount(host, customerId, localId);
 
         async function readFiles() {
             status.textContent = 'A carregar contratos…';

@@ -114,7 +114,7 @@
             const list=entries(key);if(!list.length&&key!=='configuracoes')return;
             const section=document.createElement(collapsible?'details':'section');section.className='tgn-menu-section';
             const heading=document.createElement(collapsible?'summary':'h3');heading.textContent=groups.find(g=>g[0]===key)[1];section.append(heading);
-            if(collapsible){section.dataset.tgnMenuGroup=key;section.open=moreGroup===key;const count=document.createElement('span');count.className='tgn-group-count';const total=list.length+(key==='configuracoes'?1+(permitted(card('funcionarios'))?1:0):0);count.textContent=total+' '+(total===1?'acesso':'acessos');heading.append(count);section.addEventListener('toggle',()=>{if(section.open){moreGroup=key;target.querySelectorAll('details').forEach(other=>{if(other!==section)other.open=false;});}});}
+            if(collapsible){section.dataset.tgnMenuGroup=key;section.open=moreGroup===key;const count=document.createElement('span');count.className='tgn-group-count';const total=list.length+(key==='configuracoes'?1+(permitted(card('funcionarios'))?1:0)+(window.TGCraContracts?.canConfigureModels()?1:0):0);count.textContent=total+' '+(total===1?'acesso':'acessos');heading.append(count);section.addEventListener('toggle',()=>{if(section.open){moreGroup=key;target.querySelectorAll('details').forEach(other=>{if(other!==section)other.open=false;});}});}
             const grid=document.createElement('div');grid.className='tgn-menu-grid';if(key==='configuracoes'){const profile=document.createElement('button');profile.type='button';profile.className='tgn-tile';profile.dataset.tgnProfile='';profile.innerHTML='<span class="tgn-tile-icon"><i class="fas fa-user-gear" aria-hidden="true"></i></span><span><strong>'+(['admin','subadmin'].includes(user()?.role)?'Perfil e empresa':'O meu perfil')+'</strong><small>Dados da conta e preferências</small></span><span>›</span>';grid.append(profile);if(permitted(card('funcionarios'))){const people=tile(card('funcionarios'));people.querySelector('strong').textContent='Utilizadores e permissões';people.querySelector('small').textContent='Gerir contas e acessos da equipa';grid.append(people);}}list.forEach(el=>{
                 grid.append(tile(el));
                 if(key==='configuracoes'&&el.dataset.card==='relatorios-personalizados'&&['admin','subadmin'].includes(user()?.role)){
@@ -122,7 +122,16 @@
                     survey.innerHTML='<span class="tgn-tile-icon"><i class="fas fa-star" aria-hidden="true"></i></span><span><strong>Inquéritos de Satisfação</strong><small>Perguntas e formulário enviado aos clientes</small></span><span aria-hidden="true">›</span>';
                     grid.append(survey);
                 }
-            });section.append(grid);target.append(section);
+            });
+            if (key === 'configuracoes' && window.TGCraContracts?.canConfigureModels()) {
+                const models = document.createElement('button');
+                models.type = 'button';
+                models.className = 'tgn-tile';
+                models.dataset.tgnCraModels = '';
+                models.innerHTML = '<span class="tgn-tile-icon"><i class="fas fa-file-contract" aria-hidden="true"></i></span><span><strong>Modelos de prestação de serviços</strong><small>Tipos de contrato e checklists</small></span><span aria-hidden="true">›</span>';
+                grid.append(models);
+            }
+            section.append(grid);target.append(section);
         });
     }
     function settings() {
@@ -290,11 +299,15 @@
         }
     });
     document.addEventListener('click',event=>{
-        const control=event.target.closest('[data-tgn-nav],[data-tgn-card],[data-tgn-calendar],[data-tgn-settings],[data-tgn-close],[data-tgn-dashboard],[data-tgn-profile],[data-tgn-survey-config]');if(!control||!active())return;
+        const control=event.target.closest('[data-tgn-nav],[data-tgn-card],[data-tgn-calendar],[data-tgn-settings],[data-tgn-close],[data-tgn-dashboard],[data-tgn-profile],[data-tgn-survey-config],[data-tgn-cra-models]');if(!control||!active())return;
         if(control.hasAttribute('data-tgn-close')){$('tgnSettings')?.close();return;}
         if(control.hasAttribute('data-tgn-settings'))return settings();
         if(control.hasAttribute('data-tgn-profile')){$('tgnSettings')?.close();if(typeof abrirEditarPerfil==='function')return abrirEditarPerfil();return;}
         if(control.hasAttribute('data-tgn-survey-config')){$('tgnSettings')?.close();return window.TGSurveyConfig?.open();}
+        if (control.hasAttribute('data-tgn-cra-models')) {
+            $('tgnSettings')?.close();
+            return window.TGCraContracts?.openModels();
+        }
         if(control.hasAttribute('data-tgn-dashboard')){returnToMore=true;return _abrirDashboardCentralMobile();}
         if(control.dataset.tgnCard)return openCard(control.dataset.tgnCard);
         if(control.dataset.tgnCalendar)return agenda(control.dataset.tgnCalendar);
