@@ -6599,6 +6599,7 @@ function _assistEstado(value) {
             const _bgVerOs = document.querySelector('#modalGenericoOverlay .modal-actions .btn-success'); if (_bgVerOs) { _bgVerOs.style.display = ''; _bgVerOs.innerHTML = '<i class="fas fa-check"></i> Finalizar'; }
             overlay.classList.add('open', 'modal-veros');
             _verOsMostrar(osId, 'folhas');
+            window.TGOSSurveys?.mount('os', osId, campos);
         }
         function _saldosPlanoOS(os) {
             const idsFolhas = new Set((dados.folhasObra || []).filter(f => f.adminId === os.adminId && f.servicoId === os.id).map(f => f.id));
@@ -16683,6 +16684,7 @@ function _assistEstado(value) {
             const _bg = document.querySelector('#modalGenericoOverlay .modal-actions .btn-success');
             if (_bg) { _bg.style.display = ''; _bg.innerHTML = podeFinalizar ? '<i class="fas fa-check"></i> Finalizar' : 'Fechar'; }
             document.getElementById('modalGenericoOverlay').classList.add('open', 'modal-veros');
+            window.TGOSSurveys?.mount('obra', obraId, document.getElementById('modalGenericoCampos'));
             return _verObraMostrar(obraId, abaInicial, !!concluir);
         }
         // Pasta atual aberta na aba Documentos de cada obra (id da pasta, ou null = raiz)
