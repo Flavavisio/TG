@@ -113,12 +113,20 @@
                 const lista = documento.createElement('ul');
                 lista.style.cssText = 'display:grid;gap:0.85rem;padding-left:1.25rem;';
                 const formato = new Intl.DateTimeFormat('pt-PT', { dateStyle: 'medium', timeZone: 'Europe/Lisbon' });
+                const tipos = {
+                    passaportes: 'Ficheiro de passaporte técnico',
+                    folhasObra: 'Anexo de folha de obra',
+                    obras: 'Documento de obra',
+                    pedidos: 'Anexo de pedido',
+                    relatoriosEspecialidade: 'Imagem de relatório de especialidade',
+                    veiculoDocumentos: 'Documento de viatura'
+                };
                 for (const item of items) {
                     const linha = documento.createElement('li');
                     const data = new Date(item.carregado_em);
                     const etiqueta = item.tipo === 'os_fotos'
                         ? 'Fotografia de ordem de serviço' + (item.numero_os ? ' ' + item.numero_os : '')
-                        : 'Ficheiro de passaporte técnico';
+                        : (tipos[item.tipo] || 'Ficheiro recuperado');
                     linha.append(etiqueta + (Number.isFinite(data.getTime()) ? ' · ' + formato.format(data) : ''));
                     const abrirFicheiro = documento.createElement('button');
                     abrirFicheiro.type = 'button';
