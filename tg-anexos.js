@@ -92,13 +92,17 @@
             const atalho = criarBotao('Ficheiros em revisão');
             atalho.hidden = true;
             perfil.after(atalho);
-            const secoes = { pendente: 'Por rever', validado: 'Validados', arquivado: 'Arquivo' };
+            const revisao = { pendente: 'Por rever', validado: 'Validados', arquivado: 'Arquivo' };
+            const triagem = { pendente: 'Por atribuir', duplicado: 'Duplicados', arquivado: 'Arquivo', encaminhado: 'Encaminhados' };
             const tipos = {
+                'contratos-documentos': 'Documento de contrato',
+                encomendas: 'Anexo de encomenda',
                 passaportes: 'Ficheiro de passaporte técnico',
                 folhasObra: 'Anexo de folha de obra',
                 obras: 'Documento de obra',
                 pedidos: 'Anexo de pedido',
                 relatoriosEspecialidade: 'Imagem de relatório de especialidade',
+                requisicoes: 'Anexo de requisição',
                 veiculoDocumentos: 'Documento de viatura'
             };
             const formato = new Intl.DateTimeFormat('pt-PT', {
@@ -116,30 +120,44 @@
             }
 
             async function listar() {
-                const { data, error } = await supa.rpc('tg_listar_ficheiros_revisao');
+                const { data: fila } = await supa.rpc('tg_listar_ficheiros_triagem');
+                const superadmin = Array.isArray(fila?.ficheiros);
+                const resultado = superadmin ? { data: fila.ficheiros } : await supa.rpc('tg_listar_ficheiros_revisao');
+                const { data, error } = resultado;
                 if (error) throw new Error('Não foi possível carregar os ficheiros em revisão.');
-                return (data || []).filter(item =>
+                const secoes = superadmin ? triagem : revisao;
+                const items = (data || []).filter(item =>
                     Object.hasOwn(secoes, item.estado) && referencia(origem + prefixo + 'ficheiros/' + item.caminho)
                 );
+                return { items, secoes, superadmin, empresas: superadmin ? fila.empresas : [] };
             }
 
-            function mostrarAtalho(items) {
-                const pendentes = items.filter(item => item.estado === 'pendente').length;
-                atalho.textContent = 'Ficheiros em revisão' + (pendentes ? ' (' + pendentes + ')' : '');
+            function secaoDoFicheiro(item) {
+                return item.estado === 'pendente' && item.duplicado ? 'duplicado' : item.estado;
+            }
+
+            function mostrarAtalho({ items, superadmin }) {
+                const pendentes = items.filter(item => secaoDoFicheiro(item) === 'pendente').length;
+                atalho.textContent = (superadmin ? 'Ficheiros por atribuir' : 'Ficheiros em revisão')
+                    + (pendentes ? ' (' + pendentes + ')' : '');
                 atalho.hidden = !items.length;
             }
 
-            function desenhar(items) {
+            function desenhar(fila) {
                 fechar();
+                let { items } = fila;
+                const { secoes, superadmin, empresas } = fila;
                 const dialogo = documento.createElement('dialog');
                 painel = dialogo;
                 dialogo.setAttribute('aria-labelledby', 'tg-revisao-titulo');
                 dialogo.style.cssText = 'position:fixed;inset:0;margin:auto;box-sizing:border-box;width:min(42rem,calc(100% - 2rem));max-width:none;height:fit-content;max-height:calc(100dvh - 2rem);overflow:auto;border:1px solid #cbd5e1;border-radius:14px;padding:1.25rem;text-align:left;color:#152a52;';
                 const titulo = documento.createElement('h3');
                 titulo.id = 'tg-revisao-titulo';
-                titulo.textContent = 'Ficheiros em revisão';
+                titulo.textContent = superadmin ? 'Ficheiros por atribuir' : 'Ficheiros em revisão';
                 const descricao = documento.createElement('p');
-                descricao.textContent = 'Valide os ficheiros que reconhece. Pode recuperar um ficheiro arquivado. A validação não o anexa a um registo.';
+                descricao.textContent = superadmin
+                    ? 'Confirme a empresa antes de encaminhar o ficheiro para a revisão privada do respetivo administrador. Pode recuperar ficheiros no Arquivo.'
+                    : 'Valide os ficheiros que reconhece. Pode recuperar um ficheiro arquivado. A validação não o anexa a um registo.';
                 const navegacao = documento.createElement('div');
                 navegacao.setAttribute('aria-label', 'Estado dos ficheiros');
                 navegacao.style.cssText = 'display:flex;flex-wrap:wrap;gap:.4rem;margin:.75rem 0;';
@@ -150,34 +168,38 @@
                 informacao.setAttribute('aria-live', 'polite');
                 informacao.style.margin = '.5rem 0';
                 const fecharBotao = criarBotao('Fechar', fechar);
-                let secao = items.some(item => item.estado === 'pendente') ? 'pendente' : items[0].estado;
+                let secao = Object.keys(secoes).find(chave => items.some(item => secaoDoFicheiro(item) === chave));
                 let ocupado = false;
 
-                async function decidir(item, estado) {
+                async function decidir(item, estado, empresa) {
                     const atual = revisaoSessao;
                     const estadoAnterior = item.estado;
                     ocupado = true;
                     informacao.textContent = 'A guardar decisão…';
-                    dialogo.querySelectorAll('button').forEach(botao => { botao.disabled = true; });
+                    dialogo.querySelectorAll('button, select').forEach(elemento => { elemento.disabled = true; });
                     try {
-                        const { data, error } = await supa.rpc('tg_decidir_ficheiro_revisao', {
-                            p_caminho: item.caminho, p_anterior: estadoAnterior, p_estado: estado
-                        });
+                        const argumentos = { p_caminho: item.caminho, p_anterior: estadoAnterior, p_estado: estado };
+                        if (empresa) argumentos.p_empresa = empresa.id;
+                        const { data, error } = await supa.rpc(
+                            superadmin ? 'tg_decidir_ficheiro_triagem' : 'tg_decidir_ficheiro_revisao', argumentos
+                        );
                         if (atual !== revisaoSessao || painel !== dialogo) return;
                         if (error) throw new Error('Não foi possível guardar a decisão.');
                         if (!data) {
-                            items = await listar();
+                            items = (await listar()).items;
                             if (atual !== revisaoSessao || painel !== dialogo) return;
                             informacao.textContent = 'O estado mudou entretanto. A lista foi atualizada.';
                         } else {
                             item.estado = estado;
+                            if (empresa) item.empresa_destino = empresa.nome;
                             informacao.textContent = {
                                 validado: 'Ficheiro validado.',
                                 arquivado: 'Ficheiro arquivado. Pode devolvê-lo à revisão no separador Arquivo.',
-                                pendente: 'Ficheiro devolvido à revisão.'
+                                pendente: superadmin ? 'Ficheiro devolvido à triagem.' : 'Ficheiro devolvido à revisão.',
+                                encaminhado: 'Ficheiro encaminhado para a revisão de ' + item.empresa_destino + '.'
                             }[estado];
                         }
-                        mostrarAtalho(items);
+                        mostrarAtalho({ items, superadmin });
                     } catch (error) {
                         if (atual === revisaoSessao && painel === dialogo) informacao.textContent = error.message;
                     } finally {
@@ -191,11 +213,28 @@
                     }
                 }
 
+                function criarEncaminhamento(item, acoes) {
+                    const seletor = documento.createElement('select');
+                    seletor.setAttribute('aria-label', 'Empresa de destino');
+                    const placeholder = new Option('Selecionar empresa', '');
+                    seletor.append(placeholder);
+                    for (const empresa of empresas) seletor.append(new Option(empresa.nome, empresa.id));
+                    const encaminhar = criarBotao('Encaminhar', () => {
+                        const empresa = empresas.find(empresa => empresa.id === seletor.value);
+                        if (empresa && window.confirm('Disponibilizar este ficheiro para revisão pelo administrador de ' + empresa.nome + '?')) {
+                            decidir(item, 'encaminhado', empresa);
+                        }
+                    }, 'btn btn-primary');
+                    encaminhar.disabled = true;
+                    seletor.onchange = () => { encaminhar.disabled = !seletor.value; };
+                    acoes.append(seletor, encaminhar);
+                }
+
                 function renderizar() {
                     navegacao.replaceChildren();
                     const contagens = {};
                     for (const [chave, nome] of Object.entries(secoes)) {
-                        const total = items.filter(item => item.estado === chave).length;
+                        const total = items.filter(item => secaoDoFicheiro(item) === chave).length;
                         contagens[chave] = total;
                         const botao = criarBotao(nome + ' (' + total + ')', () => {
                             secao = chave;
@@ -216,7 +255,7 @@
                         return;
                     }
 
-                    for (const item of items.filter(item => item.estado === secao)) {
+                    for (const item of items.filter(item => secaoDoFicheiro(item) === secao)) {
                         const linha = documento.createElement('li');
                         linha.style.cssText = 'border:1px solid #dbe3ed;border-radius:10px;padding:.8rem;overflow-wrap:anywhere;';
                         const data = new Date(item.carregado_em);
@@ -233,15 +272,27 @@
                         const abrirFicheiro = criarBotao('Abrir ficheiro', () =>
                             abrir(origem + prefixo + 'ficheiros/' + item.caminho, '_blank'));
                         acoes.append(abrirFicheiro);
-                        if (secao === 'pendente') {
+                        linha.append(nome, ficheiro);
+                        if (superadmin && (item.empresa_destino || item.empresa_sugerida)) {
+                            const identificacao = documento.createElement('small');
+                            identificacao.textContent = item.empresa_destino
+                                ? 'Encaminhado para ' + item.empresa_destino
+                                : 'Empresa sugerida: ' + item.empresa_sugerida;
+                            linha.append(identificacao);
+                        }
+                        if (superadmin && secao === 'pendente') {
+                            criarEncaminhamento(item, acoes);
+                        }
+                        if (secao === 'pendente' || secao === 'duplicado') {
+                            if (!superadmin) acoes.append(criarBotao('Validar', () => decidir(item, 'validado'), 'btn btn-success'));
                             acoes.append(
-                                criarBotao('Validar', () => decidir(item, 'validado'), 'btn btn-success'),
                                 criarBotao('Arquivar', () => decidir(item, 'arquivado'))
                             );
-                        } else {
-                            acoes.append(criarBotao('Voltar a pôr em revisão', () => decidir(item, 'pendente')));
+                        } else if (secao !== 'encaminhado') {
+                            const texto = superadmin ? 'Voltar a pôr em triagem' : 'Voltar a pôr em revisão';
+                            acoes.append(criarBotao(texto, () => decidir(item, 'pendente')));
                         }
-                        linha.append(nome, ficheiro, acoes);
+                        linha.append(acoes);
                         lista.append(linha);
                     }
                 }
@@ -259,10 +310,10 @@
             atalho.onclick = async () => {
                 const atual = revisaoSessao;
                 try {
-                    const items = await listar();
+                    const fila = await listar();
                     if (atual !== revisaoSessao) return;
-                    mostrarAtalho(items);
-                    if (items.length) desenhar(items);
+                    mostrarAtalho(fila);
+                    if (fila.items.length) desenhar(fila);
                     else window.alert('Já não há ficheiros disponíveis para revisão.');
                 } catch (error) {
                     if (atual === revisaoSessao) window.alert(error.message);
@@ -277,8 +328,8 @@
                 // Supabase auth listeners must finish before a new request uses the client.
                 setTimeout(async () => {
                     try {
-                        const items = await listar();
-                        if (atual === revisaoSessao) mostrarAtalho(items);
+                        const fila = await listar();
+                        if (atual === revisaoSessao) mostrarAtalho(fila);
                     } catch (_) {}
                 }, 0);
             };
