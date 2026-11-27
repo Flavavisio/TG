@@ -40,7 +40,7 @@
                 // An existing personal clock remains reachable after midnight or completion
                 // by a colleague. Team members never acquire each other's personal actions.
                 const open = rows(pointKey).find(p => p[pointId] === row.id && p.funcionarioId === u().id && p.entrada && !p.saida);
-                if (!assigned(row,people,fallback)) return;
+                if (!assigned(row,people,fallback) && !(kind==='obra' && open)) return;
                 const state=kind==='os'?row.status:row.estado;
                 if(!open && /cancelad/.test(normal(state)))return;
                 const hasDraft = kind==='os' && rows('relatoriosEspecialidade').some(r=>r.servicoId===row.id && r.rascunho && r.tecnicoId===u().id);
@@ -499,6 +499,7 @@
             ? rows('ponto').find(p=>p.id===job.open.id&&p.funcionarioId===u()?.id&&p.servicoId===job.id&&!p.saida)
             : rows('obraPontoLonga').find(p=>p.id===job.open.id&&p.funcionarioId===u()?.id&&p.obraId===job.id&&!p.saida);
         if(!active)return;
+        if(job.kind==='obra' && active.data !== today()) return _obraLongaRegistarSaida(job.id);
         pauseBusy=true;
         const oldExit=active.saida,oldReason=active.motivoSaida;
         active.saida=new Date().toTimeString().slice(0,8);

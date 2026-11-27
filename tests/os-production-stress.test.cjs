@@ -213,7 +213,8 @@ test('erros em telemóvel centrados e cache da PWA sincronizada',()=>{
  assert.match(css,/#tgToastContainer:has\(\.tg-toast\.tg-erro\)/);
  assert.match(css,/translate\(-50%,-50%\)/);
  assert.match(css,/#modalGenericoOverlay/);
- const js='tg-technician.js?v=1.11.7-materiais-os-obras',style='tg-technician.css?v=1.9.2-lunch-entry-lock';
+ const js=fs.readFileSync('index.html','utf8').match(/tg-technician\.js\?v=[\w.-]+/)?.[0],style='tg-technician.css?v=1.9.2-lunch-entry-lock';
+ assert(js);
  for(const path of ['index.html','login.html','sw.js']){
    const html=fs.readFileSync(path,'utf8');
    assert(html.includes(js),path);

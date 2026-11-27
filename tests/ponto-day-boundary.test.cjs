@@ -16,7 +16,7 @@ async function run({ ponto = [], obras = [], pausa = null } = {}) {
   const before = JSON.stringify(dados);
   const ctx = vm.createContext({
     dados, usuarioLogado: { id: 'vanda', role: 'funcionario' },
-    getDataHoje: () => today, abrirModalEntradaPonto: () => calls.push('entrada'),
+    getDataHoje: () => today, pontoAssiduidadeAtivo: () => true, abrirModalEntradaPonto: () => calls.push('entrada'),
     alert: text => calls.push(text), _pausaAlmocoPendente: () => pausa,
     perguntarSaidaOuAlmoco: async () => { calls.push('saida'); return null; }
   });
@@ -61,7 +61,7 @@ function midnightSetup({ rows = [], confirm = { data: today, hora: '00:12' }, fa
     _refrescarModalObraLongaSeAberto() {},
     guardarDados: async () => { calls.push('save'); if (fail) throw new Error('offline'); }
   });
-  for (const name of ['_obraLongaPontoAberto', '_obraLongaPontoAbertoQualquer', '_botaoPontoObraHTML', '_intervalosSaidaObra', '_obraLongaRegistarSaida', 'calcularHoras']) vm.runInContext(fn(name), ctx);
+  for (const name of ['_obraLongaPontoAberto', '_obraLongaPontoAbertoQualquer', '_botaoPontoObraHTML', '_intervalosSaidaObra', '_obraLongaRegistarSaida', '_somarIntervalosPicagem', 'calcularHoras']) vm.runInContext(fn(name), ctx);
   return { ctx, dados, calls };
 }
 const night = extra => row({ id: 'old', obraId: 'obra', data: '2026-10-23', entrada: '23:30', ...extra });
@@ -85,6 +85,10 @@ test('confirmed overnight exit splits precisely by civil day: 23:30 to 00:12 = 4
   ]);
   const total = dados.obraPontoLonga.reduce((n, x) => n + ctx.calcularHoras(x.entrada, x.saida), 0);
   assert.equal(total, 0.7);
+  const antesDaMeiaNoite = ctx._somarIntervalosPicagem([dados.obraPontoLonga[0]], today, '00:12');
+  const depoisDaMeiaNoite = ctx._somarIntervalosPicagem([dados.obraPontoLonga[1]], today, '00:12');
+  assert.equal(antesDaMeiaNoite.horas + depoisDaMeiaNoite.horas, 0.7);
+  assert.equal(dados.obraPontoLonga[1].id, 'old-dia-2026-10-24');
   assert.equal(ctx._obraLongaPontoAberto('obra'), null);
   assert.equal(calls.filter(x => x === 'save').length, 1);
   await ctx._obraLongaRegistarSaida('obra');
@@ -126,4 +130,15 @@ test('save failure never reports a confirmed exit', async () => {
   assert.equal(await ctx._obraLongaRegistarSaida('obra'), false);
   assert(calls.some(x => x.includes('NÃO foi confirmada')));
   assert(!calls.some(x => x.includes('registada e confirmada')));
+});
+
+test('general clock-in ignores a current OS entry when general attendance is closed', async () => {
+  assert.deepEqual(await run({ ponto: [row({ servicoId: 'os' })] }), ['entrada']);
+});
+
+test('split preserves seconds and recognises midnight with or without seconds', () => {
+  const { ctx } = midnightSetup();
+  const parts = ctx._intervalosSaidaObra(night({ entrada: '23:59:19' }), today, '00:00:00');
+  assert.equal(parts.length, 1);
+  assert.equal(ctx._somarIntervalosPicagem(parts, today, '00:12').horas, 41 / 3600);
 });

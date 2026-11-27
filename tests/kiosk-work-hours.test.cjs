@@ -176,7 +176,7 @@ test('the generated signed sheet PDF itself shows the combined team time and kee
   const {ctx,dados}=standaloneTeamExample(),output=[];const before=JSON.stringify(dados);
   const target={lastAutoTable:{finalY:30},text:t=>output.push(String(t)),splitTextToSize:t=>[String(t)],getTextWidth:t=>String(t).length*2,autoTable:o=>{output.push(JSON.stringify(o.body));target.lastAutoTable={finalY:30}}};
   const doc=new Proxy(target,{get:(o,k)=>k in o?o[k]:()=>{}});
-  Object.assign(ctx,{window:{jspdf:{jsPDF:class{constructor(){return doc}}}},obterDescricaoOS:()=> 'OS-EXEMPLO-2',obterLogoEmpresa:()=>({nome:'Empresa exemplo',logo:null}),obterClienteDaFolha:()=>null});
+  Object.assign(ctx,{window:{jspdf:{jsPDF:class{constructor(){return doc}}}},anexosTG:{referencia:()=>null},obterDescricaoOS:()=> 'OS-EXEMPLO-2',obterLogoEmpresa:()=>({nome:'Empresa exemplo',logo:null}),obterClienteDaFolha:()=>null});
   vm.runInContext(fn('gerarPDFFolha'),ctx);await ctx.gerarPDFFolha('signed',tipo);
   const text=output.join(' ');assert.match(text,/58 min 39 s/);assert.match(text,/29 min 37 s/);assert.match(text,/29 min 2 s/);assert.match(text,/Responsável pela folha/i);
   if(tipo==='empresa')assert.match(text,/10\.76 €/);else assert.doesNotMatch(text,/10\.76|4\.84|5\.92|USO INTERNO/);

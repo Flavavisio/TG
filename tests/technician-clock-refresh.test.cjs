@@ -12,7 +12,7 @@ function setup({attendance=false}={}){
  w.saveCalls=0;w.savePromise=new Promise((resolve,reject)=>{w.resolveSave=resolve;w.rejectSave=reject;});w.guardarDados=()=>{w.saveCalls++;return w.savePromise;};
  w.intervals=[];w.setInterval=fn=>{w.intervals.push(fn);return w.intervals.length;};
  w.eval('var _modalSimNaoResolve = null, _picandoEntradaObraLonga = false;');
- w.eval(['_obraLongaPontoAberto','_obraLongaPontoAbertoQualquer','obraLongaPicarEntrada','obraLongaPicarSaida','_obraLongaRegistarSaida','perguntarSaidaObra','_modalSimNaoResponder','_inicioTempoServico','_formatarTempoServico','_tempoServicoHTML','_entradaOSPendenteSincronizacao','picarPontoOS'].map(native).join('\n'));
+ w.eval(['_obraLongaPontoAberto','_obraLongaPontoAbertoQualquer','obraLongaPicarEntrada','obraLongaPicarSaida','_intervalosSaidaObra','_pedirSaidaObraAnterior','_obraLongaRegistarSaida','perguntarSaidaObra','_modalSimNaoResponder','_inicioTempoServico','_formatarTempoServico','_tempoServicoHTML','_entradaOSPendenteSincronizacao','picarPontoOS'].map(native).join('\n'));
  w.eval(source);return w;
 }
 function enter(w){w.dados.ponto.push({id:'p',adminId:'a',funcionarioId:'e',servicoId:'os',data:'2026-11-06',entrada:'09:40:00',saida:null});w.dados.servicos[0].status='em andamento';}
@@ -121,7 +121,7 @@ test('entry from Obras ativas shows the full personal work card in Hoje and both
  }
 });
 test('both entry points and offline precache use the same employee refresh asset',()=>{
- const asset='tg-technician.js?v=1.11.7-materiais-os-obras';for(const path of ['index.html','login.html','sw.js'])assert(fs.readFileSync(path,'utf8').includes(asset),path);const sw=fs.readFileSync('sw.js','utf8');assert.match(sw,/const CACHE = 'totalgest-release-\d{8}-[a-z0-9-]+'/);
+ const asset=fs.readFileSync('index.html','utf8').match(/tg-technician\.js\?v=[\w.-]+/)?.[0];assert(asset);for(const path of ['index.html','login.html','sw.js'])assert(fs.readFileSync(path,'utf8').includes(asset),path);const sw=fs.readFileSync('sw.js','utf8');assert.match(sw,/const CACHE = 'totalgest-release-\d{8}-[a-z0-9-]+'/);
 });
 
 
@@ -155,5 +155,32 @@ test('an unconfirmed general clock from the same return also keeps the entry pen
   assert(w._entradaOSPendenteSincronizacao(os,point));
   w._snap.ponto.set(geral.id,'{}');
   assert(!w._entradaOSPendenteSincronizacao(os,point));
+ }finally{w.close();}
+});
+
+test('mobile technician can recover their own overnight entry after work is reassigned and completed',async()=>{
+ const w=setup({attendance:true});
+ try {
+  const [work]=w.dados.obras;
+  work.responsaveisIds=['other'];
+  work.estado='concluida';
+  w.dados.servicos=[];
+  w.dados.obraPontoLonga=[{id:'night',adminId:'a',funcionarioId:'e',obraId:work.id,data:'2026-11-05',entrada:'23:30',saida:null}];
+  w._mostrarCarregando=()=>{};
+  w._esconderCarregando=()=>{};
+  w._refrescarModalObraLongaSeAberto=()=>{};
+  w.resolveSave();
+  w.TGTechnician.refresh();
+  w.document.querySelector('#omeudia [data-tgt-action=exit][data-tgt-kind=obra]').click();
+  const input=w.document.getElementById('saidaAnteriorMomento');
+  assert(input);
+  input.value='2026-11-06T00:12';
+  input.form.dispatchEvent(new w.Event('submit',{cancelable:true}));
+  await new Promise(resolve=>setTimeout(resolve,0));
+  assert.equal(w.dados.obraPontoLonga.length,2);
+  assert.equal(w.dados.obraPontoLonga[0].saida,'24:00');
+  assert.equal(w.dados.obraPontoLonga[1].saida,'00:12');
+  assert.equal(w.saveCalls,1);
+  assert.equal(work.estado,'concluida');
  }finally{w.close();}
 });

@@ -15153,7 +15153,7 @@ function _assistEstado(value) {
                 // pausaAlmoco marks the exit reason; entry to exit is worked time.
                 const inicio = segundos(p.entrada);
                 // Entradas antigas em aberto não contam até à hora atual de outro dia.
-                const fim = segundos(p.saida || (p.data === hoje ? horaAgora : null));
+                const fim = /^24:00(?::00)?$/.test(p.saida || '') ? 86400 : segundos(p.saida || (p.data === hoje ? horaAgora : null));
                 if (inicio == null || fim == null || fim < inicio) continue;
                 intervalos.push([inicio, fim]);
             }
@@ -15255,15 +15255,13 @@ function _assistEstado(value) {
                 subtotalPessoal, subtotalMateriais, totalOutrosGastos, maoDeObra: semCusto.length ? null : subtotalPessoal,
                 total: completo ? dinheiro(subtotalPessoal + subtotalMateriais + totalOutrosGastos) : null, completo, avisos };
         }
-        function _obraLongaPontoAberto(obraId) {
+        function _obraLongaPontoAberto(obraId = null) {
             if (!usuarioLogado) return null;
-            const hoje = getDataHoje();
-            return (dados.obraPontoLonga || []).find(p => p.funcionarioId === usuarioLogado.id && p.obraId === obraId && p.data === hoje && p.entrada && !p.saida) || null;
+            return (dados.obraPontoLonga || []).find(p => p.funcionarioId === usuarioLogado.id &&
+                (obraId == null || p.obraId === obraId) && p.entrada && !p.saida) || null;
         }
         function _obraLongaPontoAbertoQualquer() {
-            if (!usuarioLogado) return null;
-            const hoje = getDataHoje();
-            return (dados.obraPontoLonga || []).find(p => p.funcionarioId === usuarioLogado.id && p.data === hoje && p.entrada && !p.saida) || null;
+            return _obraLongaPontoAberto();
         }
         function _podeFinalizarObra(obra) {
             if (!obra || obra.estado === 'concluida' || obra.adminId !== _tenantId()) return false;
@@ -15609,17 +15607,15 @@ function _assistEstado(value) {
             if (!aberto) { alert('Não tens entrada em aberto nesta obra.'); return; }
             const obra = (dados.obras || []).find(o => o.id === obraId); if (!obra) return;
             const hora = new Date().toTimeString().slice(0, 8);
-            const horasDestaSessao = aberto.entrada ? calcularHoras(aberto.entrada, hora) : 0;
-            if (obra.estado === 'concluida') {
-                // A obra já foi finalizada por outra pessoa entretanto — só fecha esta entrada,
-                // sem perguntar nada nem voltar a mexer no estado da obra.
+            if (aberto.data !== getDataHoje() || obra.estado === 'concluida') {
+                // Recuperar uma entrada antiga ou fechar uma obra concluída só altera a picagem.
                 await _obraLongaRegistarSaida(obraId);
                 return;
             }
             const resposta = await perguntarSaidaObra('Saída da obra "' + obra.nome + '" às ' + hora + '.\n\nO que aconteceu?');
             if (resposta == null) return; // cancelou
             const _saidaConfirmada = await _obraLongaRegistarSaida(obraId); // fecha sempre a própria entrada, seja qual for a resposta
-            if (!_saidaConfirmada) return; // já foi avisado do problema — não avança com o resto do fluxo
+            if (!_saidaConfirmada || aberto.data !== getDataHoje()) return;
 
             if (resposta === 'almoco') {
                 aberto.pausaAlmoco = true;
@@ -15704,10 +15700,89 @@ function _assistEstado(value) {
             if (btnCancelar) btnCancelar.style.display = '';
             if (_modalSaidaOuAlmocoResolve) { _modalSaidaOuAlmocoResolve(valor); _modalSaidaOuAlmocoResolve = null; }
         }
+        // Mantém cada intervalo no seu dia civil, sem alterar calcularHoras para
+        // aceitar saídas anteriores à entrada nos restantes registos da aplicação.
+        function _intervalosSaidaObra(aberto, dataSaida, horaSaida) {
+            const normalizar = hora => hora?.length === 5 ? hora + ':00' : hora;
+            const inicio = aberto.data + 'T' + normalizar(aberto.entrada);
+            const fim = dataSaida + 'T' + normalizar(horaSaida);
+            const agora = getDataHoje() + 'T' + new Date().toTimeString().slice(0, 8);
+            const dataValida = data => /^\d{4}-\d{2}-\d{2}$/.test(data) &&
+                !isNaN(Date.parse(data + 'T00:00:00Z')) && new Date(data + 'T00:00:00Z').toISOString().slice(0, 10) === data;
+            const horaValida = /^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/;
+            if (!dataValida(aberto.data) || !dataValida(dataSaida) ||
+                !horaValida.test(aberto.entrada) || !horaValida.test(horaSaida) || fim < inicio || fim > agora) {
+                throw new Error('Indica uma saída entre a entrada e a data e hora atuais.');
+            }
+            const partes = [];
+            let dia = aberto.data;
+            let entrada = aberto.entrada;
+            while (dia < dataSaida) {
+                partes.push({ data: dia, entrada, saida: '24:00' });
+                const seguinte = new Date(dia + 'T00:00:00Z');
+                seguinte.setUTCDate(seguinte.getUTCDate() + 1);
+                dia = seguinte.toISOString().slice(0, 10);
+                entrada = '00:00';
+            }
+            if (normalizar(entrada) !== normalizar(horaSaida) || !partes.length) partes.push({ data: dia, entrada, saida: horaSaida });
+            return partes;
+        }
+        function _pedirSaidaObraAnterior(aberto) {
+            return new Promise(resolve => {
+                const overlay = document.createElement('div');
+                overlay.className = 'modal-overlay open';
+                overlay.style.zIndex = '10050';
+                const agora = getDataHoje() + 'T' + new Date().toTimeString().slice(0, 8);
+                overlay.innerHTML = `<form class="modal" role="dialog" aria-modal="true" aria-labelledby="saidaAnteriorTitulo" style="max-width:480px;">
+                    <h3 id="saidaAnteriorTitulo">Fechar entrada de dia anterior</h3>
+                    <p>Esta entrada ficou aberta desde ${escapeHtmlSimples(aberto.data)} às ${escapeHtmlSimples(aberto.entrada)}. Confirma quando saíste. As horas só serão contabilizadas até ao momento indicado.</p>
+                    <div class="form-group"><label for="saidaAnteriorMomento">Data e hora reais de saída</label>
+                    <input id="saidaAnteriorMomento" type="datetime-local" step="1" required min="${escapeHtmlSimples(aberto.data + 'T' + aberto.entrada)}" max="${agora}"></div>
+                    <p class="saida-anterior-erro" role="alert" style="color:#dc2626;"></p>
+                    <div class="modal-actions"><button type="button" class="btn">Cancelar</button><button type="submit" class="btn btn-success">Confirmar saída</button></div>
+                </form>`;
+                const terminar = valor => { document.removeEventListener('keydown', tecla); overlay.remove(); resolve(valor); };
+                const tecla = ev => { if (ev.key === 'Escape') { ev.stopImmediatePropagation(); terminar(null); } };
+                overlay.querySelector('button[type="button"]').onclick = () => terminar(null);
+                overlay.querySelector('form').onsubmit = ev => {
+                    ev.preventDefault();
+                    const [data, hora] = overlay.querySelector('input').value.split('T');
+                    try { _intervalosSaidaObra(aberto, data, hora); }
+                    catch (erro) { overlay.querySelector('.saida-anterior-erro').textContent = erro.message; return; }
+                    terminar({ data, hora });
+                };
+                document.addEventListener('keydown', tecla);
+                document.body.appendChild(overlay);
+                overlay.querySelector('input').focus();
+            });
+        }
         async function _obraLongaRegistarSaida(obraId) {
-            const aberto = _obraLongaPontoAberto(obraId);
-            if (!aberto) return true;
-            aberto.saida = new Date().toTimeString().slice(0, 8);
+            let aberto = _obraLongaPontoAberto(obraId);
+            if (!aberto) return false;
+            const momento = aberto.data !== getDataHoje()
+                ? await _pedirSaidaObraAnterior(aberto)
+                : { data: getDataHoje(), hora: new Date().toTimeString().slice(0, 8) };
+            if (!momento) return false;
+            // Uma confirmação concorrente não pode dividir nem fechar a sessão duas vezes.
+            const atual = _obraLongaPontoAberto(obraId);
+            if (!atual || atual.id !== aberto.id || atual.data !== aberto.data || atual.entrada !== aberto.entrada) return false;
+            aberto = atual;
+            let partes;
+            try { partes = _intervalosSaidaObra(aberto, momento.data, momento.hora); }
+            catch (e) { alert(e.message); return false; }
+            const novos = partes.slice(1).map((parte, i) => ({
+                id: aberto.id + '-dia-' + parte.data, funcionarioId: aberto.funcionarioId, adminId: aberto.adminId,
+                obraId: aberto.obraId, ...parte,
+                latSaida: i === partes.length - 2 ? aberto.latSaida : null,
+                lngSaida: i === partes.length - 2 ? aberto.lngSaida : null,
+                kmFim: i === partes.length - 2 ? aberto.kmFim : null
+            }));
+            aberto.saida = partes[0].saida;
+            if (novos.length) {
+                aberto.latSaida = aberto.lngSaida = aberto.kmFim = null;
+                const ids = new Set(novos.map(p => p.id));
+                dados.obraPontoLonga = dados.obraPontoLonga.filter(p => !ids.has(p.id)).concat(novos);
+            }
             let erro = null;
             _mostrarCarregando('A confirmar saída...');
             try { await guardarDados(dados); } catch (e) { erro = e; } finally { _esconderCarregando(); }
@@ -15716,7 +15791,7 @@ function _assistEstado(value) {
                 alert('⚠️ A saída ficou registada no ecrã, mas ainda NÃO foi confirmada pelo servidor (' + (erro.message || 'falha de ligação') + '). A app vai continuar a tentar sozinha — verifica a tua ligação à internet e confirma mais tarde em "Registo de Ponto" se já ficou certo. Se o aviso persistir, avisa o administrador.');
                 return false;
             }
-            alert('Saída da obra registada e confirmada ✓ às ' + aberto.saida);
+            alert('Saída da obra registada e confirmada ✓ em ' + momento.data + ' às ' + momento.hora);
             _refrescarModalObraLongaSeAberto(obraId);
             return true;
         }
@@ -15765,7 +15840,7 @@ function _assistEstado(value) {
             const isEncarregadoView = usuarioLogado?.role === 'encarregado';
             const adminId = _tenantArmazem();
             let lista = (dados.obras || []).filter(o => o.adminId === adminId);
-            if (!isAdminView) lista = lista.filter(o => o.estado !== 'concluida');
+            if (!isAdminView) lista = lista.filter(o => o.estado !== 'concluida' || _obraLongaPontoAberto(o.id));
             const cCard = document.getElementById('countObrasLonga'); if (cCard) cCard.textContent = lista.filter(o => o.estado !== 'concluida').length;
             const conta = JSON.stringify([adminId, usuarioLogado?.id, usuarioLogado?.role]);
             if (_obrasLongaConta !== conta) { _obrasLongaConta = conta; _obrasLongaEstadoFiltro = 'todas'; }
@@ -16082,9 +16157,10 @@ function _assistEstado(value) {
             // aparecer para quem ainda tenha uma entrada de ponto aberta lá — senão fica sem
             // sítio nenhum para dar saída, preso ("Tens de dar saída por lá primeiro" sem
             // conseguir sequer chegar ao botão).
-            const _obraTemPontoAbertoMeu = obraId => (dados.obraPontoLonga || []).some(p => p.obraId === obraId && p.funcionarioId === meuId && p.data === hoje && p.entrada && !p.saida);
-            const minhasObras = (dados.obras || []).filter(o => o.adminId === adminId && (o.estado !== 'concluida' || _obraTemPontoAbertoMeu(o.id))
-                && (_vejoTudo || (((o.responsaveisIds && o.responsaveisIds.length) ? o.responsaveisIds : [o.responsavelId].filter(Boolean)).includes(meuId))));
+            const minhasObras = (dados.obras || []).filter(o => o.adminId === adminId && (
+                _obraLongaPontoAberto(o.id) || (o.estado !== 'concluida' &&
+                    (_vejoTudo || (o.responsaveisIds?.length ? o.responsaveisIds : [o.responsavelId]).includes(meuId)))
+            ));
             const _botaoMapa = (urlInfo, servicoId) => urlInfo ? `<a href="${urlInfo.url}" target="_blank" rel="noopener" onclick="event.stopPropagation();${servicoId ? `_registarKmViagemOS('${servicoId}');` : ''}" class="tgm-btn-mapa" title="${urlInfo.exato ? 'Navegar (Google Maps)' : 'Navegar por morada (Google Maps)'}"><i class="fas fa-diamond-turn-right"></i></a>${urlInfo?.wazeUrl ? `<a href="${urlInfo.wazeUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation();${servicoId ? `_registarKmViagemOS('${servicoId}');` : ''}" class="tgm-btn-mapa" title="Navegar no Waze"><i class="fas fa-w" style="font-family:sans-serif;font-style:normal;font-weight:800;">W</i></a>` : ''}` : '';
 
             const linhaOS = s => {
@@ -16423,20 +16499,23 @@ function _assistEstado(value) {
         function _tempoAcumuladoServicoHTML(pontos, funcionarioId, texto = 'Tempo na OS:') {
             const registos = pontos.filter(p => p.funcionarioId === funcionarioId && p.entrada);
             if (!registos.length) return '';
-            const agora = Date.now();
-            let total = 0, aberto = false;
+            const agora = new Date();
+            const hoje = getDataHoje();
+            const hora = agora.toTimeString().slice(0, 8);
+            const porDia = new Map();
             for (const p of registos) {
-                const inicio = _inicioTempoServico({ ...p, saida: null });
-                if (inicio === null) continue;
-                if (!p.saida) { total += Math.max(0, agora - inicio); aberto = true; }
-                else {
-                    if (!/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/.test(p.saida)) continue;
-                    const fim = new Date(p.data + 'T' + p.saida).getTime();
-                    if (Number.isFinite(fim) && fim >= inicio) total += fim - inicio;
-                }
+                if (!porDia.has(p.data)) porDia.set(p.data, []);
+                porDia.get(p.data).push(p);
             }
-            // O almoço não é somado: cada intervalo termina na saída e retoma numa nova entrada.
-            return `<span class="tg-tempo-servico">${escapeHtmlSimples(texto)} <strong${aberto ? ` data-tempo-servico="${agora - total}"` : ''}>${_formatarTempoServico(0, total)}</strong></span>`;
+            let total = 0;
+            for (const lista of porDia.values()) {
+                total += Math.round(_somarIntervalosPicagem(lista, hoje, hora).horas * 3600) * 1000;
+            }
+            const aberto = (porDia.get(hoje) || []).some(p => {
+                const inicio = _inicioTempoServico(p);
+                return inicio !== null && inicio <= agora.getTime();
+            });
+            return `<span class="tg-tempo-servico">${escapeHtmlSimples(texto)} <strong${aberto ? ` data-tempo-servico="${agora.getTime() - total}"` : ''}>${_formatarTempoServico(0, total)}</strong></span>`;
         }
         function _atualizarTemposServico() {
             if (document.hidden) return;
@@ -16609,15 +16688,15 @@ function _assistEstado(value) {
 
         function _botaoPontoObraHTML(obra) {
             if (usuarioLogado?.role !== 'funcionario' && usuarioLogado?.role !== 'encarregado' && usuarioLogado?.role !== 'vendedor' && usuarioLogado?.role !== 'admin' && usuarioLogado?.role !== 'subadmin') return '';
+            const aberto = _obraLongaPontoAberto(obra.id);
+            if (aberto) {
+                return `<button type="button" class="btn btn-sm" style="background:#dc2626;color:#fff;" onclick="event.stopPropagation();obraLongaPicarSaida('${obra.id}')"><i class="fas fa-stop-circle"></i> Saída</button>`;
+            }
             // Admin e sub-admin têm acesso a todas as obras da empresa, mesmo não estando
             // alocados — só funcionário/encarregado/vendedor ficam limitados à obra onde constam.
             if (!['admin', 'subadmin'].includes(usuarioLogado.role)) {
                 const idsAtrib = (obra.responsaveisIds && obra.responsaveisIds.length) ? obra.responsaveisIds : [obra.responsavelId].filter(Boolean);
                 if (idsAtrib.length && !idsAtrib.includes(usuarioLogado.id)) return '';
-            }
-            const aberto = _obraLongaPontoAberto(obra.id);
-            if (aberto) {
-                return `<button type="button" class="btn btn-sm" style="background:#dc2626;color:#fff;" onclick="event.stopPropagation();obraLongaPicarSaida('${obra.id}')"><i class="fas fa-stop-circle"></i> Saída</button>`;
             }
             if (obra.estado === 'concluida') return '';
             return `<button type="button" class="btn btn-sm" style="background:#16a34a;color:#fff;" onclick="event.stopPropagation();obraLongaPicarEntrada('${obra.id}')"><i class="fas fa-fingerprint"></i> Entrada</button>`;
@@ -33121,7 +33200,7 @@ window._relPrefill = function(msg){
         function pontoAbertoHoje() {
             if (!usuarioLogado) return null;
             const hoje = getDataHoje();
-            return (dados.ponto || []).find(p => p.funcionarioId === usuarioLogado.id && p.data === hoje && p.entrada && !p.saida) || null;
+            return (dados.ponto || []).find(p => p.funcionarioId === usuarioLogado.id && !p.servicoId && !p.obraId && p.data === hoje && p.entrada && !p.saida) || null;
         }
 
         function atualizarEstadoPonto() {
@@ -33198,17 +33277,20 @@ window._relPrefill = function(msg){
                 alert('A picagem de ponto é para funcionários, encarregados, vendedores, vigilantes e administradores.');
                 return;
             }
-            // Verifica TODOS os registos abertos da pessoa hoje — pode ter mais que um ao
-            // mesmo tempo (ex: entrada geral às 9h00 + entrada numa OS às 9h30).
-            const hojePP = getDataHoje();
-            const todosAbertos = (dados.ponto || []).filter(p => p.funcionarioId === usuarioLogado.id && p.data === hojePP && p.entrada && !p.saida);
-            const osAberta = todosAbertos.find(p => p.servicoId);
+            const aberto = pontoAbertoHoje();
+            if (!aberto) {
+                abrirModalEntradaPonto();
+                return;
+            }
+            // Apenas as intervenções do dia bloqueiam a saída geral.
+            const hojePP = aberto.data;
+            const osAberta = (dados.ponto || []).find(p => p.funcionarioId === usuarioLogado.id && p.data === hojePP && p.servicoId && p.entrada && !p.saida);
             if (osAberta) {
                 const osLigada = dados.servicos?.find(s => s.id === osAberta.servicoId);
                 alert('Tens uma entrada aberta na OS' + (osLigada?.numeroRegisto ? ' #' + osLigada.numeroRegisto : '') + (osLigada ? (' — "' + (osLigada.descricao || _nomeClienteOS(osLigada.clienteId)) + '"') : '') + '.\n\nTens de dar saída por lá primeiro (Agenda de Obras), antes de poderes fechar aqui o Registo de Ponto geral.');
                 return;
             }
-            const obraLongaAberta = (dados.obraPontoLonga || []).find(p => p.funcionarioId === usuarioLogado.id && p.entrada && !p.saida);
+            const obraLongaAberta = (dados.obraPontoLonga || []).find(p => p.funcionarioId === usuarioLogado.id && p.data === hojePP && p.entrada && !p.saida);
             if (obraLongaAberta) {
                 const obraLigada = dados.obras?.find(o => o.id === obraLongaAberta.obraId);
                 alert('Tens uma entrada aberta na obra' + (obraLigada ? (' "' + obraLigada.nome + '"') : '') + '.\n\nTens de dar saída por lá primeiro (Obras de Longa Duração), antes de poderes fechar aqui o Registo de Ponto geral.');
@@ -33222,68 +33304,42 @@ window._relPrefill = function(msg){
                 alert('A última coisa que registaste foi uma pausa para almoço ' + (pausaPendente.tipo === 'os' ? 'numa OS' : 'numa obra') + ' ("' + pausaPendente.nome + '"). Tens de voltar lá e dar saída a sério (Não / Terminado por hoje / Sim) antes de poderes fechar aqui o Registo de Ponto geral.');
                 return;
             }
-            const aberto = todosAbertos.find(p => !p.servicoId) || pontoAbertoHoje();
-            if (aberto) {
-                const resposta = await perguntarSaidaOuAlmoco('Vais dar saída às ' + new Date().toTimeString().slice(0, 5) + '.');
-                if (resposta == null) return;
-                if (resposta === 'almoco') {
-                    _picandoEntrada = true;
-                    const agora = new Date().toTimeString().slice(0, 5);
-                    const loc = _gpsPontoAtivo() ? await obterLocalizacao() : null;
-                    aberto.saida = agora;
-                    aberto.pausaAlmoco = true;
-                    if (loc) { aberto.latSaida = loc.lat; aberto.lngSaida = loc.lng; }
-                    guardarDados(dados);
-                    renderizarTudo();
-                    _picandoEntrada = false;
-                    alert('🍽️ Saída para pausa de almoço registada às ' + agora + '. Pica a entrada normalmente quando voltares.');
-                    return;
-                }
-                const obraAberta = (dados.ponto || []).find(p => p.funcionarioId === usuarioLogado.id && p.servicoId && p.entrada && !p.saida);
-                const _finalizarSaidaGeral = async (kmFim) => {
-                    _picandoEntrada = true;
-                    const agora = new Date().toTimeString().slice(0, 5);
-                    const loc = _gpsPontoAtivo() ? await obterLocalizacao() : null;
-                    aberto.saida = agora;
-                    if (loc) { aberto.latSaida = loc.lat; aberto.lngSaida = loc.lng; }
-                    if (kmFim != null) aberto.kmFim = kmFim;
-
-                    if (obraAberta && obraAberta.servicoId) {
-                        const os = dados.servicos?.find(s => s.id === obraAberta.servicoId);
-                        if (os) {
-                            const horasSessao = calcularHoras(obraAberta.entrada, obraAberta.saida);
-                            dados.folhasObra = dados.folhasObra || [];
-                            dados.folhasObra.push({
-                                id: gerarId(), obraId: os.obraId || null, obraDescricao: (os.descricao || _nomeClienteOS(os.clienteId)) + _especialidadesEfetuadasTexto(os.id),
-                                descricao: 'Picagem via Registo de Ponto (' + obraAberta.entrada + ' – ' + obraAberta.saida + ')',
-                                horasTrabalhadas: +horasSessao.toFixed(2), data: getDataHoje(), funcionarioId: usuarioLogado.id,
-                                adminId: _tenantId() || null, servicoId: os.id, dataAtualizacao: Date.now(), origem: 'ponto_saida_os_legado'
-                            });
-                            if (os.status !== 'concluído') os.status = 'em andamento';
-                            guardarDados(dados);
-                            renderizarTudo();
-                            _picandoEntrada = false;
-                            alert('✅ Saída registada às ' + agora + '. Folha de obra criada automaticamente (' + horasSessao.toFixed(2) + 'h) para "' + (os.descricao || _nomeClienteOS(os.clienteId)) + '".');
-                            return;
-                        }
-                    }
-
-                    guardarDados(dados);
-                    renderizarTudo();
-                    _picandoEntrada = false;
-                    alert('Saída registada ✓ às ' + agora + (loc ? ' (localização guardada)' : ''));
-                };
-                // Só a "Saída Geral" (não ligada a uma OS específica) é que pede km — mesma regra
-                // da Entrada Geral, e mesma opção da Frota a controlar isto.
-                const adminSaida = dados.administradores?.find(a => a.id === _tenantId());
-                if (!aberto.servicoId && adminSaida?.kmPontoGeralAtivo) {
-                    _kmPedirRegisto(usuarioLogado.id, 'Saída ao serviço', (km) => { _finalizarSaidaGeral(km); });
-                    return;
-                }
-                _finalizarSaidaGeral(null);
-            } else {
-                abrirModalEntradaPonto();
+            const resposta = await perguntarSaidaOuAlmoco('Vais dar saída às ' + new Date().toTimeString().slice(0, 5) + '.');
+            if (resposta == null) return;
+            if (resposta === 'almoco') {
+                _picandoEntrada = true;
+                const agora = new Date().toTimeString().slice(0, 5);
+                const loc = _gpsPontoAtivo() ? await obterLocalizacao() : null;
+                aberto.saida = agora;
+                aberto.pausaAlmoco = true;
+                if (loc) { aberto.latSaida = loc.lat; aberto.lngSaida = loc.lng; }
+                guardarDados(dados);
+                renderizarTudo();
+                _picandoEntrada = false;
+                alert('🍽️ Saída para pausa de almoço registada às ' + agora + '. Pica a entrada normalmente quando voltares.');
+                return;
             }
+            const _finalizarSaidaGeral = async (kmFim) => {
+                _picandoEntrada = true;
+                const agora = new Date().toTimeString().slice(0, 5);
+                const loc = _gpsPontoAtivo() ? await obterLocalizacao() : null;
+                aberto.saida = agora;
+                if (loc) { aberto.latSaida = loc.lat; aberto.lngSaida = loc.lng; }
+                if (kmFim != null) aberto.kmFim = kmFim;
+
+                guardarDados(dados);
+                renderizarTudo();
+                _picandoEntrada = false;
+                alert('Saída registada ✓ às ' + agora + (loc ? ' (localização guardada)' : ''));
+            };
+            // Só a "Saída Geral" (não ligada a uma OS específica) é que pede km — mesma regra
+            // da Entrada Geral, e mesma opção da Frota a controlar isto.
+            const adminSaida = dados.administradores?.find(a => a.id === _tenantId());
+            if (adminSaida?.kmPontoGeralAtivo) {
+                _kmPedirRegisto(usuarioLogado.id, 'Saída ao serviço', (km) => { _finalizarSaidaGeral(km); });
+                return;
+            }
+            _finalizarSaidaGeral(null);
         }
 
         function _fecharModalGenerico() {

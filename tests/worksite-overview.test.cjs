@@ -12,7 +12,7 @@ function setup(role='admin'){
  {id:'old',adminId:'a',nome:'Antiga',estado:null},
  {id:'foreign',adminId:'other',nome:'Outra empresa',estado:'ativa'}]};w.state={};
  Object.assign(w,{_tenantArmazem:()=>w.usuarioLogado.adminId,_getTableState:()=>w.state,totalHorasObra:()=>0,_formatarTempoTrabalhado:()=>'0 s',obterNomeCliente:()=> 'Cliente',obterNomeFuncionario:()=> 'Técnico',_nomesAtribuidosObraColorido:()=> 'Técnico',_estadoSelectObra:o=>o.estado||'',obrasAvancadoAtivo:()=>false,_toolbarHtml:()=>''});
- w.eval("let _obrasLongaEstadoFiltro='todas',_obrasLongaConta='';"+['_obraIdsAtribuidos','_obraParticipantesIds','_aplicarFiltroOrdenacao','_obrasLongaGrupoEstado','_obrasLongaDataCriacao','obrasLongaFiltrarEstado','_obrasLongaContadores','renderizarObrasLongaDuracao'].map(fn).join('\n'));
+ w.eval("let _obrasLongaEstadoFiltro='todas',_obrasLongaConta='';"+['_obraIdsAtribuidos','_obraParticipantesIds','_obraLongaPontoAberto','_aplicarFiltroOrdenacao','_obrasLongaGrupoEstado','_obrasLongaDataCriacao','obrasLongaFiltrarEstado','_obrasLongaContadores','renderizarObrasLongaDuracao'].map(fn).join('\n'));
  w.renderizarObrasLongaDuracao();return w;
 }
 const count=(w,state)=>Number(w.document.querySelector(`[data-obras-estado="${state}"] strong`).textContent);
@@ -34,4 +34,17 @@ test('employee and supervisor views retain seven columns and no management count
 });
 test('both entry points include one overview container and creation-date header',()=>{
  for(const file of ['index.html','login.html']){const w=new JSDOM(fs.readFileSync(file,'utf8')).window;try{assert.equal(w.document.querySelectorAll('#obrasLongaContadores').length,1);const th=w.document.getElementById('obrasLongaDataCriacaoTh');assert.equal(th.parentElement.firstElementChild,th);assert.equal(th.dataset.tcol,'dataCriacao');}finally{w.close();}}
+});
+
+test('completed works remain visible only to the employee with a personal exit to register',()=>{
+ const w=setup('funcionario');
+ try {
+  assert(!names(w).includes('Terminada'));
+  w.dados.obraPontoLonga=[{id:'ponto',obraId:'c',funcionarioId:'other',entrada:'23:30',saida:null}];
+  w.renderizarObrasLongaDuracao();
+  assert(!names(w).includes('Terminada'));
+  w.dados.obraPontoLonga[0].funcionarioId='u';
+  w.renderizarObrasLongaDuracao();
+  assert(names(w).includes('Terminada'));
+ }finally{w.close();}
 });
