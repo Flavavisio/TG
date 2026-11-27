@@ -1,14 +1,14 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const {JSDOM}=require('jsdom');
 const src=fs.readFileSync('app-principal.js','utf8');
-const names=['_inicioTempoServico','_formatarTempoServico','_tempoServicoHTML','_tempoAcumuladoServicoHTML','_atualizarTemposServico','_htmlResumoEquipaHoje','atualizarRelogio'];
+const names=['getDataHoje','_somarIntervalosPicagem','_osComRelatoriosPorTerminar','_inicioTempoServico','_formatarTempoServico','_tempoServicoHTML','_tempoAcumuladoServicoHTML','_atualizarTemposServico','_htmlResumoEquipaHoje','atualizarRelogio'];
 const functions=names.map(name=>{const m=src.match(new RegExp('        function '+name+'\\([^]*?\\n        \\}'));assert(m,name);return m[0];}).join('\n');
 function setup(){
  const dom=new JSDOM('<input id="draft" value="Texto por guardar"><div id="panel"></div>',{pretendToBeVisual:true});
  let now=new Date('2026-10-30T16:00:00').getTime();
  class Clock extends Date {constructor(...args){super(...(args.length?args:[now]));}static now(){return now;}}
  const dados={servicos:[{id:'os',adminId:'a',data:'2026-10-30',hora:'11:43',clienteId:'c',funcionariosIds:['v','f'],status:'em andamento'}],obras:[],ponto:[],obraPontoLonga:[]};
- const ctx=vm.createContext({Date:Clock,document:dom.window.document,dados,obterNomeFuncionario:id=>({v:'Vanda Ribeiro',f:'Flávio Rosa'}[id]||id),obterNomeCliente:()=> 'Churrasqueira Jaime',escapeHtmlSimples:s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),_kmPercorridosOS:()=>0,_osComRelatoriosPorTerminar:()=>[]});
+ const ctx=vm.createContext({Date:Clock,document:dom.window.document,dados,_tiposEspecialidadePendentes:()=>[],obterNomeFuncionario:id=>({v:'Vanda Ribeiro',f:'Flávio Rosa'}[id]||id),obterNomeCliente:()=> 'Churrasqueira Jaime',escapeHtmlSimples:s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),_kmPercorridosOS:()=>0,_osComRelatoriosPorTerminar:()=>[]});
  vm.runInContext(functions,ctx);
  return {ctx,dados,document:dom.window.document,advance:ms=>now+=ms,close:()=>dom.window.close()};
 }

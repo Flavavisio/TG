@@ -52,7 +52,7 @@ test('approved absences appear in the admin panel without a missing clock-in ale
   const dados = {administradores:[{id:'a'}],funcionarios:[{id:'f',adminId:'a',nome:'Ana'}],pedidos:[ausencia()]};
   class Afternoon extends Date { constructor(...args) { super(...(args.length ? args : [hoje+'T15:00:00'])); } }
   const ctx = vm.createContext({dados,Date:Afternoon,obterNomeCliente:()=>'',pontoAssiduidadeAtivo:()=>true,escapeHtmlSimples:s=>s});
-  vm.runInContext(['_funcionarioAusenteEm','_estadoPresencaPessoa','_htmlPainelAdminHoje'].map(fn).join('\n'),ctx);
+  vm.runInContext(['_funcionarioAusenteEm','_estadoPresencaPessoa','_osComRelatoriosPorTerminar','_htmlPainelAdminHoje'].map(fn).join('\n'),ctx);
   const html = ctx._htmlPainelAdminHoje('a',hoje);
   assert.match(html,/De férias/);
   assert.doesNotMatch(html,/ainda não picou|Ainda não começou/);
