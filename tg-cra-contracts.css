@@ -1,0 +1,84 @@
+.tg-cra-dialog {
+    width: min(710px, calc(100% - 24px));
+    max-height: 90dvh;
+    padding: 0;
+    border: 1px solid #dbe3ef;
+    border-radius: 14px;
+    color: #172b4d;
+    background: #fff;
+    box-shadow: 0 24px 65px #14264532;
+}
+.tg-cra-dialog::backdrop { background: #0a173b88; }
+.tg-cra-dialog > header {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    border-bottom: 1px solid #e2e8f0;
+    background: #fff;
+}
+.tg-cra-dialog h2, .tg-cra-installation h4 { margin: 0; }
+.tg-cra-dialog h2 { font-size: 1.13rem; }
+.tg-cra-body { padding: 16px 20px 20px; }
+.tg-cra-stack { display: grid; gap: 10px; }
+.tg-cra-stack[hidden], .tg-cra-dialog [hidden], #perf_cra [hidden] { display: none; }
+.tg-cra-dialog fieldset {
+    min-width: 0;
+    margin: 0;
+    padding: 12px;
+    border: 1px solid #dbe3ef;
+    border-radius: 9px;
+}
+.tg-cra-dialog legend { padding: 0 5px; font-weight: 700; }
+.tg-cra-dialog label, #perf_cra label { display: grid; gap: 4px; font-weight: 600; }
+.tg-cra-dialog :is(input:not([type=checkbox]), select, textarea) {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    padding: 8px 10px;
+    border: 1px solid #aebed3;
+    border-radius: 7px;
+    font: inherit;
+    font-size: 1rem;
+}
+.tg-cra-dialog label.tg-cra-checkbox, #perf_cra label.tg-cra-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+#perf_cra .tg-cra-checkbox input { width: auto; margin: 0; }
+#perf_cra [data-cra-schedule] { margin-top: 10px; }
+.tg-cra-actions, .tg-cra-dialog footer, .tg-cra-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+}
+.tg-cra-dialog footer { display: flex; justify-content: flex-end; }
+.tg-cra-row {
+    justify-content: space-between;
+    padding: 9px 0;
+    border-bottom: 1px solid #e2e8f0;
+    overflow-wrap: anywhere;
+}
+.tg-cra-row small { display: block; color: #475569; }
+.tg-cra-row ul { margin: 5px 0; padding-left: 20px; }
+.tg-cra-installation:not([hidden]) { margin: 0 0 14px; }
+.tg-cra-item {
+    display: grid;
+    grid-template-columns: 1fr minmax(125px, 0.4fr);
+    gap: 8px;
+    padding: 8px;
+    background: #f4f7fb;
+    border-radius: 8px;
+}
+.tg-cra-dialog [role=status]:empty, #perf_cra [role=status]:empty { display: none; }
+.tg-cra-dialog [role=status], #perf_cra [role=status] { margin: 0; color: #7a3417; }
+@media (max-width: 520px) {
+    .tg-cra-dialog > header, .tg-cra-body { padding-inline: 12px; }
+    .tg-cra-item { grid-template-columns: 1fr; }
+}

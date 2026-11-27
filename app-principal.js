@@ -14290,6 +14290,14 @@ function _assistEstado(value) {
             if (usuarioLogado?.role !== 'admin' && usuarioLogado?.role !== 'subadmin') { cont.style.display = 'none'; cont.innerHTML = ''; return; }
             const adminId = usuarioLogado.role === 'admin' ? usuarioLogado.id : usuarioLogado.adminId;
             const alertas = [];
+            globalThis.TGCraContracts?.start();
+            const craPendencias = globalThis.TGCraContracts?.pending() || [];
+            if (craPendencias.length) alertas.push({
+                tipo: 'warning',
+                titulo: `${craPendencias.length} ${craPendencias.length === 1 ? 'contrato com itens obrigatórios em falta' : 'contratos com itens obrigatórios em falta'}`,
+                sub: 'Consulte as checklists e os documentos dos contratos de prestação de serviços.',
+                acao: 'TGCraContracts.openPending()'
+            });
 
             const _hojeAniv = new Date();
             const _md = (m, d) => String(m).padStart(2, '0') + '-' + String(d).padStart(2, '0');
@@ -34864,6 +34872,7 @@ window._relPrefill = function(msg){
             if (aviso) aviso.style.display = 'none';
             try { await supa.auth.signOut(); } catch (e) { console.warn('signOut:', e); }
             usuarioLogado = null;
+            void window.TGCraContracts?.refresh();
             document.body.classList.remove('is-cliente-portal');
             _avisoRenovChecked = false;
             pararHeartbeat(); pararPollOnline(); pararPollEquipa(); pararPollMapa(); pararPollDadosGerais(); _heartbeatOn = false;
@@ -36635,6 +36644,8 @@ window._relPrefill = function(msg){
                                     </label>
                                     <div class="help-text">Se sim, ativa os registos ANEPC, registo prévio e o logótipo da entidade certificadora, usados nos relatórios de especialidade.</div>
                                 </div>
+                                ${usuarioLogado.role === 'admin' && admin?.areasNegocio?.includes('seguranca')
+                                    ? '<div id="perf_cra" class="form-group ff-span2"></div>' : ''}
                                 <div class="form-group ff-span2">
                                     <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
                                         <input type="checkbox" id="perf_seguros_ativo" ${admin?.segurosAtivo ? 'checked' : ''} style="width:auto;margin:0;" />
@@ -36830,6 +36841,7 @@ window._relPrefill = function(msg){
                     `;
             }
             overlay.classList.add('open');
+            window.TGCraContracts?.configureProfile(document.getElementById('perf_cra'));
         }
 
         function previewPerfilLogo(e) {
@@ -36985,6 +36997,10 @@ window._relPrefill = function(msg){
                 if (anepc && _numeroJaUsado('numeroAnepc', anepc, admin.id)) { alert('Já existe outra empresa registada com esse número de ANEPC.'); return; }
                 if (registoPrevio && _numeroJaUsado('numeroRegistoPrevio', registoPrevio, admin.id)) { alert('Já existe outra empresa com esse número de registo prévio.'); return; }
                 if (cor && !/^#[0-9a-fA-F]{6}$/.test(cor)) { alert('A cor deve estar no formato #RRGGBB (ex.: #152A52).'); return; }
+                const craOptions = document.getElementById('perf_cra');
+                const profileActor = usuarioLogado;
+                if (craOptions && window.TGCraContracts && !await window.TGCraContracts.saveProfile(craOptions)) return;
+                if (usuarioLogado !== profileActor) return;
                 const aplicar = (logoData) => {
                     if (usuarioLogado.role === 'admin') admin.nome = nome;
                     admin.empresa = empresa;
